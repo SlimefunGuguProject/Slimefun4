@@ -36,4 +36,10 @@ public class RadioactivityListener implements Listener {
         RadiationUtils.clearExposure(entity);
         RadiationTask.addGracePeriod(entity);
     }
+
+    @EventHandler
+    public void onPlayerJoin(@Nonnull PlayerJoinEvent e) {
+        RadiationUtils.clearExposure(e.getPlayer());
+        RadiationTask.addGracePeriod(e.getPlayer());
+    }
 }
