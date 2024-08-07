@@ -11,14 +11,6 @@
                ${commit.short}-Insider
            </version>
        </ref>
-       <ref type="branch">
-           <pattern>test/(.+)</pattern>
-           <version>${ref}-${commit.short}</version>
-       </ref>
-       <ref type="branch">
-           <pattern>feat/(.+)</pattern>
-           <version>${ref}-${commit.short}</version>
-       </ref>
        <ref type = "tag">
            <pattern>([0-9].*)></pattern>
            <version>${1}</version>

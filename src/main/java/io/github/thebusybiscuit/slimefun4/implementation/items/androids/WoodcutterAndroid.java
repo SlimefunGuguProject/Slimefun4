@@ -14,7 +14,7 @@ import java.util.UUID;
 import java.util.function.Predicate;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
-import me.mrCookieSlime.Slimefun.api.inventory.BlockMenu;
+import me.mrCookieSlime.Slimefun.api.inventory.UniversalMenu;
 import org.bukkit.Bukkit;
 import org.bukkit.Effect;
 import org.bukkit.Material;
@@ -40,7 +40,7 @@ public class WoodcutterAndroid extends ProgrammableAndroid {
     }
 
     @Override
-    protected boolean chopTree(Block b, BlockMenu menu, BlockFace face) {
+    protected boolean chopTree(Block b, UniversalMenu menu, BlockFace face) {
         Block target = b.getRelative(face);
 
         if (!target.getWorld().getWorldBorder().isInside(target.getLocation())) {
@@ -54,8 +54,8 @@ public class WoodcutterAndroid extends ProgrammableAndroid {
                 Block log = list.get(list.size() - 1);
                 log.getWorld().playEffect(log.getLocation(), Effect.STEP_SOUND, log.getType());
 
-                OfflinePlayer owner =
-                        Bukkit.getOfflinePlayer(UUID.fromString(StorageCacheUtils.getData(b.getLocation(), "owner")));
+                OfflinePlayer owner = Bukkit.getOfflinePlayer(
+                        UUID.fromString(StorageCacheUtils.getUniversalData(menu.getUuid(), b.getLocation(), "owner")));
                 if (Slimefun.getProtectionManager().hasPermission(owner, log.getLocation(), Interaction.BREAK_BLOCK)) {
                     breakLog(log, b, menu, face);
                 }
@@ -68,7 +68,7 @@ public class WoodcutterAndroid extends ProgrammableAndroid {
     }
 
     @ParametersAreNonnullByDefault
-    private void breakLog(Block log, Block android, BlockMenu menu, BlockFace face) {
+    private void breakLog(Block log, Block android, UniversalMenu menu, BlockFace face) {
         ItemStack drop = new ItemStack(log.getType());
 
         // We try to push the log into the android's inventory, but nothing happens if it does not fit

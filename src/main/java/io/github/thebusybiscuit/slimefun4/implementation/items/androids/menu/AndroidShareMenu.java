@@ -7,7 +7,6 @@ import io.github.thebusybiscuit.slimefun4.implementation.items.androids.Programm
 import io.github.thebusybiscuit.slimefun4.utils.ChatUtils;
 import io.github.thebusybiscuit.slimefun4.utils.ChestMenuUtils;
 import io.github.thebusybiscuit.slimefun4.utils.HeadTexture;
-import io.papermc.lib.PaperLib;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -248,14 +247,6 @@ public final class AndroidShareMenu {
             container.set(BLOCK_INFO_KEY, PersistentDataType.STRING, value);
             state.update();
         } catch (Exception x) {
-            Slimefun.logger().log(Level.SEVERE, "Please check if your Server Software is up to date!");
-
-            String serverSoftware = PaperLib.isSpigot() && !PaperLib.isPaper() ? "Spigot" : Bukkit.getName();
-            Slimefun.logger()
-                    .log(
-                            Level.SEVERE,
-                            () -> serverSoftware + " | " + Bukkit.getVersion() + " | " + Bukkit.getBukkitVersion());
-
             Slimefun.logger()
                     .log(Level.SEVERE, "An Exception was thrown while trying to set Persistent Data for a Android", x);
         }

@@ -35,9 +35,15 @@ public class AutoSavingService {
                 .getScheduler()
                 .runTaskTimerAsynchronously(
                         plugin,
-                        () -> Slimefun.getDatabaseManager()
-                                .getBlockDataController()
-                                .saveAllBlockInventories(),
+                        () -> {
+                            Slimefun.getDatabaseManager()
+                                    .getBlockDataController()
+                                    .saveAllBlockInventories();
+
+                            Slimefun.getDatabaseManager()
+                                    .getBlockDataController()
+                                    .saveAllUniversalInventories();
+                        },
                         2000L,
                         interval * 60L * 20L);
     }

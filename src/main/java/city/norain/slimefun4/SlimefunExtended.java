@@ -16,6 +16,8 @@ public final class SlimefunExtended {
     private static void checkDebug() {
         if ("true".equals(System.getProperty("slimefun.database.debug"))) {
             databaseDebugMode = true;
+
+            Slimefun.getSQLProfiler().start();
         }
     }
 

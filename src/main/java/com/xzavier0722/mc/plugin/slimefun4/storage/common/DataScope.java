@@ -9,7 +9,10 @@ public enum DataScope {
     BLOCK_RECORD(new FieldKey[] {FieldKey.LOCATION}),
     BLOCK_DATA(new FieldKey[] {FieldKey.LOCATION, FieldKey.DATA_KEY}),
     CHUNK_DATA(new FieldKey[] {FieldKey.CHUNK, FieldKey.DATA_KEY}),
-    BLOCK_INVENTORY(new FieldKey[] {FieldKey.LOCATION, FieldKey.INVENTORY_SLOT});
+    BLOCK_INVENTORY(new FieldKey[] {FieldKey.LOCATION, FieldKey.INVENTORY_SLOT}),
+    UNIVERSAL_RECORD(new FieldKey[] {FieldKey.UNIVERSAL_UUID}),
+    UNIVERSAL_DATA(new FieldKey[] {FieldKey.UNIVERSAL_UUID, FieldKey.DATA_KEY}),
+    UNIVERSAL_INVENTORY(new FieldKey[] {FieldKey.UNIVERSAL_UUID, FieldKey.INVENTORY_SLOT});
 
     private final FieldKey[] primaryKeys;
 

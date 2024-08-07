@@ -11,7 +11,7 @@ import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import javax.annotation.ParametersAreNonnullByDefault;
-import me.mrCookieSlime.Slimefun.api.inventory.BlockMenu;
+import me.mrCookieSlime.Slimefun.api.inventory.UniversalMenu;
 import org.bukkit.Bukkit;
 import org.bukkit.Effect;
 import org.bukkit.Material;
@@ -35,10 +35,9 @@ public class FarmerAndroid extends ProgrammableAndroid {
     }
 
     @Override
-    protected void farm(Block b, BlockMenu menu, Block block, boolean isAdvanced) {
-
-        OfflinePlayer owner =
-                Bukkit.getOfflinePlayer(UUID.fromString(StorageCacheUtils.getData(b.getLocation(), "owner")));
+    protected void farm(Block b, UniversalMenu menu, Block block, boolean isAdvanced) {
+        OfflinePlayer owner = Bukkit.getOfflinePlayer(
+                UUID.fromString(StorageCacheUtils.getUniversalData(menu.getUuid(), b.getLocation(), "owner")));
         if (!Slimefun.getProtectionManager().hasPermission(owner, block, Interaction.BREAK_BLOCK)) {
             return;
         }

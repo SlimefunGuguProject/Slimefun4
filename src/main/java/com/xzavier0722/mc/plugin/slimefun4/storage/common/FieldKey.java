@@ -20,7 +20,14 @@ public enum FieldKey {
     SLIMEFUN_ID,
 
     DATA_KEY,
-    DATA_VALUE;
+    DATA_VALUE,
+
+    /**
+     * Represents uuid of universal inventory
+     */
+    UNIVERSAL_UUID,
+
+    LAST_PRESENT;
 
     private final boolean isNumType;
 
