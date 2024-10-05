@@ -9,11 +9,13 @@ import static com.xzavier0722.mc.plugin.slimefun4.storage.adapter.sqlcommon.SqlC
 import static com.xzavier0722.mc.plugin.slimefun4.storage.adapter.sqlcommon.SqlConstants.FIELD_DATA_VALUE;
 import static com.xzavier0722.mc.plugin.slimefun4.storage.adapter.sqlcommon.SqlConstants.FIELD_INVENTORY_ITEM;
 import static com.xzavier0722.mc.plugin.slimefun4.storage.adapter.sqlcommon.SqlConstants.FIELD_INVENTORY_SLOT;
+import static com.xzavier0722.mc.plugin.slimefun4.storage.adapter.sqlcommon.SqlConstants.FIELD_LAST_PRESENT;
 import static com.xzavier0722.mc.plugin.slimefun4.storage.adapter.sqlcommon.SqlConstants.FIELD_LOCATION;
 import static com.xzavier0722.mc.plugin.slimefun4.storage.adapter.sqlcommon.SqlConstants.FIELD_PLAYER_NAME;
 import static com.xzavier0722.mc.plugin.slimefun4.storage.adapter.sqlcommon.SqlConstants.FIELD_PLAYER_UUID;
 import static com.xzavier0722.mc.plugin.slimefun4.storage.adapter.sqlcommon.SqlConstants.FIELD_RESEARCH_KEY;
 import static com.xzavier0722.mc.plugin.slimefun4.storage.adapter.sqlcommon.SqlConstants.FIELD_SLIMEFUN_ID;
+import static com.xzavier0722.mc.plugin.slimefun4.storage.adapter.sqlcommon.SqlConstants.FIELD_UNIVERSAL_UUID;
 
 import com.xzavier0722.mc.plugin.slimefun4.storage.adapter.sqlcommon.SqlCommonAdapter;
 import com.xzavier0722.mc.plugin.slimefun4.storage.adapter.sqlcommon.SqlUtils;
@@ -41,6 +43,9 @@ public class PostgreSqlAdapter extends SqlCommonAdapter<PostgreSqlConfig> {
                 blockDataTable = SqlUtils.mapTable(DataScope.BLOCK_DATA, config.tablePrefix());
                 blockInvTable = SqlUtils.mapTable(DataScope.BLOCK_INVENTORY, config.tablePrefix());
                 chunkDataTable = SqlUtils.mapTable(DataScope.CHUNK_DATA, config.tablePrefix());
+                universalInvTable = SqlUtils.mapTable(DataScope.UNIVERSAL_INVENTORY, config.tablePrefix());
+                universalDataTable = SqlUtils.mapTable(DataScope.UNIVERSAL_DATA, config.tablePrefix());
+                universalRecordTable = SqlUtils.mapTable(DataScope.UNIVERSAL_RECORD, config.tablePrefix());
                 createBlockStorageTables();
             }
         }
@@ -136,6 +141,9 @@ public class PostgreSqlAdapter extends SqlCommonAdapter<PostgreSqlConfig> {
         createBlockDataTable();
         createBlockInvTable();
         createChunkDataTable();
+        createUniversalInventoryTable();
+        createUniversalRecordTable();
+        createUniversalDataTable();
     }
 
     private void createProfileTable() {
@@ -325,6 +333,67 @@ public class PostgreSqlAdapter extends SqlCommonAdapter<PostgreSqlConfig> {
                 + FIELD_LOCATION
                 + ", "
                 + FIELD_INVENTORY_SLOT
+                + ")"
+                + ");");
+    }
+
+    private void createUniversalInventoryTable() {
+        executeSql("CREATE TABLE IF NOT EXISTS "
+                + universalInvTable
+                + "("
+                + FIELD_UNIVERSAL_UUID
+                + " UUID NOT NULL, "
+                + FIELD_INVENTORY_SLOT
+                + " TINYINT UNSIGNED NOT NULL, "
+                + FIELD_INVENTORY_ITEM
+                + " TEXT NOT NULL,"
+                + "PRIMARY KEY ("
+                + FIELD_UNIVERSAL_UUID
+                + ", "
+                + FIELD_INVENTORY_SLOT
+                + ")"
+                + ");");
+    }
+
+    private void createUniversalRecordTable() {
+        executeSql("CREATE TABLE IF NOT EXISTS "
+                + universalRecordTable
+                + "("
+                + FIELD_UNIVERSAL_UUID
+                + " UUID NOT NULL, "
+                + FIELD_SLIMEFUN_ID
+                + " TEXT NOT NULL, "
+                + FIELD_LAST_PRESENT
+                + " TEXT NOT NULL, "
+                + "PRIMARY KEY ("
+                + FIELD_UNIVERSAL_UUID
+                + ")"
+                + ");");
+    }
+
+    private void createUniversalDataTable() {
+        executeSql("CREATE TABLE IF NOT EXISTS "
+                + universalDataTable
+                + "("
+                + FIELD_UNIVERSAL_UUID
+                + " UUID NOT NULL, "
+                + FIELD_DATA_KEY
+                + " VARCHAR(64) NOT NULL, "
+                + FIELD_DATA_VALUE
+                + " TEXT NOT NULL, "
+                + "FOREIGN KEY ("
+                + FIELD_UNIVERSAL_UUID
+                + ") "
+                + "REFERENCES "
+                + universalRecordTable
+                + "("
+                + FIELD_UNIVERSAL_UUID
+                + ") "
+                + "ON UPDATE CASCADE ON DELETE CASCADE, "
+                + "PRIMARY KEY ("
+                + FIELD_UNIVERSAL_UUID
+                + ", "
+                + FIELD_DATA_KEY
                 + ")"
                 + ");");
     }

@@ -16,6 +16,10 @@ public class LocationUtils {
     }
 
     public static Location toLocation(String lKey) {
+        if (lKey == null || lKey.isEmpty()) {
+            return null;
+        }
+
         var strArr = lKey.split(";");
         var loc = strArr[1].split(":");
         return new Location(

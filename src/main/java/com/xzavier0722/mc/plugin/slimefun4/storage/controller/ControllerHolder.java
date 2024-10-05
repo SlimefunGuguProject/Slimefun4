@@ -9,7 +9,8 @@ public class ControllerHolder<T extends ADataController> {
     private final Map<StorageType, T> controllers;
 
     public static <CT extends ADataController> CT getController(Class<CT> clazz, StorageType type) {
-        return ((ControllerHolder<CT>) holders.get(clazz)).get(type);
+        final var holder = holders.get(clazz);
+        return holder == null ? null : ((ControllerHolder<CT>) holder).get(type);
     }
 
     public static void clearControllers() {

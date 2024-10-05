@@ -2,6 +2,8 @@ package com.xzavier0722.mc.plugin.slimefun4.storage.migrator;
 
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
+import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunBlockData;
+import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunUniversalData;
 import io.github.bakedlibs.dough.config.Config;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
@@ -12,7 +14,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.Map;
 import java.util.logging.Level;
 import lombok.Getter;
-import me.mrCookieSlime.Slimefun.api.inventory.BlockMenu;
+import me.mrCookieSlime.Slimefun.api.inventory.DirtyChestMenu;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -135,18 +137,24 @@ public class BlockStorageMigrator implements IMigrator {
             var z = Integer.parseInt(arr[3]);
 
             var loc = new Location(world, x, y, z);
-            var blockData =
-                    Slimefun.getDatabaseManager().getBlockDataController().createBlock(loc, sfId);
+            var sfData = Slimefun.getDatabaseManager().getBlockDataController().createBlock(loc, sfId);
             Map<String, String> data = gson.fromJson(jsonStr, new TypeToken<Map<String, String>>() {}.getType());
             for (var each : data.entrySet()) {
                 var key = each.getKey();
                 if ("id".equals(key)) {
                     continue;
                 }
-                blockData.setData(key, each.getValue());
+                sfData.setData(key, each.getValue());
             }
 
-            var menu = blockData.getBlockMenu();
+            DirtyChestMenu menu = null;
+
+            if (sfData instanceof SlimefunBlockData blockData) {
+                menu = blockData.getBlockMenu();
+            } else if (sfData instanceof SlimefunUniversalData uniData) {
+                menu = uniData.getUniversalMenu();
+            }
+
             if (menu != null) {
                 var f = new File(invFolder, world.getName() + ";" + x + ";" + y + ";" + z + ".sfi");
                 if (!f.isFile()) {
@@ -159,7 +167,7 @@ public class BlockStorageMigrator implements IMigrator {
         }
     }
 
-    private void migrateInv(BlockMenu menu, File f) {
+    private void migrateInv(DirtyChestMenu menu, File f) {
         var cfg = new Config(f);
         var preset = menu.getPreset().getPresetSlots();
         for (var key : cfg.getKeys()) {

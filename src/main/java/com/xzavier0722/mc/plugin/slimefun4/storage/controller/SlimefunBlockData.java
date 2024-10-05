@@ -12,22 +12,18 @@ import org.bukkit.inventory.ItemStack;
 
 public class SlimefunBlockData extends ASlimefunDataContainer {
     private final Location location;
-    private final String sfId;
     private volatile BlockMenu menu;
-    private volatile boolean pendingRemove = false;
 
     @ParametersAreNonnullByDefault
     SlimefunBlockData(Location location, String sfId) {
-        super(LocationUtils.getLocKey(location));
+        super(LocationUtils.getLocKey(location), sfId);
         this.location = location;
-        this.sfId = sfId;
     }
 
     @ParametersAreNonnullByDefault
     SlimefunBlockData(Location location, SlimefunBlockData other) {
-        super(LocationUtils.getLocKey(location), other);
+        super(LocationUtils.getLocKey(location), other, other.getSfId());
         this.location = location;
-        this.sfId = other.sfId;
     }
 
     @Nonnull
@@ -37,7 +33,7 @@ public class SlimefunBlockData extends ASlimefunDataContainer {
 
     @Nonnull
     public String getSfId() {
-        return sfId;
+        return super.getSfId();
     }
 
     @ParametersAreNonnullByDefault
@@ -80,22 +76,14 @@ public class SlimefunBlockData extends ASlimefunDataContainer {
         return re;
     }
 
-    public void setPendingRemove(boolean pendingRemove) {
-        this.pendingRemove = pendingRemove;
-    }
-
-    public boolean isPendingRemove() {
-        return pendingRemove;
-    }
-
     @Override
     public String toString() {
         return "SlimefunBlockData [sfId="
-                + sfId
+                + getSfId()
                 + ", location="
                 + location
                 + ", isPendingRemove="
-                + pendingRemove
+                + isPendingRemove()
                 + "]";
     }
 }

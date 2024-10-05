@@ -4,6 +4,7 @@ import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.utils.tags.SlimefunTag;
 import io.papermc.lib.PaperLib;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.logging.Level;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -32,6 +33,7 @@ import org.bukkit.plugin.Plugin;
 public class BlockDataService implements Keyed {
 
     private final NamespacedKey namespacedKey;
+    private final NamespacedKey universalDataKey;
 
     /**
      * This creates a new {@link BlockDataService} for the given {@link Plugin}.
@@ -45,6 +47,7 @@ public class BlockDataService implements Keyed {
      */
     public BlockDataService(@Nonnull Plugin plugin, @Nonnull String key) {
         namespacedKey = new NamespacedKey(plugin, key);
+        universalDataKey = new NamespacedKey(plugin, "slimefun_unidata_uuid");
     }
 
     @Override
@@ -61,6 +64,30 @@ public class BlockDataService implements Keyed {
      *            The value to store
      */
     public void setBlockData(@Nonnull Block b, @Nonnull String value) {
+        setBlockData(b, namespacedKey, value);
+    }
+
+    /**
+     * This will store the universal data {@link UUID} inside the NBT data of the given {@link Block}
+     *
+     * @param b
+     *            The {@link Block} in which to store the given value
+     * @param uuid
+     *            The uuid linked to certain slimefun item
+     */
+    public void setUniversalDataUUID(@Nonnull Block b, @Nonnull String uuid) {
+        setBlockData(b, universalDataKey, uuid);
+    }
+
+    /**
+     * This will store the given {@link String} inside the NBT data of the given {@link Block}
+     *
+     * @param b
+     *            The {@link Block} in which to store the given value
+     * @param value
+     *            The value to store
+     */
+    public void setBlockData(@Nonnull Block b, @Nonnull NamespacedKey key, @Nonnull String value) {
         Validate.notNull(b, "The block cannot be null!");
         Validate.notNull(value, "The value cannot be null!");
 
@@ -73,7 +100,7 @@ public class BlockDataService implements Keyed {
         if (state instanceof TileState tileState) {
             try {
                 PersistentDataContainer container = tileState.getPersistentDataContainer();
-                container.set(namespacedKey, PersistentDataType.STRING, value);
+                container.set(key, PersistentDataType.STRING, value);
                 state.update();
             } catch (Exception x) {
                 Slimefun.logger().log(Level.SEVERE, "Please check if your Server Software is up to date!");
@@ -102,13 +129,29 @@ public class BlockDataService implements Keyed {
      * @return The stored value
      */
     public Optional<String> getBlockData(@Nonnull Block b) {
+        return getBlockData(b, namespacedKey);
+    }
+
+    public Optional<UUID> getUniversalDataUUID(@Nonnull Block b) {
+        var uuid = getBlockData(b, universalDataKey);
+
+        return uuid.map(data -> {
+            try {
+                return UUID.fromString(data);
+            } catch (IllegalArgumentException e) {
+                return null;
+            }
+        });
+    }
+
+    public Optional<String> getBlockData(@Nonnull Block b, @Nonnull NamespacedKey key) {
         Validate.notNull(b, "The block cannot be null!");
 
         BlockState state = PaperLib.getBlockState(b, false).getState();
         PersistentDataContainer container = getPersistentDataContainer(state);
 
         if (container != null) {
-            return Optional.ofNullable(container.get(namespacedKey, PersistentDataType.STRING));
+            return Optional.ofNullable(container.get(key, PersistentDataType.STRING));
         } else {
             return Optional.empty();
         }

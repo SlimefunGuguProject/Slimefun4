@@ -2,6 +2,7 @@ package io.github.thebusybiscuit.slimefun4.implementation.listeners;
 
 import com.xzavier0722.mc.plugin.slimefun4.storage.callback.IAsyncReadCallback;
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunBlockData;
+import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunUniversalData;
 import com.xzavier0722.mc.plugin.slimefun4.storage.util.StorageCacheUtils;
 import io.github.bakedlibs.dough.protection.Interaction;
 import io.github.thebusybiscuit.slimefun4.api.MinecraftVersion;
@@ -9,10 +10,10 @@ import io.github.thebusybiscuit.slimefun4.api.events.ExplosiveToolBreakBlocksEve
 import io.github.thebusybiscuit.slimefun4.api.events.SlimefunBlockBreakEvent;
 import io.github.thebusybiscuit.slimefun4.api.events.SlimefunBlockPlaceEvent;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
-import io.github.thebusybiscuit.slimefun4.core.attributes.NotCardinallyRotatable;
-import io.github.thebusybiscuit.slimefun4.core.attributes.NotDiagonallyRotatable;
 import io.github.thebusybiscuit.slimefun4.core.attributes.NotPlaceable;
-import io.github.thebusybiscuit.slimefun4.core.attributes.NotRotatable;
+import io.github.thebusybiscuit.slimefun4.core.attributes.rotations.NotCardinallyRotatable;
+import io.github.thebusybiscuit.slimefun4.core.attributes.rotations.NotDiagonallyRotatable;
+import io.github.thebusybiscuit.slimefun4.core.attributes.rotations.NotRotatable;
 import io.github.thebusybiscuit.slimefun4.core.handlers.BlockBreakHandler;
 import io.github.thebusybiscuit.slimefun4.core.handlers.BlockPlaceHandler;
 import io.github.thebusybiscuit.slimefun4.core.handlers.ToolUseHandler;
@@ -121,7 +122,8 @@ public class BlockListener implements Listener {
             if (!sfItem.canUse(e.getPlayer(), true)) {
                 e.setCancelled(true);
             } else {
-                if (e.getBlock().getBlockData() instanceof Rotatable rotatable
+                var block = e.getBlock();
+                if (block.getBlockData() instanceof Rotatable rotatable
                         && !(rotatable.getRotation() == BlockFace.UP || rotatable.getRotation() == BlockFace.DOWN)) {
                     BlockFace rotation = null;
 
@@ -139,22 +141,32 @@ public class BlockListener implements Listener {
 
                     if (rotation != null) {
                         rotatable.setRotation(rotation);
-                        e.getBlock().setBlockData(rotatable);
+                        block.setBlockData(rotatable);
                     }
                 }
-                var placeEvent = new SlimefunBlockPlaceEvent(e.getPlayer(), item, e.getBlock(), sfItem);
+                var placeEvent = new SlimefunBlockPlaceEvent(e.getPlayer(), item, block, sfItem);
                 Bukkit.getPluginManager().callEvent(placeEvent);
 
                 if (placeEvent.isCancelled()) {
                     e.setCancelled(true);
                 } else {
-                    if (Slimefun.getBlockDataService().isTileEntity(e.getBlock().getType())) {
-                        Slimefun.getBlockDataService().setBlockData(e.getBlock(), sfItem.getId());
+                    if (Slimefun.getBlockDataService().isTileEntity(block.getType())) {
+                        Slimefun.getBlockDataService().setBlockData(block, sfItem.getId());
                     }
 
-                    Slimefun.getDatabaseManager()
+                    var data = Slimefun.getDatabaseManager()
                             .getBlockDataController()
-                            .createBlock(e.getBlock().getLocation(), sfItem.getId());
+                            .createBlock(block.getLocation(), sfItem.getId());
+
+                    if (data instanceof SlimefunUniversalData) {
+                        if (Slimefun.getBlockDataService().isTileEntity(block.getType())) {
+                            Slimefun.getBlockDataService().setUniversalDataUUID(block, data.getKey());
+                        } else {
+                            throw new IllegalStateException(
+                                    "You must use pdc support material for this Slimefun item!");
+                        }
+                    }
+
                     sfItem.callItemHandler(BlockPlaceHandler.class, handler -> handler.onPlayerPlace(e));
                 }
             }
@@ -175,7 +187,9 @@ public class BlockListener implements Listener {
 
         var heldItem = e.getPlayer().getInventory().getItemInMainHand();
         var block = e.getBlock();
-        var blockData = StorageCacheUtils.getBlock(block.getLocation());
+        var blockData = StorageCacheUtils.hasBlock(block.getLocation())
+                ? StorageCacheUtils.getBlock(block.getLocation())
+                : StorageCacheUtils.getUniversalBlock(block);
         var sfItem = blockData == null ? null : SlimefunItem.getById(blockData.getSfId());
 
         // If there is a Slimefun Block here, call our BreakEvent and, if cancelled, cancel this event
