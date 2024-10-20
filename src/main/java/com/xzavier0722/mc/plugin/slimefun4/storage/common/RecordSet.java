@@ -4,9 +4,12 @@ import com.xzavier0722.mc.plugin.slimefun4.storage.util.DataUtils;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import javax.annotation.ParametersAreNonnullByDefault;
+import lombok.ToString;
 import org.bukkit.inventory.ItemStack;
 
+@ToString
 public class RecordSet {
     private final Map<FieldKey, String> data;
     private boolean readonly = false;
@@ -54,6 +57,11 @@ public class RecordSet {
     @ParametersAreNonnullByDefault
     public ItemStack getItemStack(FieldKey key) {
         return DataUtils.string2ItemStack(data.get(key));
+    }
+
+    @ParametersAreNonnullByDefault
+    public UUID getUUID(FieldKey key) {
+        return UUID.fromString(data.get(key));
     }
 
     public boolean getBoolean(FieldKey key) {

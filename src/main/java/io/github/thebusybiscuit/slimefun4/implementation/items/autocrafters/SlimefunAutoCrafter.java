@@ -116,7 +116,6 @@ public class SlimefunAutoCrafter extends AbstractAutoCrafter {
                     menu.open(p);
 
                     SoundEffect.AUTO_CRAFTER_UPDATE_RECIPE.playAt(b);
-                    ;
 
                     if (!task.isEmpty()) {
                         task.start(menu.toInventory());

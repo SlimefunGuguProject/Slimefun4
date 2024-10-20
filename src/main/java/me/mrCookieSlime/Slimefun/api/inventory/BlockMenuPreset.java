@@ -20,7 +20,7 @@ import org.bukkit.inventory.ItemStack;
 // This class will be deprecated, relocated and rewritten in a future version.
 public abstract class BlockMenuPreset extends ChestMenu {
 
-    private final Set<Integer> occupiedSlots = new HashSet<>();
+    protected final Set<Integer> occupiedSlots = new HashSet<>();
     private final String inventoryTitle;
     private final String id;
 

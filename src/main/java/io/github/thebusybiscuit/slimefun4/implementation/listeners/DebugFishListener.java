@@ -1,7 +1,9 @@
 package io.github.thebusybiscuit.slimefun4.implementation.listeners;
 
 import com.xzavier0722.mc.plugin.slimefun4.storage.callback.IAsyncReadCallback;
+import com.xzavier0722.mc.plugin.slimefun4.storage.controller.ASlimefunDataContainer;
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunBlockData;
+import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunUniversalData;
 import com.xzavier0722.mc.plugin.slimefun4.storage.util.LocationUtils;
 import com.xzavier0722.mc.plugin.slimefun4.storage.util.StorageCacheUtils;
 import io.github.bakedlibs.dough.common.ChatColors;
@@ -106,24 +108,45 @@ public class DebugFishListener implements Listener {
             return;
         }
 
-        var controller = Slimefun.getDatabaseManager().getBlockDataController();
-        var blockData = controller.getBlockDataFromCache(b.getLocation());
-        if (blockData != null) {
-            try {
-                if (blockData.isDataLoaded()) {
-                    sendInfo(p, b);
-                } else {
-                    controller.loadBlockDataAsync(blockData, new IAsyncReadCallback<>() {
-                        @Override
-                        public boolean runOnMainThread() {
-                            return true;
-                        }
+        if (StorageCacheUtils.hasBlock(b.getLocation()) || StorageCacheUtils.hasUniversalBlock(b.getLocation())) {
+            var data = StorageCacheUtils.hasBlock(b.getLocation())
+                    ? StorageCacheUtils.getBlock(b.getLocation())
+                    : StorageCacheUtils.getUniversalBlock(b);
 
-                        @Override
-                        public void onResult(SlimefunBlockData result) {
-                            sendInfo(p, b);
-                        }
-                    });
+            try {
+                if (data.isDataLoaded()) {
+                    sendInfo(p, b, data);
+                } else {
+                    if (data instanceof SlimefunBlockData blockData) {
+                        Slimefun.getDatabaseManager()
+                                .getBlockDataController()
+                                .loadBlockDataAsync(blockData, new IAsyncReadCallback<>() {
+                                    @Override
+                                    public boolean runOnMainThread() {
+                                        return true;
+                                    }
+
+                                    @Override
+                                    public void onResult(SlimefunBlockData result) {
+                                        sendInfo(p, b, result);
+                                    }
+                                });
+                    } else {
+                        SlimefunUniversalData universalData = (SlimefunUniversalData) data;
+                        Slimefun.getDatabaseManager()
+                                .getBlockDataController()
+                                .loadUniversalDataAsync(universalData, new IAsyncReadCallback<>() {
+                                    @Override
+                                    public boolean runOnMainThread() {
+                                        return true;
+                                    }
+
+                                    @Override
+                                    public void onResult(SlimefunUniversalData result) {
+                                        sendInfo(p, b, result);
+                                    }
+                                });
+                    }
                 }
             } catch (Exception x) {
                 Slimefun.logger().log(Level.SEVERE, "An Exception occurred while using a Debug-Fish", x);
@@ -153,9 +176,8 @@ public class DebugFishListener implements Listener {
     }
 
     @ParametersAreNonnullByDefault
-    private void sendInfo(Player p, Block b) {
-        var blockData = StorageCacheUtils.getBlock(b.getLocation());
-        SlimefunItem item = SlimefunItem.getById(blockData.getSfId());
+    private void sendInfo(Player p, Block b, ASlimefunDataContainer data) {
+        SlimefunItem item = SlimefunItem.getById(data.getSfId());
 
         p.sendMessage(" ");
         p.sendMessage(
@@ -176,10 +198,16 @@ public class DebugFishListener implements Listener {
             }
         }
 
-        if (blockData.getBlockMenu() != null) {
+        if ((data instanceof SlimefunBlockData bd && bd.getBlockMenu() != null)
+                || (data instanceof SlimefunUniversalData ud && ud.getUniversalMenu() != null)) {
             p.sendMessage(ChatColors.color("&dInventory: " + greenCheckmark));
         } else {
             p.sendMessage(ChatColors.color("&dInventory: " + redCross));
+        }
+
+        if (data instanceof SlimefunUniversalData universalData) {
+            p.sendMessage(ChatColors.color("&dUniversal Item: " + greenCheckmark));
+            p.sendMessage(ChatColors.color("    &dUUID: " + universalData.getUUID()));
         }
 
         if (item.isTicking()) {
@@ -192,15 +220,11 @@ public class DebugFishListener implements Listener {
             p.sendMessage(ChatColors.color("&dTicker: " + redCross));
         }
 
-        var ticker = Slimefun.getTickerTask().getLocations(b.getChunk()).stream()
-                .filter(l -> l.equals(b.getLocation()))
-                .findFirst();
-
-        if (ticker.isPresent()) {
-            p.sendMessage(ChatColors.color("&dTicking: " + greenCheckmark));
-        } else {
-            p.sendMessage(ChatColors.color("&dTicking: " + redCross));
-        }
+        Slimefun.getTickerTask().getTickLocations(p.getLocation().getChunk()).stream()
+                .filter(l -> l.getLocation().equals(b.getLocation()))
+                .findFirst()
+                .ifPresent(tickLoc -> p.sendMessage(ChatColors.color(
+                        "&dIn Ticker Queue " + (tickLoc.isUniversal() ? "(Universal)" : "") + ": " + greenCheckmark)));
 
         if (Slimefun.getProfiler().hasTimings(b)) {
             p.sendMessage(
@@ -243,7 +267,7 @@ public class DebugFishListener implements Listener {
             }
         }
 
-        blockData.getAllData().forEach((k, v) -> p.sendMessage(ChatColors.color("&6" + k + ": " + v)));
+        data.getAllData().forEach((k, v) -> p.sendMessage(ChatColors.color("&6" + k + ": " + v)));
         p.sendMessage(" ");
     }
 }

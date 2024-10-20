@@ -49,9 +49,6 @@ public class SlimefunDatabaseManager {
     public void init() {
         initDefaultVal();
 
-        // Minimise hikari log
-        System.setProperty("org.slf4j.simpleLogger.log.com.zaxxer.hikari", "error");
-
         try {
             blockDataStorageType = StorageType.valueOf(blockStorageConfig.getString("storageType"));
             var readExecutorThread = blockStorageConfig.getInt("readExecutorThread");
