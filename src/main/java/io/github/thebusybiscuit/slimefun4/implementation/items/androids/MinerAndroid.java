@@ -1,6 +1,7 @@
 package io.github.thebusybiscuit.slimefun4.implementation.items.androids;
 
 import city.norain.slimefun4.api.menu.UniversalMenu;
+import com.molean.folia.adapter.Folia;
 import com.xzavier0722.mc.plugin.slimefun4.storage.util.StorageCacheUtils;
 import io.github.bakedlibs.dough.protection.Interaction;
 import io.github.thebusybiscuit.slimefun4.api.events.AndroidMineEvent;
@@ -80,7 +81,7 @@ public class MinerAndroid extends ProgrammableAndroid {
 
             if (Slimefun.getProtectionManager().hasPermission(owner, block.getLocation(), Interaction.BREAK_BLOCK)) {
                 AndroidMineEvent event = new AndroidMineEvent(block, new AndroidInstance(this, b));
-                Bukkit.getPluginManager().callEvent(event);
+                Folia.getPluginManager().ce(event);
 
                 if (event.isCancelled()) {
                     return;
@@ -105,7 +106,7 @@ public class MinerAndroid extends ProgrammableAndroid {
 
             if (Slimefun.getProtectionManager().hasPermission(owner, block.getLocation(), Interaction.BREAK_BLOCK)) {
                 AndroidMineEvent event = new AndroidMineEvent(block, new AndroidInstance(this, b));
-                Bukkit.getPluginManager().callEvent(event);
+                Folia.getPluginManager().ce(event);
 
                 if (event.isCancelled()) {
                     return;

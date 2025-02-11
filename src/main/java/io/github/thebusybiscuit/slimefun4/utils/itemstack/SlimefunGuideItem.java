@@ -6,8 +6,8 @@ import io.github.thebusybiscuit.slimefun4.core.guide.SlimefunGuide;
 import io.github.thebusybiscuit.slimefun4.core.guide.SlimefunGuideImplementation;
 import io.github.thebusybiscuit.slimefun4.core.guide.SlimefunGuideMode;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import javax.annotation.Nonnull;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
@@ -30,7 +30,7 @@ public class SlimefunGuideItem extends ItemStack {
         ItemMeta meta = getItemMeta();
         meta.setDisplayName(ChatColors.color(name));
 
-        List<String> lore = new ArrayList<>();
+        List<String> lore = new CopyOnWriteArrayList<>();
         SlimefunGuideMode type = implementation.getMode();
         lore.add(type == SlimefunGuideMode.CHEAT_MODE ? ChatColors.color("&4&l仅限管理员使用") : "");
         lore.add(ChatColors.color("&e右键 &8\u21E8 &7浏览物品"));

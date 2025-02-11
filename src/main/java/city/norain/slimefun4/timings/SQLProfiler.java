@@ -9,10 +9,10 @@ import java.nio.file.Files;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
@@ -30,11 +30,11 @@ public class SQLProfiler {
     @Getter
     private volatile boolean isProfiling = false;
 
-    private final Map<TimingEntry, Long> samplingEntries = new HashMap<>();
+    private final Map<TimingEntry, Long> samplingEntries = Collections.synchronizedMap(new HashMap<>());
 
-    private final Map<TimingEntry, Long> entries = new HashMap<>();
+    private final Map<TimingEntry, Long> entries = Collections.synchronizedMap(new HashMap<>());
 
-    private final Set<CommandSender> subscribers = new HashSet<>();
+    private final Set<CommandSender> subscribers = new CopyOnWriteArraySet<>();
 
     private long startTime = -1L;
 

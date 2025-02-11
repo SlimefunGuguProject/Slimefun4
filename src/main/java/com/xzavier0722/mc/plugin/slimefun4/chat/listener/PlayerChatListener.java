@@ -1,5 +1,6 @@
 package com.xzavier0722.mc.plugin.slimefun4.chat.listener;
 
+import com.molean.folia.adapter.Folia;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -13,7 +14,7 @@ public class PlayerChatListener implements Listener {
     public void onChat(AsyncPlayerChatEvent e) {
         Slimefun.getChatCatcher().pollCatcher(e.getPlayer().getUniqueId()).ifPresent(h -> {
             e.setCancelled(true);
-            Slimefun.runSync(() -> h.accept(e.getMessage()));
+            Folia.runSync(() -> h.accept(e.getMessage()), e.getPlayer());
         });
     }
 

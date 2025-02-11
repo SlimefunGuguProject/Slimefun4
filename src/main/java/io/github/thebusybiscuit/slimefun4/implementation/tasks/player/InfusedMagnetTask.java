@@ -49,7 +49,7 @@ public class InfusedMagnetTask extends AbstractPlayerTask {
                     && !SlimefunUtils.hasNoPickupFlag(item)
                     && item.getPickupDelay() <= 0
                     && p.getLocation().distanceSquared(item.getLocation()) > 0.3) {
-                item.teleport(p.getLocation());
+                item.teleportAsync(p.getLocation());
                 playSound = true;
             }
         }

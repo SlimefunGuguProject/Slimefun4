@@ -9,8 +9,8 @@ import io.github.thebusybiscuit.slimefun4.api.items.settings.IntRangeSetting;
 import io.github.thebusybiscuit.slimefun4.api.recipes.RecipeType;
 import io.github.thebusybiscuit.slimefun4.implementation.listeners.AncientAltarListener;
 import io.github.thebusybiscuit.slimefun4.implementation.tasks.AncientAltarTask;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
 import org.bukkit.inventory.ItemStack;
@@ -37,7 +37,7 @@ public class AncientAltar extends SlimefunItem {
      */
     private static final int DEFAULT_STEP_DELAY = 8;
 
-    private final List<AltarRecipe> recipes = new ArrayList<>();
+    private final List<AltarRecipe> recipes = new CopyOnWriteArrayList<>();
 
     private final ItemSetting<Integer> stepDelay =
             new IntRangeSetting(this, "step-delay", 0, DEFAULT_STEP_DELAY, Integer.MAX_VALUE);

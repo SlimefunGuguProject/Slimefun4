@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.core.attributes;
 
+import com.molean.folia.adapter.Folia;
 import io.github.bakedlibs.dough.common.ChatColors;
 import io.github.thebusybiscuit.slimefun4.core.services.holograms.HologramsService;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
@@ -45,12 +46,14 @@ public interface HologramOwner extends ItemAttribute {
             return;
         }
 
-        Slimefun.runSync(() -> {
-            if (abort.get()) {
-                return;
-            }
-            updateHologram(b, text);
-        });
+        Folia.runSync(
+                () -> {
+                    if (abort.get()) {
+                        return;
+                    }
+                    updateHologram(b, text);
+                },
+                b.getLocation());
     }
 
     /**

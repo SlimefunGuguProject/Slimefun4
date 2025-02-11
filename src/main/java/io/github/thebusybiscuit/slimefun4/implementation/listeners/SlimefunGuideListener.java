@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.implementation.listeners;
 
+import com.molean.folia.adapter.Folia;
 import io.github.thebusybiscuit.slimefun4.api.events.PlayerRightClickEvent;
 import io.github.thebusybiscuit.slimefun4.api.events.SlimefunGuideOpenEvent;
 import io.github.thebusybiscuit.slimefun4.core.guide.SlimefunGuide;
@@ -9,7 +10,6 @@ import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.utils.SlimefunUtils;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event.Result;
@@ -72,7 +72,7 @@ public class SlimefunGuideListener implements Listener {
     @ParametersAreNonnullByDefault
     private void openGuide(Player p, PlayerRightClickEvent e, SlimefunGuideMode layout) {
         SlimefunGuideOpenEvent event = new SlimefunGuideOpenEvent(p, e.getItem(), layout);
-        Bukkit.getPluginManager().callEvent(event);
+        Folia.getPluginManager().ce(event);
 
         if (!event.isCancelled()) {
             e.cancel();

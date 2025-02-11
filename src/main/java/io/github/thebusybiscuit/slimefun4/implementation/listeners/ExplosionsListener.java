@@ -5,19 +5,22 @@ import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunBlockData;
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunUniversalBlockData;
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunUniversalData;
 import com.xzavier0722.mc.plugin.slimefun4.storage.util.StorageCacheUtils;
+import io.github.bakedlibs.dough.collections.Pair;
 import io.github.thebusybiscuit.slimefun4.api.MinecraftVersion;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.core.attributes.WitherProof;
 import io.github.thebusybiscuit.slimefun4.core.handlers.BlockBreakHandler;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
 import org.bukkit.ExplosionResult;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -87,8 +90,8 @@ public class ExplosionsListener implements Listener {
                                 if (blockData instanceof SlimefunBlockData sbd) {
                                     controller.loadBlockDataAsync(sbd, new IAsyncReadCallback<>() {
                                         @Override
-                                        public boolean runOnMainThread() {
-                                            return true;
+                                        public Pair<Boolean, Pair<Entity, Location>> runOnMainThread() {
+                                            return new Pair<>(true, new Pair<>(null, block.getLocation()));
                                         }
 
                                         @Override
@@ -99,8 +102,8 @@ public class ExplosionsListener implements Listener {
                                 } else if (blockData instanceof SlimefunUniversalBlockData ubd) {
                                     controller.loadUniversalDataAsync(ubd, new IAsyncReadCallback<>() {
                                         @Override
-                                        public boolean runOnMainThread() {
-                                            return true;
+                                        public Pair<Boolean, Pair<Entity, Location>> runOnMainThread() {
+                                            return new Pair<>(true, new Pair<>(null, block.getLocation()));
                                         }
 
                                         @Override
@@ -123,7 +126,7 @@ public class ExplosionsListener implements Listener {
         if (handler.isExplosionAllowed(block)) {
             block.setType(Material.AIR);
 
-            List<ItemStack> drops = new ArrayList<>();
+            List<ItemStack> drops = new CopyOnWriteArrayList<>();
             handler.onExplode(block, drops);
             Slimefun.getDatabaseManager().getBlockDataController().removeBlock(block.getLocation());
 

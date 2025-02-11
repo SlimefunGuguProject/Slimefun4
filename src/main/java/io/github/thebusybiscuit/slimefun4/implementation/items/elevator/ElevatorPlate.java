@@ -1,8 +1,10 @@
 package io.github.thebusybiscuit.slimefun4.implementation.items.elevator;
 
+import com.molean.folia.adapter.Folia;
 import com.xzavier0722.mc.plugin.slimefun4.storage.callback.IAsyncReadCallback;
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunBlockData;
 import com.xzavier0722.mc.plugin.slimefun4.storage.util.StorageCacheUtils;
+import io.github.bakedlibs.dough.collections.Pair;
 import io.github.bakedlibs.dough.common.ChatColors;
 import io.github.bakedlibs.dough.items.CustomItemStack;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
@@ -16,11 +18,11 @@ import io.github.thebusybiscuit.slimefun4.utils.ChatUtils;
 import io.github.thebusybiscuit.slimefun4.utils.ChestMenuUtils;
 import io.papermc.lib.PaperLib;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.function.Consumer;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -29,6 +31,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.inventory.Inventory;
@@ -58,7 +61,7 @@ public class ElevatorPlate extends SimpleSlimefunItem<BlockUseHandler> {
      * This is our {@link Set} of currently teleporting {@link Player Players}.
      * It is used to prevent them from triggering the {@link ElevatorPlate} they land on.
      */
-    private final Set<UUID> users = new HashSet<>();
+    private final Set<UUID> users = new CopyOnWriteArraySet<>();
 
     @ParametersAreNonnullByDefault
     public ElevatorPlate(
@@ -122,8 +125,8 @@ public class ElevatorPlate extends SimpleSlimefunItem<BlockUseHandler> {
                     .getBlockDataController()
                     .loadBlockDataAsync(blockDataList, new IAsyncReadCallback<>() {
                         @Override
-                        public boolean runOnMainThread() {
-                            return true;
+                        public Pair<Boolean, Pair<Entity, Location>> runOnMainThread() {
+                            return new Pair<>(true, new Pair<>(null, b.getLocation()));
                         }
 
                         @Override
@@ -236,30 +239,32 @@ public class ElevatorPlate extends SimpleSlimefunItem<BlockUseHandler> {
 
     @ParametersAreNonnullByDefault
     private void teleport(Player player, ElevatorFloor floor) {
-        Slimefun.runSync(() -> {
-            users.add(player.getUniqueId());
+        Folia.runSync(
+                () -> {
+                    users.add(player.getUniqueId());
 
-            float yaw = player.getEyeLocation().getYaw() + 180;
+                    float yaw = player.getEyeLocation().getYaw() + 180;
 
-            if (yaw > 180) {
-                yaw = -180 + (yaw - 180);
-            }
+                    if (yaw > 180) {
+                        yaw = -180 + (yaw - 180);
+                    }
 
-            Location loc = floor.getLocation();
-            Location destination = new Location(
-                    player.getWorld(),
-                    loc.getX() + 0.5,
-                    loc.getY() + 0.4,
-                    loc.getZ() + 0.5,
-                    yaw,
-                    player.getEyeLocation().getPitch());
+                    Location loc = floor.getLocation();
+                    Location destination = new Location(
+                            player.getWorld(),
+                            loc.getX() + 0.5,
+                            loc.getY() + 0.4,
+                            loc.getZ() + 0.5,
+                            yaw,
+                            player.getEyeLocation().getPitch());
 
-            PaperLib.teleportAsync(player, destination).thenAccept(teleported -> {
-                if (teleported.booleanValue()) {
-                    player.sendTitle(ChatColor.WHITE + ChatColors.color(floor.getName()), null, 20, 60, 20);
-                }
-            });
-        });
+                    PaperLib.teleportAsync(player, destination).thenAccept(teleported -> {
+                        if (teleported.booleanValue()) {
+                            player.sendTitle(ChatColor.WHITE + ChatColors.color(floor.getName()), null, 20, 60, 20);
+                        }
+                    });
+                },
+                player);
     }
 
     @ParametersAreNonnullByDefault

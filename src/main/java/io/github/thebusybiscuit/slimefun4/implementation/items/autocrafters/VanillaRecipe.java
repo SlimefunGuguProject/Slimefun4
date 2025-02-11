@@ -6,6 +6,7 @@ import io.github.thebusybiscuit.slimefun4.utils.ChestMenuUtils;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Predicate;
 import javax.annotation.Nonnull;
 import me.mrCookieSlime.CSCoreLibPlugin.general.Inventory.ChestMenu;
@@ -50,7 +51,7 @@ class VanillaRecipe extends AbstractRecipe {
 
     @Nonnull
     private static Collection<Predicate<ItemStack>> getChoices(@Nonnull ShapedRecipe recipe) {
-        List<Predicate<ItemStack>> choices = new ArrayList<>();
+        List<Predicate<ItemStack>> choices = new CopyOnWriteArrayList<>();
 
         for (String row : recipe.getShape()) {
             for (char c : row.toCharArray()) {

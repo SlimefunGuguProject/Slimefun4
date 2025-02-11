@@ -1,6 +1,7 @@
 package io.github.thebusybiscuit.slimefun4.utils;
 
 import city.norain.slimefun4.SlimefunExtended;
+import com.molean.folia.adapter.Folia;
 import io.github.bakedlibs.dough.common.CommonPatterns;
 import io.github.bakedlibs.dough.items.ItemMetaSnapshot;
 import io.github.bakedlibs.dough.skins.PlayerHead;
@@ -22,11 +23,11 @@ import io.github.thebusybiscuit.slimefun4.implementation.items.altar.AncientPede
 import io.github.thebusybiscuit.slimefun4.implementation.tasks.CapacitorTextureUpdateTask;
 import io.github.thebusybiscuit.slimefun4.utils.itemstack.ItemStackWrapper;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
+import java.util.concurrent.CopyOnWriteArrayList;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -189,7 +190,7 @@ public final class SlimefunUtils {
             container.remove(key);
         }
 
-        List<String> lore = meta.hasLore() ? meta.getLore() : new ArrayList<>();
+        List<String> lore = meta.hasLore() ? meta.getLore() : new CopyOnWriteArrayList<>();
 
         if (makeSoulbound && !isSoulbound) {
             lore.add(SOULBOUND_LORE);
@@ -581,7 +582,7 @@ public final class SlimefunUtils {
         Validate.notNull(l, "Cannot update a texture for null");
         Validate.isTrue(capacity > 0, "Capacity must be greater than zero!");
 
-        Slimefun.runSync(new CapacitorTextureUpdateTask(l, charge, capacity));
+        Folia.runSync(new CapacitorTextureUpdateTask(l, charge, capacity), l);
     }
 
     /**
@@ -633,7 +634,7 @@ public final class SlimefunUtils {
     public static @Nullable Item spawnItem(
             Location loc, ItemStack item, ItemSpawnReason reason, boolean addRandomOffset, @Nullable Player player) {
         SlimefunItemSpawnEvent event = new SlimefunItemSpawnEvent(player, loc, item, reason);
-        Slimefun.instance().getServer().getPluginManager().callEvent(event);
+        Folia.getPluginManager().ce(event);
 
         if (!event.isCancelled()) {
             World world = event.getLocation().getWorld();

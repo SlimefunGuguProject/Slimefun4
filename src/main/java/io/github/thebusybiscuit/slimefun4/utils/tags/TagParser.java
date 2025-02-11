@@ -15,9 +15,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.EnumSet;
-import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
@@ -96,7 +96,7 @@ public class TagParser implements Keyed {
 
         try {
             Set<Material> materials = EnumSet.noneOf(Material.class);
-            Set<Tag<Material>> tags = new HashSet<>();
+            Set<Tag<Material>> tags = new CopyOnWriteArraySet<>();
 
             JsonObject root = JsonUtils.parseString(json).getAsJsonObject();
             JsonElement child = root.get("values");

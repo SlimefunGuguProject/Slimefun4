@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.core.services;
 
+import com.molean.folia.adapter.Folia;
 import io.github.thebusybiscuit.slimefun4.api.player.PlayerProfile;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import java.util.Iterator;
@@ -30,9 +31,8 @@ public class AutoSavingService {
     public void start(@Nonnull Slimefun plugin, int interval) {
         this.interval = interval;
 
-        plugin.getServer().getScheduler().runTaskTimer(plugin, this::saveAllPlayers, 2000L, interval * 60L * 20L);
-        plugin.getServer()
-                .getScheduler()
+        Folia.getScheduler().runTaskTimerAsynchronously(plugin, this::saveAllPlayers, 2000L, interval * 60L * 20L);
+        Folia.getScheduler()
                 .runTaskTimerAsynchronously(
                         plugin,
                         () -> {

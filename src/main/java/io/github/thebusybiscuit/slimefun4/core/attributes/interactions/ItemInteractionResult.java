@@ -2,8 +2,8 @@ package io.github.thebusybiscuit.slimefun4.core.attributes.interactions;
 
 import io.github.thebusybiscuit.slimefun4.core.attributes.ExternallyInteractable;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 import javax.annotation.Nonnull;
 import org.bukkit.inventory.ItemStack;
 
@@ -12,7 +12,7 @@ import org.bukkit.inventory.ItemStack;
  */
 public class ItemInteractionResult extends InteractionResult {
 
-    private final @Nonnull Set<ItemStack> resultItems = new HashSet<>();
+    private final @Nonnull Set<ItemStack> resultItems = new CopyOnWriteArraySet<>();
 
     /**
      * Creates a new InteractionResult.

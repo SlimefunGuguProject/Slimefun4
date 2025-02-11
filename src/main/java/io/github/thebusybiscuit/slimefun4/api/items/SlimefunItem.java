@@ -27,11 +27,12 @@ import io.github.thebusybiscuit.slimefun4.implementation.items.electric.machines
 import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -110,8 +111,9 @@ public class SlimefunItem implements Placeable {
 
     private Optional<String> wikiURL = Optional.empty();
 
-    private final OptionalMap<Class<? extends ItemHandler>, ItemHandler> itemHandlers = new OptionalMap<>(HashMap::new);
-    private final Set<ItemSetting<?>> itemSettings = new HashSet<>();
+    private final OptionalMap<Class<? extends ItemHandler>, ItemHandler> itemHandlers =
+            new OptionalMap<>(() -> Collections.synchronizedMap(new HashMap<>()));
+    private final Set<ItemSetting<?>> itemSettings = new CopyOnWriteArraySet<>();
 
     private boolean ticking = false;
     private BlockTicker blockTicker;
@@ -494,7 +496,7 @@ public class SlimefunItem implements Placeable {
 
             // handle runtime-registrations / auto-loading
             if (Slimefun.getConfigManager().isAutoLoadingEnabled() && state == ItemState.ENABLED) {
-                info("Item was registered during runtime.");
+                //                info("Item was registered during runtime.");
                 load();
             }
         } catch (Exception x) {

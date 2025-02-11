@@ -10,10 +10,10 @@ import io.github.thebusybiscuit.slimefun4.core.attributes.RecipeDisplayItem;
 import io.github.thebusybiscuit.slimefun4.core.networks.energy.EnergyNetComponentType;
 import io.github.thebusybiscuit.slimefun4.implementation.items.electric.reactors.Reactor;
 import io.github.thebusybiscuit.slimefun4.utils.NumberUtils;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CopyOnWriteArraySet;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
 import me.mrCookieSlime.Slimefun.Objects.SlimefunItem.abstractItems.AGenerator;
@@ -34,7 +34,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 public abstract class AbstractEnergyProvider extends SlimefunItem
         implements InventoryBlock, RecipeDisplayItem, EnergyNetProvider {
 
-    protected final Set<MachineFuel> fuelTypes = new HashSet<>();
+    protected final Set<MachineFuel> fuelTypes = new CopyOnWriteArraySet<>();
 
     @ParametersAreNonnullByDefault
     protected AbstractEnergyProvider(
@@ -101,12 +101,12 @@ public abstract class AbstractEnergyProvider extends SlimefunItem
 
     @Override
     public List<ItemStack> getDisplayRecipes() {
-        List<ItemStack> list = new ArrayList<>();
+        List<ItemStack> list = new CopyOnWriteArrayList<>();
 
         for (MachineFuel fuel : fuelTypes) {
             ItemStack item = fuel.getInput().clone();
             ItemMeta im = item.getItemMeta();
-            List<String> lore = new ArrayList<>();
+            List<String> lore = new CopyOnWriteArrayList<>();
             lore.add(ChatColors.color("&8\u21E8 &7持续时间 " + NumberUtils.getTimeLeft(fuel.getTicks() / 2)));
             lore.add(ChatColors.color("&8\u21E8 &e\u26A1 &7" + getEnergyProduction() * 2) + " J/s");
             lore.add(ChatColors.color("&8\u21E8 &e\u26A1 &7最大储存量: "

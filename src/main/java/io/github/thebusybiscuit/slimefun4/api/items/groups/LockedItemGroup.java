@@ -5,10 +5,10 @@ import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.api.player.PlayerProfile;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.logging.Level;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -32,7 +32,7 @@ import org.bukkit.inventory.ItemStack;
 public class LockedItemGroup extends ItemGroup {
 
     private final NamespacedKey[] keys;
-    private final Set<ItemGroup> parents = new HashSet<>();
+    private final Set<ItemGroup> parents = new CopyOnWriteArraySet<>();
 
     /**
      * The basic constructor for a LockedItemGroup.
@@ -76,7 +76,7 @@ public class LockedItemGroup extends ItemGroup {
     public void register(@Nonnull SlimefunAddon addon) {
         super.register(addon);
 
-        List<NamespacedKey> namespacedKeys = new ArrayList<>();
+        List<NamespacedKey> namespacedKeys = new CopyOnWriteArrayList<>();
 
         for (NamespacedKey key : keys) {
             if (key != null) {

@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.implementation.items.magical.runes;
 
+import com.molean.folia.adapter.Folia;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
@@ -16,6 +17,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ThreadLocalRandom;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -47,7 +49,7 @@ public class EnchantmentRune extends SimpleSlimefunItem<ItemDropHandler> {
         super(itemGroup, item, recipeType, recipe);
 
         for (Material mat : Material.values()) {
-            List<Enchantment> enchantments = new ArrayList<>();
+            List<Enchantment> enchantments = new CopyOnWriteArrayList<>();
 
             for (Enchantment enchantment : Enchantment.values()) {
                 if (!mat.isItem()) {
@@ -72,7 +74,7 @@ public class EnchantmentRune extends SimpleSlimefunItem<ItemDropHandler> {
         return (e, p, item) -> {
             if (isItem(item.getItemStack())) {
                 if (canUse(p, true)) {
-                    Slimefun.runSync(
+                    Folia.runSync(
                             () -> {
                                 try {
                                     addRandomEnchantment(p, item);
@@ -80,6 +82,7 @@ public class EnchantmentRune extends SimpleSlimefunItem<ItemDropHandler> {
                                     error("An Exception occurred while trying to apply an Enchantment Rune", x);
                                 }
                             },
+                            p.getPlayer(),
                             20L);
                 }
 
@@ -141,7 +144,7 @@ public class EnchantmentRune extends SimpleSlimefunItem<ItemDropHandler> {
                 // This lightning is just an effect, it deals no damage.
                 l.getWorld().strikeLightningEffect(l);
 
-                Slimefun.runSync(
+                Folia.runSync(
                         () -> {
                             // Being sure entities are still valid and not picked up or whatsoever.
                             if (rune.isValid() && item.isValid() && itemStack.getAmount() == 1) {
@@ -171,6 +174,7 @@ public class EnchantmentRune extends SimpleSlimefunItem<ItemDropHandler> {
                                 l.getWorld().dropItemNaturally(l, itemStack);
                             }
                         },
+                        p.getPlayer(),
                         10L);
             } else {
                 Slimefun.getLocalization().sendMessage(p, "messages.enchantment-rune.fail", true);

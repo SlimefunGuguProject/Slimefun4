@@ -3,6 +3,7 @@ package io.github.thebusybiscuit.slimefun4.implementation.items.androids;
 import city.norain.slimefun4.api.menu.UniversalMenu;
 import city.norain.slimefun4.api.menu.UniversalMenuPreset;
 import city.norain.slimefun4.utils.TaskUtil;
+import com.molean.folia.adapter.Folia;
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunUniversalBlockData;
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunUniversalData;
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.attributes.UniversalBlock;
@@ -34,12 +35,13 @@ import io.github.thebusybiscuit.slimefun4.utils.HeadTexture;
 import io.github.thebusybiscuit.slimefun4.utils.NumberUtils;
 import io.github.thebusybiscuit.slimefun4.utils.SlimefunUtils;
 import io.papermc.lib.PaperLib;
-import java.util.ArrayList;
+import it.unimi.dsi.fastutil.Pair;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Predicate;
 import java.util.logging.Level;
 import javax.annotation.Nonnull;
@@ -83,7 +85,7 @@ public class ProgrammableAndroid extends SlimefunItem
     private static final String DEFAULT_SCRIPT = "START-TURN_LEFT-REPEAT";
     private static final int MAX_SCRIPT_LENGTH = 54;
 
-    protected final List<MachineFuel> fuelTypes = new ArrayList<>();
+    protected final List<MachineFuel> fuelTypes = new CopyOnWriteArrayList<>();
     protected final String texture;
     private final int tier;
 
@@ -631,7 +633,7 @@ public class ProgrammableAndroid extends SlimefunItem
 
     @Nonnull
     protected List<Instruction> getValidScriptInstructions() {
-        List<Instruction> list = new ArrayList<>();
+        List<Instruction> list = new CopyOnWriteArrayList<>();
 
         for (Instruction part : Instruction.valuesCache) {
             if (part == Instruction.START || part == Instruction.REPEAT) {
@@ -751,12 +753,12 @@ public class ProgrammableAndroid extends SlimefunItem
 
     @Override
     public List<ItemStack> getDisplayRecipes() {
-        List<ItemStack> list = new ArrayList<>();
+        List<ItemStack> list = new CopyOnWriteArrayList<>();
 
         for (MachineFuel fuel : fuelTypes) {
             ItemStack item = fuel.getInput().clone();
             ItemMeta im = item.getItemMeta();
-            List<String> lore = new ArrayList<>();
+            List<String> lore = new CopyOnWriteArrayList<>();
             lore.add(ChatColors.color("&8\u21E8 &7剩余 " + NumberUtils.getTimeLeft(fuel.getTicks() / 2)));
             im.setLore(lore);
             item.setItemMeta(im);
@@ -991,8 +993,8 @@ public class ProgrammableAndroid extends SlimefunItem
     public void addItems(Block b, ItemStack... items) {
         Validate.notNull(b, "The Block cannot be null.");
 
-        Optional<UUID> uuid =
-                TaskUtil.runSyncMethod(() -> Slimefun.getBlockDataService().getUniversalDataUUID(b));
+        Optional<UUID> uuid = TaskUtil.runSyncMethod(
+                () -> Slimefun.getBlockDataService().getUniversalDataUUID(b), Pair.of(null, b.getLocation()));
 
         if (uuid.isEmpty()) {
             throw new IllegalStateException("Android missing uuid");
@@ -1053,14 +1055,16 @@ public class ProgrammableAndroid extends SlimefunItem
             Slimefun.getBlockDataService()
                     .updateUniversalDataUUID(to, uniData.getUUID().toString());
 
-            Slimefun.runSync(() -> {
-                PlayerSkin skin = PlayerSkin.fromBase64(texture);
-                Material type = to.getType();
-                // Ensure that this Block is still a Player Head
-                if (type == Material.PLAYER_HEAD || type == Material.PLAYER_WALL_HEAD) {
-                    PlayerHead.setSkin(to, skin, true);
-                }
-            });
+            Folia.runSync(
+                    () -> {
+                        PlayerSkin skin = PlayerSkin.fromBase64(texture);
+                        Material type = to.getType();
+                        // Ensure that this Block is still a Player Head
+                        if (type == Material.PLAYER_HEAD || type == Material.PLAYER_WALL_HEAD) {
+                            PlayerHead.setSkin(to, skin, true);
+                        }
+                    },
+                    to.getLocation());
 
             from.setType(Material.AIR);
             uniData.setLastPresent(new BlockPosition(to.getLocation()));

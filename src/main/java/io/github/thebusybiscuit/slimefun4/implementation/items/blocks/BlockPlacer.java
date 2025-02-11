@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.implementation.items.blocks;
 
+import com.molean.folia.adapter.Folia;
 import com.xzavier0722.mc.plugin.slimefun4.storage.util.StorageCacheUtils;
 import io.github.bakedlibs.dough.protection.Interaction;
 import io.github.thebusybiscuit.slimefun4.api.events.BlockPlacerPlaceEvent;
@@ -183,7 +184,7 @@ public class BlockPlacer extends SlimefunItem {
     @ParametersAreNonnullByDefault
     private void placeSlimefunBlock(SlimefunItem sfItem, ItemStack item, Block block, Dispenser dispenser) {
         BlockPlacerPlaceEvent e = new BlockPlacerPlaceEvent(dispenser.getBlock(), item, block);
-        Bukkit.getPluginManager().callEvent(e);
+        Folia.getPluginManager().ce(e);
 
         if (!e.isCancelled()) {
             boolean hasItemHandler = sfItem.callItemHandler(BlockPlaceHandler.class, handler -> {
@@ -213,7 +214,7 @@ public class BlockPlacer extends SlimefunItem {
     @ParametersAreNonnullByDefault
     private void placeBlock(ItemStack item, Block facedBlock, Dispenser dispenser) {
         BlockPlacerPlaceEvent e = new BlockPlacerPlaceEvent(dispenser.getBlock(), item, facedBlock);
-        Bukkit.getPluginManager().callEvent(e);
+        Folia.getPluginManager().ce(e);
 
         if (!e.isCancelled()) {
             schedulePlacement(facedBlock, dispenser.getInventory(), item, () -> {
@@ -242,7 +243,7 @@ public class BlockPlacer extends SlimefunItem {
     @ParametersAreNonnullByDefault
     private void schedulePlacement(Block b, Inventory inv, ItemStack item, Runnable runnable) {
         // We need to delay this due to Dispenser-Inventory synchronization issues in Spigot.
-        Slimefun.runSync(
+        Folia.runSync(
                 () -> {
                     // Make sure the Block has not been occupied yet
                     if (b.isEmpty()) {
@@ -264,6 +265,7 @@ public class BlockPlacer extends SlimefunItem {
                         }
                     }
                 },
+                b.getLocation(),
                 2L);
     }
 

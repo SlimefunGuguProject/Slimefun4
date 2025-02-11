@@ -15,10 +15,10 @@ import io.github.thebusybiscuit.slimefun4.core.handlers.MultiBlockInteractionHan
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.implementation.items.blocks.OutputChest;
 import io.github.thebusybiscuit.slimefun4.utils.SlimefunUtils;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CopyOnWriteArrayList;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -56,8 +56,8 @@ public abstract class MultiBlockMachine extends SlimefunItem implements NotPlace
             ItemStack[] machineRecipes,
             BlockFace trigger) {
         super(itemGroup, item, RecipeType.MULTIBLOCK, recipe);
-        this.recipes = new ArrayList<>();
-        this.displayRecipes = new ArrayList<>();
+        this.recipes = new CopyOnWriteArrayList<>();
+        this.displayRecipes = new CopyOnWriteArrayList<>();
         this.displayRecipes.addAll(Arrays.asList(machineRecipes));
         this.multiblock = new MultiBlock(this, convertItemStacksToMaterial(recipe), trigger);
 
@@ -215,7 +215,7 @@ public abstract class MultiBlockMachine extends SlimefunItem implements NotPlace
     }
 
     private static @Nonnull Material[] convertItemStacksToMaterial(@Nonnull ItemStack[] items) {
-        List<Material> materials = new ArrayList<>();
+        List<Material> materials = new CopyOnWriteArrayList<>();
 
         for (ItemStack item : items) {
             if (item == null) {

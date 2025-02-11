@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.implementation.items.multiblocks.miner;
 
+import com.molean.folia.adapter.Folia;
 import io.github.bakedlibs.dough.blocks.BlockPosition;
 import io.github.bakedlibs.dough.inventory.InvUtils;
 import io.github.bakedlibs.dough.items.ItemUtils;
@@ -9,6 +10,7 @@ import io.github.thebusybiscuit.slimefun4.core.services.sounds.SoundEffect;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.utils.compatibility.VersionedParticle;
 import io.papermc.lib.PaperLib;
+import it.unimi.dsi.fastutil.Pair;
 import java.util.UUID;
 import java.util.logging.Level;
 import javax.annotation.Nonnull;
@@ -122,46 +124,48 @@ class MiningTask implements Runnable {
          */
         TaskQueue queue = new TaskQueue();
 
-        queue.thenRun(4, () -> setPistonState(pistons[0], true));
-        queue.thenRun(10, () -> setPistonState(pistons[0], false));
+        queue.thenRun(4, () -> setPistonState(pistons[0], true), Pair.of(null, pistons[0].getLocation()));
+        queue.thenRun(10, () -> setPistonState(pistons[0], false), Pair.of(null, pistons[0].getLocation()));
 
-        queue.thenRun(8, () -> setPistonState(pistons[1], true));
-        queue.thenRun(10, () -> setPistonState(pistons[1], false));
+        queue.thenRun(8, () -> setPistonState(pistons[1], true), Pair.of(null, pistons[1].getLocation()));
+        queue.thenRun(10, () -> setPistonState(pistons[1], false), Pair.of(null, pistons[1].getLocation()));
 
         /*
          * Fixes #3336
          * Trigger each piston once, so that the structure is validated.
          * Then consume fuel.
          */
-        queue.thenRun(() -> {
-            consumeFuel();
+        queue.thenRun(
+                () -> {
+                    consumeFuel();
 
-            if (fuelLevel <= 0) {
-                // This Miner has not got enough fuel to run.
-                stop(MinerStoppingReason.NO_FUEL);
-                return;
-            }
-        });
+                    if (fuelLevel <= 0) {
+                        // This Miner has not got enough fuel to run.
+                        stop(MinerStoppingReason.NO_FUEL);
+                        return;
+                    }
+                },
+                Pair.of(null, chest.getLocation()));
 
-        queue.thenRun(6, () -> setPistonState(pistons[0], true));
-        queue.thenRun(9, () -> setPistonState(pistons[0], false));
+        queue.thenRun(6, () -> setPistonState(pistons[0], true), Pair.of(null, pistons[0].getLocation()));
+        queue.thenRun(9, () -> setPistonState(pistons[0], false), Pair.of(null, pistons[0].getLocation()));
 
-        queue.thenRun(4, () -> setPistonState(pistons[1], true));
-        queue.thenRun(7, () -> setPistonState(pistons[1], false));
+        queue.thenRun(4, () -> setPistonState(pistons[1], true), Pair.of(null, pistons[1].getLocation()));
+        queue.thenRun(7, () -> setPistonState(pistons[1], false), Pair.of(null, pistons[1].getLocation()));
 
-        queue.thenRun(3, () -> setPistonState(pistons[0], true));
-        queue.thenRun(5, () -> setPistonState(pistons[0], false));
+        queue.thenRun(3, () -> setPistonState(pistons[0], true), Pair.of(null, pistons[0].getLocation()));
+        queue.thenRun(5, () -> setPistonState(pistons[0], false), Pair.of(null, pistons[0].getLocation()));
 
-        queue.thenRun(2, () -> setPistonState(pistons[1], true));
-        queue.thenRun(4, () -> setPistonState(pistons[1], false));
+        queue.thenRun(2, () -> setPistonState(pistons[1], true), Pair.of(null, pistons[1].getLocation()));
+        queue.thenRun(4, () -> setPistonState(pistons[1], false), Pair.of(null, pistons[1].getLocation()));
 
-        queue.thenRun(1, () -> setPistonState(pistons[0], true));
-        queue.thenRun(3, () -> setPistonState(pistons[0], false));
+        queue.thenRun(1, () -> setPistonState(pistons[0], true), Pair.of(null, pistons[0].getLocation()));
+        queue.thenRun(3, () -> setPistonState(pistons[0], false), Pair.of(null, pistons[0].getLocation()));
 
-        queue.thenRun(1, () -> setPistonState(pistons[1], true));
-        queue.thenRun(2, () -> setPistonState(pistons[1], false));
+        queue.thenRun(1, () -> setPistonState(pistons[1], true), Pair.of(null, pistons[1].getLocation()));
+        queue.thenRun(2, () -> setPistonState(pistons[1], false), Pair.of(null, pistons[1].getLocation()));
 
-        queue.thenRun(1, this);
+        queue.thenRun(1, this, Pair.of(null, chest.getLocation()));
         queue.execute(Slimefun.instance());
     }
 
@@ -174,54 +178,56 @@ class MiningTask implements Runnable {
 
         TaskQueue queue = new TaskQueue();
 
-        queue.thenRun(1, () -> setPistonState(pistons[0], true));
-        queue.thenRun(3, () -> setPistonState(pistons[0], false));
+        queue.thenRun(1, () -> setPistonState(pistons[0], true), Pair.of(null, pistons[0].getLocation()));
+        queue.thenRun(3, () -> setPistonState(pistons[0], false), Pair.of(null, pistons[0].getLocation()));
 
-        queue.thenRun(1, () -> setPistonState(pistons[1], true));
-        queue.thenRun(3, () -> setPistonState(pistons[1], false));
+        queue.thenRun(1, () -> setPistonState(pistons[1], true), Pair.of(null, pistons[1].getLocation()));
+        queue.thenRun(3, () -> setPistonState(pistons[1], false), Pair.of(null, pistons[1].getLocation()));
 
-        queue.thenRun(() -> {
-            try {
-                Block furnace = chest.getRelative(BlockFace.DOWN);
-                furnace.getWorld().playEffect(furnace.getLocation(), Effect.STEP_SOUND, Material.STONE);
+        queue.thenRun(
+                () -> {
+                    try {
+                        Block furnace = chest.getRelative(BlockFace.DOWN);
+                        furnace.getWorld().playEffect(furnace.getLocation(), Effect.STEP_SOUND, Material.STONE);
 
-                World world = start.getWorld();
-                for (int y = height; y > world.getMinHeight(); y--) {
-                    Block b = world.getBlockAt(x, y, z);
+                        World world = start.getWorld();
+                        for (int y = height; y > world.getMinHeight(); y--) {
+                            Block b = world.getBlockAt(x, y, z);
 
-                    if (!Slimefun.getProtectionManager()
-                            .hasPermission(Bukkit.getOfflinePlayer(owner), b, Interaction.BREAK_BLOCK)) {
-                        stop(MinerStoppingReason.NO_PERMISSION);
-                        return;
+                            if (!Slimefun.getProtectionManager()
+                                    .hasPermission(Bukkit.getOfflinePlayer(owner), b, Interaction.BREAK_BLOCK)) {
+                                stop(MinerStoppingReason.NO_PERMISSION);
+                                return;
+                            }
+
+                            if (miner.canMine(b) && push(miner.getOutcome(b.getType()))) {
+                                // Not changed since this is supposed to be a natural sound.
+                                furnace.getWorld().playEffect(furnace.getLocation(), Effect.STEP_SOUND, b.getType());
+
+                                SoundEffect.MINING_TASK_SOUND.playAt(furnace);
+
+                                b.setType(Material.AIR);
+                                fuelLevel--;
+                                ores++;
+
+                                // Repeat the same column when we hit an ore.
+                                Folia.runSync(this, chest.getLocation(), 4);
+                                return;
+                            }
+                        }
+
+                        nextColumn();
+                    } catch (Exception e) {
+                        Slimefun.logger()
+                                .log(
+                                        Level.SEVERE,
+                                        e,
+                                        () -> "An Error occurred while running an Industrial Miner at "
+                                                + new BlockPosition(chest));
+                        stop();
                     }
-
-                    if (miner.canMine(b) && push(miner.getOutcome(b.getType()))) {
-                        // Not changed since this is supposed to be a natural sound.
-                        furnace.getWorld().playEffect(furnace.getLocation(), Effect.STEP_SOUND, b.getType());
-
-                        SoundEffect.MINING_TASK_SOUND.playAt(furnace);
-
-                        b.setType(Material.AIR);
-                        fuelLevel--;
-                        ores++;
-
-                        // Repeat the same column when we hit an ore.
-                        Slimefun.runSync(this, 4);
-                        return;
-                    }
-                }
-
-                nextColumn();
-            } catch (Exception e) {
-                Slimefun.logger()
-                        .log(
-                                Level.SEVERE,
-                                e,
-                                () -> "An Error occurred while running an Industrial Miner at "
-                                        + new BlockPosition(chest));
-                stop();
-            }
-        });
+                },
+                Pair.of(null, chest.getLocation()));
 
         queue.execute(Slimefun.instance());
     }
@@ -253,7 +259,7 @@ class MiningTask implements Runnable {
             return;
         }
 
-        Slimefun.runSync(this, 5);
+        Folia.runSync(this, chest.getLocation(), 5);
     }
 
     /**

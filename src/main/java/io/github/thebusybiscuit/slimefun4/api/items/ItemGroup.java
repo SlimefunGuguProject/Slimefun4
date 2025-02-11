@@ -7,11 +7,11 @@ import io.github.thebusybiscuit.slimefun4.api.items.groups.SeasonalItemGroup;
 import io.github.thebusybiscuit.slimefun4.core.guide.SlimefunGuide;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.utils.compatibility.VersionedItemFlag;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -38,7 +38,7 @@ public class ItemGroup implements Keyed {
 
     private SlimefunAddon addon;
 
-    protected final List<SlimefunItem> items = new ArrayList<>();
+    protected final List<SlimefunItem> items = new CopyOnWriteArrayList<>();
     protected final NamespacedKey key;
     protected final ItemStack item;
     protected int tier;

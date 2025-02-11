@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.implementation.listeners;
 
+import com.molean.folia.adapter.Folia;
 import com.xzavier0722.mc.plugin.slimefun4.storage.util.StorageCacheUtils;
 import io.github.bakedlibs.dough.items.CustomItemStack;
 import io.github.bakedlibs.dough.items.ItemUtils;
@@ -16,13 +17,12 @@ import io.github.thebusybiscuit.slimefun4.implementation.items.blocks.RepairedSp
 import io.github.thebusybiscuit.slimefun4.implementation.tasks.AncientAltarTask;
 import io.github.thebusybiscuit.slimefun4.utils.SlimefunUtils;
 import io.github.thebusybiscuit.slimefun4.utils.itemstack.ItemStackWrapper;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CopyOnWriteArraySet;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
 import org.bukkit.GameMode;
@@ -30,6 +30,7 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
@@ -54,10 +55,10 @@ public class AncientAltarListener implements Listener {
     private AncientAltar altarItem;
     private AncientPedestal pedestalItem;
 
-    private final Set<Location> altarsInUse = new HashSet<>();
+    private final Set<Location> altarsInUse = new CopyOnWriteArraySet<>();
 
-    private final List<Block> altars = new ArrayList<>();
-    private final Set<UUID> removedItems = new HashSet<>();
+    private final List<Block> altars = new CopyOnWriteArrayList<>();
+    private final Set<Entity> removedItems = new CopyOnWriteArraySet<>();
 
     @ParametersAreNonnullByDefault
     public AncientAltarListener(Slimefun plugin, AncientAltar altar, AncientPedestal pedestal) {
@@ -148,10 +149,10 @@ public class AncientAltarListener implements Listener {
             }
         } else if (!removedItems.contains(stack.get().getUniqueId())) {
             Item entity = stack.get();
-            UUID uuid = entity.getUniqueId();
+            Entity uuid = entity;
             removedItems.add(uuid);
 
-            Slimefun.runSync(() -> removedItems.remove(uuid), 30L);
+            Folia.getScheduler().runTaskLaterAsync(Slimefun.instance(), () -> removedItems.remove(uuid), 30L);
 
             entity.remove();
             SoundEffect.ANCIENT_ALTAR_ITEM_PICK_UP_SOUND.playFor(p);
@@ -215,7 +216,7 @@ public class AncientAltarListener implements Listener {
 
     @ParametersAreNonnullByDefault
     private void startRitual(Player p, Block b, List<Block> pedestals, ItemStack catalyst) {
-        List<ItemStack> input = new ArrayList<>();
+        List<ItemStack> input = new CopyOnWriteArrayList<>();
 
         for (Block pedestal : pedestals) {
             Optional<Item> stack = pedestalItem.getPlacedItem(pedestal);
@@ -227,7 +228,7 @@ public class AncientAltarListener implements Listener {
 
         if (result.isPresent()) {
             if (SlimefunUtils.canPlayerUseItem(p, result.get(), true)) {
-                List<ItemStack> consumed = new ArrayList<>();
+                List<ItemStack> consumed = new CopyOnWriteArrayList<>();
                 consumed.add(catalyst);
 
                 if (p.getGameMode() != GameMode.CREATIVE) {
@@ -238,7 +239,7 @@ public class AncientAltarListener implements Listener {
 
                 AncientAltarTask task =
                         new AncientAltarTask(this, b, altarItem.getStepDelay(), result.get(), pedestals, consumed, p);
-                Slimefun.runSync(task, 10L);
+                Folia.runSync(task, p, 10L);
             } else {
                 altars.remove(b);
 
@@ -283,7 +284,7 @@ public class AncientAltarListener implements Listener {
     }
 
     private @Nonnull List<Block> getPedestals(@Nonnull Block altar) {
-        List<Block> list = new ArrayList<>();
+        List<Block> list = new CopyOnWriteArrayList<>();
         var id = pedestalItem.getId();
 
         if (StorageCacheUtils.isBlock(altar.getRelative(2, 0, -2).getLocation(), id)) {

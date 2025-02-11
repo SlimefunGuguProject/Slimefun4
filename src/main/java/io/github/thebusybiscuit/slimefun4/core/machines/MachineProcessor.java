@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.core.machines;
 
+import com.molean.folia.adapter.Folia;
 import io.github.bakedlibs.dough.blocks.BlockPosition;
 import io.github.thebusybiscuit.slimefun4.api.events.AsyncMachineOperationFinishEvent;
 import io.github.thebusybiscuit.slimefun4.core.attributes.MachineProcessHolder;
@@ -10,7 +11,6 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import me.mrCookieSlime.Slimefun.api.inventory.BlockMenu;
 import org.apache.commons.lang.Validate;
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.event.Event;
@@ -225,7 +225,7 @@ public class MachineProcessor<T extends MachineOperation> {
              */
             if (operation.isFinished()) {
                 Event event = new AsyncMachineOperationFinishEvent(pos, this, operation);
-                Bukkit.getPluginManager().callEvent(event);
+                Folia.getPluginManager().ce(event);
             } else {
                 operation.onCancel(pos);
             }

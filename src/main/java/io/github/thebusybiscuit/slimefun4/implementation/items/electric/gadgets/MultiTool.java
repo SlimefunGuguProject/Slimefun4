@@ -10,8 +10,8 @@ import io.github.thebusybiscuit.slimefun4.core.handlers.ItemUseHandler;
 import io.github.thebusybiscuit.slimefun4.core.handlers.ToolUseHandler;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.utils.compatibility.VersionedEntityType;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
 import org.bukkit.ChatColor;
@@ -32,7 +32,7 @@ public class MultiTool extends SlimefunItem implements Rechargeable {
 
     private static final float COST = 0.3F;
     private final NamespacedKey multiToolMode = new NamespacedKey(Slimefun.instance(), "MULTI_TOOL_MODE");
-    private final List<MultiToolMode> modes = new ArrayList<>();
+    private final List<MultiToolMode> modes = new CopyOnWriteArrayList<>();
     private final float capacity;
 
     @ParametersAreNonnullByDefault

@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.implementation.items.armor;
 
+import com.molean.folia.adapter.Folia;
 import io.github.bakedlibs.dough.protection.Interaction;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
@@ -9,7 +10,6 @@ import io.github.thebusybiscuit.slimefun4.core.services.sounds.SoundEffect;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
-import org.bukkit.Bukkit;
 import org.bukkit.Effect;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
@@ -60,7 +60,7 @@ public class StomperBoots extends SlimefunItem {
                                         .hasPermission(player, entity.getLocation(), Interaction.ATTACK_PLAYER))) {
                     EntityDamageByEntityEvent event = new EntityDamageByEntityEvent(
                             player, entity, DamageCause.ENTITY_ATTACK, fallDamageEvent.getDamage() / 2);
-                    Bukkit.getPluginManager().callEvent(event);
+                    Folia.getPluginManager().ce(event);
 
                     if (!event.isCancelled()) {
                         livingEntity.damage(event.getDamage());

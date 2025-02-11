@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.implementation.items.multiblocks;
 
+import com.molean.folia.adapter.Folia;
 import io.github.bakedlibs.dough.inventory.InvUtils;
 import io.github.thebusybiscuit.slimefun4.api.events.MultiBlockCraftEvent;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
@@ -12,7 +13,6 @@ import io.github.thebusybiscuit.slimefun4.utils.SlimefunUtils;
 import io.papermc.lib.PaperLib;
 import java.util.List;
 import javax.annotation.ParametersAreNonnullByDefault;
-import org.bukkit.Bukkit;
 import org.bukkit.Effect;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -50,7 +50,7 @@ abstract class AbstractSmeltery extends MultiBlockMachine {
                             RecipeType.getRecipeOutputList(this, inputs.get(i)).clone();
                     MultiBlockCraftEvent event = new MultiBlockCraftEvent(p, this, inputs.get(i), output);
 
-                    Bukkit.getPluginManager().callEvent(event);
+                    Folia.getPluginManager().ce(event);
                     if (!event.isCancelled() && SlimefunUtils.canPlayerUseItem(p, output, true)) {
                         Inventory outputInv = findOutputInventory(output, possibleDispenser, inv);
 

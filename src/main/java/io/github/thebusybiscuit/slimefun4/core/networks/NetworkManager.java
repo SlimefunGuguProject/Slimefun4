@@ -9,7 +9,6 @@ import io.github.thebusybiscuit.slimefun4.core.debug.TestCase;
 import io.github.thebusybiscuit.slimefun4.core.networks.cargo.CargoNet;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.implementation.listeners.NetworkListener;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -137,11 +136,11 @@ public class NetworkManager {
     public <T extends Network> List<T> getNetworksFromLocation(@Nullable Location l, @Nonnull Class<T> type) {
         if (l == null) {
             // No networks here, if the location does not even exist
-            return new ArrayList<>();
+            return new CopyOnWriteArrayList<>();
         }
 
         Validate.notNull(type, "Type must not be null");
-        List<T> list = new ArrayList<>();
+        List<T> list = new CopyOnWriteArrayList<>();
 
         for (Network network : networks) {
             if (type.isInstance(network) && network.connectsTo(l)) {

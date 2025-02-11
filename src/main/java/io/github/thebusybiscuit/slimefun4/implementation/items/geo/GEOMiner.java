@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.implementation.items.geo;
 
+import com.molean.folia.adapter.Folia;
 import com.xzavier0722.mc.plugin.slimefun4.storage.callback.IAsyncReadCallback;
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunBlockData;
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunChunkData;
@@ -337,7 +338,11 @@ public class GEOMiner extends SlimefunItem
                         if (result.getAllData().isEmpty()) {
                             updateHologram(b, "&4需要先进行地形扫描!");
                         } else {
-                            start(b, inv);
+                            Folia.runSync(
+                                    () -> {
+                                        start(b, inv);
+                                    },
+                                    b.getLocation());
                         }
                     }
                 });

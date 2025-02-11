@@ -1,10 +1,10 @@
 package io.github.thebusybiscuit.slimefun4.implementation.items.food;
 
+import com.molean.folia.adapter.Folia;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
 import io.github.thebusybiscuit.slimefun4.api.recipes.RecipeType;
 import io.github.thebusybiscuit.slimefun4.core.handlers.ItemConsumptionHandler;
-import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.implementation.items.SimpleSlimefunItem;
 import javax.annotation.ParametersAreNonnullByDefault;
 import org.bukkit.inventory.ItemStack;
@@ -28,7 +28,7 @@ public class MonsterJerky extends SimpleSlimefunItem<ItemConsumptionHandler> {
 
     @Override
     public ItemConsumptionHandler getItemHandler() {
-        return (e, p, item) -> Slimefun.runSync(
+        return (e, p, item) -> Folia.runSync(
                 () -> {
                     if (p.hasPotionEffect(PotionEffectType.HUNGER)) {
                         p.removePotionEffect(PotionEffectType.HUNGER);
@@ -36,6 +36,7 @@ public class MonsterJerky extends SimpleSlimefunItem<ItemConsumptionHandler> {
 
                     p.addPotionEffect(new PotionEffect(PotionEffectType.SATURATION, 5, 0));
                 },
+                p.getPlayer(),
                 1L);
     }
 }

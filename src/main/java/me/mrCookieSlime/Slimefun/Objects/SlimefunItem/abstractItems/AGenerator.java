@@ -20,6 +20,7 @@ import io.github.thebusybiscuit.slimefun4.implementation.operations.FuelOperatio
 import io.github.thebusybiscuit.slimefun4.utils.ChestMenuUtils;
 import io.github.thebusybiscuit.slimefun4.utils.SlimefunUtils;
 import io.github.thebusybiscuit.slimefun4.utils.itemstack.ItemStackWrapper;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nonnull;
@@ -184,7 +185,7 @@ public abstract class AGenerator extends AbstractEnergyProvider implements Machi
                 return 0;
             }
         } else {
-            Map<Integer, Integer> found = new HashMap<>();
+            Map<Integer, Integer> found = Collections.synchronizedMap(new HashMap<>());
             MachineFuel fuel = findRecipe(inv, found);
 
             if (fuel != null) {

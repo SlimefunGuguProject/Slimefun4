@@ -2,6 +2,7 @@ package io.github.thebusybiscuit.slimefun4.integrations;
 
 import com.gmail.nossr50.events.fake.FakeBlockBreakEvent;
 import com.gmail.nossr50.util.skills.SkillUtils;
+import com.molean.folia.adapter.Folia;
 import dev.lone.itemsadder.api.CustomBlock;
 import dev.lone.itemsadder.api.ItemsAdder;
 import io.github.bakedlibs.dough.protection.ProtectionManager;
@@ -90,7 +91,7 @@ public class IntegrationsManager {
         onServerLoad();
 
         // Load any integrations which aren't dependencies (loadBefore)
-        plugin.getServer().getScheduler().runTask(plugin, this::onServerStart);
+        Folia.getScheduler().runTaskAsynchronously(plugin, this::onServerStart);
     }
 
     /**

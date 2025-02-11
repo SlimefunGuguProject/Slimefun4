@@ -1,5 +1,6 @@
 package city.norain.slimefun4;
 
+import com.molean.folia.adapter.Folia;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import java.util.List;
 import java.util.logging.Level;
@@ -74,8 +75,8 @@ class EnvironmentChecker {
     }
 
     static void scheduleSlimeGlueCheck(@Nonnull Slimefun sf) {
-        Bukkit.getScheduler()
-                .runTaskLater(
+        Folia.getScheduler()
+                .runTaskLaterAsync(
                         sf,
                         () -> {
                             if (Bukkit.getPluginManager().getPlugin("SlimeGlue") == null) {

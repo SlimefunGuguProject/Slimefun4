@@ -1,9 +1,11 @@
 package io.github.thebusybiscuit.slimefun4.core.services.holograms;
 
+import com.molean.folia.adapter.Folia;
 import io.github.bakedlibs.dough.blocks.BlockPosition;
 import io.github.thebusybiscuit.slimefun4.core.attributes.HologramOwner;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -63,7 +65,7 @@ public class HologramsService {
     /**
      * Our cache to save {@link Entity} lookups
      */
-    private final Map<BlockPosition, Hologram> cache = new HashMap<>();
+    private final Map<BlockPosition, Hologram> cache = Collections.synchronizedMap(new HashMap<>());
 
     /**
      * This constructs a new {@link HologramsService}.
@@ -83,7 +85,7 @@ public class HologramsService {
      * purge-task.
      */
     public void start() {
-        plugin.getServer().getScheduler().scheduleSyncRepeatingTask(plugin, this::purge, PURGE_RATE, PURGE_RATE);
+        Folia.getScheduler().runTaskTimerAsynchronously(plugin, this::purge, PURGE_RATE, PURGE_RATE);
     }
 
     /**
@@ -264,7 +266,7 @@ public class HologramsService {
         if (Bukkit.isPrimaryThread()) {
             runnable.run();
         } else {
-            Slimefun.runSync(runnable);
+            Folia.runSync(runnable, loc);
         }
     }
 

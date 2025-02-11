@@ -4,10 +4,11 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Level;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -18,12 +19,12 @@ class ContributionsConnector extends GitHubConnector {
      * GitHub Bots that do not count as Contributors
      * (includes "invalid-email-address" because it is an invalid contributor)
      */
-    private final List<String> ignoredAccounts = new ArrayList<>();
+    private final List<String> ignoredAccounts = new CopyOnWriteArrayList<>();
 
     /**
      * Matches a GitHub name with a Minecraft name.
      */
-    private final Map<String, String> aliases = new HashMap<>();
+    private final Map<String, String> aliases = Collections.synchronizedMap(new HashMap<>());
 
     private final String prefix;
     private final String role;
@@ -115,7 +116,7 @@ class ContributionsConnector extends GitHubConnector {
 
     @Override
     public Map<String, Object> getParameters() {
-        Map<String, Object> parameters = new HashMap<>();
+        Map<String, Object> parameters = Collections.synchronizedMap(new HashMap<>());
         parameters.put("per_page", 100);
         parameters.put("page", page);
         return parameters;

@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.api.gps;
 
+import com.molean.folia.adapter.Folia;
 import io.github.bakedlibs.dough.common.ChatColors;
 import io.github.bakedlibs.dough.items.CustomItemStack;
 import io.github.thebusybiscuit.slimefun4.api.player.PlayerProfile;
@@ -11,9 +12,9 @@ import io.github.thebusybiscuit.slimefun4.utils.HeadTexture;
 import io.github.thebusybiscuit.slimefun4.utils.NumberUtils;
 import io.github.thebusybiscuit.slimefun4.utils.compatibility.VersionedPotionEffectType;
 import io.papermc.lib.PaperLib;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArraySet;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -51,7 +52,7 @@ public final class TeleportationManager {
      * This {@link Set} holds the {@link UUID} of all Players that are
      * teleporting right now.
      */
-    private final Set<UUID> teleporterUsers = new HashSet<>();
+    private final Set<UUID> teleporterUsers = new CopyOnWriteArraySet<>();
 
     /**
      * Opens the GUI of the teleporter and calculates the network complexity of the {@link Player}
@@ -133,7 +134,7 @@ public final class TeleportationManager {
                     index++;
                 }
 
-                Slimefun.runSync(() -> menu.open(p));
+                Folia.runSync(() -> menu.open(p), p);
             });
         }
     }
@@ -239,8 +240,8 @@ public final class TeleportationManager {
 
                 source.getWorld().spawnParticle(Particle.PORTAL, source, progress * 2, 0.2F, 0.8F, 0.2F);
                 SoundEffect.TELEPORT_UPDATE_SOUND.playFor(p);
-                Slimefun.runSync(
-                        () -> updateProgress(uuid, speed, progress + speed, source, destination, resistance), 10L);
+                Folia.runSync(
+                        () -> updateProgress(uuid, speed, progress + speed, source, destination, resistance), p, 10L);
             }
         } else {
             cancel(uuid, p);
@@ -253,27 +254,29 @@ public final class TeleportationManager {
          * This needs to run on the main Thread so we force it, as
          * the async teleportation might happen on a separate Thread.
          */
-        Slimefun.runSync(() -> {
-            if (success) {
-                // Apply Resistance Effect, if enabled
-                if (resistance) {
-                    p.addPotionEffect(new PotionEffect(VersionedPotionEffectType.RESISTANCE, 600, 20));
-                    Slimefun.getLocalization().sendMessage(p, "machines.TELEPORTER.invulnerability");
-                }
+        Folia.runSync(
+                () -> {
+                    if (success) {
+                        // Apply Resistance Effect, if enabled
+                        if (resistance) {
+                            p.addPotionEffect(new PotionEffect(VersionedPotionEffectType.RESISTANCE, 600, 20));
+                            Slimefun.getLocalization().sendMessage(p, "machines.TELEPORTER.invulnerability");
+                        }
 
-                // Spawn some particles for aesthetic reasons.
-                Location loc = new Location(
-                        destination.getWorld(), destination.getX(), destination.getY() + 1, destination.getZ());
-                destination.getWorld().spawnParticle(Particle.PORTAL, loc, 200, 0.2F, 0.8F, 0.2F);
-                SoundEffect.TELEPORT_SOUND.playFor(p);
-                teleporterUsers.remove(p.getUniqueId());
-            } else {
-                /*
-                 * Make sure the Player is removed from the actively teleporting
-                 * users and notified about the failed teleportation
-                 */
-                cancel(p.getUniqueId(), p);
-            }
-        });
+                        // Spawn some particles for aesthetic reasons.
+                        Location loc = new Location(
+                                destination.getWorld(), destination.getX(), destination.getY() + 1, destination.getZ());
+                        destination.getWorld().spawnParticle(Particle.PORTAL, loc, 200, 0.2F, 0.8F, 0.2F);
+                        SoundEffect.TELEPORT_SOUND.playFor(p);
+                        teleporterUsers.remove(p.getUniqueId());
+                    } else {
+                        /*
+                         * Make sure the Player is removed from the actively teleporting
+                         * users and notified about the failed teleportation
+                         */
+                        cancel(p.getUniqueId(), p);
+                    }
+                },
+                p);
     }
 }

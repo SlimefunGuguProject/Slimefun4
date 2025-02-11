@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.implementation.tasks;
 
+import com.molean.folia.adapter.Folia;
 import io.github.thebusybiscuit.slimefun4.api.events.AncientAltarCraftEvent;
 import io.github.thebusybiscuit.slimefun4.core.services.sounds.SoundEffect;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
@@ -9,6 +10,7 @@ import io.github.thebusybiscuit.slimefun4.implementation.items.altar.AncientPede
 import io.github.thebusybiscuit.slimefun4.implementation.listeners.AncientAltarListener;
 import io.github.thebusybiscuit.slimefun4.utils.compatibility.VersionedParticle;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -16,7 +18,6 @@ import java.util.Map;
 import java.util.Optional;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
-import org.bukkit.Bukkit;
 import org.bukkit.Effect;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -51,7 +52,7 @@ public class AncientAltarTask implements Runnable {
     private final List<ItemStack> items;
 
     private final Collection<Location> particleLocations = new LinkedList<>();
-    private final Map<Item, Location> positionLock = new HashMap<>();
+    private final Map<Item, Location> positionLock = Collections.synchronizedMap(new HashMap<>());
 
     private boolean running;
     private int stage;
@@ -107,7 +108,7 @@ public class AncientAltarTask implements Runnable {
         }
 
         this.stage += 1;
-        Slimefun.runSync(this, stepDelay);
+        Folia.runSync(this, altar.getLocation(), stepDelay);
     }
 
     private boolean checkLockedItems() {
@@ -179,7 +180,7 @@ public class AncientAltarTask implements Runnable {
         if (running) {
 
             AncientAltarCraftEvent event = new AncientAltarCraftEvent(output, altar, player);
-            Bukkit.getPluginManager().callEvent(event);
+            Folia.getPluginManager().ce(event);
 
             if (!event.isCancelled()) {
                 SoundEffect.ANCIENT_ALTAR_FINISH_SOUND.playAt(dropLocation, SoundCategory.BLOCKS);

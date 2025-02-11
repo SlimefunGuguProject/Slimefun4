@@ -3,8 +3,8 @@ package io.github.thebusybiscuit.slimefun4.implementation.items.multiblocks;
 import io.github.bakedlibs.dough.items.CustomItemStack;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import javax.annotation.ParametersAreNonnullByDefault;
 import org.bukkit.Effect;
 import org.bukkit.Material;
@@ -46,7 +46,7 @@ public class MakeshiftSmeltery extends AbstractSmeltery {
 
     @Override
     public List<ItemStack> getDisplayRecipes() {
-        List<ItemStack> items = new ArrayList<>();
+        List<ItemStack> items = new CopyOnWriteArrayList<>();
 
         for (int i = 0; i < recipes.size() - 1; i += 2) {
             items.add(recipes.get(i)[0]);

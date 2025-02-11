@@ -28,7 +28,7 @@
         <maven.settings.file>${project.basedir}/.mvn/settings.xml</maven.settings.file>
 
         <!-- Paper properties -->
-        <paper.version>1.21</paper.version>
+        <paper.version>1.21.4</paper.version>
         <paper.javadocs>https://papermc.io/javadocs</paper.javadocs>
     </properties>
 
@@ -183,6 +183,13 @@
                         <goals>
                             <goal>shade</goal>
                         </goals>
+                        <configuration>
+                            <artifactSet>
+                                <excludes>
+                                    <exclude>com.molean:FoliaAdapter</exclude>
+                                </excludes>
+                            </artifactSet>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
@@ -278,6 +285,12 @@
             <version>${paper.version}-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>com.molean</groupId>
+            <artifactId>FoliaAdapter</artifactId>
+            <version>1.0-SNAPSHOT</version>
+            <classifier>dev</classifier>
+        </dependency>
 
         <!-- Development dependencies -->
         <dependency>
@@ -303,9 +316,9 @@
 
         <!-- Shaded packages -->
         <dependency>
-            <groupId>com.github.StarWishsama.dough</groupId>
+            <groupId>io.github.baked-libs</groupId>
             <artifactId>dough-api</artifactId>
-            <version>4dab7610a2</version>
+            <version>1.3.1-Folia</version>
             <scope>compile</scope>
         </dependency>
         <dependency>

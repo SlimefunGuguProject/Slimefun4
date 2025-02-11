@@ -4,6 +4,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import io.github.thebusybiscuit.slimefun4.utils.NumberUtils;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nonnull;
@@ -42,6 +43,6 @@ class GitHubActivityConnector extends GitHubConnector {
 
     @Override
     public Map<String, Object> getParameters() {
-        return new HashMap<>();
+        return Collections.synchronizedMap(new HashMap<>());
     }
 }

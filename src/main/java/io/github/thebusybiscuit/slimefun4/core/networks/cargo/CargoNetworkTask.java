@@ -12,6 +12,7 @@ import io.github.thebusybiscuit.slimefun4.utils.itemstack.ItemStackWrapper;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
@@ -44,7 +45,7 @@ class CargoNetworkTask implements Runnable {
 
     private final NetworkManager manager;
     private final CargoNet network;
-    private final Map<Location, Inventory> inventories = new HashMap<>();
+    private final Map<Location, Inventory> inventories = Collections.synchronizedMap(new HashMap<>());
 
     private final Map<Location, Integer> inputs;
     private final Map<Integer, List<Location>> outputs;

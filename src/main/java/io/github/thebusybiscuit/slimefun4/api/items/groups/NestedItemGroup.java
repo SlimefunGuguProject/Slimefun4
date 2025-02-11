@@ -9,8 +9,8 @@ import io.github.thebusybiscuit.slimefun4.core.services.sounds.SoundEffect;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.implementation.guide.SurvivalSlimefunGuide;
 import io.github.thebusybiscuit.slimefun4.utils.ChestMenuUtils;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
 import me.mrCookieSlime.CSCoreLibPlugin.general.Inventory.ChestMenu;
@@ -23,7 +23,7 @@ import org.bukkit.inventory.ItemStack;
 public class NestedItemGroup extends FlexItemGroup {
 
     private static final int GROUP_SIZE = 36;
-    private final List<SubItemGroup> subGroups = new ArrayList<>();
+    private final List<SubItemGroup> subGroups = new CopyOnWriteArrayList<>();
 
     @ParametersAreNonnullByDefault
     public NestedItemGroup(NamespacedKey key, ItemStack item) {

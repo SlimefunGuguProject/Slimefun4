@@ -3,6 +3,7 @@ package io.github.thebusybiscuit.slimefun4.core.networks.cargo;
 import io.github.thebusybiscuit.slimefun4.api.network.Network;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.utils.SlimefunUtils;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,12 +34,12 @@ abstract class AbstractItemNetwork extends Network {
      * This is a cache for the {@link BlockFace} a node is facing, so we don't need to
      * request the {@link BlockData} each time we visit a node
      */
-    protected Map<Location, BlockFace> connectorCache = new HashMap<>();
+    protected Map<Location, BlockFace> connectorCache = Collections.synchronizedMap(new HashMap<>());
 
     /**
      * This is our cache for the {@link ItemFilter} for each node.
      */
-    protected Map<Location, ItemFilter> filterCache = new HashMap<>();
+    protected Map<Location, ItemFilter> filterCache = Collections.synchronizedMap(new HashMap<>());
 
     protected AbstractItemNetwork(@Nonnull Location regulator) {
         super(Slimefun.getNetworkManager(), regulator);

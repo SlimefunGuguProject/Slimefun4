@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.core.guide;
 
+import com.molean.folia.adapter.Folia;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.api.player.PlayerProfile;
@@ -68,7 +69,8 @@ public final class SlimefunGuide {
 
     @ParametersAreNonnullByDefault
     private static void openMainMenuAsync(Player player, SlimefunGuideMode mode, int selectedPage) {
-        if (!PlayerProfile.get(player, profile -> Slimefun.runSync(() -> openMainMenu(profile, mode, selectedPage)))) {
+        if (!PlayerProfile.get(
+                player, profile -> Folia.runSync(() -> openMainMenu(profile, mode, selectedPage), player))) {
             Slimefun.getLocalization().sendMessage(player, "messages.opening-guide");
         }
     }

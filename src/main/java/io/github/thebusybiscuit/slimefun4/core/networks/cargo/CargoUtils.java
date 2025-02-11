@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.core.networks.cargo;
 
+import com.molean.folia.adapter.Folia;
 import com.xzavier0722.mc.plugin.slimefun4.storage.util.StorageCacheUtils;
 import com.xzavier0722.mc.plugin.slimefuncomplib.event.cargo.CargoInsertEvent;
 import com.xzavier0722.mc.plugin.slimefuncomplib.event.cargo.CargoWithdrawEvent;
@@ -17,7 +18,6 @@ import javax.annotation.Nullable;
 import me.mrCookieSlime.Slimefun.api.inventory.BlockMenu;
 import me.mrCookieSlime.Slimefun.api.inventory.DirtyChestMenu;
 import me.mrCookieSlime.Slimefun.api.item_transport.ItemTransportFlow;
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Tag;
@@ -208,7 +208,7 @@ final class CargoUtils {
 
         if (menu != null) {
             var event = new CargoWithdrawEvent(node, target, menu.toInventory());
-            Bukkit.getPluginManager().callEvent(event);
+            Folia.getPluginManager().ce(event);
             if (event.isCancelled()) {
                 return null;
             }
@@ -235,7 +235,7 @@ final class CargoUtils {
             }
 
             var event = new CargoWithdrawEvent(node, target, inventory);
-            Bukkit.getPluginManager().callEvent(event);
+            Folia.getPluginManager().ce(event);
             if (!event.isCancelled()) {
                 return withdrawFromVanillaInventory(network, node, inventory);
             }
@@ -291,7 +291,7 @@ final class CargoUtils {
                     inventories.put(target.getLocation(), inventory);
                 }
                 var event = new CargoInsertEvent(node, target, inventory);
-                Bukkit.getPluginManager().callEvent(event);
+                Folia.getPluginManager().ce(event);
                 if (!event.isCancelled()) {
                     return insertIntoVanillaInventory(stack, wrapper, smartFill, inventory);
                 }
@@ -301,7 +301,7 @@ final class CargoUtils {
         }
 
         var event = new CargoInsertEvent(node, target, menu.toInventory());
-        Bukkit.getPluginManager().callEvent(event);
+        Folia.getPluginManager().ce(event);
         if (event.isCancelled()) {
             return stack;
         }

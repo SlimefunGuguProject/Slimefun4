@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.core.services.profiler;
 
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -40,7 +41,7 @@ public enum SummaryOrderType {
                         .sorted(Comparator.comparingLong(Map.Entry::getValue))
                         .collect(Collectors.toList());
             default:
-                final Map<String, Long> map = new HashMap<>();
+                final Map<String, Long> map = Collections.synchronizedMap(new HashMap<>());
                 for (Map.Entry<String, Long> entry : entrySet) {
                     int count = profiler.getBlocksOfId(entry.getKey());
                     long avg = count > 0 ? entry.getValue() / count : entry.getValue();

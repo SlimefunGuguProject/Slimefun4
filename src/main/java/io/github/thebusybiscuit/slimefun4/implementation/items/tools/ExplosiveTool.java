@@ -1,6 +1,7 @@
 package io.github.thebusybiscuit.slimefun4.implementation.items.tools;
 
 import city.norain.slimefun4.compatibillty.VersionedEvent;
+import com.molean.folia.adapter.Folia;
 import com.xzavier0722.mc.plugin.slimefun4.storage.util.StorageCacheUtils;
 import dev.lone.itemsadder.api.CustomBlock;
 import io.github.bakedlibs.dough.protection.Interaction;
@@ -23,6 +24,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -78,11 +80,11 @@ public class ExplosiveTool extends SimpleSlimefunItem<ToolUseHandler> implements
     @ParametersAreNonnullByDefault
     private void breakBlocks(
             BlockBreakEvent e, Player p, ItemStack item, Block b, List<Block> blocks, List<ItemStack> drops) {
-        List<Block> blocksToDestroy = new ArrayList<>();
+        List<Block> blocksToDestroy = new CopyOnWriteArrayList<>();
 
         if (callExplosionEvent.getValue()) {
             BlockExplodeEvent blockExplodeEvent = VersionedEvent.newBlockExplodeEvent(b, blocks, 0);
-            Bukkit.getServer().getPluginManager().callEvent(blockExplodeEvent);
+            Folia.getPluginManager().ce(blockExplodeEvent);
 
             if (!blockExplodeEvent.isCancelled()) {
                 for (Block block : blockExplodeEvent.blockList()) {
@@ -108,7 +110,7 @@ public class ExplosiveTool extends SimpleSlimefunItem<ToolUseHandler> implements
         }
 
         ExplosiveToolBreakBlocksEvent event = new ExplosiveToolBreakBlocksEvent(p, b, blocksToDestroy, item, this);
-        Bukkit.getServer().getPluginManager().callEvent(event);
+        Folia.getPluginManager().ce(event);
 
         /*
          * 修复: https://github.com/SlimefunGuguProject/Slimefun4/issues/853

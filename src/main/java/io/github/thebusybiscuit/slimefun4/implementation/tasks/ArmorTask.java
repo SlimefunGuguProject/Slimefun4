@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.implementation.tasks;
 
+import com.molean.folia.adapter.Folia;
 import io.github.thebusybiscuit.slimefun4.api.items.HashedArmorpiece;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
@@ -12,8 +13,8 @@ import io.github.thebusybiscuit.slimefun4.implementation.items.electric.gadgets.
 import io.github.thebusybiscuit.slimefun4.utils.compatibility.VersionedPotionEffectType;
 import io.github.thebusybiscuit.slimefun4.utils.itemstack.ItemStackWrapper;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -48,7 +49,7 @@ public class ArmorTask implements Runnable {
     public ArmorTask(boolean radioactiveFire) {
         this.radioactiveFire = radioactiveFire;
 
-        Set<PotionEffect> effects = new HashSet<>();
+        Set<PotionEffect> effects = new CopyOnWriteArraySet<>();
         effects.add(new PotionEffect(PotionEffectType.WITHER, 400, 2));
         effects.add(new PotionEffect(PotionEffectType.BLINDNESS, 400, 3));
         effects.add(new PotionEffect(VersionedPotionEffectType.NAUSEA, 400, 3));
@@ -109,16 +110,19 @@ public class ArmorTask implements Runnable {
             }
 
             if (item != null && armorpiece.getItem().isPresent()) {
-                Slimefun.runSync(() -> {
-                    SlimefunArmorPiece slimefunArmor = armorpiece.getItem().get();
+                Folia.runSync(
+                        () -> {
+                            SlimefunArmorPiece slimefunArmor =
+                                    armorpiece.getItem().get();
 
-                    if (slimefunArmor.canUse(p, true)) {
-                        for (PotionEffect effect : slimefunArmor.getPotionEffects()) {
-                            p.removePotionEffect(effect.getType());
-                            p.addPotionEffect(effect);
-                        }
-                    }
-                });
+                            if (slimefunArmor.canUse(p, true)) {
+                                for (PotionEffect effect : slimefunArmor.getPotionEffects()) {
+                                    p.removePotionEffect(effect.getType());
+                                    p.addPotionEffect(effect);
+                                }
+                            }
+                        },
+                        p);
             }
         }
     }
@@ -172,14 +176,16 @@ public class ArmorTask implements Runnable {
                 // If the item is enabled in the world, then make radioactivity do its job
                 Slimefun.getLocalization().sendMessage(p, "messages.radiation");
 
-                Slimefun.runSync(() -> {
-                    p.addPotionEffects(radiationEffects);
+                Folia.runSync(
+                        () -> {
+                            p.addPotionEffects(radiationEffects);
 
-                    // if radioactive fire is enabled, set them on fire
-                    if (radioactiveFire) {
-                        p.setFireTicks(400);
-                    }
-                });
+                            // if radioactive fire is enabled, set them on fire
+                            if (radioactiveFire) {
+                                p.setFireTicks(400);
+                            }
+                        },
+                        p);
 
                 return true;
             }

@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
@@ -57,7 +58,7 @@ class GitHubIssuesConnector extends GitHubConnector {
 
     @Override
     public Map<String, Object> getParameters() {
-        Map<String, Object> parameters = new HashMap<>();
+        Map<String, Object> parameters = Collections.synchronizedMap(new HashMap<>());
         parameters.put("per_page", 100);
         return parameters;
     }

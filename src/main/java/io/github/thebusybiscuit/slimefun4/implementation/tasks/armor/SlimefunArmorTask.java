@@ -1,9 +1,9 @@
 package io.github.thebusybiscuit.slimefun4.implementation.tasks.armor;
 
+import com.molean.folia.adapter.Folia;
 import io.github.thebusybiscuit.slimefun4.api.items.HashedArmorpiece;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.api.player.PlayerProfile;
-import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.implementation.items.armor.SlimefunArmorPiece;
 import javax.annotation.ParametersAreNonnullByDefault;
 import org.bukkit.entity.Player;
@@ -44,13 +44,16 @@ public class SlimefunArmorTask extends AbstractArmorTask {
             }
 
             if (item != null && armorPiece.getItem().isPresent()) {
-                Slimefun.runSync(() -> {
-                    SlimefunArmorPiece sfArmorPiece = armorPiece.getItem().get();
+                Folia.runSync(
+                        () -> {
+                            SlimefunArmorPiece sfArmorPiece =
+                                    armorPiece.getItem().get();
 
-                    if (sfArmorPiece.canUse(p, true)) {
-                        onArmorPieceTick(p, sfArmorPiece, item);
-                    }
-                });
+                            if (sfArmorPiece.canUse(p, true)) {
+                                onArmorPieceTick(p, sfArmorPiece, item);
+                            }
+                        },
+                        p);
             }
         }
     }

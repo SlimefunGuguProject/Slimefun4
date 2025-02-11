@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.implementation.items.weapons;
 
+import com.molean.folia.adapter.Folia;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemSetting;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
@@ -10,7 +11,6 @@ import io.github.thebusybiscuit.slimefun4.utils.compatibility.VersionedParticle;
 import java.util.Collection;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
-import org.bukkit.Bukkit;
 import org.bukkit.SoundCategory;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
@@ -66,7 +66,7 @@ public class ExplosiveBow extends SlimefunBow {
                 if (!entity.getUniqueId().equals(target.getUniqueId())) {
                     EntityDamageByEntityEvent event = new EntityDamageByEntityEvent(
                             e.getDamager(), entity, EntityDamageEvent.DamageCause.ENTITY_EXPLOSION, damage);
-                    Bukkit.getPluginManager().callEvent(event);
+                    Folia.getPluginManager().ce(event);
 
                     if (!event.isCancelled()) {
                         distanceVector.setY(0.75);

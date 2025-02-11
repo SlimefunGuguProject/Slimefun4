@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.core.guide.options;
 
+import com.molean.folia.adapter.Folia;
 import io.github.bakedlibs.dough.data.persistent.PersistentDataAPI;
 import io.github.bakedlibs.dough.items.CustomItemStack;
 import io.github.thebusybiscuit.slimefun4.api.SlimefunAddon;
@@ -11,9 +12,9 @@ import io.github.thebusybiscuit.slimefun4.utils.ChatUtils;
 import io.github.thebusybiscuit.slimefun4.utils.ChestMenuUtils;
 import io.github.thebusybiscuit.slimefun4.utils.HeadTexture;
 import io.github.thebusybiscuit.slimefun4.utils.SlimefunUtils;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CopyOnWriteArrayList;
 import me.mrCookieSlime.CSCoreLibPlugin.general.Inventory.ChestMenu;
 import org.bukkit.ChatColor;
 import org.bukkit.NamespacedKey;
@@ -44,7 +45,7 @@ class PlayerLanguageOption implements SlimefunGuideOption<String> {
                             + ")")
                     : Slimefun.getLocalization().getMessage(p, "languages." + language.getId());
 
-            List<String> lore = new ArrayList<>();
+            List<String> lore = new CopyOnWriteArrayList<>();
             lore.add("");
             lore.add("&e&o" + Slimefun.getLocalization().getMessage(p, "guide.work-in-progress"));
             lore.add("");
@@ -144,10 +145,8 @@ class PlayerLanguageOption implements SlimefunGuideOption<String> {
                         "",
                         "&7\u21E8 &e" + Slimefun.getLocalization().getMessage(p, "guide.languages.select-default")),
                 (pl, i, item, action) -> {
-                    Slimefun.instance()
-                            .getServer()
-                            .getPluginManager()
-                            .callEvent(new PlayerLanguageChangeEvent(
+                    Folia.getPluginManager()
+                            .ce(new PlayerLanguageChangeEvent(
                                     pl, Slimefun.getLocalization().getLanguage(pl), defaultLanguage));
                     setSelectedOption(pl, guide, null);
 
@@ -171,10 +170,8 @@ class PlayerLanguageOption implements SlimefunGuideOption<String> {
                             "",
                             "&7\u21E8 &e" + Slimefun.getLocalization().getMessage(p, "guide.languages.select")),
                     (pl, i, item, action) -> {
-                        Slimefun.instance()
-                                .getServer()
-                                .getPluginManager()
-                                .callEvent(new PlayerLanguageChangeEvent(
+                        Folia.getPluginManager()
+                                .ce(new PlayerLanguageChangeEvent(
                                         pl, Slimefun.getLocalization().getLanguage(pl), language));
                         setSelectedOption(pl, guide, language.getId());
 

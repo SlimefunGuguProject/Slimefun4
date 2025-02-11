@@ -3,6 +3,7 @@ package io.github.thebusybiscuit.slimefun4.implementation.listeners;
 import com.xzavier0722.mc.plugin.slimefun4.storage.callback.IAsyncReadCallback;
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunBlockData;
 import com.xzavier0722.mc.plugin.slimefun4.storage.util.StorageCacheUtils;
+import io.github.bakedlibs.dough.collections.Pair;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.core.attributes.WitherProof;
 import io.github.thebusybiscuit.slimefun4.core.handlers.BlockBreakHandler;
@@ -18,6 +19,7 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.Skull;
 import org.bukkit.block.data.type.Piston;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.FallingBlock;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -81,8 +83,8 @@ public class BlockPhysicsListener implements Listener {
                                 blockData.setPendingRemove(true);
                                 controller.loadBlockDataAsync(blockData, new IAsyncReadCallback<>() {
                                     @Override
-                                    public boolean runOnMainThread() {
-                                        return true;
+                                    public Pair<Boolean, Pair<Entity, Location>> runOnMainThread() {
+                                        return new Pair<>(true, new Pair<>(null, block.getLocation()));
                                     }
 
                                     @Override

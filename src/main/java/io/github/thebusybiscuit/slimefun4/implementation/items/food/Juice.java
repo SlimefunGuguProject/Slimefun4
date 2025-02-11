@@ -9,8 +9,8 @@ import io.github.thebusybiscuit.slimefun4.implementation.items.SimpleSlimefunIte
 import io.github.thebusybiscuit.slimefun4.implementation.items.backpacks.Cooler;
 import io.github.thebusybiscuit.slimefun4.implementation.listeners.CoolerListener;
 import io.github.thebusybiscuit.slimefun4.utils.SlimefunUtils;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 import org.bukkit.Material;
@@ -54,7 +54,7 @@ public class Juice extends SimpleSlimefunItem<ItemConsumptionHandler> {
         if (meta instanceof PotionMeta potionMeta) {
             effects = potionMeta.getCustomEffects();
         } else {
-            effects = new ArrayList<>();
+            effects = new CopyOnWriteArrayList<>();
         }
     }
 

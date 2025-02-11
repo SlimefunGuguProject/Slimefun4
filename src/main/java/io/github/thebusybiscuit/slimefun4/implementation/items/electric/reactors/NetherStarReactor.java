@@ -1,9 +1,9 @@
 package io.github.thebusybiscuit.slimefun4.implementation.items.electric.reactors;
 
+import com.molean.folia.adapter.Folia;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
 import io.github.thebusybiscuit.slimefun4.api.recipes.RecipeType;
-import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.implementation.SlimefunItems;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -40,14 +40,16 @@ public abstract class NetherStarReactor extends Reactor {
 
     @Override
     public void extraTick(@Nonnull Location l) {
-        Slimefun.runSync(() -> {
-            for (Entity entity :
-                    l.getWorld().getNearbyEntities(l, 5, 5, 5, n -> n instanceof LivingEntity && n.isValid())) {
-                if (entity instanceof LivingEntity livingEntity) {
-                    livingEntity.addPotionEffect(new PotionEffect(PotionEffectType.WITHER, 60, 1));
-                }
-            }
-        });
+        Folia.runSync(
+                () -> {
+                    for (Entity entity :
+                            l.getWorld().getNearbyEntities(l, 5, 5, 5, n -> n instanceof LivingEntity && n.isValid())) {
+                        if (entity instanceof LivingEntity livingEntity) {
+                            livingEntity.addPotionEffect(new PotionEffect(PotionEffectType.WITHER, 60, 1));
+                        }
+                    }
+                },
+                l);
     }
 
     @Override

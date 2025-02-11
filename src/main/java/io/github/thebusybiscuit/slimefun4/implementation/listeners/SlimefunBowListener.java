@@ -1,9 +1,11 @@
 package io.github.thebusybiscuit.slimefun4.implementation.listeners;
 
+import com.molean.folia.adapter.Folia;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.core.handlers.BowShootHandler;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.implementation.items.weapons.SlimefunBow;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -30,7 +32,7 @@ import org.bukkit.event.entity.ProjectileHitEvent;
  */
 public class SlimefunBowListener implements Listener {
 
-    private final Map<UUID, SlimefunBow> projectiles = new HashMap<>();
+    private final Map<UUID, SlimefunBow> projectiles = Collections.synchronizedMap(new HashMap<>());
 
     public void register(@Nonnull Slimefun plugin) {
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
@@ -60,12 +62,13 @@ public class SlimefunBowListener implements Listener {
 
     @EventHandler
     public void onArrowHit(ProjectileHitEvent e) {
-        Slimefun.runSync(
+        Folia.runSync(
                 () -> {
                     if (e.getEntity().isValid() && e.getEntity() instanceof Arrow) {
                         projectiles.remove(e.getEntity().getUniqueId());
                     }
                 },
+                e.getEntity(),
                 4L);
     }
 

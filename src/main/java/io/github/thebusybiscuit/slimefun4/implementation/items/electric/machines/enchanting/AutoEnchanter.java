@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.implementation.items.electric.machines.enchanting;
 
+import com.molean.folia.adapter.Folia;
 import io.github.bakedlibs.dough.inventory.InvUtils;
 import io.github.thebusybiscuit.slimefun4.api.events.AsyncAutoEnchanterProcessEvent;
 import io.github.thebusybiscuit.slimefun4.api.events.AutoEnchantEvent;
@@ -8,13 +9,13 @@ import io.github.thebusybiscuit.slimefun4.api.items.ItemSetting;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
 import io.github.thebusybiscuit.slimefun4.api.recipes.RecipeType;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 import me.mrCookieSlime.Slimefun.Objects.SlimefunItem.abstractItems.MachineRecipe;
 import me.mrCookieSlime.Slimefun.api.inventory.BlockMenu;
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemStack;
@@ -63,7 +64,7 @@ public class AutoEnchanter extends AbstractEnchantmentMachine {
 
             // Call an event so other Plugins can modify it.
             AutoEnchantEvent event = new AutoEnchantEvent(item);
-            Bukkit.getPluginManager().callEvent(event);
+            Folia.getPluginManager().ce(event);
 
             if (event.isCancelled()) {
                 return null;
@@ -83,14 +84,14 @@ public class AutoEnchanter extends AbstractEnchantmentMachine {
     protected MachineRecipe enchant(BlockMenu menu, ItemStack target, ItemStack enchantedBook) {
         // Call an event so other Plugins can modify it.
         AsyncAutoEnchanterProcessEvent event = new AsyncAutoEnchanterProcessEvent(target, enchantedBook, menu);
-        Bukkit.getPluginManager().callEvent(event);
+        Folia.getPluginManager().ce(event);
 
         if (event.isCancelled()) {
             return null;
         }
 
         EnchantmentStorageMeta meta = (EnchantmentStorageMeta) enchantedBook.getItemMeta();
-        Map<Enchantment, Integer> enchantments = new HashMap<>();
+        Map<Enchantment, Integer> enchantments = Collections.synchronizedMap(new HashMap<>());
 
         if (!isEnchantmentCountAllowed(meta.getStoredEnchants().size())) {
             showEnchantmentLimitWarning(menu);

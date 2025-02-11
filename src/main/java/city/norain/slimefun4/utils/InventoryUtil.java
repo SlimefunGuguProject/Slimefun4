@@ -1,6 +1,6 @@
 package city.norain.slimefun4.utils;
 
-import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
+import com.molean.folia.adapter.Folia;
 import java.util.LinkedList;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.HumanEntity;
@@ -20,7 +20,9 @@ public class InventoryUtil {
         if (Bukkit.isPrimaryThread()) {
             new LinkedList<>(inventory.getViewers()).forEach(HumanEntity::closeInventory);
         } else {
-            Slimefun.runSync(() -> new LinkedList<>(inventory.getViewers()).forEach(HumanEntity::closeInventory));
+            Folia.runSync(
+                    () -> new LinkedList<>(inventory.getViewers()).forEach(HumanEntity::closeInventory),
+                    inventory.getLocation());
         }
     }
 
@@ -30,7 +32,7 @@ public class InventoryUtil {
         if (Bukkit.isPrimaryThread()) {
             callback.run();
         } else {
-            Slimefun.runSync(callback);
+            Folia.runSync(callback, inventory.getLocation());
         }
     }
 }

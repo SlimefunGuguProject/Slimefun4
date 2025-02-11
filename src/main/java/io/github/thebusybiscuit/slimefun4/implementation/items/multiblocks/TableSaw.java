@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.implementation.items.multiblocks;
 
+import com.molean.folia.adapter.Folia;
 import io.github.bakedlibs.dough.items.ItemUtils;
 import io.github.thebusybiscuit.slimefun4.api.events.MultiBlockCraftEvent;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
@@ -9,13 +10,12 @@ import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
 import io.github.thebusybiscuit.slimefun4.core.multiblocks.MultiBlockMachine;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.implementation.items.blocks.OutputChest;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CopyOnWriteArrayList;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
-import org.bukkit.Bukkit;
 import org.bukkit.Effect;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
@@ -41,7 +41,7 @@ import org.bukkit.inventory.ItemStack;
  */
 public class TableSaw extends MultiBlockMachine {
 
-    private final List<ItemStack> displayedRecipes = new ArrayList<>();
+    private final List<ItemStack> displayedRecipes = new CopyOnWriteArrayList<>();
 
     private final ItemSetting<Boolean> canUseSlimefunItems = new ItemSetting<>(this, "can-use-slimefun-items", true);
 
@@ -129,7 +129,7 @@ public class TableSaw extends MultiBlockMachine {
 
         MultiBlockCraftEvent event = new MultiBlockCraftEvent(p, this, item, output);
 
-        Bukkit.getPluginManager().callEvent(event);
+        Folia.getPluginManager().ce(event);
         if (event.isCancelled()) {
             return;
         }

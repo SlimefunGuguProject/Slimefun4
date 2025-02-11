@@ -1,6 +1,7 @@
 package io.github.thebusybiscuit.slimefun4.core.commands.subcommands;
 
 import com.xzavier0722.mc.plugin.slimefun4.storage.callback.IAsyncReadCallback;
+import io.github.bakedlibs.dough.collections.Pair;
 import io.github.thebusybiscuit.slimefun4.api.player.PlayerBackpack;
 import io.github.thebusybiscuit.slimefun4.core.commands.SlimefunCommand;
 import io.github.thebusybiscuit.slimefun4.core.commands.SubCommand;
@@ -17,8 +18,10 @@ import me.mrCookieSlime.CSCoreLibPlugin.general.Inventory.ChestMenu;
 import org.apache.commons.lang.Validate;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 
 /**
@@ -99,8 +102,8 @@ class BackpackCommand extends SubCommand {
                 .getProfileDataController()
                 .getBackpacksAsync(owner.getUniqueId().toString(), new IAsyncReadCallback<>() {
                     @Override
-                    public boolean runOnMainThread() {
-                        return true;
+                    public Pair<Boolean, Pair<Entity, Location>> runOnMainThread() {
+                        return new Pair<>(true, new Pair<>(p, null));
                     }
 
                     @Override

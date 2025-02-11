@@ -1,6 +1,7 @@
 package io.github.thebusybiscuit.slimefun4.api.researches;
 
 import city.norain.slimefun4.VaultIntegration;
+import com.molean.folia.adapter.Folia;
 import io.github.thebusybiscuit.slimefun4.api.events.PlayerPreResearchEvent;
 import io.github.thebusybiscuit.slimefun4.api.events.ResearchUnlockEvent;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
@@ -20,7 +21,6 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 import org.apache.commons.lang.Validate;
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
 import org.bukkit.Keyed;
@@ -300,7 +300,7 @@ public class Research implements Keyed {
                 guide.openItemGroup(profile, itemGroup, page);
             } else {
                 PlayerPreResearchEvent event = new PlayerPreResearchEvent(player, this, sfItem);
-                Bukkit.getPluginManager().callEvent(event);
+                Folia.getPluginManager().ce(event);
 
                 if (!event.isCancelled()) {
                     if (this.canUnlock(player)) {

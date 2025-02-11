@@ -1,10 +1,11 @@
 package me.mrCookieSlime.Slimefun.api.inventory;
 
+import com.molean.folia.adapter.Folia;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.utils.ChestMenuUtils;
-import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import me.mrCookieSlime.CSCoreLibPlugin.general.Inventory.ChestMenu;
@@ -20,7 +21,7 @@ import org.bukkit.inventory.ItemStack;
 // This class will be deprecated, relocated and rewritten in a future version.
 public abstract class BlockMenuPreset extends ChestMenu {
 
-    protected final Set<Integer> occupiedSlots = new HashSet<>();
+    protected final Set<Integer> occupiedSlots = new CopyOnWriteArraySet<>();
     private final String inventoryTitle;
     private final String id;
 
@@ -173,7 +174,7 @@ public abstract class BlockMenuPreset extends ChestMenu {
 
     @Nonnull
     public Set<Integer> getInventorySlots() {
-        Set<Integer> emptySlots = new HashSet<>();
+        Set<Integer> emptySlots = new CopyOnWriteArraySet<>();
 
         if (isSizeAutomaticallyInferred()) {
             for (int i = 0; i < toInventory().getSize(); i++) {
@@ -220,15 +221,17 @@ public abstract class BlockMenuPreset extends ChestMenu {
     public void newInstance(@Nonnull BlockMenu menu, @Nonnull Location l) {
         Validate.notNull(l, "Cannot create a new BlockMenu without a Location");
 
-        Slimefun.runSync(() -> {
-            locked = true;
+        Folia.runSync(
+                () -> {
+                    locked = true;
 
-            try {
-                newInstance(menu, l.getBlock());
-            } catch (Exception | LinkageError x) {
-                getSlimefunItem().error("An Error occurred while trying to create a BlockMenu", x);
-            }
-        });
+                    try {
+                        newInstance(menu, l.getBlock());
+                    } catch (Exception | LinkageError x) {
+                        getSlimefunItem().error("An Error occurred while trying to create a BlockMenu", x);
+                    }
+                },
+                l);
     }
 
     /**

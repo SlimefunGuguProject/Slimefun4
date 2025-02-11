@@ -1,9 +1,11 @@
 package io.github.thebusybiscuit.slimefun4.implementation.listeners;
 
+import com.molean.folia.adapter.Folia;
 import com.xzavier0722.mc.plugin.slimefun4.storage.callback.IAsyncReadCallback;
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunBlockData;
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.attributes.UniversalBlock;
 import com.xzavier0722.mc.plugin.slimefun4.storage.util.StorageCacheUtils;
+import io.github.bakedlibs.dough.collections.Pair;
 import io.github.bakedlibs.dough.protection.Interaction;
 import io.github.thebusybiscuit.slimefun4.api.MinecraftVersion;
 import io.github.thebusybiscuit.slimefun4.api.events.ExplosiveToolBreakBlocksEvent;
@@ -23,11 +25,11 @@ import io.github.thebusybiscuit.slimefun4.utils.tags.SlimefunTag;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ThreadLocalRandom;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
-import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -36,6 +38,7 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.Rotatable;
 import org.bukkit.enchantments.Enchantment;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -129,7 +132,7 @@ public class BlockListener implements Listener {
                 optimizePlacement(sfItem, block, e.getPlayer().getLocation());
 
                 var placeEvent = new SlimefunBlockPlaceEvent(e.getPlayer(), item, block, sfItem);
-                Bukkit.getPluginManager().callEvent(placeEvent);
+                Folia.getPluginManager().ce(placeEvent);
 
                 if (placeEvent.isCancelled()) {
                     e.setCancelled(true);
@@ -182,7 +185,7 @@ public class BlockListener implements Listener {
         if (blockData != null) {
             SlimefunBlockBreakEvent breakEvent =
                     new SlimefunBlockBreakEvent(e.getPlayer(), heldItem, e.getBlock(), sfItem);
-            Bukkit.getPluginManager().callEvent(breakEvent);
+            Folia.getPluginManager().ce(breakEvent);
 
             if (breakEvent.isCancelled()) {
                 e.setCancelled(true);
@@ -190,7 +193,7 @@ public class BlockListener implements Listener {
             }
         }
 
-        List<ItemStack> drops = new ArrayList<>();
+        List<ItemStack> drops = new CopyOnWriteArrayList<>();
 
         if (!heldItem.getType().isAir()) {
             int fortune = getBonusDropsWithFortune(heldItem, e.getBlock());
@@ -224,7 +227,7 @@ public class BlockListener implements Listener {
                             e.setDropItems(true);
                             dropItems(e, heldItem, block, sfItem, drops);
                         },
-                        true);
+                        new Pair<>(true, new Pair<>(null, e.getBlock().getLocation())));
                 return;
             }
 
@@ -334,8 +337,8 @@ public class BlockListener implements Listener {
                     blockData.setPendingRemove(true);
                     controller.loadBlockDataAsync(blockData, new IAsyncReadCallback<>() {
                         @Override
-                        public boolean runOnMainThread() {
-                            return true;
+                        public Pair<Boolean, Pair<Entity, Location>> runOnMainThread() {
+                            return new Pair<>(true, new Pair<>(null, loc));
                         }
 
                         @Override

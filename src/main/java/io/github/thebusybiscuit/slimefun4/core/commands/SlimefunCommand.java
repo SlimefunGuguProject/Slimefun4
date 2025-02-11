@@ -3,6 +3,7 @@ package io.github.thebusybiscuit.slimefun4.core.commands;
 import io.github.bakedlibs.dough.common.ChatColors;
 import io.github.thebusybiscuit.slimefun4.core.commands.subcommands.SlimefunSubCommands;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -28,7 +29,7 @@ public class SlimefunCommand implements CommandExecutor, Listener {
     private boolean registered = false;
     private final Slimefun plugin;
     private final List<SubCommand> commands = new LinkedList<>();
-    private final Map<SubCommand, Integer> commandUsage = new HashMap<>();
+    private final Map<SubCommand, Integer> commandUsage = Collections.synchronizedMap(new HashMap<>());
 
     /**
      * Creates a new instance of {@link SlimefunCommand}

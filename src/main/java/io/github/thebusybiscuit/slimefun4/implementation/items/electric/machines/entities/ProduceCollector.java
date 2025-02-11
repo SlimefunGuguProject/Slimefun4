@@ -13,10 +13,10 @@ import io.github.thebusybiscuit.slimefun4.api.recipes.RecipeType;
 import io.github.thebusybiscuit.slimefun4.core.attributes.RecipeDisplayItem;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.utils.SlimefunUtils;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.function.Predicate;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -47,7 +47,7 @@ import org.bukkit.inventory.ItemStack;
 public class ProduceCollector extends AContainer implements RecipeDisplayItem {
 
     private final ItemSetting<Integer> range = new IntRangeSetting(this, "range", 1, 2, 32);
-    private final Set<AnimalProduce> animalProduces = new HashSet<>();
+    private final Set<AnimalProduce> animalProduces = new CopyOnWriteArraySet<>();
 
     @ParametersAreNonnullByDefault
     public ProduceCollector(ItemGroup itemGroup, SlimefunItemStack item, RecipeType recipeType, ItemStack[] recipe) {
@@ -110,7 +110,7 @@ public class ProduceCollector extends AContainer implements RecipeDisplayItem {
 
     @Override
     public @Nonnull List<ItemStack> getDisplayRecipes() {
-        List<ItemStack> displayRecipes = new ArrayList<>();
+        List<ItemStack> displayRecipes = new CopyOnWriteArrayList<>();
 
         displayRecipes.add(new CustomItemStack(Material.BUCKET, null, "&fRequires &bCow &fnearby"));
         displayRecipes.add(new ItemStack(Material.MILK_BUCKET));

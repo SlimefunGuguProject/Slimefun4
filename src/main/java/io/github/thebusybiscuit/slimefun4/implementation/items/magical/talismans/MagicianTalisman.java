@@ -4,9 +4,9 @@ import io.github.thebusybiscuit.slimefun4.api.items.ItemSetting;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.implementation.settings.TalismanEnchantment;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -30,7 +30,7 @@ public class MagicianTalisman extends Talisman {
 
     private final ItemSetting<Boolean> allowEnchantmentBooks =
             new ItemSetting<>(this, "allow-enchantment-books", false);
-    private final Set<TalismanEnchantment> enchantments = new HashSet<>();
+    private final Set<TalismanEnchantment> enchantments = new CopyOnWriteArraySet<>();
 
     @ParametersAreNonnullByDefault
     public MagicianTalisman(SlimefunItemStack item, ItemStack[] recipe) {

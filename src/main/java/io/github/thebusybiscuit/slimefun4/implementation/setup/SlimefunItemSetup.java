@@ -203,8 +203,8 @@ import io.github.thebusybiscuit.slimefun4.utils.ColoredMaterial;
 import io.github.thebusybiscuit.slimefun4.utils.HeadTexture;
 import io.github.thebusybiscuit.slimefun4.utils.SlimefunUtils;
 import io.github.thebusybiscuit.slimefun4.utils.compatibility.VersionedPotionEffectType;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
 import org.bukkit.DyeColor;
@@ -7967,7 +7967,7 @@ public final class SlimefunItemSetup {
             PotionEffect[][] effects,
             SlimefunAddon addon) {
         String[] components = new String[] {"_HELMET", "_CHESTPLATE", "_LEGGINGS", "_BOOTS"};
-        List<ItemStack[]> recipes = new ArrayList<>();
+        List<ItemStack[]> recipes = new CopyOnWriteArrayList<>();
 
         recipes.add(new ItemStack[] {
             baseComponent, baseComponent, baseComponent, baseComponent, null, baseComponent, null, null, null

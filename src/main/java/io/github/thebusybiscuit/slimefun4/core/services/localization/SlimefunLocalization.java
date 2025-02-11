@@ -10,9 +10,9 @@ import io.github.thebusybiscuit.slimefun4.core.services.LocalizationService;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.function.UnaryOperator;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -430,7 +430,7 @@ public abstract class SlimefunLocalization implements Keyed {
     }
 
     protected @Nonnull Set<String> getKeys(@Nonnull FileConfiguration... files) {
-        Set<String> keys = new HashSet<>();
+        Set<String> keys = new CopyOnWriteArraySet<>();
 
         for (FileConfiguration cfg : files) {
             keys.addAll(cfg.getKeys(true));

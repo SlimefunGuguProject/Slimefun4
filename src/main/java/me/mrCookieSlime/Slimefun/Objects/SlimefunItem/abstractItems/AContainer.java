@@ -21,9 +21,11 @@ import io.github.thebusybiscuit.slimefun4.utils.ChestMenuUtils;
 import io.github.thebusybiscuit.slimefun4.utils.SlimefunUtils;
 import io.github.thebusybiscuit.slimefun4.utils.itemstack.ItemStackWrapper;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
 import me.mrCookieSlime.CSCoreLibPlugin.general.Inventory.ChestMenu.AdvancedMenuClickHandler;
@@ -49,7 +51,7 @@ public abstract class AContainer extends SlimefunItem
     private static final int[] BORDER_IN = {9, 10, 11, 12, 18, 21, 27, 28, 29, 30};
     private static final int[] BORDER_OUT = {14, 15, 16, 17, 23, 26, 32, 33, 34, 35};
 
-    protected final List<MachineRecipe> recipes = new ArrayList<>();
+    protected final List<MachineRecipe> recipes = new CopyOnWriteArrayList<>();
     private final MachineProcessor<CraftingOperation> processor = new MachineProcessor<>(this);
 
     private int energyConsumedPerTick = -1;
@@ -410,7 +412,7 @@ public abstract class AContainer extends SlimefunItem
     }
 
     protected MachineRecipe findNextRecipe(BlockMenu inv) {
-        Map<Integer, ItemStack> inventory = new HashMap<>();
+        Map<Integer, ItemStack> inventory = Collections.synchronizedMap(new HashMap<>());
 
         for (int slot : getInputSlots()) {
             ItemStack item = inv.getItemInSlot(slot);
@@ -420,7 +422,7 @@ public abstract class AContainer extends SlimefunItem
             }
         }
 
-        Map<Integer, Integer> found = new HashMap<>();
+        Map<Integer, Integer> found = Collections.synchronizedMap(new HashMap<>());
 
         for (MachineRecipe recipe : recipes) {
             for (ItemStack input : recipe.getInput()) {

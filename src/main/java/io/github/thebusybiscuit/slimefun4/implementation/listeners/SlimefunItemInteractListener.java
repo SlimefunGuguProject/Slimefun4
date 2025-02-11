@@ -1,10 +1,12 @@
 package io.github.thebusybiscuit.slimefun4.implementation.listeners;
 
+import com.molean.folia.adapter.Folia;
 import com.xzavier0722.mc.plugin.slimefun4.storage.callback.IAsyncReadCallback;
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunBlockData;
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunUniversalData;
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.attributes.UniversalBlock;
 import com.xzavier0722.mc.plugin.slimefun4.storage.util.StorageCacheUtils;
+import io.github.bakedlibs.dough.collections.Pair;
 import io.github.thebusybiscuit.slimefun4.api.events.PlayerRightClickEvent;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.core.handlers.BlockUseHandler;
@@ -17,9 +19,10 @@ import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
 import me.mrCookieSlime.Slimefun.api.inventory.BlockMenuPreset;
 import me.mrCookieSlime.Slimefun.api.inventory.DirtyChestMenu;
-import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event.Result;
 import org.bukkit.event.EventHandler;
@@ -63,7 +66,7 @@ public class SlimefunItemInteractListener implements Listener {
 
             // Fire our custom Event
             PlayerRightClickEvent event = new PlayerRightClickEvent(e);
-            Bukkit.getPluginManager().callEvent(event);
+            Folia.getPluginManager().ce(event);
 
             boolean itemUsed = e.getHand() == EquipmentSlot.OFF_HAND;
 
@@ -157,8 +160,8 @@ public class SlimefunItemInteractListener implements Listener {
                                 .getBlockDataController()
                                 .loadUniversalDataAsync(uniData, new IAsyncReadCallback<>() {
                                     @Override
-                                    public boolean runOnMainThread() {
-                                        return true;
+                                    public Pair<Boolean, Pair<Entity, Location>> runOnMainThread() {
+                                        return new Pair<>(true, new Pair<>(p, null));
                                     }
 
                                     @Override
@@ -185,8 +188,8 @@ public class SlimefunItemInteractListener implements Listener {
                                 .getBlockDataController()
                                 .loadBlockDataAsync(blockData, new IAsyncReadCallback<>() {
                                     @Override
-                                    public boolean runOnMainThread() {
-                                        return true;
+                                    public Pair<Boolean, Pair<Entity, Location>> runOnMainThread() {
+                                        return new Pair<>(true, new Pair<>(p, null));
                                     }
 
                                     @Override

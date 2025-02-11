@@ -1,5 +1,6 @@
 package com.xzavier0722.mc.plugin.slimefun4.storage.controller;
 
+import com.molean.folia.adapter.Folia;
 import com.xzavier0722.mc.plugin.slimefun4.storage.adapter.IDataSourceAdapter;
 import com.xzavier0722.mc.plugin.slimefun4.storage.callback.IAsyncReadCallback;
 import com.xzavier0722.mc.plugin.slimefun4.storage.common.DataType;
@@ -8,6 +9,7 @@ import com.xzavier0722.mc.plugin.slimefun4.storage.common.RecordSet;
 import com.xzavier0722.mc.plugin.slimefun4.storage.common.ScopeKey;
 import com.xzavier0722.mc.plugin.slimefun4.storage.task.DatabaseThreadFactory;
 import com.xzavier0722.mc.plugin.slimefun4.storage.task.QueuedWriteTask;
+import io.github.bakedlibs.dough.collections.Pair;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import java.util.List;
 import java.util.Map;
@@ -18,6 +20,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.OverridingMethodsMustInvokeSuper;
+import org.bukkit.Location;
+import org.bukkit.entity.Entity;
 
 public abstract class ADataController {
     private final DatabaseThreadFactory threadFactory = new DatabaseThreadFactory();
@@ -138,9 +142,13 @@ public abstract class ADataController {
         } else {
             cb = () -> callback.onResult(result);
         }
-
-        if (callback.runOnMainThread()) {
-            Slimefun.runSync(cb);
+        Pair<Boolean, Pair<Entity, Location>> pairPair = callback.runOnMainThread();
+        if (pairPair != null && Boolean.TRUE.equals(pairPair.getFirstValue())) {
+            if (pairPair.getSecondValue().getFirstValue() != null) {
+                Folia.runSync(cb, pairPair.getSecondValue().getFirstValue());
+            } else {
+                Folia.runSync(cb, pairPair.getSecondValue().getSecondValue());
+            }
         } else {
             callbackExecutor.submit(cb);
         }

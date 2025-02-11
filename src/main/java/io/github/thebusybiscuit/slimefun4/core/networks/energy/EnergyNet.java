@@ -1,6 +1,7 @@
 package io.github.thebusybiscuit.slimefun4.core.networks.energy;
 
 import city.norain.slimefun4.utils.MathUtil;
+import com.molean.folia.adapter.Folia;
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunBlockData;
 import com.xzavier0722.mc.plugin.slimefun4.storage.util.StorageCacheUtils;
 import io.github.thebusybiscuit.slimefun4.api.ErrorReport;
@@ -15,10 +16,10 @@ import io.github.thebusybiscuit.slimefun4.implementation.SlimefunItems;
 import io.github.thebusybiscuit.slimefun4.utils.NumberUtils;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.LongConsumer;
 import javax.annotation.Nonnull;
@@ -44,9 +45,9 @@ public class EnergyNet extends Network implements HologramOwner {
 
     private static final int RANGE = 6;
 
-    private final Map<Location, EnergyNetProvider> generators = new HashMap<>();
-    private final Map<Location, EnergyNetComponent> capacitors = new HashMap<>();
-    private final Map<Location, EnergyNetComponent> consumers = new HashMap<>();
+    private final Map<Location, EnergyNetProvider> generators = Collections.synchronizedMap(new HashMap<>());
+    private final Map<Location, EnergyNetComponent> capacitors = Collections.synchronizedMap(new HashMap<>());
+    private final Map<Location, EnergyNetComponent> consumers = Collections.synchronizedMap(new HashMap<>());
 
     protected EnergyNet(@Nonnull Location l) {
         super(Slimefun.getNetworkManager(), l);
@@ -263,7 +264,7 @@ public class EnergyNet extends Network implements HologramOwner {
     }
 
     private int tickAllGenerators(@Nonnull LongConsumer timings) {
-        Set<Location> explodedBlocks = new HashSet<>();
+        Set<Location> explodedBlocks = new CopyOnWriteArraySet<>();
         int supply = 0;
 
         for (Map.Entry<Location, EnergyNetProvider> entry : generators.entrySet()) {
@@ -302,10 +303,12 @@ public class EnergyNet extends Network implements HologramOwner {
                     explodedBlocks.add(loc);
                     Slimefun.getDatabaseManager().getBlockDataController().removeBlock(loc);
 
-                    Slimefun.runSync(() -> {
-                        loc.getBlock().setType(Material.LAVA);
-                        loc.getWorld().createExplosion(loc, 0F, false);
-                    });
+                    Folia.runSync(
+                            () -> {
+                                loc.getBlock().setType(Material.LAVA);
+                                loc.getWorld().createExplosion(loc, 0F, false);
+                            },
+                            loc);
                 } else {
                     supply = NumberUtils.flowSafeAddition(supply, energy);
                 }

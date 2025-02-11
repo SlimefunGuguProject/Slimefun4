@@ -1,6 +1,7 @@
 package io.github.thebusybiscuit.slimefun4.implementation.items.multiblocks;
 
 import com.xzavier0722.mc.plugin.slimefun4.storage.callback.IAsyncReadCallback;
+import io.github.bakedlibs.dough.collections.Pair;
 import io.github.bakedlibs.dough.common.ChatColors;
 import io.github.bakedlibs.dough.common.CommonPatterns;
 import io.github.bakedlibs.dough.items.ItemUtils;
@@ -17,8 +18,10 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.BlockFace;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -92,8 +95,8 @@ abstract class AbstractCraftingTable extends MultiBlockMachine {
                     .getProfileDataController()
                     .getBackpackAsync(id.get(), new IAsyncReadCallback<>() {
                         @Override
-                        public boolean runOnMainThread() {
-                            return true;
+                        public Pair<Boolean, Pair<Entity, Location>> runOnMainThread() {
+                            return new Pair<>(true, new Pair<>(p, null));
                         }
 
                         @Override
@@ -111,8 +114,8 @@ abstract class AbstractCraftingTable extends MultiBlockMachine {
                         .getProfileDataController()
                         .getBackpackAsync(p, Integer.parseInt(id.get()), new IAsyncReadCallback<>() {
                             @Override
-                            public boolean runOnMainThread() {
-                                return true;
+                            public Pair<Boolean, Pair<Entity, Location>> runOnMainThread() {
+                                return new Pair<>(true, new Pair<>(p, null));
                             }
 
                             @Override

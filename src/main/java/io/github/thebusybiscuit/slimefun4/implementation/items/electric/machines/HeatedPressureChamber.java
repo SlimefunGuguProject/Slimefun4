@@ -8,10 +8,10 @@ import io.github.thebusybiscuit.slimefun4.api.recipes.RecipeType;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.implementation.SlimefunItems;
 import io.github.thebusybiscuit.slimefun4.utils.SlimefunUtils;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import javax.annotation.ParametersAreNonnullByDefault;
 import me.mrCookieSlime.Slimefun.Objects.SlimefunItem.abstractItems.AContainer;
 import me.mrCookieSlime.Slimefun.api.inventory.BlockMenuPreset;
@@ -54,7 +54,7 @@ public class HeatedPressureChamber extends AContainer {
                     return getOutputSlots();
                 }
 
-                List<Integer> slots = new ArrayList<>();
+                List<Integer> slots = new CopyOnWriteArrayList<>();
 
                 for (int slot : getInputSlots()) {
                     if (SlimefunUtils.isItemSimilar(menu.getItemInSlot(slot), item, true)) {

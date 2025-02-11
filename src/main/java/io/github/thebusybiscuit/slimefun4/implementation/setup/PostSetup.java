@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.implementation.setup;
 
+import com.molean.folia.adapter.Folia;
 import io.github.thebusybiscuit.slimefun4.api.events.SlimefunItemRegistryFinalizedEvent;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
@@ -8,11 +9,11 @@ import io.github.thebusybiscuit.slimefun4.implementation.items.multiblocks.Grind
 import io.github.thebusybiscuit.slimefun4.implementation.items.multiblocks.MakeshiftSmeltery;
 import io.github.thebusybiscuit.slimefun4.implementation.items.multiblocks.OreCrusher;
 import io.github.thebusybiscuit.slimefun4.implementation.items.multiblocks.Smeltery;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Level;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
@@ -53,7 +54,7 @@ public final class PostSetup {
             }
         }
 
-        Bukkit.getPluginManager().callEvent(new SlimefunItemRegistryFinalizedEvent());
+        Folia.getPluginManager().ce(new SlimefunItemRegistryFinalizedEvent());
 
         loadOreGrinderRecipes();
         loadSmelteryRecipes();
@@ -88,6 +89,7 @@ public final class PostSetup {
         sender.sendMessage("");
         sender.sendMessage(ChatColor.GREEN + " - 源码:      https://github.com/SlimefunGuguProject/Slimefun4");
         sender.sendMessage(ChatColor.GREEN + " - Bug 反馈:  https://github.com/SlimefunGuguProject/Slimefun4/issues");
+        sender.sendMessage(ChatColor.GREEN + " - Folia 相关BUG反馈: @梓莎(QQ2719322893)");
 
         sender.sendMessage("");
 
@@ -111,7 +113,7 @@ public final class PostSetup {
     }
 
     private static void loadOreGrinderRecipes() {
-        List<ItemStack[]> grinderRecipes = new ArrayList<>();
+        List<ItemStack[]> grinderRecipes = new CopyOnWriteArrayList<>();
 
         GrindStone grinder = (GrindStone) SlimefunItems.GRIND_STONE.getItem();
         if (grinder != null) {
@@ -191,7 +193,7 @@ public final class PostSetup {
     }
 
     private static void addSmelteryRecipe(ItemStack[] input, ItemStack[] output, MakeshiftSmeltery makeshiftSmeltery) {
-        List<ItemStack> ingredients = new ArrayList<>();
+        List<ItemStack> ingredients = new CopyOnWriteArrayList<>();
 
         // Filter out 'null' items
         for (ItemStack item : input) {

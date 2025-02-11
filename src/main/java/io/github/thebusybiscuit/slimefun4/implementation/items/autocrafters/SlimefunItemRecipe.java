@@ -5,9 +5,9 @@ import io.github.thebusybiscuit.slimefun4.api.recipes.RecipeType;
 import io.github.thebusybiscuit.slimefun4.implementation.tasks.AsyncRecipeChoiceTask;
 import io.github.thebusybiscuit.slimefun4.utils.ChestMenuUtils;
 import io.github.thebusybiscuit.slimefun4.utils.SlimefunUtils;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Predicate;
 import javax.annotation.Nonnull;
 import me.mrCookieSlime.CSCoreLibPlugin.general.Inventory.ChestMenu;
@@ -35,7 +35,7 @@ class SlimefunItemRecipe extends AbstractRecipe {
 
     @Nonnull
     private static Collection<Predicate<ItemStack>> getInputs(@Nonnull SlimefunItem item) {
-        List<Predicate<ItemStack>> predicates = new ArrayList<>();
+        List<Predicate<ItemStack>> predicates = new CopyOnWriteArrayList<>();
 
         for (int i = 0; i < 9; i++) {
             ItemStack ingredient = item.getRecipe()[i];

@@ -1,16 +1,17 @@
 package io.github.thebusybiscuit.slimefun4.core.services.github;
 
+import com.molean.folia.adapter.Folia;
 import io.github.bakedlibs.dough.config.Config;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.utils.HeadTexture;
 import java.io.File;
 import java.time.LocalDateTime;
-import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import javax.annotation.Nonnull;
@@ -52,7 +53,7 @@ public class GitHubService {
     public GitHubService(@Nonnull String repository) {
         this.repository = repository;
 
-        connectors = new HashSet<>();
+        connectors = new CopyOnWriteArraySet<>();
         contributors = new ConcurrentHashMap<>();
     }
 
@@ -69,7 +70,7 @@ public class GitHubService {
         long period = TimeUnit.HOURS.toMillis(1);
         GitHubTask task = new GitHubTask(this);
 
-        plugin.getServer().getScheduler().runTaskTimerAsynchronously(plugin, task, 30 * 20L, period);
+        Folia.getScheduler().runTaskTimerAsynchronously(plugin, task, 30 * 20L, period);
     }
 
     /**

@@ -12,6 +12,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Level;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -190,7 +191,7 @@ public final class AndroidShareMenu {
         String replacedText = value.replace("[", "").replace("]", "");
 
         if (replacedText.isEmpty()) {
-            return new ArrayList<>();
+            return new CopyOnWriteArrayList<>();
         } else {
             return new ArrayList<>(Arrays.asList(replacedText.split(", ")));
         }
@@ -209,7 +210,7 @@ public final class AndroidShareMenu {
 
         // Checks for old Android
         if (!trustUsers.isPresent()) {
-            List<String> emptyUsers = new ArrayList<>();
+            List<String> emptyUsers = new CopyOnWriteArrayList<>();
             setSharedUserData(b.getState(), String.valueOf(emptyUsers));
             return emptyUsers;
         }

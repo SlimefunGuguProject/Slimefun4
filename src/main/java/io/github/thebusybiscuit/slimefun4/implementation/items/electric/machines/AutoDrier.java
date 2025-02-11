@@ -8,8 +8,8 @@ import io.github.thebusybiscuit.slimefun4.core.attributes.NotHopperable;
 import io.github.thebusybiscuit.slimefun4.core.attributes.RecipeDisplayItem;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.implementation.SlimefunItems;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import javax.annotation.ParametersAreNonnullByDefault;
 import me.mrCookieSlime.Slimefun.Objects.SlimefunItem.abstractItems.AContainer;
 import org.bukkit.Material;
@@ -35,7 +35,7 @@ public class AutoDrier extends AContainer implements RecipeDisplayItem, NotHoppe
 
     @Override
     protected void registerDefaultRecipes() {
-        recipeList = new ArrayList<>();
+        recipeList = new CopyOnWriteArrayList<>();
         recipeList.add(new ItemStack(Material.ROTTEN_FLESH));
         recipeList.add(new ItemStack(Material.LEATHER));
 

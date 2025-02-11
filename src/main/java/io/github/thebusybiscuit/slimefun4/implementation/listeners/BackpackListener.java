@@ -9,6 +9,7 @@ import io.github.thebusybiscuit.slimefun4.core.services.sounds.SoundEffect;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.implementation.items.backpacks.Cooler;
 import io.github.thebusybiscuit.slimefun4.implementation.items.backpacks.SlimefunBackpack;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,8 +47,8 @@ import org.bukkit.inventory.ItemStack;
  */
 public class BackpackListener implements Listener {
 
-    private final Map<UUID, ItemStack> backpacks = new HashMap<>();
-    private final Map<UUID, List<Pair<ItemStack, Integer>>> invSnapshot = new HashMap<>();
+    private final Map<UUID, ItemStack> backpacks = Collections.synchronizedMap(new HashMap<>());
+    private final Map<UUID, List<Pair<ItemStack, Integer>>> invSnapshot = Collections.synchronizedMap(new HashMap<>());
 
     public void register(@Nonnull Slimefun plugin) {
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
@@ -213,7 +214,7 @@ public class BackpackListener implements Listener {
                                 InvStorageUtils.getInvSnapshot(
                                         backpack.getInventory().getContents()));
                     },
-                    true);
+                    new Pair<>(true, new Pair<>(p, null)));
 
         } else {
             Slimefun.getLocalization().sendMessage(p, "backpack.already-open", true);

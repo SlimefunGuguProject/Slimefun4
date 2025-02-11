@@ -1,6 +1,7 @@
 package com.xzavier0722.mc.plugin.slimefun4.autocrafter;
 
 import com.xzavier0722.mc.plugin.slimefun4.storage.util.StorageCacheUtils;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import org.bukkit.block.Block;
@@ -17,7 +18,7 @@ import org.bukkit.block.Block;
  */
 public class CrafterInteractorManager {
 
-    private static final Map<String, CrafterInteractorHandler> handlers = new HashMap<>();
+    private static final Map<String, CrafterInteractorHandler> handlers = Collections.synchronizedMap(new HashMap<>());
 
     /**
      * Register the specific slimefun item as crafter interactor.

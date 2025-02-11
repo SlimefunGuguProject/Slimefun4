@@ -55,7 +55,7 @@ public class GrapplingHook extends SimpleSlimefunItem<ItemUseHandler> {
             boolean isConsumed = consumeOnUse.getValue() && p.getGameMode() != GameMode.CREATIVE;
 
             if (e.getClickedBlock().isEmpty()
-                    && !Slimefun.getGrapplingHookListener().isGrappling(uuid)) {
+                    && !Slimefun.getGrapplingHookListener().isGrappling(p)) {
                 e.cancel();
 
                 if (p.getInventory().getItemInOffHand().getType() == Material.BOW) {

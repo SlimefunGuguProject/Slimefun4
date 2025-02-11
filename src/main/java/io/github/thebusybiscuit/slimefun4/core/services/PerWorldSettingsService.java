@@ -9,13 +9,13 @@ import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import java.io.File;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArraySet;
 import javax.annotation.Nonnull;
 import org.apache.commons.lang.Validate;
 import org.bukkit.Server;
@@ -31,9 +31,10 @@ public class PerWorldSettingsService {
 
     private final Slimefun plugin;
 
-    private final OptionalMap<UUID, Set<String>> disabledItems = new OptionalMap<>(HashMap::new);
-    private final Map<SlimefunAddon, Set<String>> disabledAddons = new HashMap<>();
-    private final Set<UUID> disabledWorlds = new HashSet<>();
+    private final OptionalMap<UUID, Set<String>> disabledItems =
+            new OptionalMap<>(() -> Collections.synchronizedMap(new HashMap<>()));
+    private final Map<SlimefunAddon, Set<String>> disabledAddons = Collections.synchronizedMap(new HashMap<>());
+    private final Set<UUID> disabledWorlds = new CopyOnWriteArraySet<>();
 
     public PerWorldSettingsService(@Nonnull Slimefun plugin) {
         this.plugin = plugin;
@@ -238,7 +239,7 @@ public class PerWorldSettingsService {
                 boolean isAddonDisabled = config.getBoolean(addon + ".enabled");
 
                 if (isAddonDisabled) {
-                    Set<String> blacklist = disabledAddons.computeIfAbsent(plugin, key -> new HashSet<>());
+                    Set<String> blacklist = disabledAddons.computeIfAbsent(plugin, key -> new CopyOnWriteArraySet<>());
                     blacklist.add(worldName);
                 }
 

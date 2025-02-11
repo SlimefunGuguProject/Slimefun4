@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
 
@@ -18,7 +19,7 @@ public class RecordKey extends ScopeKey {
 
     @ParametersAreNonnullByDefault
     public RecordKey(DataScope scope) {
-        this(scope, new HashSet<>());
+        this(scope, new CopyOnWriteArraySet<>());
     }
 
     @ParametersAreNonnullByDefault

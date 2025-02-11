@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.implementation.listeners;
 
+import com.molean.folia.adapter.Folia;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.api.player.PlayerProfile;
 import io.github.thebusybiscuit.slimefun4.core.attributes.DamageableItem;
@@ -8,10 +9,10 @@ import io.github.thebusybiscuit.slimefun4.core.services.sounds.SoundEffect;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.implementation.items.armor.ElytraCap;
 import io.github.thebusybiscuit.slimefun4.implementation.items.armor.SlimefunArmorPiece;
-import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArraySet;
 import javax.annotation.Nonnull;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
@@ -31,7 +32,7 @@ import org.bukkit.event.entity.EntityToggleGlideEvent;
  */
 public class ElytraImpactListener implements Listener {
 
-    private final Set<UUID> gliding = new HashSet<>();
+    private final Set<UUID> gliding = new CopyOnWriteArraySet<>();
 
     public ElytraImpactListener(@Nonnull Slimefun plugin) {
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
@@ -45,7 +46,7 @@ public class ElytraImpactListener implements Listener {
             gliding.add(uuid);
         }
         // We tick 1 tick later because the player is being toggled of at the same tick as it takes damage.
-        Slimefun.instance().getServer().getScheduler().runTaskLater(Slimefun.instance(), gliding::clear, 1);
+        Folia.getScheduler().runTaskLaterAsync(Slimefun.instance(), gliding::clear, 1);
     }
 
     @EventHandler

@@ -3,6 +3,7 @@ package me.mrCookieSlime.Slimefun.api;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import java.io.File;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -26,7 +27,7 @@ public class BlockInfoConfig extends Config {
     private final Map<String, String> data;
 
     public BlockInfoConfig() {
-        this(new HashMap<>());
+        this(Collections.synchronizedMap(new HashMap<>()));
     }
 
     public BlockInfoConfig(Map<String, String> data) {

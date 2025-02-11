@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.api.researches;
 
+import com.molean.folia.adapter.Folia;
 import io.github.thebusybiscuit.slimefun4.api.events.ResearchUnlockEvent;
 import io.github.thebusybiscuit.slimefun4.api.player.PlayerProfile;
 import io.github.thebusybiscuit.slimefun4.core.guide.options.SlimefunGuideSettings;
@@ -10,7 +11,6 @@ import java.util.function.Consumer;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.apache.commons.lang.Validate;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 /**
@@ -60,7 +60,7 @@ public class PlayerResearchTask implements Consumer<PlayerProfile> {
             }
 
             if (!isInstant) {
-                Slimefun.runSync(
+                Folia.runSync(
                         () -> {
                             SoundEffect.PLAYER_RESEARCHING_SOUND.playFor(p);
                             Slimefun.getLocalization()
@@ -68,15 +68,16 @@ public class PlayerResearchTask implements Consumer<PlayerProfile> {
                                                     PLACEHOLDER, research.getName(p))
                                             .replace("%progress%", "0%"));
                         },
+                        p,
                         5L);
             }
 
             ResearchUnlockEvent event = new ResearchUnlockEvent(p, research);
-            Bukkit.getPluginManager().callEvent(event);
+            Folia.getPluginManager().ce(event);
 
             if (!event.isCancelled()) {
                 if (isInstant) {
-                    Slimefun.runSync(() -> unlockResearch(p, profile));
+                    Folia.runSync(() -> unlockResearch(p, profile), p);
                 } else if (Slimefun.getRegistry()
                         .getCurrentlyResearchingPlayers()
                         .add(p.getUniqueId())) {
@@ -88,13 +89,14 @@ public class PlayerResearchTask implements Consumer<PlayerProfile> {
                                     msg -> msg.replace(PLACEHOLDER, research.getName(p)));
                     sendUpdateMessage(p);
 
-                    Slimefun.runSync(
+                    Folia.runSync(
                             () -> {
                                 unlockResearch(p, profile);
                                 Slimefun.getRegistry()
                                         .getCurrentlyResearchingPlayers()
                                         .remove(p.getUniqueId());
                             },
+                            p,
                             (RESEARCH_PROGRESS.length + 1) * 20L);
                 }
             }
@@ -105,7 +107,7 @@ public class PlayerResearchTask implements Consumer<PlayerProfile> {
         for (int i = 1; i < RESEARCH_PROGRESS.length + 1; i++) {
             int index = i;
 
-            Slimefun.runSync(
+            Folia.runSync(
                     () -> {
                         SoundEffect.PLAYER_RESEARCHING_SOUND.playFor(p);
 
@@ -114,6 +116,7 @@ public class PlayerResearchTask implements Consumer<PlayerProfile> {
                             return msg.replace(PLACEHOLDER, research.getName(p)).replace("%progress%", progress);
                         });
                     },
+                    p,
                     i * 20L);
         }
     }

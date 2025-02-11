@@ -3,6 +3,7 @@ package io.github.thebusybiscuit.slimefun4.implementation.listeners;
 import io.github.thebusybiscuit.slimefun4.core.attributes.Soulbound;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.utils.SlimefunUtils;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -24,7 +25,7 @@ import org.bukkit.inventory.ItemStack;
  */
 public class SoulboundListener implements Listener {
 
-    private final Map<UUID, Map<Integer, ItemStack>> soulbound = new HashMap<>();
+    private final Map<UUID, Map<Integer, ItemStack>> soulbound = Collections.synchronizedMap(new HashMap<>());
 
     public SoulboundListener(@Nonnull Slimefun plugin) {
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
@@ -32,7 +33,7 @@ public class SoulboundListener implements Listener {
 
     @EventHandler
     public void onDamage(PlayerDeathEvent e) {
-        Map<Integer, ItemStack> items = new HashMap<>();
+        Map<Integer, ItemStack> items = Collections.synchronizedMap(new HashMap<>());
         Player p = e.getEntity();
 
         for (int slot = 0; slot < p.getInventory().getSize(); slot++) {

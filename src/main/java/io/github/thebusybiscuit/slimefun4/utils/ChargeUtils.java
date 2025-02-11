@@ -5,8 +5,8 @@ import io.github.thebusybiscuit.slimefun4.core.attributes.Rechargeable;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.regex.Pattern;
 import javax.annotation.Nonnull;
 import org.apache.commons.lang.Validate;
@@ -46,7 +46,7 @@ public final class ChargeUtils {
         NamespacedKey key = Slimefun.getRegistry().getItemChargeDataKey();
         meta.getPersistentDataContainer().set(key, PersistentDataType.FLOAT, value);
 
-        List<String> lore = meta.hasLore() ? meta.getLore() : new ArrayList<>();
+        List<String> lore = meta.hasLore() ? meta.getLore() : new CopyOnWriteArrayList<>();
         for (int i = 0; i < lore.size(); i++) {
             String line = lore.get(i);
 

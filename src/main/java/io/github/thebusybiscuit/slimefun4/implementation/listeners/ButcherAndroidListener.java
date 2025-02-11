@@ -1,12 +1,13 @@
 package io.github.thebusybiscuit.slimefun4.implementation.listeners;
 
+import com.molean.folia.adapter.Folia;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.implementation.items.androids.AndroidInstance;
 import io.github.thebusybiscuit.slimefun4.implementation.items.androids.ButcherAndroid;
 import io.github.thebusybiscuit.slimefun4.utils.SlimefunUtils;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ThreadLocalRandom;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -42,9 +43,9 @@ public class ButcherAndroidListener implements Listener {
             AndroidInstance obj = (AndroidInstance)
                     e.getEntity().getMetadata(METADATA_KEY).get(0).value();
 
-            Slimefun.runSync(
+            Folia.runSync(
                     () -> {
-                        List<ItemStack> items = new ArrayList<>();
+                        List<ItemStack> items = new CopyOnWriteArrayList<>();
 
                         // Collect any nearby dropped items
                         for (Entity n : e.getEntity().getNearbyEntities(0.5D, 0.5D, 0.5D)) {
@@ -62,6 +63,7 @@ public class ButcherAndroidListener implements Listener {
                                 .spawnEntity(e.getEntity().getLocation(), EntityType.EXPERIENCE_ORB);
                         exp.setExperience(1 + ThreadLocalRandom.current().nextInt(6));
                     },
+                    e.getEntity(),
                     1L);
 
             // Removing metadata to prevent memory leaks

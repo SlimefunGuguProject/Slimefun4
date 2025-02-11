@@ -7,6 +7,7 @@ import io.github.thebusybiscuit.slimefun4.implementation.settings.GoldPanDrop;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
 import org.bukkit.Material;
@@ -42,7 +43,7 @@ public class NetherGoldPan extends GoldPan {
 
     @Override
     protected @Nonnull Set<GoldPanDrop> getGoldPanDrops() {
-        Set<GoldPanDrop> settings = new HashSet<>();
+        Set<GoldPanDrop> settings = new CopyOnWriteArraySet<>();
 
         settings.add(new GoldPanDrop(this, "chance.QUARTZ", 50, new ItemStack(Material.QUARTZ)));
         settings.add(new GoldPanDrop(this, "chance.GOLD_NUGGET", 25, new ItemStack(Material.GOLD_NUGGET)));

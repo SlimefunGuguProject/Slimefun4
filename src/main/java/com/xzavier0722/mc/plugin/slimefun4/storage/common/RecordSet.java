@@ -15,7 +15,7 @@ public class RecordSet {
     private boolean readonly = false;
 
     public RecordSet() {
-        data = new HashMap<>();
+        data = Collections.synchronizedMap(new HashMap<>());
     }
 
     @ParametersAreNonnullByDefault

@@ -2,6 +2,7 @@ package io.github.thebusybiscuit.slimefun4.api.player;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.molean.folia.adapter.Folia;
 import com.xzavier0722.mc.plugin.slimefun4.storage.callback.IAsyncReadCallback;
 import io.github.bakedlibs.dough.common.ChatColors;
 import io.github.bakedlibs.dough.config.Config;
@@ -16,14 +17,14 @@ import io.github.thebusybiscuit.slimefun4.core.guide.GuideHistory;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.implementation.items.armor.SlimefunArmorPiece;
 import io.github.thebusybiscuit.slimefun4.utils.NumberUtils;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import javax.annotation.Nonnull;
@@ -59,7 +60,7 @@ public class PlayerProfile {
     private boolean markedForDeletion = false;
 
     private final Set<Research> researches;
-    private final List<Waypoint> waypoints = new ArrayList<>();
+    private final List<Waypoint> waypoints = new CopyOnWriteArrayList<>();
     private final GuideHistory guideHistory = new GuideHistory(this);
 
     private final HashedArmorpiece[] armor = {
@@ -67,7 +68,7 @@ public class PlayerProfile {
     };
 
     public PlayerProfile(@Nonnull OfflinePlayer p, int backpackNum) {
-        this(p, backpackNum, new HashSet<>());
+        this(p, backpackNum, new CopyOnWriteArraySet<>());
     }
 
     public PlayerProfile(@Nonnull OfflinePlayer p, int backpackNum, Set<Research> researches) {
@@ -357,7 +358,7 @@ public class PlayerProfile {
      * @return The {@link Player} of this {@link PlayerProfile} or null
      */
     public @Nullable Player getPlayer() {
-        return owner.getPlayer();
+        return Bukkit.getPlayer(owner.getUniqueId());
     }
 
     /**
@@ -518,7 +519,7 @@ public class PlayerProfile {
 
             private void invokeCb(PlayerProfile pf) {
                 AsyncProfileLoadEvent event = new AsyncProfileLoadEvent(pf);
-                Bukkit.getPluginManager().callEvent(event);
+                Folia.getPluginManager().ce(event);
 
                 Slimefun.getRegistry().getPlayerProfiles().put(p.getUniqueId(), event.getProfile());
                 if (cb != null) {

@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.implementation.items.tools;
 
+import com.molean.folia.adapter.Folia;
 import io.github.thebusybiscuit.slimefun4.api.MinecraftVersion;
 import io.github.thebusybiscuit.slimefun4.api.events.ClimbingPickLaunchEvent;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
@@ -14,20 +15,19 @@ import io.github.thebusybiscuit.slimefun4.implementation.items.SimpleSlimefunIte
 import io.github.thebusybiscuit.slimefun4.implementation.settings.ClimbableSurface;
 import io.github.thebusybiscuit.slimefun4.utils.compatibility.VersionedEnchantment;
 import io.github.thebusybiscuit.slimefun4.utils.tags.SlimefunTag;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ThreadLocalRandom;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 import org.apache.commons.lang.Validate;
-import org.bukkit.Bukkit;
 import org.bukkit.Effect;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
@@ -60,7 +60,7 @@ public class ClimbingPick extends SimpleSlimefunItem<ItemUseHandler> implements 
     private final ItemSetting<Boolean> damageOnUse = new ItemSetting<>(this, "damage-on-use", true);
 
     private final Map<Material, ClimbableSurface> surfaces = new EnumMap<>(Material.class);
-    private final Set<UUID> users = new HashSet<>();
+    private final Set<UUID> users = new CopyOnWriteArraySet<>();
 
     @ParametersAreNonnullByDefault
     public ClimbingPick(ItemGroup itemGroup, SlimefunItemStack item, RecipeType recipeType, ItemStack[] recipe) {
@@ -200,10 +200,10 @@ public class ClimbingPick extends SimpleSlimefunItem<ItemUseHandler> implements 
         if (power > 0.05) {
             // Prevent players from spamming this item by enforcing a cooldown
             if (users.add(p.getUniqueId())) {
-                Slimefun.runSync(() -> users.remove(p.getUniqueId()), COOLDOWN);
+                Folia.runSync(() -> users.remove(p.getUniqueId()), p, COOLDOWN);
                 Vector velocity = new Vector(0, power, 0);
                 ClimbingPickLaunchEvent event = new ClimbingPickLaunchEvent(p, velocity, this, item, block);
-                Bukkit.getPluginManager().callEvent(event);
+                Folia.getPluginManager().ce(event);
 
                 if (!event.isCancelled()) {
                     p.setVelocity(event.getVelocity());
@@ -262,7 +262,7 @@ public class ClimbingPick extends SimpleSlimefunItem<ItemUseHandler> implements 
 
     @Override
     public List<ItemStack> getDisplayRecipes() {
-        List<ItemStack> display = new ArrayList<>();
+        List<ItemStack> display = new CopyOnWriteArrayList<>();
 
         for (Material mat : surfaces.keySet()) {
             if (mat.isItem()) {

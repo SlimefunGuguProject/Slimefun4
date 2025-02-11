@@ -1,6 +1,7 @@
 package io.github.thebusybiscuit.slimefun4.implementation.tasks.armor;
 
 import com.google.common.base.Preconditions;
+import com.molean.folia.adapter.Folia;
 import io.github.thebusybiscuit.slimefun4.api.player.PlayerProfile;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import java.util.logging.Level;
@@ -54,7 +55,7 @@ public abstract class AbstractArmorTask implements Runnable {
                             new Object[] {getClass().getSimpleName(), tickInterval});
         }
 
-        plugin.getServer().getScheduler().runTaskTimerAsynchronously(plugin, this, 0L, tickInterval);
+        Folia.getScheduler().runTaskTimerAsynchronously(plugin, this, 0L, tickInterval);
     }
 
     /**

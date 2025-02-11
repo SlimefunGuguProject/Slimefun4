@@ -3,6 +3,7 @@ package io.github.thebusybiscuit.slimefun4.implementation;
 import city.norain.slimefun4.SlimefunExtended;
 import city.norain.slimefun4.timings.SQLProfiler;
 import city.norain.slimefun4.utils.LangUtil;
+import com.molean.folia.adapter.Folia;
 import com.xzavier0722.mc.plugin.slimefun4.chat.PlayerChatCatcher;
 import com.xzavier0722.mc.plugin.slimefun4.storage.migrator.BlockStorageMigrator;
 import com.xzavier0722.mc.plugin.slimefun4.storage.migrator.PlayerProfileMigrator;
@@ -111,11 +112,11 @@ import io.github.thebusybiscuit.slimefun4.utils.NumberUtils;
 import io.github.thebusybiscuit.slimefun4.utils.tags.SlimefunTag;
 import io.papermc.lib.PaperLib;
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -123,8 +124,6 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 import me.mrCookieSlime.CSCoreLibPlugin.general.Inventory.MenuListener;
-import net.guizhanss.slimefun4.updater.AutoUpdateTask;
-import org.apache.commons.lang.Validate;
 import org.bukkit.Bukkit;
 import org.bukkit.Server;
 import org.bukkit.World;
@@ -219,6 +218,7 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
      */
     public Slimefun() {
         super();
+        Folia.setPlugin(this);
     }
 
     /**
@@ -247,6 +247,7 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
     @Override
     public void onEnable() {
         setInstance(this);
+        Folia.setPlugin(this);
 
         if (isUnitTest()) {
             // We handle Unit Tests seperately.
@@ -391,28 +392,31 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
 
         // Initiating various Stuff and all items with a slight delay (0ms after the Server finished
         // loading)
-        runSync(
-                new SlimefunStartupTask(this, () -> {
-                    textureService.register(registry.getAllSlimefunItems(), true);
-                    permissionsService.update(registry.getAllSlimefunItems(), true);
-                    soundService.reload(true);
 
-                    // This try/catch should prevent buggy Spigot builds from blocking item loading
-                    try {
-                        recipeService.refresh();
-                    } catch (Exception | LinkageError x) {
-                        logger.log(
-                                Level.SEVERE,
-                                x,
-                                () -> "An Exception occured while iterating through the Recipe list on Minecraft"
-                                        + " Version "
-                                        + minecraftVersion.getName()
-                                        + " (Slimefun v"
-                                        + getVersion()
-                                        + ")");
-                    }
-                }),
-                0);
+        Folia.runAtFirstTick(this, () -> {
+            new SlimefunStartupTask(Slimefun.this, () -> {
+                        textureService.register(registry.getAllSlimefunItems(), true);
+                        permissionsService.update(registry.getAllSlimefunItems(), true);
+                        soundService.reload(true);
+
+                        // This try/catch should prevent buggy Spigot builds from blocking item
+                        // loading
+                        try {
+                            recipeService.refresh();
+                        } catch (Exception | LinkageError x) {
+                            logger.log(
+                                    Level.SEVERE,
+                                    x,
+                                    () -> "An Exception occured while iterating through the Recipe list on Minecraft"
+                                            + " Version "
+                                            + minecraftVersion.getName()
+                                            + " (Slimefun v"
+                                            + getVersion()
+                                            + ")");
+                        }
+                    })
+                    .run();
+        });
 
         // Setting up our commands
         try {
@@ -445,7 +449,7 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
 
         if (cfgManager.isAutoUpdate()) {
             // 汉化版自动更新
-            Bukkit.getScheduler().scheduleSyncDelayedTask(this, new AutoUpdateTask(this, getFile()));
+            //            Folia.getScheduler().runTaskLaterAsync(this, new AutoUpdateTask(this, getFile()), 1);
         }
 
         // Hooray!
@@ -482,7 +486,7 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
         getSQLProfiler().stop();
 
         // Cancel all tasks from this plugin immediately
-        Bukkit.getScheduler().cancelTasks(this);
+        //        Bukkit.getScheduler().cancelTasks(this);
 
         // Finishes all started movements/removals of block data
         ticker.setPaused(true);
@@ -556,7 +560,7 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
      * @return A {@link Collection} of all compatible minecraft versions as strings
      */
     static @Nonnull Collection<String> getSupportedVersions() {
-        List<String> list = new ArrayList<>();
+        List<String> list = new CopyOnWriteArrayList<>();
 
         for (MinecraftVersion version : MinecraftVersion.values()) {
             if (!version.isVirtual()) {
@@ -1132,22 +1136,22 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
      *
      * @return The resulting {@link BukkitTask} or null if Slimefun was disabled
      */
-    public static @Nullable BukkitTask runSync(@Nonnull Runnable runnable, long delay) {
-        Validate.notNull(runnable, "Cannot run null");
-        Validate.isTrue(delay >= 0, "The delay cannot be negative");
-
-        // Run the task instantly within a Unit Test
-        if (getMinecraftVersion() == MinecraftVersion.UNIT_TEST) {
-            runnable.run();
-            return null;
-        }
-
-        if (instance == null || !instance.isEnabled()) {
-            return null;
-        }
-
-        return instance.getServer().getScheduler().runTaskLater(instance, runnable, delay);
-    }
+    //    public static @Nullable BukkitTask runSync(@Nonnull Runnable runnable, long delay) {
+    //        Validate.notNull(runnable, "Cannot run null");
+    //        Validate.isTrue(delay >= 0, "The delay cannot be negative");
+    //
+    //        // Run the task instantly within a Unit Test
+    //        if (getMinecraftVersion() == MinecraftVersion.UNIT_TEST) {
+    //            runnable.run();
+    //            return null;
+    //        }
+    //
+    //        if (instance == null || !instance.isEnabled()) {
+    //            return null;
+    //        }
+    //
+    //        return instance.getServer().getScheduler().runTaskLater(instance, runnable, delay);
+    //    }
 
     /**
      * This method schedules a synchronous task for Slimefun.
@@ -1161,21 +1165,21 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
      *
      * @return The resulting {@link BukkitTask} or null if Slimefun was disabled
      */
-    public static @Nullable BukkitTask runSync(@Nonnull Runnable runnable) {
-        Validate.notNull(runnable, "Cannot run null");
-
-        // Run the task instantly within a Unit Test
-        if (getMinecraftVersion() == MinecraftVersion.UNIT_TEST) {
-            runnable.run();
-            return null;
-        }
-
-        if (instance == null || !instance.isEnabled()) {
-            return null;
-        }
-
-        return instance.getServer().getScheduler().runTask(instance, runnable);
-    }
+    //    public static @Nullable BukkitTask runSync(@Nonnull Runnable runnable) {
+    //        Validate.notNull(runnable, "Cannot run null");
+    //
+    //        // Run the task instantly within a Unit Test
+    //        if (getMinecraftVersion() == MinecraftVersion.UNIT_TEST) {
+    //            runnable.run();
+    //            return null;
+    //        }
+    //
+    //        if (instance == null || !instance.isEnabled()) {
+    //            return null;
+    //        }
+    //
+    //        return instance.getServer().getScheduler().runTask(instance, runnable);
+    //    }
 
     @Nonnull
     public File getFile() {

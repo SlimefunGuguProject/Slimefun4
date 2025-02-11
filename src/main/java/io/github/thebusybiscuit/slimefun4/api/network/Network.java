@@ -1,15 +1,16 @@
 package io.github.thebusybiscuit.slimefun4.api.network;
 
+import com.molean.folia.adapter.Folia;
 import com.xzavier0722.mc.plugin.slimefun4.storage.util.LocationUtils;
 import io.github.thebusybiscuit.slimefun4.core.debug.Debug;
 import io.github.thebusybiscuit.slimefun4.core.debug.TestCase;
 import io.github.thebusybiscuit.slimefun4.core.networks.NetworkManager;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.implementation.listeners.NetworkListener;
-import java.util.ArrayDeque;
-import java.util.HashSet;
 import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.CopyOnWriteArraySet;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.apache.commons.lang.Validate;
@@ -38,11 +39,11 @@ public abstract class Network {
      */
     protected Location regulator;
 
-    private final Queue<Location> nodeQueue = new ArrayDeque<>();
-    protected final Set<Location> connectedLocations = new HashSet<>();
-    protected final Set<Location> regulatorNodes = new HashSet<>();
-    protected final Set<Location> connectorNodes = new HashSet<>();
-    protected final Set<Location> terminusNodes = new HashSet<>();
+    private final Queue<Location> nodeQueue = new ConcurrentLinkedQueue<>();
+    protected final Set<Location> connectedLocations = new CopyOnWriteArraySet<>();
+    protected final Set<Location> regulatorNodes = new CopyOnWriteArraySet<>();
+    protected final Set<Location> connectorNodes = new CopyOnWriteArraySet<>();
+    protected final Set<Location> terminusNodes = new CopyOnWriteArraySet<>();
 
     /**
      * This constructs a new {@link Network} at the given {@link Location}.
@@ -227,7 +228,7 @@ public abstract class Network {
      */
     public void display() {
         if (manager.isVisualizerEnabled()) {
-            Slimefun.runSync(new NetworkVisualizer(this, Color.BLUE));
+            Folia.getScheduler().runTaskAsynchronously(Slimefun.instance(), new NetworkVisualizer(this, Color.BLUE));
         }
     }
 

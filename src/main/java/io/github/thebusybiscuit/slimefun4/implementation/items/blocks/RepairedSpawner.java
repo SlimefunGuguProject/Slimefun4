@@ -8,8 +8,8 @@ import io.github.thebusybiscuit.slimefun4.api.recipes.RecipeType;
 import io.github.thebusybiscuit.slimefun4.core.handlers.BlockPlaceHandler;
 import io.github.thebusybiscuit.slimefun4.core.handlers.BlockUseHandler;
 import io.github.thebusybiscuit.slimefun4.utils.tags.SlimefunTag;
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.concurrent.CopyOnWriteArrayList;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
 import org.bukkit.Material;
@@ -88,6 +88,6 @@ public class RepairedSpawner extends AbstractMonsterSpawner {
          * There should be no drops by default since drops are handled
          * by the Pickaxe of Containment exclusively.
          */
-        return new ArrayList<>();
+        return new CopyOnWriteArrayList<>();
     }
 }

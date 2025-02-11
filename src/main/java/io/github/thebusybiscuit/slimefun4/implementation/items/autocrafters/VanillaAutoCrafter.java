@@ -13,8 +13,8 @@ import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.implementation.tasks.AsyncRecipeChoiceTask;
 import io.github.thebusybiscuit.slimefun4.utils.ChestMenuUtils;
 import io.papermc.lib.PaperLib;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Predicate;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -174,7 +174,7 @@ public class VanillaAutoCrafter extends AbstractAutoCrafter implements NotDiagon
 
     @Nonnull
     private List<Recipe> getRecipesFor(@Nonnull ItemStack item) {
-        List<Recipe> recipes = new ArrayList<>();
+        List<Recipe> recipes = new CopyOnWriteArrayList<>();
 
         // Fixes #2913 - Bukkit.getRecipesFor() only checks for Materials
         MinecraftRecipeService recipeService = Slimefun.getMinecraftRecipeService();

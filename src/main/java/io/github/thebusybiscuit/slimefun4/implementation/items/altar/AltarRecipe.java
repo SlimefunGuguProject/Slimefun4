@@ -1,7 +1,7 @@
 package io.github.thebusybiscuit.slimefun4.implementation.items.altar;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import org.bukkit.inventory.ItemStack;
 
 public class AltarRecipe {
@@ -12,7 +12,7 @@ public class AltarRecipe {
 
     public AltarRecipe(List<ItemStack> input, ItemStack output) {
         this.catalyst = input.get(4);
-        this.input = new ArrayList<>();
+        this.input = new CopyOnWriteArrayList<>();
 
         this.input.add(input.get(0));
         this.input.add(input.get(1));

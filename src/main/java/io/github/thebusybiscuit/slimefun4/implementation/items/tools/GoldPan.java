@@ -17,12 +17,13 @@ import io.github.thebusybiscuit.slimefun4.implementation.items.electric.machines
 import io.github.thebusybiscuit.slimefun4.implementation.items.multiblocks.AutomatedPanningMachine;
 import io.github.thebusybiscuit.slimefun4.implementation.settings.GoldPanDrop;
 import io.github.thebusybiscuit.slimefun4.utils.SlimefunUtils;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CopyOnWriteArraySet;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -48,7 +49,7 @@ public class GoldPan extends SimpleSlimefunItem<ItemUseHandler> implements Recip
 
     private final RandomizedSet<ItemStack> randomizer = new RandomizedSet<>();
     private final Set<Material> inputMaterials = new HashSet<>(List.of(Material.GRAVEL));
-    private final Set<GoldPanDrop> drops = new HashSet<>();
+    private final Set<GoldPanDrop> drops = new CopyOnWriteArraySet<>();
 
     @ParametersAreNonnullByDefault
     public GoldPan(ItemGroup itemGroup, SlimefunItemStack item, RecipeType recipeType, ItemStack[] recipe) {
@@ -84,7 +85,7 @@ public class GoldPan extends SimpleSlimefunItem<ItemUseHandler> implements Recip
      * @return The {@link Set} of {@link GoldPanDrop GoldPanDrops} this {@link GoldPan} can drop.
      */
     protected @Nonnull Set<GoldPanDrop> getGoldPanDrops() {
-        Set<GoldPanDrop> settings = new HashSet<>();
+        Set<GoldPanDrop> settings = new CopyOnWriteArraySet<>();
 
         settings.add(new GoldPanDrop(this, "chance.FLINT", 40, new ItemStack(Material.FLINT)));
         settings.add(new GoldPanDrop(this, "chance.CLAY", 20, new ItemStack(Material.CLAY_BALL)));
@@ -183,7 +184,7 @@ public class GoldPan extends SimpleSlimefunItem<ItemUseHandler> implements Recip
     @Nonnull
     @Override
     public List<ItemStack> getDisplayRecipes() {
-        List<ItemStack> recipes = new ArrayList<>();
+        List<ItemStack> recipes = new CopyOnWriteArrayList<>();
 
         for (GoldPanDrop drop : drops) {
             if (drop.getValue() <= 0) {

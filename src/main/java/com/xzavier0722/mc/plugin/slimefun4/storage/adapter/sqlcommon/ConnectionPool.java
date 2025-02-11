@@ -3,9 +3,9 @@ package com.xzavier0722.mc.plugin.slimefun4.storage.adapter.sqlcommon;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Deque;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.function.Supplier;
 
 public class ConnectionPool {
@@ -22,7 +22,7 @@ public class ConnectionPool {
         this.connCreator = connCreator;
         this.maxConnCount = maxConnCount;
         this.freeConn = new LinkedList<>();
-        this.usingConn = new HashSet<>();
+        this.usingConn = new CopyOnWriteArraySet<>();
     }
 
     public synchronized Connection getConn() throws SQLException, InterruptedException {

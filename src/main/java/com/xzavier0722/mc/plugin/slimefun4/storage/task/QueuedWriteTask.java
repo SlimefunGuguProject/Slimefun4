@@ -1,6 +1,7 @@
 package com.xzavier0722.mc.plugin.slimefun4.storage.task;
 
 import com.xzavier0722.mc.plugin.slimefun4.storage.common.RecordKey;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
@@ -8,7 +9,7 @@ import java.util.Queue;
 
 public class QueuedWriteTask implements Runnable {
     private final Queue<RecordKey> queue = new LinkedList<>();
-    private final Map<RecordKey, Runnable> tasks = new HashMap<>();
+    private final Map<RecordKey, Runnable> tasks = Collections.synchronizedMap(new HashMap<>());
     private volatile boolean done = false;
     private volatile boolean aborted = false;
 

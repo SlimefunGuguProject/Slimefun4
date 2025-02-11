@@ -4,6 +4,7 @@ import city.norain.slimefun4.api.menu.UniversalMenu;
 import com.xzavier0722.mc.plugin.slimefun4.storage.util.StorageCacheUtils;
 import io.github.thebusybiscuit.slimefun4.utils.HeadTexture;
 import io.github.thebusybiscuit.slimefun4.utils.SlimefunUtils;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Predicate;
@@ -242,7 +243,7 @@ public enum Instruction {
         android.refuel(inv, target);
     });
 
-    private static final Map<String, Instruction> nameLookup = new HashMap<>();
+    private static final Map<String, Instruction> nameLookup = Collections.synchronizedMap(new HashMap<>());
     public static final Instruction[] valuesCache = values();
 
     static {

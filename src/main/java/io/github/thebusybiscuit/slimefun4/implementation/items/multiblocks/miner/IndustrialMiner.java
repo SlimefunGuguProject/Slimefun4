@@ -10,11 +10,12 @@ import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
 import io.github.thebusybiscuit.slimefun4.core.multiblocks.MultiBlockMachine;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.utils.tags.SlimefunTag;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ThreadLocalRandom;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -43,8 +44,8 @@ import org.bukkit.inventory.meta.ItemMeta;
  */
 public class IndustrialMiner extends MultiBlockMachine {
 
-    protected final Map<Location, MiningTask> activeMiners = new HashMap<>();
-    protected final List<MachineFuel> fuelTypes = new ArrayList<>();
+    protected final Map<Location, MiningTask> activeMiners = Collections.synchronizedMap(new HashMap<>());
+    protected final List<MachineFuel> fuelTypes = new CopyOnWriteArrayList<>();
 
     private final OreDictionary oreDictionary;
     private final ItemSetting<Boolean> canMineAncientDebris = new ItemSetting<>(this, "can-mine-ancient-debris", false);
@@ -164,12 +165,12 @@ public class IndustrialMiner extends MultiBlockMachine {
 
     @Override
     public @Nonnull List<ItemStack> getDisplayRecipes() {
-        List<ItemStack> list = new ArrayList<>();
+        List<ItemStack> list = new CopyOnWriteArrayList<>();
 
         for (MachineFuel fuel : fuelTypes) {
             ItemStack item = fuel.getInput().clone();
             ItemMeta im = item.getItemMeta();
-            List<String> lore = new ArrayList<>();
+            List<String> lore = new CopyOnWriteArrayList<>();
             lore.add(ChatColors.color("&8\u21E8 &7剩余最多 " + fuel.getTicks() + " 个矿石"));
             im.setLore(lore);
             item.setItemMeta(im);

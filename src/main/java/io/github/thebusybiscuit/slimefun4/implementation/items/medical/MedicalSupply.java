@@ -8,8 +8,8 @@ import io.github.thebusybiscuit.slimefun4.api.recipes.RecipeType;
 import io.github.thebusybiscuit.slimefun4.implementation.items.SimpleSlimefunItem;
 import io.github.thebusybiscuit.slimefun4.utils.compatibility.VersionedPotionEffectType;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
 import org.bukkit.entity.LivingEntity;
@@ -19,7 +19,7 @@ import org.bukkit.potion.PotionEffectType;
 
 public abstract class MedicalSupply<T extends ItemHandler> extends SimpleSlimefunItem<T> {
 
-    private final Set<PotionEffectType> curedEffects = new HashSet<>();
+    private final Set<PotionEffectType> curedEffects = new CopyOnWriteArraySet<>();
     private final int healAmount;
 
     @ParametersAreNonnullByDefault

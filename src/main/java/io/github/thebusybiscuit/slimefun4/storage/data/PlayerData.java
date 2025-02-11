@@ -4,10 +4,11 @@ import com.google.common.annotations.Beta;
 import io.github.thebusybiscuit.slimefun4.api.gps.Waypoint;
 import io.github.thebusybiscuit.slimefun4.api.player.PlayerBackpack;
 import io.github.thebusybiscuit.slimefun4.api.researches.Research;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 import javax.annotation.Nonnull;
 import org.apache.commons.lang.Validate;
 
@@ -20,9 +21,9 @@ import org.apache.commons.lang.Validate;
 @Beta
 public class PlayerData {
 
-    private final Set<Research> researches = new HashSet<>();
-    private final Map<Integer, PlayerBackpack> backpacks = new HashMap<>();
-    private final Set<Waypoint> waypoints = new HashSet<>();
+    private final Set<Research> researches = new CopyOnWriteArraySet<>();
+    private final Map<Integer, PlayerBackpack> backpacks = Collections.synchronizedMap(new HashMap<>());
+    private final Set<Waypoint> waypoints = new CopyOnWriteArraySet<>();
 
     public PlayerData(Set<Research> researches, Map<Integer, PlayerBackpack> backpacks, Set<Waypoint> waypoints) {
         this.researches.addAll(researches);

@@ -81,11 +81,6 @@ public class TeleporterListener implements Listener {
                             .getBlockDataController()
                             .loadBlockDataAsync(blockData, new IAsyncReadCallback<>() {
                                 @Override
-                                public boolean runOnMainThread() {
-                                    return true;
-                                }
-
-                                @Override
                                 public void onResult(SlimefunBlockData result) {
                                     teleport(blockData.getData("owner"), p, block);
                                 }

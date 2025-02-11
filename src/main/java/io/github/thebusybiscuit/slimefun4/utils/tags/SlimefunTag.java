@@ -16,10 +16,10 @@ import io.github.thebusybiscuit.slimefun4.implementation.items.tools.SmeltersPic
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -280,7 +280,7 @@ public enum SlimefunTag implements Tag<Material> {
     /**
      * Lookup table for tag names.
      */
-    private static final Map<String, SlimefunTag> nameLookup = new HashMap<>();
+    private static final Map<String, SlimefunTag> nameLookup = Collections.synchronizedMap(new HashMap<>());
 
     /**
      * Speed up lookups by caching the values instead of creating a new array
@@ -296,7 +296,7 @@ public enum SlimefunTag implements Tag<Material> {
 
     private final NamespacedKey key;
     private final Set<Material> includedMaterials = EnumSet.noneOf(Material.class);
-    private final Set<Tag<Material>> additionalTags = new HashSet<>();
+    private final Set<Tag<Material>> additionalTags = new CopyOnWriteArraySet<>();
 
     /**
      * This constructs a new {@link SlimefunTag}.

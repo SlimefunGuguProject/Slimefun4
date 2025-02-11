@@ -1,5 +1,6 @@
 package com.xzavier0722.mc.plugin.slimefun4.storage.common;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -10,7 +11,7 @@ public class FieldMapper<T> {
 
     public FieldMapper(Map<FieldKey, T> map) {
         this.map = map;
-        this.inverseMap = new HashMap<>();
+        this.inverseMap = Collections.synchronizedMap(new HashMap<>());
         map.forEach((k, v) -> inverseMap.put(v, k));
     }
 

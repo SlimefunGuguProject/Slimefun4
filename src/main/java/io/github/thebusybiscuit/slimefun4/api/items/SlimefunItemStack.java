@@ -11,11 +11,11 @@ import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.utils.HeadTexture;
 import io.github.thebusybiscuit.slimefun4.utils.compatibility.VersionedItemFlag;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -102,7 +102,7 @@ public class SlimefunItemStack extends ItemStack {
             }
 
             if (lore.length > 0) {
-                List<String> lines = new ArrayList<>();
+                List<String> lines = new CopyOnWriteArrayList<>();
 
                 for (String line : lore) {
                     lines.add(ChatColor.translateAlternateColorCodes('&', line));
@@ -124,7 +124,7 @@ public class SlimefunItemStack extends ItemStack {
             }
 
             if (lore.length > 0) {
-                List<String> lines = new ArrayList<>();
+                List<String> lines = new CopyOnWriteArrayList<>();
 
                 for (String line : lore) {
                     lines.add(ChatColor.translateAlternateColorCodes('&', line));
@@ -155,7 +155,7 @@ public class SlimefunItemStack extends ItemStack {
             }
 
             if (lore.length > 0) {
-                List<String> lines = new ArrayList<>();
+                List<String> lines = new CopyOnWriteArrayList<>();
 
                 for (String line : lore) {
                     lines.add(ChatColor.translateAlternateColorCodes('&', line));

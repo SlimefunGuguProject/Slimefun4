@@ -1,7 +1,9 @@
 package io.github.thebusybiscuit.slimefun4.implementation.items.electric.reactors;
 
+import com.molean.folia.adapter.Folia;
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunBlockData;
 import com.xzavier0722.mc.plugin.slimefun4.storage.util.StorageCacheUtils;
+import io.github.bakedlibs.dough.collections.Pair;
 import io.github.bakedlibs.dough.items.CustomItemStack;
 import io.github.bakedlibs.dough.protection.Interaction;
 import io.github.thebusybiscuit.slimefun4.api.events.ReactorExplodeEvent;
@@ -21,10 +23,11 @@ import io.github.thebusybiscuit.slimefun4.implementation.operations.FuelOperatio
 import io.github.thebusybiscuit.slimefun4.utils.ChestMenuUtils;
 import io.github.thebusybiscuit.slimefun4.utils.SlimefunUtils;
 import io.github.thebusybiscuit.slimefun4.utils.itemstack.ItemStackWrapper;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ThreadLocalRandom;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -34,7 +37,6 @@ import me.mrCookieSlime.Slimefun.Objects.SlimefunItem.abstractItems.MachineFuel;
 import me.mrCookieSlime.Slimefun.api.inventory.BlockMenu;
 import me.mrCookieSlime.Slimefun.api.inventory.BlockMenuPreset;
 import me.mrCookieSlime.Slimefun.api.item_transport.ItemTransportFlow;
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -81,7 +83,7 @@ public abstract class Reactor extends AbstractEnergyProvider
     // No coolant border
     private static final int[] border_4 = {25, 34, 43};
 
-    private final Set<Location> explosionsQueue = new HashSet<>();
+    private final Set<Location> explosionsQueue = new CopyOnWriteArraySet<>();
     private final MachineProcessor<FuelOperation> processor = new MachineProcessor<>(this);
 
     @ParametersAreNonnullByDefault
@@ -397,13 +399,15 @@ public abstract class Reactor extends AbstractEnergyProvider
         boolean explosion = explosionsQueue.contains(l);
 
         if (explosion) {
-            Slimefun.runSync(() -> {
-                ReactorExplodeEvent event = new ReactorExplodeEvent(l, Reactor.this);
-                Bukkit.getPluginManager().callEvent(event);
+            Folia.runSync(
+                    () -> {
+                        ReactorExplodeEvent event = new ReactorExplodeEvent(l, Reactor.this);
+                        Folia.getPluginManager().ce(event);
 
-                data.getBlockMenu().close();
-                removeHologram(l.getBlock());
-            });
+                        data.getBlockMenu().close();
+                        removeHologram(l.getBlock());
+                    },
+                    l);
 
             explosionsQueue.remove(l);
             processor.endOperation(l);
@@ -413,18 +417,20 @@ public abstract class Reactor extends AbstractEnergyProvider
     }
 
     private void checkForWaterBlocks(Location l) {
-        Slimefun.runSync(() -> {
-            /*
-             * We will pick a surrounding block at random and see if this is water.
-             * If it isn't, then we will make it explode.
-             */
-            int index = ThreadLocalRandom.current().nextInt(WATER_BLOCKS.length);
-            BlockFace randomNeighbour = WATER_BLOCKS[index];
+        Folia.runSync(
+                () -> {
+                    /*
+                     * We will pick a surrounding block at random and see if this is water.
+                     * If it isn't, then we will make it explode.
+                     */
+                    int index = ThreadLocalRandom.current().nextInt(WATER_BLOCKS.length);
+                    BlockFace randomNeighbour = WATER_BLOCKS[index];
 
-            if (l.getBlock().getRelative(randomNeighbour).getType() != Material.WATER) {
-                explosionsQueue.add(l);
-            }
-        });
+                    if (l.getBlock().getRelative(randomNeighbour).getType() != Material.WATER) {
+                        explosionsQueue.add(l);
+                    }
+                },
+                l);
     }
 
     private void createByproduct(
@@ -452,7 +458,7 @@ public abstract class Reactor extends AbstractEnergyProvider
     }
 
     private void burnNextFuel(Location l, BlockMenu inv, BlockMenu accessPort) {
-        Map<Integer, Integer> found = new HashMap<>();
+        Map<Integer, Integer> found = Collections.synchronizedMap(new HashMap<>());
         MachineFuel fuel = findFuel(inv, found);
 
         if (accessPort != null) {
@@ -561,7 +567,8 @@ public abstract class Reactor extends AbstractEnergyProvider
         }
 
         if (!port.isDataLoaded()) {
-            StorageCacheUtils.executeAfterLoad(port, () -> updateInventory(menu, l.getBlock()), false);
+            StorageCacheUtils.executeAfterLoad(
+                    port, () -> updateInventory(menu, l.getBlock()), new Pair<>(false, null));
             return null;
         }
 

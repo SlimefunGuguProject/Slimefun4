@@ -4,9 +4,9 @@ import io.github.thebusybiscuit.slimefun4.api.events.MultiBlockInteractEvent;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.core.handlers.MultiBlockInteractionHandler;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.apache.commons.lang.Validate;
@@ -30,7 +30,7 @@ import org.bukkit.block.BlockFace;
  */
 public class MultiBlock {
 
-    private static final Set<Tag<Material>> SUPPORTED_TAGS = new HashSet<>();
+    private static final Set<Tag<Material>> SUPPORTED_TAGS = new CopyOnWriteArraySet<>();
 
     static {
         // Allow variations of different types of wood to be used

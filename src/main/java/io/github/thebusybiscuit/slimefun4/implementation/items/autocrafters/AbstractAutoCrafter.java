@@ -28,12 +28,13 @@ import io.github.thebusybiscuit.slimefun4.utils.itemstack.ItemStackWrapper;
 import io.github.thebusybiscuit.slimefun4.utils.tags.SlimefunTag;
 import io.papermc.lib.PaperLib;
 import io.papermc.lib.features.blockstatesnapshot.BlockStateSnapshotResult;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.function.Predicate;
 import java.util.logging.Level;
 import javax.annotation.Nonnull;
@@ -111,7 +112,7 @@ public abstract class AbstractAutoCrafter extends SlimefunItem implements Energy
         recipeStorageKey = new NamespacedKey(Slimefun.instance(), "recipe_key");
         recipeEnabledKey = new NamespacedKey(Slimefun.instance(), "recipe_enabled");
 
-        recipeCache = new HashMap<>();
+        recipeCache = Collections.synchronizedMap(new HashMap<>());
 
         addItemHandler(new BlockTicker() {
 
@@ -483,13 +484,13 @@ public abstract class AbstractAutoCrafter extends SlimefunItem implements Energy
 
         // Check if we have an empty slot
         if (inv.canOutput(recipe.getResult())) {
-            Map<Integer, Integer> itemQuantities = new HashMap<>();
+            Map<Integer, Integer> itemQuantities = Collections.synchronizedMap(new HashMap<>());
 
             if (!inv.matchRecipe(this, recipe.getIngredients(), itemQuantities)) {
                 return false;
             }
 
-            List<ItemStack> leftoverItems = new ArrayList<>();
+            List<ItemStack> leftoverItems = new CopyOnWriteArrayList<>();
 
             // Remove ingredients
             for (Map.Entry<Integer, Integer> entry : itemQuantities.entrySet()) {
@@ -640,7 +641,7 @@ public abstract class AbstractAutoCrafter extends SlimefunItem implements Energy
 
         if (recipe instanceof SlimefunItemRecipe) {
             // Recipe is for slimefun item
-            List<ItemStackWrapper> itemInRecipe = new ArrayList<>();
+            List<ItemStackWrapper> itemInRecipe = new CopyOnWriteArrayList<>();
             SlimefunItem recipeResult = SlimefunItem.getByItem(recipe.getResult());
 
             if (recipeResult == null) {
@@ -677,7 +678,7 @@ public abstract class AbstractAutoCrafter extends SlimefunItem implements Energy
         }
 
         // Not shape less recipe, do check the shape.
-        Set<ItemStack> itemInRecipe = new HashSet<>();
+        Set<ItemStack> itemInRecipe = new CopyOnWriteArraySet<>();
         // Loop to read each recipe shape char
         for (String row : ((ShapedRecipe) vanillaRecipe).getShape()) {
             for (char each : row.toCharArray()) {
