@@ -43,7 +43,7 @@ public class SqliteAdapter extends SqlCommonAdapter<SqliteConfig> {
     }
 
     @Override
-    public void setData(RecordKey key, RecordSet item) {
+    public void setData(RecordKey key, RecordSet item, Throwable throwable) {
         var data = item.getAll();
         var fields = data.keySet();
         var fieldStr = SqlUtils.buildFieldStr(fields);

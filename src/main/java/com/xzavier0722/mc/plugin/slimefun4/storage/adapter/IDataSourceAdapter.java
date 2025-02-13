@@ -14,7 +14,7 @@ public interface IDataSourceAdapter<T> {
 
     void shutdown();
 
-    void setData(RecordKey key, RecordSet item);
+    void setData(RecordKey key, RecordSet item, Throwable throwable);
 
     default List<RecordSet> getData(RecordKey key) {
         return getData(key, false);

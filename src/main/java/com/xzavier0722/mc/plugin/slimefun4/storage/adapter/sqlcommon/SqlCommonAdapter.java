@@ -36,11 +36,19 @@ public abstract class SqlCommonAdapter<T extends ISqlCommonConfig> implements ID
     }
 
     protected void executeSql(String sql) {
+        executeSql(sql, null);
+    }
+
+    protected void executeSql(String sql, Throwable throwable) {
+
         var entry = new SQLEntry(sql);
         Slimefun.getSQLProfiler().recordEntry(entry);
         try (var conn = ds.getConnection()) {
             SqlUtils.execSql(conn, sql);
         } catch (SQLException e) {
+            if (throwable != null) {
+                throwable.printStackTrace();
+            }
             throw new IllegalStateException("An exception thrown while executing sql: " + sql, e);
         } finally {
             Slimefun.getSQLProfiler().finishEntry(entry);
