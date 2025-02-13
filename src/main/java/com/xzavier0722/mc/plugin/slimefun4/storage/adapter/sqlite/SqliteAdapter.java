@@ -14,9 +14,11 @@ import static com.xzavier0722.mc.plugin.slimefun4.storage.adapter.sqlcommon.SqlC
 import static com.xzavier0722.mc.plugin.slimefun4.storage.adapter.sqlcommon.SqlConstants.FIELD_PLAYER_UUID;
 import static com.xzavier0722.mc.plugin.slimefun4.storage.adapter.sqlcommon.SqlConstants.FIELD_RESEARCH_KEY;
 import static com.xzavier0722.mc.plugin.slimefun4.storage.adapter.sqlcommon.SqlConstants.FIELD_SLIMEFUN_ID;
-import static com.xzavier0722.mc.plugin.slimefun4.storage.adapter.sqlcommon.SqlConstants.FIELD_TABLE_VERSION;
+import static com.xzavier0722.mc.plugin.slimefun4.storage.adapter.sqlcommon.SqlConstants.FIELD_TABLE_METADATA_KEY;
+import static com.xzavier0722.mc.plugin.slimefun4.storage.adapter.sqlcommon.SqlConstants.FIELD_TABLE_METADATA_VALUE;
 import static com.xzavier0722.mc.plugin.slimefun4.storage.adapter.sqlcommon.SqlConstants.FIELD_UNIVERSAL_TRAITS;
 import static com.xzavier0722.mc.plugin.slimefun4.storage.adapter.sqlcommon.SqlConstants.FIELD_UNIVERSAL_UUID;
+import static com.xzavier0722.mc.plugin.slimefun4.storage.adapter.sqlcommon.SqlConstants.METADATA_VERSION;
 
 import city.norain.slimefun4.timings.entry.SQLEntry;
 import com.xzavier0722.mc.plugin.slimefun4.storage.adapter.IDataSourceAdapter;
@@ -28,6 +30,7 @@ import com.xzavier0722.mc.plugin.slimefun4.storage.common.RecordKey;
 import com.xzavier0722.mc.plugin.slimefun4.storage.common.RecordSet;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import java.sql.SQLException;
+import java.text.MessageFormat;
 import java.util.List;
 
 public class SqliteAdapter extends SqlCommonAdapter<SqliteConfig> {
@@ -38,8 +41,8 @@ public class SqliteAdapter extends SqlCommonAdapter<SqliteConfig> {
             case BLOCK_STORAGE -> createBlockStorageTables();
         }
 
-        tableInformationTable = SqlUtils.mapTable(DataScope.TABLE_INFORMATION);
-        createTableInformationTable();
+        tableMetadataTable = SqlUtils.mapTable(DataScope.TABLE_METADATA);
+        createTableMetadataTable();
     }
 
     @Override
@@ -384,19 +387,27 @@ public class SqliteAdapter extends SqlCommonAdapter<SqliteConfig> {
                 + ");");
     }
 
-    private void createTableInformationTable() {
-        var table = SqlUtils.mapTable(DataScope.TABLE_INFORMATION);
-        executeSql("CREATE TABLE IF NOT EXISTS "
-                + table
-                + "("
-                + FIELD_TABLE_VERSION
-                + " INT UNIQUE NOT NULL DEFAULT '0'"
-                + ");");
+    private void createTableMetadataTable() {
+        executeSql(MessageFormat.format(
+                """
+                CREATE TABLE IF NOT EXISTS {0}
+                (
+                    {1} VARCHAR(255) UNIQUE NOT NULL,
+                    {2} TEXT NOT NULL
+                );
+                """,
+                SqlUtils.mapTable(DataScope.TABLE_METADATA), FIELD_TABLE_METADATA_KEY, FIELD_TABLE_METADATA_VALUE));
 
         if (Slimefun.isNewlyInstalled()) {
-            executeSql("INSERT INTO " + tableInformationTable + " (" + FIELD_TABLE_VERSION + ") SELECT '"
-                    + IDataSourceAdapter.DATABASE_VERSION + "' WHERE NOT EXISTS (SELECT 1 FROM " + tableInformationTable
-                    + ")");
+            executeSql(MessageFormat.format(
+                    """
+                    INSERT INTO {0} ({1}, {2}) VALUES ({3}, {4});
+                    """,
+                    SqlUtils.mapTable(DataScope.TABLE_METADATA),
+                    FIELD_TABLE_METADATA_KEY,
+                    FIELD_TABLE_METADATA_VALUE,
+                    METADATA_VERSION,
+                    IDataSourceAdapter.DATABASE_VERSION));
         }
     }
 

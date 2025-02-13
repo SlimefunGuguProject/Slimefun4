@@ -13,7 +13,7 @@ public enum DataScope {
     UNIVERSAL_RECORD(new FieldKey[] {FieldKey.UNIVERSAL_UUID}),
     UNIVERSAL_DATA(new FieldKey[] {FieldKey.UNIVERSAL_UUID, FieldKey.DATA_KEY}),
     UNIVERSAL_INVENTORY(new FieldKey[] {FieldKey.UNIVERSAL_UUID, FieldKey.INVENTORY_SLOT}),
-    TABLE_INFORMATION;
+    TABLE_METADATA;
 
     private final FieldKey[] primaryKeys;
 

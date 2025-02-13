@@ -14,9 +14,11 @@ import static com.xzavier0722.mc.plugin.slimefun4.storage.adapter.sqlcommon.SqlC
 import static com.xzavier0722.mc.plugin.slimefun4.storage.adapter.sqlcommon.SqlConstants.FIELD_PLAYER_UUID;
 import static com.xzavier0722.mc.plugin.slimefun4.storage.adapter.sqlcommon.SqlConstants.FIELD_RESEARCH_KEY;
 import static com.xzavier0722.mc.plugin.slimefun4.storage.adapter.sqlcommon.SqlConstants.FIELD_SLIMEFUN_ID;
-import static com.xzavier0722.mc.plugin.slimefun4.storage.adapter.sqlcommon.SqlConstants.FIELD_TABLE_VERSION;
+import static com.xzavier0722.mc.plugin.slimefun4.storage.adapter.sqlcommon.SqlConstants.FIELD_TABLE_METADATA_KEY;
+import static com.xzavier0722.mc.plugin.slimefun4.storage.adapter.sqlcommon.SqlConstants.FIELD_TABLE_METADATA_VALUE;
 import static com.xzavier0722.mc.plugin.slimefun4.storage.adapter.sqlcommon.SqlConstants.FIELD_UNIVERSAL_TRAITS;
 import static com.xzavier0722.mc.plugin.slimefun4.storage.adapter.sqlcommon.SqlConstants.FIELD_UNIVERSAL_UUID;
+import static com.xzavier0722.mc.plugin.slimefun4.storage.adapter.sqlcommon.SqlConstants.METADATA_VERSION;
 
 import com.xzavier0722.mc.plugin.slimefun4.storage.adapter.IDataSourceAdapter;
 import com.xzavier0722.mc.plugin.slimefun4.storage.adapter.sqlcommon.SqlCommonAdapter;
@@ -26,6 +28,7 @@ import com.xzavier0722.mc.plugin.slimefun4.storage.common.DataType;
 import com.xzavier0722.mc.plugin.slimefun4.storage.common.RecordKey;
 import com.xzavier0722.mc.plugin.slimefun4.storage.common.RecordSet;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
+import java.text.MessageFormat;
 import java.util.List;
 
 public class MysqlAdapter extends SqlCommonAdapter<MysqlConfig> {
@@ -51,8 +54,8 @@ public class MysqlAdapter extends SqlCommonAdapter<MysqlConfig> {
             }
         }
 
-        tableInformationTable = SqlUtils.mapTable(DataScope.TABLE_INFORMATION, config.tablePrefix());
-        createTableInformationTable();
+        tableMetadataTable = SqlUtils.mapTable(DataScope.TABLE_METADATA, config.tablePrefix());
+        createTableMetadataTable();
     }
 
     @Override
@@ -388,18 +391,27 @@ public class MysqlAdapter extends SqlCommonAdapter<MysqlConfig> {
                 + ");");
     }
 
-    private void createTableInformationTable() {
-        executeSql("CREATE TABLE IF NOT EXISTS "
-                + tableInformationTable
-                + "("
-                + FIELD_TABLE_VERSION
-                + " INT UNIQUE NOT NULL DEFAULT '0'"
-                + ");");
+    private void createTableMetadataTable() {
+        executeSql(MessageFormat.format(
+                """
+                CREATE TABLE IF NOT EXISTS {0}
+                (
+                    {1} VARCHAR(100) UNIQUE NOT NULL,
+                    {2} TEXT NOT NULL
+                );
+                """,
+                tableMetadataTable, FIELD_TABLE_METADATA_KEY, FIELD_TABLE_METADATA_VALUE));
 
         if (Slimefun.isNewlyInstalled()) {
-            executeSql("INSERT INTO " + tableInformationTable + " (" + FIELD_TABLE_VERSION + ") SELECT '"
-                    + IDataSourceAdapter.DATABASE_VERSION + "' WHERE NOT EXISTS (SELECT 1 FROM " + tableInformationTable
-                    + ")");
+            executeSql(MessageFormat.format(
+                    """
+                    INSERT INTO {0} ({1}, {2}) VALUES ({3}, {4});
+                    """,
+                    tableMetadataTable,
+                    FIELD_TABLE_METADATA_KEY,
+                    FIELD_TABLE_METADATA_VALUE,
+                    METADATA_VERSION,
+                    IDataSourceAdapter.DATABASE_VERSION));
         }
     }
 }

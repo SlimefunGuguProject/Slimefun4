@@ -1,6 +1,9 @@
 package com.xzavier0722.mc.plugin.slimefun4.storage.adapter.sqlcommon;
 
+import static com.xzavier0722.mc.plugin.slimefun4.storage.adapter.sqlcommon.SqlConstants.FIELD_TABLE_METADATA_KEY;
+import static com.xzavier0722.mc.plugin.slimefun4.storage.adapter.sqlcommon.SqlConstants.FIELD_TABLE_METADATA_VALUE;
 import static com.xzavier0722.mc.plugin.slimefun4.storage.adapter.sqlcommon.SqlConstants.FIELD_TABLE_VERSION;
+import static com.xzavier0722.mc.plugin.slimefun4.storage.adapter.sqlcommon.SqlConstants.METADATA_VERSION;
 import static com.xzavier0722.mc.plugin.slimefun4.storage.adapter.sqlcommon.SqlConstants.TABLE_NAME_TABLE_INFORMATION;
 
 import city.norain.slimefun4.timings.entry.SQLEntry;
@@ -10,6 +13,7 @@ import com.xzavier0722.mc.plugin.slimefun4.storage.common.FieldKey;
 import com.xzavier0722.mc.plugin.slimefun4.storage.common.RecordSet;
 import com.xzavier0722.mc.plugin.slimefun4.storage.patch.DatabasePatch;
 import com.xzavier0722.mc.plugin.slimefun4.storage.patch.DatabasePatchV1;
+import com.xzavier0722.mc.plugin.slimefun4.storage.patch.DatabasePatchV2;
 import com.zaxxer.hikari.HikariDataSource;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import java.sql.SQLException;
@@ -26,7 +30,7 @@ public abstract class SqlCommonAdapter<T extends ISqlCommonConfig> implements ID
             chunkDataTable,
             blockInvTable,
             universalInvTable;
-    protected String tableInformationTable;
+    protected String tableMetadataTable;
     protected T config;
 
     @Override
@@ -81,7 +85,7 @@ public abstract class SqlCommonAdapter<T extends ISqlCommonConfig> implements ID
             case UNIVERSAL_INVENTORY -> universalInvTable;
             case UNIVERSAL_RECORD -> universalRecordTable;
             case UNIVERSAL_DATA -> universalDataTable;
-            case TABLE_INFORMATION -> tableInformationTable;
+            case TABLE_METADATA -> tableMetadataTable;
             case NONE -> throw new IllegalArgumentException("NONE cannot be a storage data scope!");
         };
     }
@@ -101,28 +105,47 @@ public abstract class SqlCommonAdapter<T extends ISqlCommonConfig> implements ID
         universalInvTable = null;
         universalDataTable = null;
         universalRecordTable = null;
+        tableMetadataTable = null;
     }
 
     public int getDatabaseVersion() {
-        var query = executeQuery("SELECT (" + FIELD_TABLE_VERSION + ") FROM "
-                + (tableInformationTable == null ? TABLE_NAME_TABLE_INFORMATION : tableInformationTable));
+        if (Slimefun.isNewlyInstalled()) {
+            return IDataSourceAdapter.DATABASE_VERSION;
+        }
+
+        var query = executeQuery(String.format(
+                "SELECT (%s) FROM %s WHERE %s='%s';",
+                FIELD_TABLE_METADATA_VALUE, tableMetadataTable, FIELD_TABLE_METADATA_KEY, METADATA_VERSION));
 
         if (query.isEmpty()) {
-            return 0;
+            try {
+                var prefix = config instanceof SqlCommonConfig sqc ? sqc.tablePrefix() : "";
+                var fallbackQuery = executeQuery(
+                        "SELECT (" + FIELD_TABLE_VERSION + ") FROM " + (prefix + TABLE_NAME_TABLE_INFORMATION));
+
+                if (fallbackQuery.isEmpty()) {
+                    return 0;
+                }
+
+                return fallbackQuery.getFirst().getInt(null);
+            } catch (Exception e) {
+                return 0;
+            }
         } else {
-            return query.getFirst().getInt(FieldKey.TABLE_VERSION);
+            return query.getFirst().getInt(FieldKey.METADATA_VALUE);
         }
     }
 
     @Override
     public void patch() {
         DatabasePatch patch = null;
+        var dbVer = getDatabaseVersion();
 
-        switch (getDatabaseVersion()) {
-            case 0: {
-                patch = new DatabasePatchV1();
-                break;
-            }
+        Slimefun.logger().log(Level.INFO, "当前数据库版本 {0}", new Object[] {dbVer});
+
+        switch (dbVer) {
+            case 0 -> patch = new DatabasePatchV1();
+            case 1 -> patch = new DatabasePatchV2();
         }
 
         if (patch == null) {
@@ -131,7 +154,9 @@ public abstract class SqlCommonAdapter<T extends ISqlCommonConfig> implements ID
 
         try (var conn = ds.getConnection()) {
             Slimefun.logger().log(Level.INFO, "正在更新数据库版本至 " + patch.getVersion() + ", 可能需要一段时间...");
-            patch.patch(conn.createStatement(), config);
+            var stmt = conn.createStatement();
+            patch.updateVersion(stmt, config);
+            patch.patch(stmt, config);
             Slimefun.logger().log(Level.INFO, "更新完成. ");
         } catch (SQLException e) {
             Slimefun.logger().log(Level.SEVERE, "更新数据库时出现问题!", e);

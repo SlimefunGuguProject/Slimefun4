@@ -29,7 +29,8 @@ public enum FieldKey {
 
     UNIVERSAL_TRAITS,
 
-    TABLE_VERSION;
+    METADATA_KEY,
+    METADATA_VALUE;
 
     private final boolean isNumType;
 

@@ -73,6 +73,10 @@ public class BlockDataConfigWrapper extends Config {
 
     @Override
     public void setValue(@Nonnull String path, Object value) {
+        if (value == null) {
+            blockData.removeData(path);
+        }
+
         if (!(value instanceof String str)) {
             throw new NotImplementedException();
         }
