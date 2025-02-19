@@ -421,7 +421,7 @@ public class PostgreSqlAdapter extends SqlCommonAdapter<PostgreSqlConfig> {
         if (Slimefun.isNewlyInstalled()) {
             executeSql(MessageFormat.format(
                     """
-                    INSERT INTO {0} ({1}, {2}) VALUES ({3}, {4});
+                    INSERT INTO {0} ({1}, {2}) VALUES ("{3}", {4});
                     """,
                     tableMetadataTable,
                     FIELD_TABLE_METADATA_KEY,
