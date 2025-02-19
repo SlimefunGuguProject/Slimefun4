@@ -54,7 +54,9 @@ public class AutoEnchanter extends AbstractEnchantmentMachine {
     @Override
     protected MachineRecipe findNextRecipe(BlockMenu menu) {
         for (int slot : getInputSlots()) {
-            ItemStack item = menu.getItemInSlot(slot == getInputSlots()[0] ? getInputSlots()[1] : getInputSlots()[0]);
+            // Other item
+            int otherSlot = slot == getInputSlots()[0] ? getInputSlots()[1] : getInputSlots()[0];
+            ItemStack item = menu.getItemInSlot(otherSlot);
 
             // Check if the item is enchantable
             if (!isEnchantable(item)) {
@@ -62,10 +64,14 @@ public class AutoEnchanter extends AbstractEnchantmentMachine {
             }
 
             // Call an event so other Plugins can modify it.
-            AutoEnchantEvent event = new AutoEnchantEvent(item);
+            AutoEnchantEvent event = new AutoEnchantEvent(item, menu.getBlock());
             Bukkit.getPluginManager().callEvent(event);
 
             if (event.isCancelled()) {
+                if (InvUtils.fitAll(menu.toInventory(), new ItemStack[] {item}, getOutputSlots())) {
+                    menu.replaceExistingItem(otherSlot, null);
+                    menu.pushItem(item, getOutputSlots());
+                }
                 return null;
             }
 
