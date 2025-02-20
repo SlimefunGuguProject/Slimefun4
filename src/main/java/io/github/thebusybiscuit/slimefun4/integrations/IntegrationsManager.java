@@ -91,7 +91,7 @@ public class IntegrationsManager {
         onServerLoad();
 
         // Load any integrations which aren't dependencies (loadBefore)
-        Folia.getScheduler().runTaskAsynchronously(plugin, this::onServerStart);
+        Folia.runAtFirstTick(plugin, this::onServerStart);
     }
 
     /**
