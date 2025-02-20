@@ -143,10 +143,12 @@ public class ElevatorPlate extends SimpleSlimefunItem<BlockUseHandler> {
         var floors = new LinkedList<ElevatorFloor>();
         for (var i = 0; i < blockDataList.size(); i++) {
             var blockData = blockDataList.get(i);
-            floors.addFirst(new ElevatorFloor(
-                    ChatColors.color(blockData.getData(DATA_KEY)),
-                    i,
-                    blockData.getLocation().getBlock()));
+            if (blockData.isDataLoaded()) {
+                floors.addFirst(new ElevatorFloor(
+                        ChatColors.color(blockData.getData(DATA_KEY)),
+                        i,
+                        blockData.getLocation().getBlock()));
+            }
         }
         return floors;
     }
