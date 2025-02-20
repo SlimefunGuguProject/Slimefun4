@@ -6,19 +6,20 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public class DelayedSavingLooperTask implements Runnable {
-    private final int forceSavePeriod;
+    private final long forceSavePeriodInMillis;
     private final Supplier<Map<ScopeKey, DelayedTask>> taskGetter;
     private final Consumer<ScopeKey> executeCallback;
-    private long lastForceSave;
+    private long nextForceRun;
 
     /**
      * @param forceSavePeriod: force save period in second
      */
     public DelayedSavingLooperTask(
             int forceSavePeriod, Supplier<Map<ScopeKey, DelayedTask>> taskGetter, Consumer<ScopeKey> executeCallback) {
-        this.forceSavePeriod = forceSavePeriod;
+        this.forceSavePeriodInMillis = forceSavePeriod * 1000L;
         this.executeCallback = executeCallback;
         this.taskGetter = taskGetter;
+        updateNextForceRunTime();
     }
 
     @Override
@@ -28,18 +29,22 @@ public class DelayedSavingLooperTask implements Runnable {
             return;
         }
 
-        if (lastForceSave + (forceSavePeriod * 1000L) < System.currentTimeMillis()) {
+        if (nextForceRun > System.currentTimeMillis()) {
             tasks.forEach((key, task) -> {
                 if (task.tryRun()) {
                     executeCallback.accept(key);
                 }
             });
         } else {
-            lastForceSave = System.currentTimeMillis();
+            updateNextForceRunTime();
             tasks.forEach((key, task) -> {
                 task.runUnsafely();
                 executeCallback.accept(key);
             });
         }
+    }
+
+    private void updateNextForceRunTime() {
+        nextForceRun = System.currentTimeMillis() + forceSavePeriodInMillis;
     }
 }
