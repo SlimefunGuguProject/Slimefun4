@@ -70,6 +70,7 @@ body:
     attributes:
       label: Minecraft 版本
       options:
+        - 1.21.x
         - 1.20.x
         - 1.19.x
         - 1.18.x
