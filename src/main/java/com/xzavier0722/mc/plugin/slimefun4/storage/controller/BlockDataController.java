@@ -253,9 +253,9 @@ public class BlockDataController extends ADataController {
         var uuid = UUID.randomUUID();
         var uniData = new SlimefunUniversalBlockData(uuid, sfId, l);
 
-        uniData.initLastPresent();
-
         uniData.setIsDataLoaded(true);
+
+        uniData.initLastPresent();
 
         loadedUniversalData.put(uuid, uniData);
 
