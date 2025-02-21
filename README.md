@@ -22,8 +22,7 @@
 `./gradlew build && ./gradlew publishToMavenLocal`
 
 ## FoliaAdapter
-[https://github.com/KujouMolean/dough-folia](https://github.com/KujouMolean/FoliaAdapter)
-
+[https://github.com/KujouMolean/FoliaAdapter](https://github.com/KujouMolean/FoliaAdapter)
 `./gradlew build && ./gradlew publishToMavenLocal`
 
 ## Slimefun-Folia
