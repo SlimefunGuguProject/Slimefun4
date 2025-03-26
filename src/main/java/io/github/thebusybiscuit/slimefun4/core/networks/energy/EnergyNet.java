@@ -141,77 +141,78 @@ public class EnergyNet extends Network implements HologramOwner {
 
     public void tick(@Nonnull Block b, SlimefunBlockData blockData) {
         AtomicLong timestamp = new AtomicLong(Slimefun.getProfiler().newEntry());
+        try {
+            if (!regulator.equals(b.getLocation())) {
+                updateHologram(b, "&4检测到附近有其他调节器", blockData::isPendingRemove);
 
-        if (!regulator.equals(b.getLocation())) {
-            updateHologram(b, "&4检测到附近有其他调节器", blockData::isPendingRemove);
-            Slimefun.getProfiler()
-                    .closeEntry(b.getLocation(), SlimefunItems.ENERGY_REGULATOR.getItem(), timestamp.get());
-            return;
-        }
+                return;
+            }
 
-        super.tick();
+            super.tick();
 
-        if (connectorNodes.isEmpty() && terminusNodes.isEmpty()) {
-            updateHologram(b, "&4找不到能源网络", blockData::isPendingRemove);
-        } else {
-            int generatorsSupply = tickAllGenerators(timestamp::getAndAdd);
-            int capacitorsSupply = tickAllCapacitors();
-            int supply = NumberUtils.flowSafeAddition(generatorsSupply, capacitorsSupply);
-            int remainingEnergy = supply;
-            int demand = 0;
+            if (connectorNodes.isEmpty() && terminusNodes.isEmpty()) {
+                updateHologram(b, "&4找不到能源网络", blockData::isPendingRemove);
+            } else {
+                long generatorsSupply = tickAllGenerators(timestamp::getAndAdd);
+                long capacitorsSupply = tickAllCapacitors();
+                long supply = generatorsSupply
+                        + capacitorsSupply; // NumberUtils.flowSafeAddition(generatorsSupply, capacitorsSupply);
+                long remainingEnergy = supply;
+                long demand = 0;
 
-            for (Map.Entry<Location, EnergyNetComponent> entry : consumers.entrySet()) {
-                Location loc = entry.getKey();
+                for (Map.Entry<Location, EnergyNetComponent> entry : consumers.entrySet()) {
+                    Location loc = entry.getKey();
 
-                var data = StorageCacheUtils.getBlock(loc);
-                if (data == null || data.isPendingRemove()) {
-                    continue;
-                }
-
-                EnergyNetComponent component = entry.getValue();
-                if (!((SlimefunItem) component).getId().equals(data.getSfId())) {
-                    var newItem = SlimefunItem.getById(data.getSfId());
-                    if (!(newItem instanceof EnergyNetComponent newComponent)
-                            || newComponent.getEnergyComponentType() != EnergyNetComponentType.CONSUMER) {
+                    var data = StorageCacheUtils.getBlock(loc);
+                    if (data == null || data.isPendingRemove()) {
                         continue;
                     }
-                    consumers.put(loc, newComponent);
-                    component = newComponent;
-                }
 
-                if (!data.isDataLoaded()) {
-                    StorageCacheUtils.requestLoad(data);
-                    continue;
-                }
+                    EnergyNetComponent component = entry.getValue();
+                    if (!((SlimefunItem) component).getId().equals(data.getSfId())) {
+                        var newItem = SlimefunItem.getById(data.getSfId());
+                        if (!(newItem instanceof EnergyNetComponent newComponent)
+                                || newComponent.getEnergyComponentType() != EnergyNetComponentType.CONSUMER) {
+                            continue;
+                        }
+                        consumers.put(loc, newComponent);
+                        component = newComponent;
+                    }
 
-                int capacity = component.getCapacity();
-                int charge = component.getCharge(loc);
+                    if (!data.isDataLoaded()) {
+                        StorageCacheUtils.requestLoad(data);
+                        continue;
+                    }
 
-                if (charge < capacity) {
-                    int availableSpace = capacity - charge;
-                    demand = NumberUtils.flowSafeAddition(demand, availableSpace);
+                    int capacity = component.getCapacity();
+                    int charge = component.getCharge(loc);
 
-                    if (remainingEnergy > 0) {
-                        if (remainingEnergy > availableSpace) {
-                            component.setCharge(loc, capacity);
-                            remainingEnergy -= availableSpace;
-                        } else {
-                            component.setCharge(loc, charge + remainingEnergy);
-                            remainingEnergy = 0;
+                    if (charge < capacity) {
+                        int availableSpace = capacity - charge;
+                        demand = demand + availableSpace; // NumberUtils.flowSafeAddition(demand, availableSpace);
+
+                        if (remainingEnergy > 0) {
+                            if (remainingEnergy > availableSpace) {
+                                component.setCharge(loc, capacity);
+                                remainingEnergy -= availableSpace;
+                            } else {
+                                component.setCharge(loc, charge + (int) remainingEnergy);
+                                remainingEnergy = 0;
+                            }
                         }
                     }
                 }
+                storeRemainingEnergy(remainingEnergy);
+                updateHologram(blockData, supply, demand);
             }
-
-            storeRemainingEnergy(remainingEnergy);
-            updateHologram(blockData, supply, demand);
+        } finally {
+            // We have subtracted the timings from Generators, so they do not show up twice.
+            Slimefun.getProfiler()
+                    .closeEntry(b.getLocation(), SlimefunItems.ENERGY_REGULATOR.getItem(), timestamp.get());
         }
-
-        // We have subtracted the timings from Generators, so they do not show up twice.
-        Slimefun.getProfiler().closeEntry(b.getLocation(), SlimefunItems.ENERGY_REGULATOR.getItem(), timestamp.get());
     }
 
-    private void storeRemainingEnergy(int remainingEnergy) {
+    private void storeRemainingEnergy(long remainingEnergy) {
         for (Map.Entry<Location, EnergyNetComponent> entry : capacitors.entrySet()) {
             Location loc = entry.getKey();
 
@@ -229,7 +230,7 @@ public class EnergyNet extends Network implements HologramOwner {
                     component.setCharge(loc, capacity);
                     remainingEnergy -= capacity;
                 } else {
-                    component.setCharge(loc, remainingEnergy);
+                    component.setCharge(loc, (int) remainingEnergy);
                     remainingEnergy = 0;
                 }
             } else {
@@ -253,7 +254,7 @@ public class EnergyNet extends Network implements HologramOwner {
                     component.setCharge(loc, capacity);
                     remainingEnergy -= capacity;
                 } else {
-                    component.setCharge(loc, remainingEnergy);
+                    component.setCharge(loc, (int) remainingEnergy);
                     remainingEnergy = 0;
                 }
             } else {
@@ -262,9 +263,9 @@ public class EnergyNet extends Network implements HologramOwner {
         }
     }
 
-    private int tickAllGenerators(@Nonnull LongConsumer timings) {
+    private long tickAllGenerators(@Nonnull LongConsumer timings) {
         Set<Location> explodedBlocks = new HashSet<>();
-        int supply = 0;
+        long supply = 0;
 
         for (Map.Entry<Location, EnergyNetProvider> entry : generators.entrySet()) {
             long timestamp = Slimefun.getProfiler().newEntry();
@@ -307,7 +308,7 @@ public class EnergyNet extends Network implements HologramOwner {
                         loc.getWorld().createExplosion(loc, 0F, false);
                     });
                 } else {
-                    supply = NumberUtils.flowSafeAddition(supply, energy);
+                    supply = supply + energy; // = NumberUtils.flowSafeAddition(supply, energy);
                 }
             } catch (Exception | LinkageError throwable) {
                 explodedBlocks.add(loc);
@@ -326,11 +327,12 @@ public class EnergyNet extends Network implements HologramOwner {
         return supply;
     }
 
-    private int tickAllCapacitors() {
-        int supply = 0;
+    private long tickAllCapacitors() {
+        long supply = 0;
 
         for (Map.Entry<Location, EnergyNetComponent> entry : capacitors.entrySet()) {
-            supply = NumberUtils.flowSafeAddition(supply, entry.getValue().getCharge(entry.getKey()));
+            supply = supply + entry.getValue().getCharge(entry.getKey()); // NumberUtils.flowSafeAddition(supply,
+            // entry.getValue().getCharge(entry.getKey()));
         }
 
         return supply;
