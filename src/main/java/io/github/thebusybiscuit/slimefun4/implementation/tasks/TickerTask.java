@@ -27,7 +27,6 @@ import me.mrCookieSlime.Slimefun.Objects.handlers.BlockTicker;
 import org.apache.commons.lang.Validate;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
-import org.bukkit.scheduler.BukkitScheduler;
 
 /**
  * The {@link TickerTask} is responsible for ticking every {@link BlockTicker},
@@ -68,8 +67,7 @@ public class TickerTask implements Runnable {
     public void start(@Nonnull Slimefun plugin) {
         this.tickRate = Slimefun.getCfg().getInt("URID.custom-ticker-delay");
 
-        BukkitScheduler scheduler = plugin.getServer().getScheduler();
-        scheduler.runTaskTimerAsynchronously(plugin, this, 100L, tickRate);
+        Slimefun.getPlatformScheduler().runTimerAsync(this, 100L, tickRate);
     }
 
     /**
@@ -113,7 +111,6 @@ public class TickerTask implements Runnable {
                 ticker.startNewTick();
             }
 
-            reset();
             Slimefun.getProfiler().stop();
         } catch (Exception | LinkageError x) {
             Slimefun.logger()
@@ -122,6 +119,7 @@ public class TickerTask implements Runnable {
                             x,
                             () -> "An Exception was caught while ticking the Block Tickers Task for Slimefun v"
                                     + Slimefun.getVersion());
+        } finally {
             reset();
         }
     }
@@ -153,45 +151,33 @@ public class TickerTask implements Runnable {
 
         SlimefunItem item = SlimefunItem.getById(blockData.getSfId());
 
-        if (item != null && item.getBlockTicker() != null) {
-            if (item.isDisabledIn(l.getWorld())) {
-                return;
-            }
-
-            try {
-                if (item.getBlockTicker().isSynchronized()) {
-                    Slimefun.getProfiler().scheduleEntries(1);
-                    item.getBlockTicker().update();
-
-                    /**
-                     * We are inserting a new timestamp because synchronized actions
-                     * are always ran with a 50ms delay (1 game tick)
-                     */
-                    Slimefun.runSync(() -> {
-                        if (blockData.isPendingRemove()) {
-                            return;
-                        }
-                        tickBlock(l, item, blockData, System.nanoTime());
-                    });
-                } else {
-                    long timestamp = Slimefun.getProfiler().newEntry();
-                    item.getBlockTicker().update();
-                    tickBlock(l, item, blockData, timestamp);
-                }
-
-                tickers.add(item.getBlockTicker());
-            } catch (Exception x) {
-                reportErrors(l, item, x);
-            }
+        if (item == null) {
+            return;
         }
+
+        callBlockTicker(l, item, blockData, tickers);
     }
 
     @ParametersAreNonnullByDefault
     private void tickUniversalLocation(UUID uuid, Location l, @Nonnull Set<BlockTicker> tickers) {
-        var data = StorageCacheUtils.getUniversalBlock(uuid);
-        var item = SlimefunItem.getById(data.getSfId());
+        var uniData = StorageCacheUtils.getUniversalBlock(uuid);
+        if (uniData == null || !uniData.isDataLoaded() || uniData.isPendingRemove()) {
+            return;
+        }
 
-        if (item != null && item.getBlockTicker() != null) {
+        var item = SlimefunItem.getById(uniData.getSfId());
+
+        if (item == null) {
+            return;
+        }
+
+        callBlockTicker(l, item, uniData, tickers);
+    }
+
+    @ParametersAreNonnullByDefault
+    private void callBlockTicker(
+            Location l, SlimefunItem item, ASlimefunDataContainer data, @Nonnull Set<BlockTicker> tickers) {
+        if (item.getBlockTicker() != null) {
             if (item.isDisabledIn(l.getWorld())) {
                 return;
             }
@@ -205,16 +191,23 @@ public class TickerTask implements Runnable {
                      * We are inserting a new timestamp because synchronized actions
                      * are always ran with a 50ms delay (1 game tick)
                      */
-                    Slimefun.runSync(() -> {
-                        if (data.isPendingRemove()) {
-                            return;
-                        }
-                        tickBlock(l, item, data, System.nanoTime());
-                    });
+                    Slimefun.runSync(
+                            () -> {
+                                if (data.isPendingRemove()) {
+                                    return;
+                                }
+                                tickBlock(l, item, data, System.nanoTime());
+                            },
+                            l);
                 } else {
                     long timestamp = Slimefun.getProfiler().newEntry();
                     item.getBlockTicker().update();
-                    tickBlock(l, item, data, timestamp);
+
+                    if (Slimefun.folia().isFolia()) {
+                        Slimefun.getPlatformScheduler().runAtLocation(l, task -> tickBlock(l, item, data, timestamp));
+                    } else {
+                        tickBlock(l, item, data, timestamp);
+                    }
                 }
 
                 tickers.add(item.getBlockTicker());
@@ -260,9 +253,9 @@ public class TickerTask implements Runnable {
             Slimefun.logger().log(Level.SEVERE, "X: {0} Y: {1} Z: {2} ({3})", new Object[] {
                 l.getBlockX(), l.getBlockY(), l.getBlockZ(), item.getId()
             });
-            Slimefun.logger().log(Level.SEVERE, "在过去的 4 个 Tick 中发生多次错误，该方块对应的机器已被停用。");
+            Slimefun.logger().log(Level.SEVERE, "该位置上的机器在过去一段时间内多次报错，对应机器已被停用。");
             Slimefun.logger().log(Level.SEVERE, "请在 /plugins/Slimefun/error-reports/ 文件夹中查看错误详情。");
-            Slimefun.logger().log(Level.SEVERE, "如果要反馈错误,请向他人发送上述错误报告文件,而不是发送这个窗口的截图");
+            Slimefun.logger().log(Level.SEVERE, "在反馈时，请向他人发送上述错误报告文件，而不是发送这段话的截图");
             Slimefun.logger().log(Level.SEVERE, " ");
             bugs.remove(position);
 
@@ -424,8 +417,7 @@ public class TickerTask implements Runnable {
      * This method disables the ticker at the given {@link UUID} and removes it from our internal
      * "queue".
      *
-     * DO NOT USE THIS until you cannot disable by location,
-     * or enjoy extremely slow.
+     * We don't recommend disable by this way unless you only have UUID of universal data.
      *
      * @param uuid
      *            The {@link UUID} to remove

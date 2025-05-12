@@ -45,7 +45,7 @@ public class ElytraImpactListener implements Listener {
             gliding.add(uuid);
         }
         // We tick 1 tick later because the player is being toggled of at the same tick as it takes damage.
-        Slimefun.instance().getServer().getScheduler().runTaskLater(Slimefun.instance(), gliding::clear, 1);
+        Slimefun.getPlatformScheduler().runLater(gliding::clear, 1);
     }
 
     @EventHandler

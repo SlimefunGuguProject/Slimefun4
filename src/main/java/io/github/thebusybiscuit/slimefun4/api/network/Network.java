@@ -227,7 +227,7 @@ public abstract class Network {
      */
     public void display() {
         if (manager.isVisualizerEnabled()) {
-            Slimefun.runSync(new NetworkVisualizer(this, Color.BLUE));
+            Slimefun.runSync(new NetworkVisualizer(this, Color.BLUE), this.regulator);
         }
     }
 
