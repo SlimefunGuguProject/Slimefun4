@@ -208,7 +208,7 @@ public class SlimefunItemInteractListener implements Listener {
 
     private void openMenu(DirtyChestMenu menu, Block b, Player p) {
         if (menu != null) {
-            if (menu.canOpen(b, p)) {
+            if (p.hasPermission("slimefun.inventory.bypass") || menu.canOpen(b, p)) {
                 menu.open(p);
             } else {
                 Slimefun.getLocalization().sendMessage(p, "inventory.no-access", true);
