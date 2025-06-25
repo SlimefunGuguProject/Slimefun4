@@ -233,7 +233,16 @@ public class IntegrationsManager {
      */
     public boolean isEventFaked(@Nonnull Event event) {
         // This can be changed to "FakeEvent" in a later version
-        return isMcMMOInstalled && event instanceof FakeBlockBreakEvent;
+        if (isMcMMOInstalled) {
+            if (event instanceof FakeBlockBreakEvent) {
+                return true;
+            }
+        }
+        // Fix #1071
+        if (event.getClass().getName().startsWith("com.ghostchu.quickshop.util.PermissionChecker")) {
+            return true;
+        }
+        return false;
     }
 
     /**
