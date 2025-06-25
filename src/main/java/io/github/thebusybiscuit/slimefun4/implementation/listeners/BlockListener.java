@@ -295,7 +295,6 @@ public class BlockListener implements Listener {
                         if (e.getPlayer().getGameMode() != GameMode.CREATIVE
                                 || Slimefun.getCfg().getBoolean("options.drop-block-creative")) {
                             block.getWorld().dropItemNaturally(block.getLocation(), drop);
-                            drop.setAmount(0);
                         }
                     }
                 }
