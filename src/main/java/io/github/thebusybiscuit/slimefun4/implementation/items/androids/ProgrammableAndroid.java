@@ -200,10 +200,14 @@ public class ProgrammableAndroid extends SlimefunItem
                         "rotation", p.getFacing().getOppositeFace().toString());
                 universalData.setData("paused", String.valueOf(true));
 
-                if (b.getBlockData() instanceof Rotatable rotatable) {
-                    rotatable.setRotation(p.getFacing());
-                    b.setBlockData(rotatable);
-                }
+                b.setBlockData(Material.PLAYER_HEAD.createBlockData(data -> {
+                    if (data instanceof Rotatable rotatable) {
+                        rotatable.setRotation(p.getFacing());
+                    }
+                }));
+
+                Slimefun.getBlockDataService().updateUniversalDataUUID(b, universalData.getKey());
+                PlayerHead.setSkin(b, PlayerSkin.fromBase64(texture), true);
             }
         };
     }

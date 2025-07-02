@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.implementation.listeners;
 
+import city.norain.slimefun4.utils.TaskUtil;
 import com.xzavier0722.mc.plugin.slimefun4.storage.callback.IAsyncReadCallback;
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.ASlimefunDataContainer;
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunBlockData;
@@ -114,6 +115,20 @@ public class DebugFishListener implements Listener {
                     : StorageCacheUtils.getUniversalBlock(b);
 
             try {
+                if (data == null) {
+                    TaskUtil.runSyncMethod(() -> Slimefun.getBlockDataService()
+                            .getUniversalDataUUID(b)
+                            .ifPresentOrElse(
+                                    (uuid) -> {
+                                        p.sendMessage(ChatColors.color(
+                                                "&c检测到损坏的通用数据物品, UUID: " + uuid + ", 请检查数据库对应数据是否存在!"));
+                                        sendVanillaInfo(p, b);
+                                    },
+                                    () -> sendVanillaInfo(p, b)));
+
+                    return;
+                }
+
                 if (data.isDataLoaded()) {
                     sendInfo(p, b, data);
                 } else {
@@ -152,26 +167,30 @@ public class DebugFishListener implements Listener {
                 Slimefun.logger().log(Level.SEVERE, "An Exception occurred while using a Debug-Fish", x);
             }
         } else {
-            // Read applicable Slimefun tags
-            Set<SlimefunTag> tags = EnumSet.noneOf(SlimefunTag.class);
+            sendVanillaInfo(p, b);
+        }
+    }
 
-            for (SlimefunTag tag : SlimefunTag.values()) {
-                if (tag.isTagged(b.getType())) {
-                    tags.add(tag);
-                }
+    private void sendVanillaInfo(Player p, Block b) {
+        // Read applicable Slimefun tags
+        Set<SlimefunTag> tags = EnumSet.noneOf(SlimefunTag.class);
+
+        for (SlimefunTag tag : SlimefunTag.values()) {
+            if (tag.isTagged(b.getType())) {
+                tags.add(tag);
+            }
+        }
+
+        if (!tags.isEmpty()) {
+            p.sendMessage(" ");
+            p.sendMessage(
+                    ChatColors.color("&dSlimefun tags for: &e") + b.getType().name());
+
+            for (SlimefunTag tag : tags) {
+                p.sendMessage(ChatColors.color("&d* &e") + tag.name());
             }
 
-            if (!tags.isEmpty()) {
-                p.sendMessage(" ");
-                p.sendMessage(ChatColors.color("&dSlimefun tags for: &e")
-                        + b.getType().name());
-
-                for (SlimefunTag tag : tags) {
-                    p.sendMessage(ChatColors.color("&d* &e") + tag.name());
-                }
-
-                p.sendMessage(" ");
-            }
+            p.sendMessage(" ");
         }
     }
 
@@ -190,11 +209,9 @@ public class DebugFishListener implements Listener {
 
             // Check if the skull is a wall skull, and if so use Directional instead of Rotatable.
             if (b.getType() == Material.PLAYER_WALL_HEAD) {
-                p.sendMessage(ChatColors.color("  &dFacing: &e"
-                        + ((Directional) b.getBlockData()).getFacing().toString()));
+                p.sendMessage(ChatColors.color("  &dFacing: &e" + ((Directional) b.getBlockData()).getFacing()));
             } else {
-                p.sendMessage(ChatColors.color("  &dRotation: &e"
-                        + ((Rotatable) b.getBlockData()).getRotation().toString()));
+                p.sendMessage(ChatColors.color("  &dRotation: &e" + ((Rotatable) b.getBlockData()).getRotation()));
             }
         }
 
@@ -208,6 +225,7 @@ public class DebugFishListener implements Listener {
         if (data instanceof SlimefunUniversalData universalData) {
             p.sendMessage(ChatColors.color("&dUniversal Item: " + greenCheckmark));
             p.sendMessage(ChatColors.color("    &dUUID: " + universalData.getUUID()));
+            p.sendMessage(ChatColors.color("    &dTrait: " + universalData.getTraits()));
         }
 
         if (item.isTicking()) {

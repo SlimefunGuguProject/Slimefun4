@@ -4,6 +4,7 @@ import city.norain.slimefun4.api.menu.UniversalMenu;
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.attributes.UniversalDataTrait;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Level;
@@ -45,7 +46,7 @@ public class SlimefunUniversalData extends ASlimefunDataContainer {
     protected void setTraitData(UniversalDataTrait trait, String val) {
         checkData();
 
-        if (!trait.getReservedKey().isBlank()) {
+        if (!trait.getReservedKey().isEmpty()) {
             setCacheInternal(trait.getReservedKey(), val, true);
             Slimefun.getDatabaseManager()
                     .getBlockDataController()
@@ -81,8 +82,8 @@ public class SlimefunUniversalData extends ASlimefunDataContainer {
         return UUID.fromString(getKey());
     }
 
-    public void addTrait(UniversalDataTrait trait) {
-        traits.add(trait);
+    public void addTrait(UniversalDataTrait... trait) {
+        traits.addAll(List.of(trait));
     }
 
     public boolean hasTrait(UniversalDataTrait trait) {

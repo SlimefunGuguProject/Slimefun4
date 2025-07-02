@@ -85,8 +85,11 @@ public class GrapplingHookListener implements Listener {
         }
 
         // This is called when the arrow shoots off a painting or an item frame
-        if (e.getRemover() instanceof Arrow arrow) {
-            handleGrapplingHook(arrow);
+        if (e.getRemover() instanceof Player player) {
+            GrapplingHookEntity hook = activeHooks.get(player.getUniqueId());
+            if (hook == null) return;
+            handleGrapplingHook(hook.getArrow());
+            e.setCancelled(true);
         }
     }
 

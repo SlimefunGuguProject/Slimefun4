@@ -339,7 +339,7 @@ public class MysqlAdapter extends SqlCommonAdapter<MysqlConfig> {
                 + FIELD_INVENTORY_SLOT
                 + " TINYINT UNSIGNED NOT NULL, "
                 + FIELD_INVENTORY_ITEM
-                + " CHAR(64) NOT NULL,"
+                + " TEXT NOT NULL,"
                 + "PRIMARY KEY ("
                 + FIELD_UNIVERSAL_UUID
                 + ", "
@@ -405,7 +405,7 @@ public class MysqlAdapter extends SqlCommonAdapter<MysqlConfig> {
         if (Slimefun.isNewlyInstalled()) {
             executeSql(MessageFormat.format(
                     """
-                    INSERT INTO {0} ({1}, {2}) VALUES ("{3}", {4});
+                    INSERT IGNORE INTO {0} ({1}, {2}) VALUES ("{3}", {4});
                     """,
                     tableMetadataTable,
                     FIELD_TABLE_METADATA_KEY,

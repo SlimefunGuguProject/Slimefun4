@@ -17,6 +17,15 @@ import org.bukkit.entity.Entity;
 @UtilityClass
 public class TaskUtil {
     @SneakyThrows
+    public void runSyncMethod(Runnable runnable) {
+        if (Bukkit.isPrimaryThread()) {
+            runnable.run();
+        } else {
+            Slimefun.runSync(runnable);
+        }
+    }
+
+    @SneakyThrows
     public <T> T runSyncMethod(@Nonnull Callable<T> callable) {
         if (Slimefun.folia().isFolia()) {
             throw new IllegalArgumentException("Location must be provided when executing sync task on Folia!");

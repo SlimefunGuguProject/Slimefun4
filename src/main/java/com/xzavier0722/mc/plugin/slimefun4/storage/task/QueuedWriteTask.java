@@ -62,4 +62,9 @@ public class QueuedWriteTask implements Runnable {
         }
         return tasks.remove(key);
     }
+
+    @Override
+    public String toString() {
+        return "QueuedWriteTask{" + "queue=" + queue + '}';
+    }
 }

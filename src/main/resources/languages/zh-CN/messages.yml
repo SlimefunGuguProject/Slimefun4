@@ -67,6 +67,8 @@ commands:
     failed: "&c迁移数据过程中出现了问题, 请查看后台."
     already-migrated: "&a暂无可迁移数据."
     in-progress: "&a迁移正在进行中..."
+  blockdata:
+    description: '操作粘液方块数据'
 placeholderapi:
   profile-loading: '加载中...'
 guide:

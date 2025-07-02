@@ -9,11 +9,11 @@ body:
       value: |
         感谢你使用 Slimefun 问题反馈系统！
 
-        在反馈前, 请确认你已经做了下面这些事情
-        - 查看 [Releases](https://github.com/SlimefunGuguProject/Slimefun4/releases) 中最新版是否已修复你所遇到的问题
-        - 搜索了已有的 [issues](https://github.com/SlimefunGuguProject/Slimefun4/issues) 列表中是否有相似问题
+        在反馈前, 请确认
+        - 你已经查看 [最新版本](https://github.com/SlimefunGuguProject/Slimefun4/releases) 是否已修复你所遇到的问题
+        - 你已经搜索了已有的 [问题](https://github.com/SlimefunGuguProject/Slimefun4/issues) 是否发现了相似的问题
         
-        如果此问题反馈不符合模板，将会被管理员无条件关闭。
+        如果你的反馈含糊不清或不符合模板，将会被我们直接关闭。
 
   - type: textarea
     id: issue-description
@@ -40,11 +40,11 @@ body:
     id: reproduce
     attributes:
       label: 复现步骤
-      description: 在这里简略说明如何让这个问题再次发生
+      description: 简略说明如何让我们复现这个问题
       placeholder: |
-        在这里简略说明如何让这个问题再次发生
+        简略说明如何让我们复现这个问题
         可使用 1.  2.  3.  的列表格式，或其他任意恰当的格式
-        如果你不确定如何复现, 请尽量描述发生当时的情景
+        如果这个问题不容易复现, 请尽量描述发生当时的情景
     validations:
       required: true
 
@@ -53,15 +53,17 @@ body:
     attributes:
       label: 服务端类型
       description: |
-        选择你正在使用的服务端，如 `Spigot`
-        注意：汉化版仓库不对**混合端** (例如 Arclight、CatServer) 做任何支持，请自己设法解决
+        选择你正在使用的服务端，如 `Paper`
+        注意：汉化版仓库不对**混合端** (例如 Arclight、CatServer 这类支持插件与 Mod 并存的服务端) 做任何支持，请自己设法解决
       options:
-        - Spigot
         - Paper
+        - Leaves
         - Purpur
         - Airplane
+        - Pufferfish
+        - Leaf
         - Mirai
-        - 其他服务端 (请在 `问题描述` 处说明)
+        - 其他服务端 (请在 `问题描述` 处详细说明)
     validations:
       required: true
 
@@ -70,6 +72,7 @@ body:
     attributes:
       label: Minecraft 版本
       options:
+        - 1.21.x
         - 1.20.x
         - 1.19.x
         - 1.18.x
@@ -87,15 +90,15 @@ body:
     attributes:
       label: Slimefun 版本
       description: |
-        **"最新版" 不是版本号，请填写一个确切的版本号！**
-        如果你不太确定，可以截图 "/sf versions" 的输出内容并截图，记得截全。
-      placeholder: Slimefun 2022.07
+        **不要填写 "最新版本"，否则你的反馈会被立即关闭**
+        请你截图或复制执行命令 "/sf versions" 后的输出内容。
+      placeholder: Slimefun 2025.1
 
   - type: textarea
     id: other-plugin
     attributes:
-      label: 其他插件信息
-      description: 如果这个问题与你的其他插件有关，请提供你的服务器插件列表。
+      label: 服务端插件列表
+      description: 提供你的服务器插件列表，你可以通过执行命令 /plugins 获取。
       placeholder: |
         插件: 版本
 

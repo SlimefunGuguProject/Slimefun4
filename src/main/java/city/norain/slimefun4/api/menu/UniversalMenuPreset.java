@@ -44,7 +44,7 @@ public abstract class UniversalMenuPreset extends BlockMenuPreset {
             menu.addItem(slot, getItemInSlot(slot));
         }
 
-        if (getSize() > -1) {
+        if (isSizeAutomaticallyInferred()) {
             menu.addItem(getSize() - 1, null);
         }
 

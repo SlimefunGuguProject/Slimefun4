@@ -401,7 +401,7 @@ public class SqliteAdapter extends SqlCommonAdapter<SqliteConfig> {
         if (Slimefun.isNewlyInstalled()) {
             executeSql(MessageFormat.format(
                     """
-                    INSERT INTO {0} ({1}, {2}) VALUES ("{3}", {4});
+                    INSERT OR IGNORE INTO {0} ({1}, {2}) VALUES ("{3}", {4});
                     """,
                     SqlUtils.mapTable(DataScope.TABLE_METADATA),
                     FIELD_TABLE_METADATA_KEY,

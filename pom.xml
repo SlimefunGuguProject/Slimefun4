@@ -309,7 +309,7 @@
         <dependency>
             <groupId>com.github.StarWishsama.dough</groupId>
             <artifactId>dough-api</artifactId>
-            <version>4dab7610a2</version>
+            <version>a155ce90e3</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
@@ -341,7 +341,7 @@
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>42.7.4</version>
+            <version>42.7.7</version>
             <scope>compile</scope>
         </dependency>
         <dependency>

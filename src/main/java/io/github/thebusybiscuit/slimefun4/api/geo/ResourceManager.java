@@ -284,7 +284,7 @@ public class ResourceManager {
         resources.sort(Comparator.comparing(a -> a.getName(p).toLowerCase(Locale.ROOT)));
 
         int index = 10;
-        int pages = (int) (Math.ceil((double) resources.size() / 36) + 1);
+        int pages = (int) (Math.ceil((double) resources.size() / 28) + 1);
 
         Map<GEOResource, Integer> supplyMap = new HashMap<>();
 

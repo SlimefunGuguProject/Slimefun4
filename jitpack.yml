@@ -1,10 +1,7 @@
 before_install:
-  - sdk install java 21.0.2-open
-  - sdk use java 21.0.2-open
+  - sdk install java 17.0.15-zulu
+  - sdk use java 17.0.15-zulu
   - sdk install maven
-
-jdk:
-  - openjdk21
 
 install:
   - chmod 777 ./mvnw

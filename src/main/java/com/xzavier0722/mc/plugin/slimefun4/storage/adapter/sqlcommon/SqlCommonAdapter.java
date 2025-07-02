@@ -119,12 +119,12 @@ public abstract class SqlCommonAdapter<T extends ISqlCommonConfig> implements ID
                     return 0;
                 }
 
-                return fallbackQuery.getFirst().getInt(null);
+                return fallbackQuery.get(0).getInt(null);
             } catch (Exception e) {
                 return 0;
             }
         } else {
-            return query.getFirst().getInt(FieldKey.METADATA_VALUE);
+            return query.get(0).getInt(FieldKey.METADATA_VALUE);
         }
     }
 

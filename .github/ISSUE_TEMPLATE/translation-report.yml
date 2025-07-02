@@ -8,12 +8,12 @@ body:
   attributes:
     value: |
       感谢你使用 Slimefun 问题反馈系统！
-
-      在反馈前, 请确认你已经做了下面这些事情
-      - 查看 [Releases](https://github.com/SlimefunGuguProject/Slimefun4/releases) 中最新版是否已修复你所遇到的问题
-      - 搜索了已有的 [issues](https://github.com/SlimefunGuguProject/Slimefun4/issues) 列表中是否有相似问题
       
-      如果此问题反馈不符合模板，将会被管理员无条件关闭。
+      在反馈前, 请确认
+      - 你已经查看 [最新版本](https://github.com/SlimefunGuguProject/Slimefun4/releases) 是否已修复你所遇到的问题
+      - 你已经搜索了已有的 [问题](https://github.com/SlimefunGuguProject/Slimefun4/issues) 是否发现了相似的问题
+      
+      如果你的反馈含糊不清或不符合模板，将会被我们直接关闭。
 
 - type: textarea
   id: issue-description
@@ -38,9 +38,9 @@ body:
   attributes:
     label: Slimefun 版本
     description: |
-      **"最新版" 不是版本号，请填写一个确切的版本号！**
-      如果你不太确定，可以截图 "/sf versions" 的输出内容并截图，记得截全。
-    placeholder: Slimefun 2023.02
+      **不要填写 "最新版本"，否则你的反馈会被立即关闭**
+      请你截图或复制执行命令 "/sf versions" 后的输出内容。
+    placeholder: Slimefun 2025.1
 
 - type: textarea
   id: additional

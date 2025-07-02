@@ -24,13 +24,17 @@ public class SlimefunUniversalBlockData extends SlimefunUniversalData {
         this(uuid, sfId, new BlockPosition(present));
     }
 
+    public void initTraits() {
+        addTrait(UniversalDataTrait.BLOCK, UniversalDataTrait.INVENTORY);
+    }
+
     public void initLastPresent() {
         setTraitData(UniversalDataTrait.BLOCK, LocationUtils.getLocKey(lastPresent.toLocation()));
     }
 
-    public void setLastPresent(BlockPosition lastPresent) {
-        setTraitData(UniversalDataTrait.BLOCK, LocationUtils.getLocKey(lastPresent.toLocation()));
-        this.lastPresent = lastPresent;
+    public void setLastPresent(BlockPosition bp) {
+        this.lastPresent = bp;
+        setTraitData(UniversalDataTrait.BLOCK, LocationUtils.getLocKey(bp.toLocation()));
     }
 
     public void setLastPresent(Location l) {
@@ -44,6 +48,7 @@ public class SlimefunUniversalBlockData extends SlimefunUniversalData {
 
         var data = getData(UniversalDataTrait.BLOCK.getReservedKey());
 
+        // 自动修复丢失的位置数据
         if (lastPresent != null) {
             if (data == null) {
                 setTraitData(UniversalDataTrait.BLOCK, LocationUtils.getLocKey(lastPresent.toLocation()));
@@ -85,5 +90,12 @@ public class SlimefunUniversalBlockData extends SlimefunUniversalData {
         } catch (Exception x) {
             throw new RuntimeException("Unable to fix location " + data + ", it might be broken", x);
         }
+    }
+
+    @Override
+    public String toString() {
+        return "SlimefunUniversalBlockData [uuid= " + getUUID() + ", sfId=" + getSfId() + ", isPendingRemove="
+                + isPendingRemove() + ", lastPresent=" + lastPresent + ", hasMenu=" + (getMenu() != null) + ", traits="
+                + getTraits() + "]";
     }
 }

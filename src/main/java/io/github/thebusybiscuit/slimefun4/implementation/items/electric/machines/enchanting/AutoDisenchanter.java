@@ -61,10 +61,14 @@ public class AutoDisenchanter extends AbstractEnchantmentMachine {
             }
 
             // Call an event so other Plugins can modify it.
-            AutoDisenchantEvent event = new AutoDisenchantEvent(item);
+            AutoDisenchantEvent event = new AutoDisenchantEvent(item, menu.getBlock());
             Bukkit.getPluginManager().callEvent(event);
 
             if (event.isCancelled()) {
+                if (InvUtils.fitAll(menu.toInventory(), new ItemStack[] {item}, getOutputSlots())) {
+                    menu.replaceExistingItem(slot, null);
+                    menu.pushItem(item, getOutputSlots());
+                }
                 return null;
             }
 
