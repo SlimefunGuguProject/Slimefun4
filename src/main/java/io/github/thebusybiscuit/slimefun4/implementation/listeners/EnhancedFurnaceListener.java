@@ -87,7 +87,10 @@ public class EnhancedFurnaceListener implements Listener {
                             ? inventory.getResult().getAmount()
                             : 0;
                     amount = Math.min(item.getMaxStackSize() - previous, amount);
-                    e.setResult(new ItemStack(item.getType(), amount));
+                    // Fixes https://github.com/SlimefunGuguProject/Slimefun4/issues/1013
+                    if (amount != 1) {
+                        e.setResult(new ItemStack(item.getType(), amount));
+                    }
                 }
             }
         }
