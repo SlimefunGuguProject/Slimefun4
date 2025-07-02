@@ -17,7 +17,7 @@ public class InventoryUtil {
             return;
         }
 
-        if (Bukkit.isPrimaryThread()) {
+        if (!Slimefun.folia().isFolia() && Bukkit.isPrimaryThread()) {
             new LinkedList<>(inventory.getViewers()).forEach(HumanEntity::closeInventory);
         } else {
             Slimefun.runSync(() -> new LinkedList<>(inventory.getViewers()).forEach(HumanEntity::closeInventory));
@@ -27,7 +27,7 @@ public class InventoryUtil {
     public static void closeInventory(Inventory inventory, Runnable callback) {
         closeInventory(inventory);
 
-        if (Bukkit.isPrimaryThread()) {
+        if (!Slimefun.folia().isFolia() && Bukkit.isPrimaryThread()) {
             callback.run();
         } else {
             Slimefun.runSync(callback);
