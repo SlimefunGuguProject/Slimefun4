@@ -72,11 +72,79 @@ Slimefun 4 可以在[鬼斩构建站](https://builds.guizhanss.com)页面中**�
 
 **! 建议你使用最新的测试版，可以获得最新的内容更新和 Bug 修复！**
 
+## :computer: (开发) 添加依赖
+
+首先添加我们的私有仓库：
+
+Maven:
+
+```xml
+<repository>
+    <id>gugu-maven-repo</id>
+    <url>https://maven.norain.city/releases</url>
+</repository>
+
+```
+
+开发版:
+```xml
+<repository>
+    <id>gugu-maven-repo</id>
+    <url>https://maven.norain.city/snapshots</url>
+    <snapshots>
+        <enabled>true</enabled>
+    </snapshots>
+</repository>
+```
+
+Gradle: 在 `build.gradle` 中添加以下内容:
+
+```groovy
+repositories {
+    maven {
+        url "https://maven.norain.city/releases"
+    }
+}
+```
+
+对于开发版：
+```groovy
+repositories {
+    maven {
+        url "https://maven.norain.city/snapshots"
+    }
+}
+```
+
+接下来添加 Slimefun 4 作为依赖:
+Maven:
+
+```xml
+<dependency>
+    <groupId>com.github.SlimefunGuguProject</groupId>
+    <artifactId>Slimefun4</artifactId>
+    <version>DEV-SNAPSHOT</version>
+    <scope>provided</scope>
+</dependency>
+```
+
+Gradle:
+
+```groovy
+dependencies {
+    compileOnly 'com.github.SlimefunGuguProject:Slimefun4:DEV-SNAPSHOT'
+}
+```
+
+
 ## :computer: 如何编译
 要编译 Slimefun4，你必须先安装 [Git](https://git-scm.com/)
-然后 `git clone https://github.com/SlimefunGuguProject/Slimefun4.git`
-最后如果你是 Windows 系统: `.\mvnw.cmd package`
-如果你是类 Unix 系统: `.\mvnw package`
+
+然后运行 `git clone https://github.com/SlimefunGuguProject/Slimefun4.git` 克隆仓库到本地。
+
+最后进行编译：
+- 如果你是 Windows 系统: `.\mvnw.cmd package`
+- 如果你是类 Unix 系统: `.\mvnw package`
 
 ## :framed_picture: 截图
 

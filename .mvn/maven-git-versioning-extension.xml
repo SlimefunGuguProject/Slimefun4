@@ -11,9 +11,5 @@
                ${commit.short}-Insider
            </version>
        </ref>
-       <ref type = "tag">
-           <pattern>([0-9].*)></pattern>
-           <version>${1}</version>
-       </ref>
    </refs>
 </configuration>
