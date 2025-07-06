@@ -2,7 +2,6 @@ package io.github.thebusybiscuit.slimefun4.implementation;
 
 import city.norain.slimefun4.SlimefunExtended;
 import city.norain.slimefun4.timings.SQLProfiler;
-import city.norain.slimefun4.utils.LangUtil;
 import com.tcoded.folialib.FoliaLib;
 import com.tcoded.folialib.enums.EntityTaskResult;
 import com.tcoded.folialib.impl.PlatformScheduler;

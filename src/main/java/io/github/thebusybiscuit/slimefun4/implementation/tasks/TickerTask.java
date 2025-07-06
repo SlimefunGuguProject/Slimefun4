@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.implementation.tasks;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.ASlimefunDataContainer;
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunBlockData;
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunUniversalData;
@@ -17,6 +18,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
@@ -33,9 +39,7 @@ import org.bukkit.Location;
  * synchronous or not.
  *
  * @author TheBusyBiscuit
- *
  * @see BlockTicker
- *
  */
 public class TickerTask implements Runnable {
 
@@ -51,6 +55,24 @@ public class TickerTask implements Runnable {
      */
     private final Map<BlockPosition, Integer> bugs = new ConcurrentHashMap<>();
 
+    private final ThreadFactory tickerThreadFactory = new ThreadFactoryBuilder()
+            .setNameFormat("SF-Ticker-%d")
+            .setDaemon(true)
+            .setUncaughtExceptionHandler(
+                    (t, e) -> Slimefun.logger().log(Level.SEVERE, e, () -> "do tick 时发生异常 (@" + t.getName() + ")"))
+            .build();
+
+    /**
+     * 负责并发运行部分可异步的 Tick 任务的 {@link ExecutorService} 实例.
+     */
+    private final ExecutorService asyncTickerService = new ThreadPoolExecutor(
+            2,
+            Runtime.getRuntime().availableProcessors(),
+            10L,
+            TimeUnit.SECONDS,
+            new LinkedBlockingQueue<>(),
+            tickerThreadFactory);
+
     private int tickRate;
     private boolean halted = false;
     private boolean running = false;
@@ -61,8 +83,7 @@ public class TickerTask implements Runnable {
     /**
      * This method starts the {@link TickerTask} on an asynchronous schedule.
      *
-     * @param plugin
-     *            The instance of our {@link Slimefun}
+     * @param plugin The instance of our {@link Slimefun}
      */
     public void start(@Nonnull Slimefun plugin) {
         this.tickRate = Slimefun.getCfg().getInt("URID.custom-ticker-delay");
@@ -203,11 +224,18 @@ public class TickerTask implements Runnable {
                     long timestamp = Slimefun.getProfiler().newEntry();
                     item.getBlockTicker().update();
 
-                    if (Slimefun.folia().isFolia()) {
-                        Slimefun.getPlatformScheduler().runAtLocation(l, task -> tickBlock(l, item, data, timestamp));
-                    } else {
-                        tickBlock(l, item, data, timestamp);
-                    }
+                    asyncTickerService.submit(() -> {
+                        try {
+                            if (Slimefun.folia().isFolia()) {
+                                Slimefun.getPlatformScheduler()
+                                        .runAtLocation(l, task -> tickBlock(l, item, data, timestamp));
+                            } else {
+                                tickBlock(l, item, data, timestamp);
+                            }
+                        } catch (Exception x) {
+                            reportErrors(l, item, x);
+                        }
+                    });
                 }
 
                 tickers.add(item.getBlockTicker());
@@ -317,9 +345,7 @@ public class TickerTask implements Runnable {
      * The {@link Chunk} does not have to be loaded.
      * If no {@link Location} is present, the returned {@link Set} will be empty.
      *
-     * @param chunk
-     *            The {@link Chunk}
-     *
+     * @param chunk The {@link Chunk}
      * @return A {@link Set} of all ticking {@link Location Locations}
      */
     @Nonnull
@@ -337,9 +363,7 @@ public class TickerTask implements Runnable {
      *
      * 其中包含的 {@link Location} 可以是已加载或卸载的 {@link Chunk}
      *
-     * @param chunk
-     *            {@link Chunk}
-     *
+     * @param chunk {@link Chunk}
      * @return 包含所有机器 Tick {@link TickLocation 位置}的只读 {@link Map}
      */
     @Nonnull
@@ -352,8 +376,7 @@ public class TickerTask implements Runnable {
     /**
      * This enables the ticker at the given {@link Location} and adds it to our "queue".
      *
-     * @param l
-     *            The {@link Location} to activate
+     * @param l The {@link Location} to activate
      */
     public void enableTicker(@Nonnull Location l) {
         enableTicker(l, null);
@@ -393,8 +416,7 @@ public class TickerTask implements Runnable {
      * This method disables the ticker at the given {@link Location} and removes it from our internal
      * "queue".
      *
-     * @param l
-     *            The {@link Location} to remove
+     * @param l The {@link Location} to remove
      */
     public void disableTicker(@Nonnull Location l) {
         Validate.notNull(l, "Location cannot be null!");
@@ -419,8 +441,7 @@ public class TickerTask implements Runnable {
      *
      * We don't recommend disable by this way unless you only have UUID of universal data.
      *
-     * @param uuid
-     *            The {@link UUID} to remove
+     * @param uuid The {@link UUID} to remove
      */
     public void disableTicker(@Nonnull UUID uuid) {
         Validate.notNull(uuid, "Universal Data ID cannot be null!");
