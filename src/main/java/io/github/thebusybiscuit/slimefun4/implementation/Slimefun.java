@@ -495,8 +495,7 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
         foliaLib.getScheduler().cancelAllTasks();
 
         // Finishes all started movements/removals of block data
-        ticker.setPaused(true);
-        ticker.halt();
+        ticker.shutdown();
         /**try {
          * ticker.halt();
          * ticker.run();

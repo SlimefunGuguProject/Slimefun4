@@ -450,4 +450,19 @@ public class TickerTask implements Runnable {
             tickingLocations.values().forEach(loc -> loc.removeIf(tk -> uuid.equals(tk.getUuid())));
         }
     }
+
+    public void shutdown() {
+        setPaused(true);
+        halt();
+
+        try {
+            asyncTickerService.shutdown();
+            if (!asyncTickerService.awaitTermination(10, TimeUnit.SECONDS)) {
+                asyncTickerService.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            asyncTickerService.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
+    }
 }
