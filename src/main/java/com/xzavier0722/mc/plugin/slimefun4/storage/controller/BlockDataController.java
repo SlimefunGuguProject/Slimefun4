@@ -351,20 +351,19 @@ public class BlockDataController extends ADataController {
         var removed = getChunkDataCache(l.getChunk(), true).removeBlockData(l);
 
         if (removed == null) {
-            getUniversalBlockDataFromCache(l)
-                    .ifPresentOrElse(data -> removeUniversalBlockData(data.getUUID(), l), () -> {
-                        if (!Slimefun.folia().isFolia() && Bukkit.isPrimaryThread()) {
-                            Slimefun.getBlockDataService()
+            getUniversalBlockDataFromCache(l).ifPresentOrElse(data -> removeUniversalBlockData(data.getUUID()), () -> {
+                if (!Slimefun.folia().isFolia() && Bukkit.isPrimaryThread()) {
+                    Slimefun.getBlockDataService()
+                            .getUniversalDataUUID(l.getBlock())
+                            .ifPresent(this::removeUniversalBlockData);
+                } else {
+                    Slimefun.runSync(
+                            () -> Slimefun.getBlockDataService()
                                     .getUniversalDataUUID(l.getBlock())
-                                    .ifPresent(uuid -> removeUniversalBlockData(uuid, l));
-                        } else {
-                            Slimefun.runSync(
-                                    () -> Slimefun.getBlockDataService()
-                                            .getUniversalDataUUID(l.getBlock())
-                                            .ifPresent(uuid -> removeUniversalBlockData(uuid, l)),
-                                    l);
-                        }
-                    });
+                                    .ifPresent(this::removeUniversalBlockData),
+                            l);
+                }
+            });
 
             return;
         }

@@ -70,7 +70,7 @@ public class TickerTask implements Runnable {
             Runtime.getRuntime().availableProcessors(),
             10L,
             TimeUnit.SECONDS,
-            new LinkedBlockingQueue<>(),
+            new LinkedBlockingQueue<>(128), // TEST CAPACITY
             tickerThreadFactory);
 
     private int tickRate;

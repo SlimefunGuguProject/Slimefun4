@@ -14,11 +14,11 @@ import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.implementation.SlimefunItems;
 import io.github.thebusybiscuit.slimefun4.utils.NumberUtils;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.LongConsumer;
 import javax.annotation.Nonnull;
@@ -44,9 +44,9 @@ public class EnergyNet extends Network implements HologramOwner {
 
     private static final int RANGE = 6;
 
-    private final Map<Location, EnergyNetProvider> generators = new HashMap<>();
-    private final Map<Location, EnergyNetComponent> capacitors = new HashMap<>();
-    private final Map<Location, EnergyNetComponent> consumers = new HashMap<>();
+    private final Map<Location, EnergyNetProvider> generators = new ConcurrentHashMap<>();
+    private final Map<Location, EnergyNetComponent> capacitors = new ConcurrentHashMap<>();
+    private final Map<Location, EnergyNetComponent> consumers = new ConcurrentHashMap<>();
 
     protected EnergyNet(@Nonnull Location l) {
         super(Slimefun.getNetworkManager(), l);
