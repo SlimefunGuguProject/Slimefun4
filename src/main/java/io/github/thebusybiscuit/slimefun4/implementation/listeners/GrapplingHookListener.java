@@ -14,12 +14,14 @@ import javax.annotation.ParametersAreNonnullByDefault;
 import org.bukkit.Location;
 import org.bukkit.entity.Arrow;
 import org.bukkit.entity.Bat;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
+import org.bukkit.event.entity.EntityDropItemEvent;
 import org.bukkit.event.entity.EntityPortalEnterEvent;
 import org.bukkit.event.entity.PlayerLeashEntityEvent;
 import org.bukkit.event.entity.ProjectileHitEvent;
@@ -42,6 +44,7 @@ import org.bukkit.util.Vector;
 public class GrapplingHookListener implements Listener {
 
     private GrapplingHook grapplingHook;
+    private static Entity leashTarget;
 
     private final Map<UUID, GrapplingHookEntity> activeHooks = new HashMap<>();
     private final Set<UUID> invulnerability = new HashSet<>();
@@ -156,6 +159,19 @@ public class GrapplingHookListener implements Listener {
         }
     }
 
+    @EventHandler
+    public void onLeashBreak(EntityDropItemEvent e){
+        if (grapplingHook.isDisabled()) {
+            return;
+        }
+
+        Entity entity = e.getEntity();
+
+        if (entity.equals(leashTarget)){
+            e.setCancelled(true);
+        }
+    }
+
     private void handleGrapplingHook(@Nullable Arrow arrow) {
         if (arrow != null && arrow.isValid() && arrow.getShooter() instanceof Player player) {
             GrapplingHookEntity hook = activeHooks.get(player.getUniqueId());
@@ -208,6 +224,7 @@ public class GrapplingHookListener implements Listener {
         UUID uuid = p.getUniqueId();
 
         activeHooks.put(uuid, hook);
+        leashTarget = bat;
 
         // To fix issue #253
         Slimefun.runSync(
