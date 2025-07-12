@@ -581,7 +581,7 @@ public final class SlimefunUtils {
         Validate.notNull(l, "Cannot update a texture for null");
         Validate.isTrue(capacity > 0, "Capacity must be greater than zero!");
 
-        Slimefun.runSync(new CapacitorTextureUpdateTask(l, charge, capacity));
+        Slimefun.runSync(new CapacitorTextureUpdateTask(l, charge, capacity), l);
     }
 
     /**

@@ -42,9 +42,11 @@ public class StorageCacheUtils {
 
     @ParametersAreNonnullByDefault
     public static boolean hasUniversalBlock(Location l) {
-        return TaskUtil.runSyncMethod(() -> Slimefun.getBlockDataService()
-                .getUniversalDataUUID(l.getBlock())
-                .isPresent());
+        return TaskUtil.runSyncMethod(
+                () -> Slimefun.getBlockDataService()
+                        .getUniversalDataUUID(l.getBlock())
+                        .isPresent(),
+                l);
     }
 
     @ParametersAreNonnullByDefault
