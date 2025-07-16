@@ -446,7 +446,7 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
         // Starting our tasks
         autoSavingService.start(this, config.getInt("options.auto-save-delay-in-minutes"));
         hologramsService.start();
-        ticker.start(this);
+        ticker.start();
 
         logger.log(Level.INFO, "正在加载第三方插件支持...");
         integrations.start();
@@ -1259,12 +1259,12 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
         return super.getFile();
     }
 
-    public static FoliaLib folia() {
-        return instance.foliaLib;
+    public static boolean isFolia() {
+        return instance.foliaLib.isFolia();
     }
 
     public static PlatformScheduler getPlatformScheduler() {
-        return folia().getScheduler();
+        return instance.foliaLib.getScheduler();
     }
 
     public static @Nonnull PlayerChatCatcher getChatCatcher() {

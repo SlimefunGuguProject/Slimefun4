@@ -37,7 +37,7 @@ public interface HologramOwner extends ItemAttribute {
     }
 
     default void updateHologram(@Nonnull Block b, @Nonnull String text, Supplier<Boolean> abort) {
-        if (!Slimefun.folia().isFolia() && Bukkit.isPrimaryThread()) {
+        if (!Slimefun.isFolia() && Bukkit.isPrimaryThread()) {
             if (abort.get()) {
                 return;
             }

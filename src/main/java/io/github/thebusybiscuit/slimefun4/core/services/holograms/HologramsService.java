@@ -309,7 +309,7 @@ public class HologramsService {
 
         if (Bukkit.isPrimaryThread()) {
             return removeHologramTask.call();
-        } else if (Slimefun.folia().isFolia()) {
+        } else if (Slimefun.isFolia()) {
             return TaskUtil.runSyncMethod(removeHologramTask, loc);
         } else {
             throw new UnsupportedOperationException("You cannot remove a hologram asynchronously.");

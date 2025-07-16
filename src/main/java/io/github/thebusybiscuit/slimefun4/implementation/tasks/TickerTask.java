@@ -59,33 +59,42 @@ public class TickerTask implements Runnable {
             .setNameFormat("SF-Ticker-%d")
             .setDaemon(true)
             .setUncaughtExceptionHandler(
-                    (t, e) -> Slimefun.logger().log(Level.SEVERE, e, () -> "do tick 时发生异常 (@" + t.getName() + ")"))
+                    (t, e) -> Slimefun.logger().log(Level.SEVERE, e, () -> "tick 时发生异常 (@" + t.getName() + ")"))
             .build();
 
     /**
      * 负责并发运行部分可异步的 Tick 任务的 {@link ExecutorService} 实例.
      */
     private final ExecutorService asyncTickerService = new ThreadPoolExecutor(
-            2,
+            Runtime.getRuntime().availableProcessors() / 2,
             Runtime.getRuntime().availableProcessors(),
-            10L,
+            30L,
             TimeUnit.SECONDS,
             new LinkedBlockingQueue<>(128), // TEST CAPACITY
             tickerThreadFactory);
 
     private int tickRate;
+
+    /**
+     * 该标记代表 TickerTask 已被终止.
+     */
     private boolean halted = false;
+
+    /**
+     * 该标记代表 TickerTask 正在运行.
+     */
     private boolean running = false;
 
+    /**
+     * 该标记代表 TickerTask 暂时被暂停.
+     */
     @Setter
     private volatile boolean paused = false;
 
     /**
      * This method starts the {@link TickerTask} on an asynchronous schedule.
-     *
-     * @param plugin The instance of our {@link Slimefun}
      */
-    public void start(@Nonnull Slimefun plugin) {
+    public void start() {
         this.tickRate = Slimefun.getCfg().getInt("URID.custom-ticker-delay");
 
         Slimefun.getPlatformScheduler().runTimerAsync(this, 100L, tickRate);
@@ -224,9 +233,9 @@ public class TickerTask implements Runnable {
                     long timestamp = Slimefun.getProfiler().newEntry();
                     item.getBlockTicker().update();
 
-                    asyncTickerService.submit(() -> {
+                    asyncTickerService.execute(() -> {
                         try {
-                            if (Slimefun.folia().isFolia()) {
+                            if (Slimefun.isFolia()) {
                                 Slimefun.getPlatformScheduler()
                                         .runAtLocation(l, task -> tickBlock(l, item, data, timestamp));
                             } else {

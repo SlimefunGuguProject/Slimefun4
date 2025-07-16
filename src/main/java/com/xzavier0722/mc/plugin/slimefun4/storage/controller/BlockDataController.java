@@ -352,7 +352,7 @@ public class BlockDataController extends ADataController {
 
         if (removed == null) {
             getUniversalBlockDataFromCache(l).ifPresentOrElse(data -> removeUniversalBlockData(data.getUUID()), () -> {
-                if (!Slimefun.folia().isFolia() && Bukkit.isPrimaryThread()) {
+                if (!Slimefun.isFolia() && Bukkit.isPrimaryThread()) {
                     Slimefun.getBlockDataService()
                             .getUniversalDataUUID(l.getBlock())
                             .ifPresent(this::removeUniversalBlockData);

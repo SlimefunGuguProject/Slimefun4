@@ -27,7 +27,7 @@ public class TaskUtil {
 
     @SneakyThrows
     public <T> T runSyncMethod(@Nonnull Callable<T> callable) {
-        if (Slimefun.folia().isFolia()) {
+        if (Slimefun.isFolia()) {
             throw new IllegalArgumentException("Location must be provided when executing sync task on Folia!");
         }
 
@@ -41,7 +41,7 @@ public class TaskUtil {
 
     @SneakyThrows
     public <T> T runSyncMethod(@Nonnull Callable<T> callable, @Nonnull Entity entity) {
-        if (Slimefun.folia().isFolia()) {
+        if (Slimefun.isFolia()) {
             throw new IllegalArgumentException("Entity must be provided when executing sync task on Folia!");
         }
 
@@ -54,7 +54,7 @@ public class TaskUtil {
             return callable.call();
         } else {
             try {
-                if (Slimefun.folia().isFolia()) {
+                if (Slimefun.isFolia()) {
                     final CompletableFuture<T> result = new CompletableFuture<>();
 
                     System.out.println("Sync task created, hashcode = " + result.hashCode());
