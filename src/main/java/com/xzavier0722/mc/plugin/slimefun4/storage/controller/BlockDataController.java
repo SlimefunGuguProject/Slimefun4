@@ -3,7 +3,7 @@ package com.xzavier0722.mc.plugin.slimefun4.storage.controller;
 import city.norain.slimefun4.api.menu.UniversalMenu;
 import city.norain.slimefun4.api.menu.UniversalMenuPreset;
 import city.norain.slimefun4.utils.InventoryUtil;
-import city.norain.slimefun4.utils.TaskUtil;
+import com.tcoded.folialib.wrapper.task.WrappedTask;
 import com.xzavier0722.mc.plugin.slimefun4.storage.adapter.IDataSourceAdapter;
 import com.xzavier0722.mc.plugin.slimefun4.storage.callback.IAsyncReadCallback;
 import com.xzavier0722.mc.plugin.slimefun4.storage.common.DataScope;
@@ -44,8 +44,6 @@ import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.plugin.Plugin;
-import org.bukkit.scheduler.BukkitTask;
 
 /**
  * 方块数据控制器
@@ -87,7 +85,7 @@ public class BlockDataController extends ADataController {
     private boolean enableDelayedSaving = false;
 
     private int delayedSecond = 0;
-    private BukkitTask looperTask;
+    private WrappedTask looperTask;
     /**
      * 区块数据加载模式
      * {@link ChunkDataLoadMode}
@@ -130,9 +128,9 @@ public class BlockDataController extends ADataController {
             case LOAD_ON_STARTUP -> loadLoadedWorlds();
         }
 
-        Bukkit.getScheduler()
-                .runTaskLater(
-                        Slimefun.instance(),
+        Slimefun.instance()
+                .getPlatformScheduler()
+                .runLater(
                         () -> {
                             initLoading = true;
                             loadUniversalRecord();
@@ -145,9 +143,9 @@ public class BlockDataController extends ADataController {
      * 加载所有服务器已加载的世界中的数据
      */
     private void loadLoadedWorlds() {
-        Bukkit.getScheduler()
-                .runTaskLater(
-                        Slimefun.instance(),
+        Slimefun.instance()
+                .getPlatformScheduler()
+                .runLater(
                         () -> {
                             initLoading = true;
                             for (var world : Bukkit.getWorlds()) {
@@ -162,9 +160,9 @@ public class BlockDataController extends ADataController {
      * 加载所有服务器已加载的世界区块中的数据
      */
     private void loadLoadedChunks() {
-        Bukkit.getScheduler()
-                .runTaskLater(
-                        Slimefun.instance(),
+        Slimefun.instance()
+                .getPlatformScheduler()
+                .runLater(
                         () -> {
                             initLoading = true;
                             for (var world : Bukkit.getWorlds()) {
@@ -184,16 +182,15 @@ public class BlockDataController extends ADataController {
      * @param delayedSecond   首次执行延时
      * @param forceSavePeriod 强制保存周期
      */
-    public void initDelayedSaving(Plugin p, int delayedSecond, int forceSavePeriod) {
+    public void initDelayedSaving(Slimefun p, int delayedSecond, int forceSavePeriod) {
         checkDestroy();
         if (delayedSecond < 1 || forceSavePeriod < 1) {
             throw new IllegalArgumentException("save period second must be greater than 0!");
         }
         enableDelayedSaving = true;
         this.delayedSecond = delayedSecond;
-        looperTask = Bukkit.getScheduler()
-                .runTaskTimerAsynchronously(
-                        p,
+        looperTask = p.getPlatformScheduler()
+                .runTimerAsync(
                         new DelayedSavingLooperTask(
                                 forceSavePeriod,
                                 () -> {
@@ -354,12 +351,19 @@ public class BlockDataController extends ADataController {
         var removed = getChunkDataCache(l.getChunk(), true).removeBlockData(l);
 
         if (removed == null) {
-            getUniversalBlockDataFromCache(l)
-                    .ifPresentOrElse(
-                            data -> removeUniversalBlockData(data.getUUID()),
-                            () -> TaskUtil.runSyncMethod(() -> Slimefun.getBlockDataService()
+            getUniversalBlockDataFromCache(l).ifPresentOrElse(data -> removeUniversalBlockData(data.getUUID()), () -> {
+                if (!Slimefun.isFolia() && Bukkit.isPrimaryThread()) {
+                    Slimefun.getBlockDataService()
+                            .getUniversalDataUUID(l.getBlock())
+                            .ifPresent(this::removeUniversalBlockData);
+                } else {
+                    Slimefun.runSync(
+                            () -> Slimefun.getBlockDataService()
                                     .getUniversalDataUUID(l.getBlock())
-                                    .ifPresent(this::removeUniversalBlockData)));
+                                    .ifPresent(this::removeUniversalBlockData),
+                            l);
+                }
+            });
 
             return;
         }
@@ -1404,7 +1408,8 @@ public class BlockDataController extends ADataController {
                                     .updateUniversalDataUUID(l.getBlock(), String.valueOf(universalData.getUUID()));
                         }
                     },
-                    10L);
+                    10L,
+                    l);
 
             kvData.forEach(recordSet -> universalData.setData(
                     recordSet.get(FieldKey.DATA_KEY), DataUtils.blockDataDebase64(recordSet.get(FieldKey.DATA_VALUE))));

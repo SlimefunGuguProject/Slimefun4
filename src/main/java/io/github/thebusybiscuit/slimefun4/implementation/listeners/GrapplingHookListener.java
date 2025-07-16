@@ -174,7 +174,7 @@ public class GrapplingHookListener implements Listener {
                 } else {
                     Location l = player.getLocation();
                     l.setY(l.getY() + 0.5);
-                    player.teleport(l);
+                    Slimefun.getPlatformScheduler().teleportAsync(player, l);
 
                     double g = -0.08;
                     double d = target.distance(l);
