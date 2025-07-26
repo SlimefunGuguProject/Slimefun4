@@ -26,7 +26,7 @@
         <maven.settings.file>${project.basedir}/.mvn/settings.xml</maven.settings.file>
 
         <!-- Paper properties -->
-        <paper.version>1.21</paper.version>
+        <paper.version>1.21.4</paper.version>
         <paper.javadocs>https://papermc.io/javadocs</paper.javadocs>
     </properties>
 
