@@ -146,7 +146,7 @@ public class WoodcutterAndroid extends ProgrammableAndroid {
             }
         }
 
-        if (SlimefunExtended.getMinecraftVersion().isAtLeast(21, 2)) {
+        if (SlimefunExtended.getMinecraftVersion().isAtLeast(1, 21, 2)) {
             switch (logType) {
                 case PALE_OAK_LOG, PALE_OAK_WOOD, STRIPPED_PALE_OAK_LOG, STRIPPED_PALE_OAK_WOOD -> {
                     saplingType = Material.PALE_OAK_SAPLING;
