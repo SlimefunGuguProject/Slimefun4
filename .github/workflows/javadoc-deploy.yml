@@ -1,0 +1,30 @@
+name: javadoc-deploy.yml
+on:
+  push:
+    branches:
+      - release
+      - dev
+    paths:
+      - 'src/**'
+  workflow_dispatch:
+
+env:
+  JAVADOC_TARGET: snapshot
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Check javadoc target
+        if: github.ref_name == 'release'
+        run: echo "JAVADOC_TARGET=release" >> $GITHUB_ENV
+      - name: Deploy JavaDoc 🚀
+        uses: MathieuSoysal/Javadoc-publisher.yml@v3.0.2
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          javadoc-branch: ${{ format('javadoc-{0}', env.JAVADOC_TARGET) }}
+          java-version: 21
+          target-folder: ${{ env.JAVADOC_TARGET }}
+          project: maven
