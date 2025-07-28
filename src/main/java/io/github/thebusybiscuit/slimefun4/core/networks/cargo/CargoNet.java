@@ -9,12 +9,13 @@ import io.github.thebusybiscuit.slimefun4.api.network.NetworkComponent;
 import io.github.thebusybiscuit.slimefun4.core.attributes.HologramOwner;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.logging.Level;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -42,10 +43,10 @@ public class CargoNet extends AbstractItemNetwork implements HologramOwner {
 
     private static final int RANGE = 5;
 
-    private final Set<Location> inputNodes = new HashSet<>();
-    private final Set<Location> outputNodes = new HashSet<>();
+    private final Set<Location> inputNodes = new CopyOnWriteArraySet<>();
+    private final Set<Location> outputNodes = new CopyOnWriteArraySet<>();
 
-    protected final Map<Location, Integer> roundRobin = new HashMap<>();
+    protected final Map<Location, Integer> roundRobin = new ConcurrentHashMap<>();
     private int tickDelayThreshold = 0;
 
     public static @Nullable CargoNet getNetworkFromLocation(@Nonnull Location l) {

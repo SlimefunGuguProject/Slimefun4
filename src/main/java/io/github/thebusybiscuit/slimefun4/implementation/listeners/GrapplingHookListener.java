@@ -3,11 +3,11 @@ package io.github.thebusybiscuit.slimefun4.implementation.listeners;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.implementation.items.tools.GrapplingHook;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -21,6 +21,7 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 import org.bukkit.event.entity.EntityPortalEnterEvent;
+import org.bukkit.event.entity.EntityUnleashEvent;
 import org.bukkit.event.entity.PlayerLeashEntityEvent;
 import org.bukkit.event.entity.ProjectileHitEvent;
 import org.bukkit.event.hanging.HangingBreakByEntityEvent;
@@ -43,7 +44,7 @@ public class GrapplingHookListener implements Listener {
 
     private GrapplingHook grapplingHook;
 
-    private final Map<UUID, GrapplingHookEntity> activeHooks = new HashMap<>();
+    private final Map<UUID, GrapplingHookEntity> activeHooks = new ConcurrentHashMap<>();
     private final Set<UUID> invulnerability = new HashSet<>();
 
     public void register(@Nonnull Slimefun plugin, @Nonnull GrapplingHook grapplingHook) {
@@ -156,6 +157,20 @@ public class GrapplingHookListener implements Listener {
         }
     }
 
+    @EventHandler
+    public void onLeashBreak(EntityUnleashEvent e) {
+        if (grapplingHook.isDisabled()) {
+            return;
+        }
+
+        for (GrapplingHookEntity hook : activeHooks.values()) {
+            if (hook.getLeashTarget() == e.getEntity()) {
+                e.setDropLeash(false);
+                return;
+            }
+        }
+    }
+
     private void handleGrapplingHook(@Nullable Arrow arrow) {
         if (arrow != null && arrow.isValid() && arrow.getShooter() instanceof Player player) {
             GrapplingHookEntity hook = activeHooks.get(player.getUniqueId());
@@ -174,7 +189,7 @@ public class GrapplingHookListener implements Listener {
                 } else {
                     Location l = player.getLocation();
                     l.setY(l.getY() + 0.5);
-                    Slimefun.getPlatformScheduler().teleportAsync(player, l);
+                    player.teleport(l);
 
                     double g = -0.08;
                     double d = target.distance(l);
