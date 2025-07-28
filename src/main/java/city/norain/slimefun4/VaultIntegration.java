@@ -8,6 +8,8 @@ import net.milkbowl.vault.economy.Economy;
 import org.bukkit.OfflinePlayer;
 
 /**
+ * Vault 集成类, 用于处理游戏币相关的操作.
+ *
  * @author StarWishsama
  */
 public class VaultIntegration {

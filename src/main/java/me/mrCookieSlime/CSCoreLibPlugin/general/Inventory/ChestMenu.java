@@ -3,6 +3,8 @@ package me.mrCookieSlime.CSCoreLibPlugin.general.Inventory;
 import city.norain.slimefun4.holder.SlimefunInventoryHolder;
 import city.norain.slimefun4.utils.InventoryUtil;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
+import io.github.thebusybiscuit.slimefun4.core.debug.Debug;
+import io.github.thebusybiscuit.slimefun4.core.debug.TestCase;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -257,6 +259,9 @@ public class ChestMenu extends SlimefunInventoryHolder {
 
     private void setup() {
         if (this.inventory != null) return;
+
+        Debug.log(TestCase.INVENTORY, "Set up chestmenu {} in {}", title, Bukkit.isPrimaryThread() ? "sync" : "async");
+
         this.inventory = Bukkit.createInventory(this, getSize(), title);
         for (int i = 0; i < this.items.size(); i++) {
             this.inventory.setItem(i, this.items.get(i));
@@ -300,7 +305,7 @@ public class ChestMenu extends SlimefunInventoryHolder {
     public void open(Player... players) {
         setup();
         for (Player p : players) {
-            p.openInventory(this.inventory);
+            InventoryUtil.openInventory(p, this.inventory);
             addViewer(p.getUniqueId());
             if (open != null) open.onOpen(p);
         }

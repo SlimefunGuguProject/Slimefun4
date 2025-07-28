@@ -27,7 +27,7 @@ public enum AndroidType {
     FARMER,
 
     /**
-     * The {@link AdvancedFarmerAndroid} is an extension of the {@link FarmerAndroid},
+     * The AdvancedFarmerAndroid is an extension of the {@link FarmerAndroid},
      * it can also harvest plants from ExoticGarden.
      */
     ADVANCED_FARMER,
