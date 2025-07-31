@@ -65,13 +65,7 @@ public class TickerTask implements Runnable {
     /**
      * 负责并发运行部分可异步的 Tick 任务的 {@link ExecutorService} 实例.
      */
-    private final ExecutorService asyncTickerService = new ThreadPoolExecutor(
-            Runtime.getRuntime().availableProcessors() / 2,
-            Runtime.getRuntime().availableProcessors(),
-            30L,
-            TimeUnit.SECONDS,
-            new LinkedBlockingQueue<>(128), // TEST CAPACITY
-            tickerThreadFactory);
+    private ExecutorService asyncTickerService;
 
     private int tickRate;
 
@@ -96,6 +90,34 @@ public class TickerTask implements Runnable {
      */
     public void start() {
         this.tickRate = Slimefun.getCfg().getInt("URID.custom-ticker-delay");
+
+        var initSize = Slimefun.getConfigManager().getAsyncTickerInitSize();
+
+        if (initSize > Runtime.getRuntime().availableProcessors() + 1) {
+            initSize = Runtime.getRuntime().availableProcessors() + 1;
+            Slimefun.logger().log(Level.WARNING, "当前设置的 Ticker 线程池初始大小过大，已被重设至 {0}，建议修改为小于 {1} 的值。", new Object[] {
+                initSize, initSize + 1
+            });
+        }
+
+        var maxSize = Slimefun.getCfg().getInt("URID.custom-async-ticker.max-size");
+
+        if (maxSize > Runtime.getRuntime().availableProcessors() + 1) {
+            maxSize = Runtime.getRuntime().availableProcessors() + 1;
+            Slimefun.logger().log(Level.WARNING, "当前设置的 Ticker 线程池最大大小过大，已被重设至 {0}，建议修改为小于 {1} 的值。", new Object[] {
+                maxSize, maxSize + 1
+            });
+        }
+
+        var poolSize = Slimefun.getCfg().getInt("URID.custom-async-ticker.pool-size");
+
+        if (poolSize < 32) {
+            Slimefun.logger().log(Level.WARNING, "当前设置的 Ticker 线程池任务队列大小过小，请修改成一个大于 31 的数。");
+            poolSize = 32;
+        }
+
+        this.asyncTickerService = new ThreadPoolExecutor(
+                initSize, maxSize, 10L, TimeUnit.SECONDS, new LinkedBlockingQueue<>(poolSize), tickerThreadFactory);
 
         Slimefun.getPlatformScheduler().runTimerAsync(this, 100L, tickRate);
     }
@@ -471,7 +493,8 @@ public class TickerTask implements Runnable {
             }
         } catch (InterruptedException e) {
             asyncTickerService.shutdownNow();
-            Thread.currentThread().interrupt();
+        } finally {
+            asyncTickerService = null;
         }
     }
 }
