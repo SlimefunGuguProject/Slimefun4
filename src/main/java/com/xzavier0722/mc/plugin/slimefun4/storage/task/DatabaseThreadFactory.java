@@ -20,7 +20,7 @@ public class DatabaseThreadFactory implements ThreadFactory {
     public Thread newThread(@Nonnull Runnable r) {
         Thread t = new Thread(r, prefix + threadCount.getAndIncrement());
         t.setUncaughtExceptionHandler((et, e) ->
-                Slimefun.logger().log(Level.SEVERE, "A error occurred in database thread " + t.getName(), e));
+                Slimefun.logger().log(Level.SEVERE, "A error occurred in database thread " + et.getName(), e));
 
         return t;
     }

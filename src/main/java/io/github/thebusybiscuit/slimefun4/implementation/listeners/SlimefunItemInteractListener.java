@@ -155,6 +155,10 @@ public class SlimefunItemInteractListener implements Listener {
                     // We added a manual patch by identify its pdc info to fix it.
                     if (uniData.getData(UniversalDataTrait.BLOCK.getReservedKey()) == null) {
                         uniData.setLastPresent(clickedBlock.getLocation());
+
+                        if (item.isTicking()) {
+                            Slimefun.getTickerTask().enableTicker(clickedBlock.getLocation(), uniData.getUUID());
+                        }
                     }
 
                     if (uniData.isDataLoaded()) {

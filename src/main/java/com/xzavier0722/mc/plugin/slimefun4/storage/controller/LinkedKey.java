@@ -1,10 +1,15 @@
 package com.xzavier0722.mc.plugin.slimefun4.storage.controller;
 
 import com.xzavier0722.mc.plugin.slimefun4.storage.common.ScopeKey;
+import lombok.Getter;
+import lombok.Setter;
 
 public class LinkedKey extends ScopeKey {
     private final ScopeKey self;
     private final int hash;
+
+    @Getter
+    @Setter
     private ScopeKey parent;
 
     public LinkedKey(ScopeKey self) {
@@ -18,14 +23,6 @@ public class LinkedKey extends ScopeKey {
         this.parent = parent;
     }
 
-    public void setParent(ScopeKey parent) {
-        this.parent = parent;
-    }
-
-    public ScopeKey getParent() {
-        return parent;
-    }
-
     @Override
     public int hashCode() {
         return hash;
@@ -34,5 +31,10 @@ public class LinkedKey extends ScopeKey {
     @Override
     public boolean equals(Object obj) {
         return self.equals(obj instanceof LinkedKey linked ? linked.self : obj);
+    }
+
+    @Override
+    public String toString() {
+        return getKeyStr() + " -> " + self.toString();
     }
 }

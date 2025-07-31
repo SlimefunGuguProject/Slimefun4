@@ -11,6 +11,9 @@ on:
       - 'src/**'
       - 'pom.xml'
 
+env:
+  TZ: 'Asia/Shanghai'
+
 permissions:
   contents: read
   packages: read

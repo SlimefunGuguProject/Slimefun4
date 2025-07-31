@@ -11,6 +11,16 @@ import me.mrCookieSlime.Slimefun.api.inventory.BlockMenu;
 import org.bukkit.Location;
 import org.bukkit.inventory.ItemStack;
 
+/**
+ * {@link SlimefunBlockData} 是 Slimefun 中机器等方块类物品的数据存储容器。
+ * <br/>
+ * 它包含了方块对应的键值容器、位置信息和菜单，
+ * 是 Slimefun 中常用的方块数据存储类。
+ *
+ * @author Xzavier0722
+ *
+ * @see ASlimefunDataContainer
+ */
 @ToString
 public class SlimefunBlockData extends ASlimefunDataContainer {
     private final Location location;
