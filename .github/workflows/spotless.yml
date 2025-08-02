@@ -33,16 +33,16 @@ jobs:
       - name: Spotless check
         id: spotless-check
         run: mvn -B spotless:check --errors
-        continue-on-error: ${{ github.event.action == 'push' }}
+        continue-on-error: ${{ github.event_name == 'push' }}
 
       - name: Spotless apply (if needed)
         id: spotless-apply
-        if: ${{ github.event.action == 'push' && failure() && steps.spotless-check.outcome == 'failure' }}
+        if: ${{ github.github.event_name == 'push' && failure() && steps.spotless-check.outcome == 'failure' }}
         run: mvn -B spotless:apply --errors
 
       - name: Push changes
         uses: EndBug/add-and-commit@v9.1.4
-        if: ${{ github.event.action == 'push'}}
+        if: ${{ github.github.event_name == 'push'}}
         with:
           github_token: ${{ secrets.ACCESS_TOKEN }}
           add: '.'
@@ -54,13 +54,16 @@ jobs:
           committer_email: ${{ secrets.BOT_EMAIL }}
   call-dev-ci:
     needs: [ spotless ]
-    if: ${{ github.event.action == 'push' && github.ref_name == 'dev' }}
+    if: ${{ github.event_name == 'PushEvent' && github.ref_name == 'dev' }}
     uses: ./.github/workflows/dev-ci.yml
+    secrets: inherit
   call-beta-ci:
     needs: [ spotless ]
-    if: ${{ github.event.action == 'push' && github.ref_name == 'master' }}
+    if: ${{ github.event_name == 'push' && github.ref_name == 'master' }}
     uses: ./.github/workflows/build-ci.yml
+    secrets: inherit
   call-pr-checker:
     needs: [ spotless ]
-    if: ${{ github.event.action == 'pull_request' }}
+    if: ${{ github.event_name == 'pull_request' }}
     uses: ./.github/workflows/pr-checker.yml
+    secrets: inherit
