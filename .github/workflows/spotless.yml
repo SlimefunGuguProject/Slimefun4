@@ -1,0 +1,66 @@
+name: spotless.yml
+on:
+  push:
+    branches: [ master, dev ]
+    paths:
+      - 'src/**'
+      - 'pom.xml'
+  pull_request:
+    types: [ opened, synchronize, reopened ]
+    paths:
+      - 'src/**'
+      - 'pom.xml'
+
+env:
+  TZ: 'Asia/Shanghai'
+
+jobs:
+  spotless:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: 21
+          java-package: jdk
+          architecture: x64
+          cache: maven
+
+      - name: Spotless check
+        id: spotless-check
+        run: mvn -B spotless:check --errors
+        continue-on-error: ${{ github.event.action == 'push' }}
+
+      - name: Spotless apply (if needed)
+        id: spotless-apply
+        if: ${{ github.event.action == 'push' && failure() && steps.spotless-check.outcome == 'failure' }}
+        run: mvn -B spotless:apply --errors
+
+      - name: Push changes
+        uses: EndBug/add-and-commit@v9.1.4
+        if: ${{ github.event.action == 'push'}}
+        with:
+          github_token: ${{ secrets.ACCESS_TOKEN }}
+          add: '.'
+          push: true
+          message: 'chore(ci): spotless'
+          author_name: 'noraincity-bot'
+          author_email: ${{ secrets.BOT_EMAIL }}
+          committer_name: 'noraincity-bot'
+          committer_email: ${{ secrets.BOT_EMAIL }}
+  call-dev-ci:
+    needs: [ spotless ]
+    if: ${{ github.event.action == 'push' && github.ref_name == 'dev' }}
+    uses: ./.github/workflows/dev-ci.yml
+  call-beta-ci:
+    needs: [ spotless ]
+    if: ${{ github.event.action == 'push' && github.ref_name == 'master' }}
+    uses: ./.github/workflows/build-ci.yml
+  call-pr-checker:
+    needs: [ spotless ]
+    if: ${{ github.event.action == 'pull_request' }}
+    uses: ./.github/workflows/pr-checker.yml

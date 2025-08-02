@@ -358,19 +358,7 @@ public class BlockDataController extends ADataController {
         var removed = getChunkDataCache(l.getChunk(), true).removeBlockData(l);
 
         if (removed == null) {
-            getUniversalBlockDataFromCache(l).ifPresentOrElse(data -> removeUniversalBlockData(data.getUUID()), () -> {
-                if (!Slimefun.isFolia() && Bukkit.isPrimaryThread()) {
-                    Slimefun.getBlockDataService()
-                            .getUniversalDataUUID(l.getBlock())
-                            .ifPresent(this::removeUniversalBlockData);
-                } else {
-                    Slimefun.runSync(
-                            () -> Slimefun.getBlockDataService()
-                                    .getUniversalDataUUID(l.getBlock())
-                                    .ifPresent(this::removeUniversalBlockData),
-                            l);
-                }
-            });
+            removeUniversalBlockData(l);
 
             return;
         }
@@ -379,13 +367,13 @@ public class BlockDataController extends ADataController {
             return;
         }
 
+        if (Slimefun.getRegistry().getTickerBlocks().contains(removed.getSfId())) {
+            Slimefun.getTickerTask().disableTicker(l);
+        }
+
         var menu = removed.getBlockMenu();
         if (menu != null) {
             menu.lock();
-        }
-
-        if (Slimefun.getRegistry().getTickerBlocks().contains(removed.getSfId())) {
-            Slimefun.getTickerTask().disableTicker(l);
         }
     }
 
@@ -411,6 +399,23 @@ public class BlockDataController extends ADataController {
         if (Slimefun.getRegistry().getTickerBlocks().contains(removed.getSfId())) {
             Slimefun.getTickerTask().disableTicker(l);
         }
+    }
+
+    /**
+     * 移除指定位置对应的可能存在的 Slimefun 通用方块数据
+     *
+     * @param l {@link Location} 位置
+     */
+    public void removeUniversalBlockData(Location l) {
+        checkDestroy();
+
+        var toRemove = getUniversalBlockDataFromCache(l);
+
+        if (toRemove.isEmpty()) {
+            return;
+        }
+
+        removeUniversalBlockData(toRemove.get().getUUID());
     }
 
     /**

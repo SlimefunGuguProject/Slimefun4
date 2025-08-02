@@ -1,15 +1,11 @@
 # This workflow will build a Java project with Maven
 # For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-maven
 
-name: Slimefun DEV
+name: Slimefun Dev CI
 
 on:
-  push:
-    branches:
-      - dev
-    paths:
-      - 'src/**'
-      - 'pom.xml'
+  workflow_call:
+    secrets: inherit
   workflow_dispatch:
 
 env:
@@ -27,8 +23,6 @@ jobs:
           java-package: jdk
           architecture: x64
           cache: maven
-      - name: Codestyle check
-        run: mvn -s .mvn/settings.xml -B spotless:check --errors
       - name: Publish snapshots
         run: |
           echo "::add-mask::$MAVEN_ACCOUNT"
@@ -38,7 +32,7 @@ jobs:
           MAVEN_ACCOUNT: '${{ vars.MAVEN_ACCOUNT }}'
           MAVEN_PASSWORD: '${{ secrets.MAVEN_PASSWORD }}'
       - name: Build Slimefun
-        run: mvn -s .mvn/settings.xml -B clean package --errors
+        run: mvn -B clean package --errors
       - name: Mask Output
         run: |
           echo "::add-mask::$CF_API_TOKEN"

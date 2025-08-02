@@ -4,12 +4,8 @@
 name: Pull Request Checker
 
 on:
-  pull_request_target:
-    types: [opened, synchronize, reopened]
-    paths:
-      - '.github/workflows/**'
-      - 'src/**'
-      - 'pom.xml'
+  workflow_call:
+    secrets: inherit
 
 env:
   TZ: 'Asia/Shanghai'

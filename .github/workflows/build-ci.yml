@@ -1,15 +1,11 @@
 # This workflow will build a Java project with Maven
 # For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-maven
 
-name: Slimefun Builder
+name: Slimefun Beta Builder
 
 on:
-  push:
-    branches:
-      - master
-    paths:
-      - 'src/**'
-      - 'pom.xml'
+  workflow_call:
+    secrets: inherit
   workflow_dispatch:
 
 env:
@@ -31,9 +27,9 @@ jobs:
           architecture: x64
           cache: maven
       - name: Codestyle Check
-        run: mvn -s .mvn/settings.xml -B spotless:check --errors
+        run: mvn -B spotless:check --errors
       - name: Build Slimefun
-        run: mvn -s .mvn/settings.xml -B package --errors
+        run: mvn -B package --errors
       - uses: actions/upload-artifact@v4
         name: Upload Beta artifact
         with:
