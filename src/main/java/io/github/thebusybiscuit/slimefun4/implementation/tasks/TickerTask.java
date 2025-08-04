@@ -102,11 +102,9 @@ public class TickerTask implements Runnable {
 
         var maxSize = Slimefun.getCfg().getInt("URID.custom-async-ticker.max-size");
 
-        if (maxSize > Runtime.getRuntime().availableProcessors() + 1) {
-            maxSize = Runtime.getRuntime().availableProcessors() + 1;
-            Slimefun.logger().log(Level.WARNING, "当前设置的 Ticker 线程池最大大小过大，已被重设至 {0}，建议修改为小于 {1} 的值。", new Object[] {
-                maxSize, maxSize + 1
-            });
+        if (maxSize < 0) {
+            maxSize = initSize;
+            Slimefun.logger().log(Level.WARNING, "当前设置的 Ticker 线程池最大大小异常，已自动设置为 {0}，请你修改为一个正常的大小", maxSize);
         }
 
         var poolSize = Slimefun.getCfg().getInt("URID.custom-async-ticker.pool-size");

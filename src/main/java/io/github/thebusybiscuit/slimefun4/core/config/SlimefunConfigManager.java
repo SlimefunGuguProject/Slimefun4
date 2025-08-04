@@ -136,9 +136,10 @@ public class SlimefunConfigManager {
             pluginConfig.setDefaultValue("researches.auto-convert", false);
             researchAutoConvert = pluginConfig.getBoolean("researches.auto-convert");
 
-            pluginConfig.setDefaultValue("URID.custom.async-ticker.init-size", 1);
             pluginConfig.setDefaultValue(
-                    "URID.custom.async-ticker.max-size", Runtime.getRuntime().availableProcessors() + 1);
+                    "URID.custom.async-ticker.init-size", Runtime.getRuntime().availableProcessors() / 2);
+            pluginConfig.setDefaultValue(
+                    "URID.custom.async-ticker.max-size", Runtime.getRuntime().availableProcessors());
             pluginConfig.setDefaultValue("URID.custom.async-ticker.queue-size", 128);
 
             asyncTickerInitSize = pluginConfig.getInt("URID.custom.async-ticker.init-size");
