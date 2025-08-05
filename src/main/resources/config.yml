@@ -63,6 +63,16 @@ URID:
   info-delay: 3000
   custom-ticker-delay: 10
   enable-tickers: true
+  # 自定义 Ticker 的异步线程池配置
+  # 我们建议普通用户只需修改 max-size
+  # 在你了解 Java 线程池如何运作的情况下可以自行更改
+  custom-async-ticker:
+    # 线程池初始线程数, 推荐数为主机的 CPU 核心数
+    init-size: 1
+    # 线程数最大线程数，推荐数为主机的 CPU 核心数 * 2
+    max-size: 8
+    # 每个线程池的任务队列大小，数值越大每个线程能处理的任务越多，但会增加总体延迟
+    queue-size: 128
 
 networks:
   max-size: 200

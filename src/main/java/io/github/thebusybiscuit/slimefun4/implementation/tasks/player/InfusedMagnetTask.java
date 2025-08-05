@@ -1,6 +1,7 @@
 package io.github.thebusybiscuit.slimefun4.implementation.tasks.player;
 
 import io.github.thebusybiscuit.slimefun4.core.services.sounds.SoundEffect;
+import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.implementation.items.magical.InfusedMagnet;
 import io.github.thebusybiscuit.slimefun4.utils.SlimefunUtils;
 import javax.annotation.Nonnull;
@@ -49,7 +50,7 @@ public class InfusedMagnetTask extends AbstractPlayerTask {
                     && !SlimefunUtils.hasNoPickupFlag(item)
                     && item.getPickupDelay() <= 0
                     && p.getLocation().distanceSquared(item.getLocation()) > 0.3) {
-                item.teleport(p.getLocation());
+                Slimefun.getPlatformScheduler().teleportAsync(item, p.getLocation());
                 playSound = true;
             }
         }
