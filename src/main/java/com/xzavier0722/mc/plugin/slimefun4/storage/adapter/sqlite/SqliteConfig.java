@@ -1,6 +1,5 @@
 package com.xzavier0722.mc.plugin.slimefun4.storage.adapter.sqlite;
 
-import city.norain.slimefun4.SlimefunExtended;
 import com.xzavier0722.mc.plugin.slimefun4.storage.adapter.sqlcommon.ISqlCommonConfig;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
@@ -13,13 +12,7 @@ public record SqliteConfig(String path, int maxConnection) implements ISqlCommon
         config.setPoolName("SlimefunHikariPool");
         config.setMaximumPoolSize(maxConnection);
 
-        /* ===================
-         * DATABASE DEBUG MODE
-         * ===================
-         */
-        if (SlimefunExtended.isDatabaseDebugMode()) {
-            config.setLeakDetectionThreshold(5000);
-        }
+        config.setLeakDetectionThreshold(8000);
 
         return new HikariDataSource(config);
     }

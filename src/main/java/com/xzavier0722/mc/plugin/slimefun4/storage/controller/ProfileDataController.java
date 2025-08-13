@@ -1,6 +1,6 @@
 package com.xzavier0722.mc.plugin.slimefun4.storage.controller;
 
-import city.norain.slimefun4.utils.PlayerUtil;
+import city.norain.slimefun4.compatibillty.CompatibilityUtil;
 import com.xzavier0722.mc.plugin.slimefun4.storage.callback.IAsyncReadCallback;
 import com.xzavier0722.mc.plugin.slimefun4.storage.common.DataScope;
 import com.xzavier0722.mc.plugin.slimefun4.storage.common.DataType;
@@ -356,7 +356,7 @@ public class ProfileDataController extends ADataController {
                     return;
                 }
 
-                if (PlayerUtil.isConnected(Bukkit.getOfflinePlayer(UUID.fromString(pUuid)))) {
+                if (CompatibilityUtil.isConnected(Bukkit.getOfflinePlayer(UUID.fromString(pUuid)))) {
                     return;
                 }
 

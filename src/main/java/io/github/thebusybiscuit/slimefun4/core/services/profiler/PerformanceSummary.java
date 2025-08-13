@@ -94,6 +94,11 @@ class PerformanceSummary {
 
             return entry.getKey() + " - " + count + " block" + (count != 1 ? 's' : "") + " (" + time + ")";
         });
+
+        if (sender.isVerbose()) {
+            sender.sendMessage("");
+            sender.sendMessage(profiler.getThreadPoolStatus());
+        }
     }
 
     @ParametersAreNonnullByDefault

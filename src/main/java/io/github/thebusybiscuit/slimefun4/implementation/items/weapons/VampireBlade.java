@@ -1,6 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.implementation.items.weapons;
 
-import city.norain.slimefun4.compatibillty.VersionedAttribute;
+import city.norain.slimefun4.compatibillty.CompatibilityUtil;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemSetting;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
@@ -43,7 +43,7 @@ public class VampireBlade extends SimpleSlimefunItem<WeaponUseHandler> {
                 SoundEffect.VAMPIRE_BLADE_HEALING_SOUND.playFor(p);
                 double health = p.getHealth() + HEALING_AMOUNT;
                 double maxHealth =
-                        p.getAttribute(VersionedAttribute.getMaxHealth()).getValue();
+                        p.getAttribute(CompatibilityUtil.getMaxHealth()).getValue();
                 p.setHealth(Math.min(health, maxHealth));
             }
         };

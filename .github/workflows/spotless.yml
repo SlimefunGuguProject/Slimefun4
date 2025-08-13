@@ -1,4 +1,5 @@
-name: spotless.yml
+name: Spotless
+
 on:
   push:
     branches: [ master, dev ]
@@ -10,6 +11,7 @@ on:
     paths:
       - 'src/**'
       - 'pom.xml'
+  workflow_dispatch:
 
 env:
   TZ: 'Asia/Shanghai'
@@ -17,9 +19,13 @@ env:
 jobs:
   spotless:
     runs-on: ubuntu-latest
+    outputs:
+        spotless-status: ${{ steps.spotless-check.outputs.status }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.BOT_ACCESS_TOKEN }}
 
       - name: Set up JDK
         uses: actions/setup-java@v4
@@ -32,38 +38,44 @@ jobs:
 
       - name: Spotless check
         id: spotless-check
-        run: mvn -B spotless:check --errors
-        continue-on-error: ${{ github.event_name == 'push' }}
+        run: |
+          set +e
+          mvn -B spotless:check --errors
+          STATUS=$?
+          echo "status=$STATUS" >> $GITHUB_OUTPUT
+          set -e
+          exit $STATUS
+        continue-on-error: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
 
       - name: Spotless apply (if needed)
         id: spotless-apply
-        if: ${{ github.github.event_name == 'push' && failure() && steps.spotless-check.outcome == 'failure' }}
+        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.spotless-check.outputs.status != '0' }}
         run: mvn -B spotless:apply --errors
 
       - name: Push changes
         uses: EndBug/add-and-commit@v9.1.4
-        if: ${{ github.github.event_name == 'push'}}
+        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.spotless-check.outputs.status != '0' && success()}}
         with:
-          github_token: ${{ secrets.ACCESS_TOKEN }}
+          github_token: ${{ secrets.BOT_ACCESS_TOKEN }}
           add: '.'
           push: true
-          message: 'chore(ci): spotless'
+          message: 'chore(style): spotless apply'
           author_name: 'noraincity-bot'
           author_email: ${{ secrets.BOT_EMAIL }}
           committer_name: 'noraincity-bot'
           committer_email: ${{ secrets.BOT_EMAIL }}
   call-dev-ci:
     needs: [ spotless ]
-    if: ${{ github.event_name == 'PushEvent' && github.ref_name == 'dev' }}
+    if: ${{ needs.spotless.outputs.spotless-status == '0' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref_name == 'dev' }}
     uses: ./.github/workflows/dev-ci.yml
     secrets: inherit
   call-beta-ci:
     needs: [ spotless ]
-    if: ${{ github.event_name == 'push' && github.ref_name == 'master' }}
+    if: ${{ needs.spotless.outputs.spotless-status == '0' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref_name == 'master' }}
     uses: ./.github/workflows/build-ci.yml
     secrets: inherit
   call-pr-checker:
     needs: [ spotless ]
-    if: ${{ github.event_name == 'pull_request' }}
+    if: ${{ needs.spotless.outputs.spotless-status == '0' && github.event_name == 'pull_request' }}
     uses: ./.github/workflows/pr-checker.yml
     secrets: inherit

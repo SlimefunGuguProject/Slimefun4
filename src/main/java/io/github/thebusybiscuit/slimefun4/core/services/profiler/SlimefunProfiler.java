@@ -1,17 +1,23 @@
 package io.github.thebusybiscuit.slimefun4.core.services.profiler;
 
+import city.norain.slimefun4.utils.SlimefunPoolExecutor;
+import city.norain.slimefun4.utils.StringUtil;
 import com.google.common.util.concurrent.AtomicDouble;
 import io.github.thebusybiscuit.slimefun4.api.SlimefunAddon;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.implementation.tasks.TickerTask;
 import io.github.thebusybiscuit.slimefun4.utils.NumberUtils;
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadMXBean;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -35,9 +41,7 @@ import org.bukkit.scheduler.BukkitScheduler;
  * But it also enables Server Admins to locate lag-inducing areas on the {@link Server}.
  *
  * @author TheBusyBiscuit
- *
  * @see TickerTask
- *
  */
 public class SlimefunProfiler {
 
@@ -80,6 +84,8 @@ public class SlimefunProfiler {
      * profiled.
      */
     private final AtomicInteger queued = new AtomicInteger(0);
+
+    private final List<SlimefunPoolExecutor> threadPools = new CopyOnWriteArrayList<>();
 
     private long totalElapsedTime;
 
@@ -130,8 +136,7 @@ public class SlimefunProfiler {
      *
      * If the specified amount is negative, scheduled entries will be removed
      *
-     * @param amount
-     *            The amount of entries that should be scheduled. Can be negative
+     * @param amount The amount of entries that should be scheduled. Can be negative
      */
     public void scheduleEntries(int amount) {
         if (isProfiling) {
@@ -143,13 +148,9 @@ public class SlimefunProfiler {
      * This method closes a previously started entry.
      * Make sure to call {@link #newEntry()} to get the timestamp in advance.
      *
-     * @param l
-     *            The {@link Location} of our {@link Block}
-     * @param item
-     *            The {@link SlimefunItem} at this {@link Location}
-     * @param timestamp
-     *            The timestamp marking the start of this entry, you can retrieve it using {@link #newEntry()}
-     *
+     * @param l         The {@link Location} of our {@link Block}
+     * @param item      The {@link SlimefunItem} at this {@link Location}
+     * @param timestamp The timestamp marking the start of this entry, you can retrieve it using {@link #newEntry()}
      * @return The total timings of this entry
      */
     public long closeEntry(@Nonnull Location l, @Nonnull SlimefunItem item, long timestamp) {
@@ -185,6 +186,17 @@ public class SlimefunProfiler {
         }
 
         executor.execute(this::finishReport);
+    }
+
+    public void registerPool(SlimefunPoolExecutor executor) {
+        Validate.notNull(executor, "Cannot register a null SlimefunPoolExecutor");
+
+        if (threadPools.contains(executor)) {
+            // Already registered
+            return;
+        }
+
+        threadPools.add(executor);
     }
 
     private void finishReport() {
@@ -253,8 +265,7 @@ public class SlimefunProfiler {
      * This method requests a summary for the given {@link PerformanceInspector}.
      * The summary will be sent upon the next available moment in time.
      *
-     * @param inspector
-     *            The {@link PerformanceInspector} who shall receive this summary.
+     * @param inspector The {@link PerformanceInspector} who shall receive this summary.
      */
     public void requestSummary(@Nonnull PerformanceInspector inspector) {
         Validate.notNull(inspector, "Cannot request a summary for null");
@@ -381,9 +392,7 @@ public class SlimefunProfiler {
      * This method checks whether the {@link SlimefunProfiler} has collected timings on
      * the given {@link Block}
      *
-     * @param b
-     *            The {@link Block}
-     *
+     * @param b The {@link Block}
      * @return Whether timings of this {@link Block} have been collected
      */
     public boolean hasTimings(@Nonnull Block b) {
@@ -447,5 +456,44 @@ public class SlimefunProfiler {
      */
     public double getAverageTimingsPerMachine() {
         return averageTimingsPerMachine.getAndSet(0);
+    }
+
+    public String getThreadPoolStatus() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("线程池状态 [ 运行中 | 已完成 | 总任务 | 队列大小 ]\n");
+
+        for (SlimefunPoolExecutor executor : threadPools) {
+            sb.append(executor.getName())
+                    .append(" (")
+                    .append(executor.getCorePoolSize())
+                    .append(" / ")
+                    .append(executor.getMaximumPoolSize())
+                    .append(") ")
+                    .append(": ")
+                    .append("\n")
+                    .append(executor.getActiveCount())
+                    .append(" | ")
+                    .append(executor.getCompletedTaskCount())
+                    .append(" | ")
+                    .append(executor.getTaskCount())
+                    .append(" | ")
+                    .append(executor.getQueue().size())
+                    .append("\n");
+        }
+
+        return sb.toString();
+    }
+
+    public String snapshotThreads() {
+        StringBuilder sb = new StringBuilder();
+        final ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
+        for (SlimefunPoolExecutor threadPool : threadPools) {
+            for (Thread t : threadPool.getRunningThreads()) {
+                sb.append(StringUtil.formatDetailedThreadInfo(threadMXBean.getThreadInfo(t.getId(), Integer.MAX_VALUE)))
+                        .append("\n");
+            }
+        }
+
+        return sb.toString();
     }
 }

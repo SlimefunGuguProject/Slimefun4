@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.implementation.listeners;
 
+import city.norain.slimefun4.compatibillty.CompatibilityUtil;
 import com.xzavier0722.mc.plugin.slimefun4.storage.callback.IAsyncReadCallback;
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunBlockData;
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.attributes.UniversalBlock;
@@ -116,7 +117,8 @@ public class BlockListener implements Listener {
         if (sfItem != null && !(sfItem instanceof NotPlaceable)) {
             // Fixes #994, should check placed block is equals to item material or not.
             if (item.getType() != e.getBlock().getType()) {
-                if (item.getType() != e.getBlock().getBlockData().getPlacementMaterial()) {
+                if (item.getType()
+                        != CompatibilityUtil.getPlacementMaterial(e.getBlock().getBlockData())) {
                     return;
                 }
             }
