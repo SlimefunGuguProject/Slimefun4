@@ -71,9 +71,15 @@ public final class NumberUtils {
         } else if (value < 1000000000000000.0) {
             // Trillion
             return DECIMAL_FORMAT.format(value / 1000000000000.0) + 'T';
-        } else {
+        } else if (value < 1000000000000000000.0) {
             // Quadrillion
             return DECIMAL_FORMAT.format(value / 1000000000000000.0) + 'Q';
+        } else if (value < 1000000000000000000000.0) {
+            // Quintillion
+            return DECIMAL_FORMAT.format(value / 1000000000000000000.0) + 'Qi';
+        } else {
+            // Sextillion
+            return DECIMAL_FORMAT.format(value / 1000000000000000000000.0) + 'S';
         }
     }
 
