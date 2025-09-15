@@ -33,8 +33,21 @@ public interface EnergyNetProvider extends EnergyNetComponent {
 
     /**
      * This method returns how much energy this {@link EnergyNetProvider} provides to the {@link EnergyNet}.
-     * We call this method on every tick, so make sure to keep it light and fast.
+     * We call this method every time we tick a energy regulator, so make sure to keep it light and fast.
      * Stored energy does not have to be handled in here.
+     *
+     * @param l    The {@link Location} of this {@link EnergyNetProvider}
+     * @param data The stored block data
+     * @return The generated output energy of this {@link EnergyNetProvider}.
+     */
+    default long getGeneratedOutputLong(@Nonnull Location l, @Nonnull SlimefunBlockData data) {
+        return getGeneratedOutput(l, data);
+    }
+
+    /**
+     * This method returns how much energy this {@link EnergyNetProvider} provides to the {@link EnergyNet}.
+     * Stored energy does not have to be handled in here.
+     * if your machine returns a long value of generated output, please return Integer.MAX_VALUE and override {@link EnergyNetProvider#getGeneratedOutputLong(Location, SlimefunBlockData)}
      *
      * @param l    The {@link Location} of this {@link EnergyNetProvider}
      * @param data The stored block data
@@ -44,6 +57,13 @@ public interface EnergyNetProvider extends EnergyNetComponent {
         return getGeneratedOutput(l, new BlockDataConfigWrapper(data));
     }
 
+    /**
+     * please do not use this method, override {@link EnergyNetProvider#getGeneratedOutput(Location, SlimefunBlockData)} please
+     * @param l
+     * @param data
+     * @return
+     */
+    @Deprecated(forRemoval = true)
     default int getGeneratedOutput(@Nonnull Location l, @Nonnull Config data) {
         return 0;
     }
@@ -60,6 +80,7 @@ public interface EnergyNetProvider extends EnergyNetComponent {
         return willExplode(l, new BlockDataConfigWrapper(data));
     }
 
+    @Deprecated(forRemoval = true)
     default boolean willExplode(@Nonnull Location l, @Nonnull Config data) {
         return false;
     }

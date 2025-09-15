@@ -4,6 +4,7 @@ import io.github.bakedlibs.dough.skins.PlayerHead;
 import io.github.bakedlibs.dough.skins.PlayerSkin;
 import io.github.thebusybiscuit.slimefun4.implementation.items.electric.Capacitor;
 import io.github.thebusybiscuit.slimefun4.utils.HeadTexture;
+import io.github.thebusybiscuit.slimefun4.utils.NumberUtils;
 import io.papermc.lib.PaperLib;
 import javax.annotation.Nonnull;
 import org.apache.commons.lang.Validate;
@@ -37,16 +38,14 @@ public class CapacitorTextureUpdateTask implements Runnable {
      *
      * @param l
      *            The {@link Location} of the {@link Capacitor}
-     * @param charge
-     *            The amount of charge in this {@link Capacitor}
-     * @param capacity
-     *            The capacity of this {@link Capacitor}
+     * @param percentage
+     *            The percentage of charge in this {@link Capacitor}
      */
-    public CapacitorTextureUpdateTask(@Nonnull Location l, double charge, double capacity) {
+    public CapacitorTextureUpdateTask(@Nonnull Location l, double percentage) {
         Validate.notNull(l, "The Location cannot be null");
 
         this.l = l;
-        this.filledPercentage = charge / capacity;
+        this.filledPercentage = NumberUtils.clamp(0.0D, percentage, 1.0D);
     }
 
     @Override

@@ -488,8 +488,8 @@ public class SlimefunProfiler {
         StringBuilder sb = new StringBuilder();
         final ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
         for (SlimefunPoolExecutor threadPool : threadPools) {
-            for (Thread t : threadPool.getRunningThreads()) {
-                sb.append(StringUtil.formatDetailedThreadInfo(threadMXBean.getThreadInfo(t.getId(), Integer.MAX_VALUE)))
+            for (long id : threadPool.getRunningThreads()) {
+                sb.append(StringUtil.formatDetailedThreadInfo(threadMXBean.getThreadInfo(id, 100)))
                         .append("\n");
             }
         }

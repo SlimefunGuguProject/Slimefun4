@@ -179,7 +179,7 @@ public abstract class ADataController {
             };
             queuedTask.queue(key, task);
             scheduledWriteTasks.put(scopeToUse, queuedTask);
-            writeExecutor.execute(queuedTask);
+            writeExecutor.submit(queuedTask);
         } finally {
             lock.unlock(scopeKey);
         }
@@ -206,18 +206,18 @@ public abstract class ADataController {
         if (callback.runOnMainThread()) {
             Slimefun.runSync(cb);
         } else {
-            callbackExecutor.execute(cb);
+            callbackExecutor.submit(cb);
         }
     }
 
     protected void scheduleReadTask(Runnable run) {
         checkDestroy();
-        readExecutor.execute(run);
+        readExecutor.submit(run);
     }
 
     protected void scheduleWriteTask(Runnable run) {
         checkDestroy();
-        writeExecutor.execute(run);
+        writeExecutor.submit(run);
     }
 
     protected List<RecordSet> getData(RecordKey key) {

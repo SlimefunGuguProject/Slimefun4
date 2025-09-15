@@ -362,6 +362,8 @@ public class BlockDataController extends ADataController {
 
             return;
         }
+        // fix issue # 992 # 1099
+        invSnapshots.remove(removed.getKey());
 
         if (!removed.isDataLoaded()) {
             return;

@@ -11,6 +11,7 @@ public class SlimefunRejectedExecutionHandler implements RejectedExecutionHandle
         var name = executor instanceof SlimefunPoolExecutor
                 ? ((SlimefunPoolExecutor) executor).getName()
                 : executor.getClass().getSimpleName();
+
         Slimefun.logger().log(Level.WARNING, "A task was rejected from " + name + ", use fallback thread.");
         Slimefun.getThreadService().newThread(Slimefun.instance(), "Fallback-Service", r);
     }

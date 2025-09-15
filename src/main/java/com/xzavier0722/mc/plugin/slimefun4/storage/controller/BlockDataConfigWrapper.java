@@ -14,7 +14,8 @@ public class BlockDataConfigWrapper extends Config {
     private final SlimefunBlockData blockData;
 
     public BlockDataConfigWrapper(SlimefunBlockData blockData) {
-        super(null, null);
+        // fix the problem that Config.loadYaml continuously throw IO Exception during ticking old plugin's machines:
+        super();
         this.blockData = blockData;
     }
 
