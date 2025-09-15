@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.implementation.tasks;
 
+import city.norain.slimefun4.utils.SlimefunPoolExecutor;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.ASlimefunDataContainer;
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunBlockData;
@@ -21,7 +22,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -67,17 +67,19 @@ public class TickerTask implements Runnable {
      */
     private ExecutorService asyncTickerService;
 
+    private ExecutorService fallbackTickerService;
+
     private int tickRate;
 
     /**
      * 该标记代表 TickerTask 已被终止.
      */
-    private boolean halted = false;
+    private volatile boolean halted = false;
 
     /**
      * 该标记代表 TickerTask 正在运行.
      */
-    private boolean running = false;
+    private volatile boolean running = false;
 
     /**
      * 该标记代表 TickerTask 暂时被暂停.
@@ -92,30 +94,54 @@ public class TickerTask implements Runnable {
         this.tickRate = Slimefun.getCfg().getInt("URID.custom-ticker-delay");
 
         var initSize = Slimefun.getConfigManager().getAsyncTickerInitSize();
-
-        if (initSize > Runtime.getRuntime().availableProcessors() + 1) {
-            initSize = Runtime.getRuntime().availableProcessors() + 1;
-            Slimefun.logger().log(Level.WARNING, "当前设置的 Ticker 线程池初始大小过大，已被重设至 {0}，建议修改为小于 {1} 的值。", new Object[] {
-                initSize, initSize + 1
-            });
-        }
-
         var maxSize = Slimefun.getCfg().getInt("URID.custom-async-ticker.max-size");
+
+        boolean change = false;
 
         if (maxSize < 0) {
             maxSize = initSize;
             Slimefun.logger().log(Level.WARNING, "当前设置的 Ticker 线程池最大大小异常，已自动设置为 {0}，请你修改为一个正常的大小", maxSize);
+            Slimefun.getCfg().setValue("URID.custom-async-ticker.max-size", maxSize);
+            change = true;
+        }
+
+        if (initSize > maxSize) {
+            initSize = maxSize;
+            Slimefun.logger().log(Level.WARNING, "当前设置的 Ticker 线程池初始大小过大，已被重设至 {0}，建议修改为小于 {1} 的值。", new Object[] {
+                maxSize, maxSize - 1
+            });
+            Slimefun.getCfg().setValue("URID.custom.async-ticker.init-size", initSize);
+            change = true;
         }
 
         var poolSize = Slimefun.getCfg().getInt("URID.custom-async-ticker.pool-size");
 
-        if (poolSize < 32) {
-            Slimefun.logger().log(Level.WARNING, "当前设置的 Ticker 线程池任务队列大小过小，请修改成一个大于 31 的数。");
-            poolSize = 32;
+        if (poolSize < 1024) {
+            Slimefun.logger().log(Level.WARNING, "当前设置的 Ticker 线程池任务队列大小过小，请修改成一个大于 1024 的数。");
+            poolSize = 1024;
+            Slimefun.getCfg().setValue("URID.custom-async-ticker.pool-size", poolSize);
+            change = true;
         }
 
-        this.asyncTickerService = new ThreadPoolExecutor(
-                initSize, maxSize, 10L, TimeUnit.SECONDS, new LinkedBlockingQueue<>(poolSize), tickerThreadFactory);
+        if (change) {
+            Slimefun.getCfg().save();
+        }
+        this.asyncTickerService = new SlimefunPoolExecutor(
+                "Slimefun-Ticker-Pool",
+                initSize - 1,
+                maxSize - 1,
+                1,
+                TimeUnit.MINUTES,
+                new LinkedBlockingQueue<>(poolSize),
+                tickerThreadFactory);
+        this.fallbackTickerService = new SlimefunPoolExecutor(
+                "Slimefun-Ticker-Fallback-Service",
+                1,
+                1,
+                0,
+                TimeUnit.SECONDS,
+                new LinkedBlockingQueue<>(),
+                tickerThreadFactory);
 
         Slimefun.getPlatformScheduler().runTimerAsync(this, 100L, tickRate);
     }
@@ -147,9 +173,7 @@ public class TickerTask implements Runnable {
             if (!halted) {
                 Set<Map.Entry<ChunkPosition, Set<TickLocation>>> loc;
 
-                synchronized (tickingLocations) {
-                    loc = new HashSet<>(tickingLocations.entrySet());
-                }
+                loc = new HashSet<>(tickingLocations.entrySet());
 
                 for (Map.Entry<ChunkPosition, Set<TickLocation>> entry : loc) {
                     tickChunk(entry.getKey(), tickers, new HashSet<>(entry.getValue()));
@@ -253,7 +277,7 @@ public class TickerTask implements Runnable {
                     long timestamp = Slimefun.getProfiler().newEntry();
                     item.getBlockTicker().update();
 
-                    asyncTickerService.execute(() -> {
+                    Runnable func = () -> {
                         try {
                             if (Slimefun.isFolia()) {
                                 Slimefun.getPlatformScheduler()
@@ -264,7 +288,13 @@ public class TickerTask implements Runnable {
                         } catch (Exception x) {
                             reportErrors(l, item, x);
                         }
-                    });
+                    };
+
+                    if (item.getBlockTicker().isConcurrentSafe()) {
+                        asyncTickerService.execute(func);
+                    } else {
+                        fallbackTickerService.execute(func);
+                    }
                 }
 
                 tickers.add(item.getBlockTicker());
@@ -277,7 +307,7 @@ public class TickerTask implements Runnable {
     @ParametersAreNonnullByDefault
     private void tickBlock(Location l, SlimefunItem item, ASlimefunDataContainer data, long timestamp) {
         try {
-            if (item.getBlockTicker().isUniversal()) {
+            if (item.getBlockTicker().useUniversalData()) {
                 if (data instanceof SlimefunUniversalData universalData) {
                     item.getBlockTicker().tick(l.getBlock(), item, universalData);
                 } else {

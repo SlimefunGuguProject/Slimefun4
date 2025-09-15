@@ -34,6 +34,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import java.util.logging.Level;
 import javax.annotation.Nonnull;
@@ -111,7 +112,7 @@ public abstract class AbstractAutoCrafter extends SlimefunItem implements Energy
         recipeStorageKey = new NamespacedKey(Slimefun.instance(), "recipe_key");
         recipeEnabledKey = new NamespacedKey(Slimefun.instance(), "recipe_enabled");
 
-        recipeCache = new HashMap<>();
+        recipeCache = new ConcurrentHashMap<>();
 
         addItemHandler(new BlockTicker() {
 

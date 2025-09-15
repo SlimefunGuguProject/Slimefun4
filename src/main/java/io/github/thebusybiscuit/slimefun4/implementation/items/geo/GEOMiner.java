@@ -303,6 +303,11 @@ public class GEOMiner extends SlimefunItem
             public boolean isSynchronized() {
                 return false;
             }
+
+            @Override
+            public boolean isConcurrentSafe() {
+                return true;
+            }
         });
     }
 

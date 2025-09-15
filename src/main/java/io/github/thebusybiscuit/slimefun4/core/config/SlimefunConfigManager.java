@@ -74,8 +74,10 @@ public class SlimefunConfigManager {
     @Getter
     private int asyncTickerInitSize;
 
+    @Getter
     private int asyncTickerMaxSize;
 
+    @Getter
     private int asyncTickerQueueSize;
 
     public SlimefunConfigManager(@Nonnull Slimefun plugin) {
@@ -140,7 +142,7 @@ public class SlimefunConfigManager {
                     "URID.custom.async-ticker.init-size", Runtime.getRuntime().availableProcessors() / 2);
             pluginConfig.setDefaultValue(
                     "URID.custom.async-ticker.max-size", Runtime.getRuntime().availableProcessors());
-            pluginConfig.setDefaultValue("URID.custom.async-ticker.queue-size", 128);
+            pluginConfig.setDefaultValue("URID.custom.async-ticker.queue-size", 1024);
 
             asyncTickerInitSize = pluginConfig.getInt("URID.custom.async-ticker.init-size");
             asyncTickerMaxSize = pluginConfig.getInt("URID.custom.async-ticker.max-size");
