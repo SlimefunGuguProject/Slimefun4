@@ -529,5 +529,16 @@ public class TickerTask implements Runnable {
         } finally {
             asyncTickerService = null;
         }
+
+        try {
+            fallbackTickerService.shutdown();
+            if (!fallbackTickerService.awaitTermination(10, TimeUnit.SECONDS)) {
+                fallbackTickerService.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            fallbackTickerService.shutdownNow();
+        } finally {
+            fallbackTickerService = null;
+        }
     }
 }
