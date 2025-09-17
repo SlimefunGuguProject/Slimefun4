@@ -66,6 +66,7 @@ public abstract class BlockTicker implements ItemHandler {
     public boolean isConcurrentSafe() {
         return false;
     }
+
     /**
      * This method is called every tick for every block
      *

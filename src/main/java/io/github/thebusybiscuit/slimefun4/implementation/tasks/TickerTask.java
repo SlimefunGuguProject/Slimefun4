@@ -133,7 +133,12 @@ public class TickerTask implements Runnable {
                 1,
                 TimeUnit.MINUTES,
                 new LinkedBlockingQueue<>(poolSize),
-                tickerThreadFactory);
+                tickerThreadFactory,
+                (r, e) -> {
+                    // 任务队列已满，使用备用的单线程池执行该任务
+                    fallbackTickerService.execute(r);
+                });
+
         this.fallbackTickerService = new SlimefunPoolExecutor(
                 "Slimefun-Ticker-Fallback-Service",
                 1,
