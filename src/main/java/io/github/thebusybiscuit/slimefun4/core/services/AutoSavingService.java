@@ -64,7 +64,7 @@ public class AutoSavingService {
                 profile.save();
             }
 
-            if (profile.isMarkedForDeletion() || profile.isInvalid()) {
+            if (profile.isMarkedForDeletion()) {
                 iterator.remove();
             }
         }
