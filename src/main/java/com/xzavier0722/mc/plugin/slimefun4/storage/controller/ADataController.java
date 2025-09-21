@@ -36,15 +36,15 @@ public abstract class ADataController {
     /**
      * 数据库读取调度器
      */
-    private ExecutorService readExecutor;
+    protected ExecutorService readExecutor;
     /**
      * 数据库写入调度器
      */
-    private ExecutorService writeExecutor;
+    protected ExecutorService writeExecutor;
     /**
      * 数据库回调调度器
      */
-    private ExecutorService callbackExecutor;
+    protected ExecutorService callbackExecutor;
     /**
      * 标记当前控制器是否已被关闭
      */
