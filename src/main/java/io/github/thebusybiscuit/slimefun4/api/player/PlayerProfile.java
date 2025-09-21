@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableSet;
 import com.xzavier0722.mc.plugin.slimefun4.storage.callback.IAsyncReadCallback;
 import io.github.bakedlibs.dough.common.ChatColors;
 import io.github.bakedlibs.dough.config.Config;
+import io.github.thebusybiscuit.slimefun4.api.events.AsyncProfileLoadEvent;
 import io.github.thebusybiscuit.slimefun4.api.gps.Waypoint;
 import io.github.thebusybiscuit.slimefun4.api.items.HashedArmorpiece;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemState;
@@ -55,8 +56,7 @@ public class PlayerProfile {
 
     private boolean dirty = false;
     private boolean isInvalid = false;
-    // remove this flag, one flag is enough
-    //    private boolean markedForDeletion = false;
+    private boolean markedForDeletion = false;
 
     private final Set<Research> researches;
     private final List<Waypoint> waypoints = new ArrayList<>();
@@ -124,7 +124,7 @@ public class PlayerProfile {
      * @return Whether the Profile is marked for deletion
      */
     public boolean isMarkedForDeletion() {
-        return isInvalid;
+        return markedForDeletion;
     }
 
     /**
@@ -137,22 +137,12 @@ public class PlayerProfile {
     }
 
     /**
-     * This method will save the Player's waypoint to the hard drive
+     * This method will save the Player's Researches and Backpacks to the hard drive
      */
     public void save() {
         // As waypoints still store in file, just keep this method here for now...
         waypointsFile.save();
         dirty = false;
-    }
-    /**
-     * This method will save the Player's waypoint to the hard drive
-     */
-    public void saveAsync() {
-        try {
-            Slimefun.getDatabaseManager().getProfileDataController().saveWaypoints(this);
-        } catch (IllegalStateException destroyed) {
-            save();
-        }
     }
 
     /**
@@ -253,8 +243,6 @@ public class PlayerProfile {
             waypointsFile.setValue(waypoint.getId(), waypoint.getLocation());
             waypointsFile.setValue(waypoint.getId() + ".name", waypoint.getName());
             markDirty();
-            // just save async immediately
-            saveAsync();
         }
     }
 
@@ -271,8 +259,6 @@ public class PlayerProfile {
         if (waypoints.remove(waypoint)) {
             waypointsFile.setValue(waypoint.getId(), null);
             markDirty();
-            // just save async immediately
-            saveAsync();
         }
     }
 
@@ -281,7 +267,7 @@ public class PlayerProfile {
      * The profile can then be removed from RAM.
      */
     public final void markForDeletion() {
-        isInvalid = true;
+        markedForDeletion = true;
     }
 
     /**
@@ -531,10 +517,12 @@ public class PlayerProfile {
             }
 
             private void invokeCb(PlayerProfile pf) {
-                // this may not trigger a profile load, so we move the event to the ProfileDataContainer, where the
-                // profiler really loaded and created
+                AsyncProfileLoadEvent event = new AsyncProfileLoadEvent(pf);
+                Bukkit.getPluginManager().callEvent(event);
+
+                Slimefun.getRegistry().getPlayerProfiles().put(p.getUniqueId(), event.getProfile());
                 if (cb != null) {
-                    cb.accept(pf);
+                    cb.accept(event.getProfile());
                 }
             }
         });
