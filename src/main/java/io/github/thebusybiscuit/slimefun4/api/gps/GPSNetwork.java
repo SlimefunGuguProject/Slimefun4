@@ -17,12 +17,13 @@ import io.github.thebusybiscuit.slimefun4.implementation.items.teleporter.Telepo
 import io.github.thebusybiscuit.slimefun4.utils.ChestMenuUtils;
 import io.github.thebusybiscuit.slimefun4.utils.HeadTexture;
 import io.github.thebusybiscuit.slimefun4.utils.NumberUtils;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArraySet;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
 import me.mrCookieSlime.CSCoreLibPlugin.general.Inventory.ChestMenu;
@@ -55,7 +56,7 @@ public class GPSNetwork {
     private final int[] inventory = {19, 20, 21, 22, 23, 24, 25, 28, 29, 30, 31, 32, 33, 34, 37, 38, 39, 40, 41, 42, 43
     };
 
-    private final Map<UUID, Set<Location>> transmitters = new HashMap<>();
+    private final Map<UUID, Set<Location>> transmitters = new ConcurrentHashMap<>();
     private final TeleportationManager teleportation = new TeleportationManager();
 
     private final ResourceManager resourceManager;
@@ -82,7 +83,7 @@ public class GPSNetwork {
      *            Whether that {@link GPSTransmitter} is online
      */
     public void updateTransmitter(@Nonnull Location l, @Nonnull UUID uuid, boolean online) {
-        Set<Location> set = transmitters.computeIfAbsent(uuid, id -> new HashSet<>());
+        Set<Location> set = transmitters.computeIfAbsent(uuid, id -> new CopyOnWriteArraySet<>());
 
         if (online) {
             set.add(l);
@@ -374,33 +375,36 @@ public class GPSNetwork {
                 return;
             }
 
-            Slimefun.runSync(() -> {
-                WaypointCreateEvent event = new WaypointCreateEvent(p, name, l);
-                Bukkit.getPluginManager().callEvent(event);
+            Slimefun.runSync(
+                    () -> {
+                        WaypointCreateEvent event = new WaypointCreateEvent(p, name, l);
+                        Bukkit.getPluginManager().callEvent(event);
 
-                if (!event.isCancelled()) {
-                    String id = ChatColor.stripColor(ChatColors.color(event.getName()))
-                            .toUpperCase(Locale.ROOT)
-                            .replace(' ', '_');
+                        if (!event.isCancelled()) {
+                            String id = ChatColor.stripColor(ChatColors.color(event.getName()))
+                                    .toUpperCase(Locale.ROOT)
+                                    .replace(' ', '_');
 
-                    for (Waypoint wp : profile.getWaypoints()) {
-                        if (wp.getId().equals(id)) {
-                            Slimefun.getLocalization()
-                                    .sendMessage(
-                                            p,
-                                            "gps.waypoint.duplicate",
-                                            true,
-                                            msg -> msg.replace("%waypoint%", event.getName()));
-                            return;
+                            for (Waypoint wp : profile.getWaypoints()) {
+                                if (wp.getId().equals(id)) {
+                                    Slimefun.getLocalization()
+                                            .sendMessage(
+                                                    p,
+                                                    "gps.waypoint.duplicate",
+                                                    true,
+                                                    msg -> msg.replace("%waypoint%", event.getName()));
+                                    return;
+                                }
+                            }
+
+                            profile.addWaypoint(
+                                    new Waypoint(p.getUniqueId(), id, event.getLocation(), event.getName()));
+
+                            SoundEffect.GPS_NETWORK_ADD_WAYPOINT.playFor(p);
+                            Slimefun.getLocalization().sendMessage(p, "gps.waypoint.added", true);
                         }
-                    }
-
-                    profile.addWaypoint(new Waypoint(p.getUniqueId(), id, event.getLocation(), event.getName()));
-
-                    SoundEffect.GPS_NETWORK_ADD_WAYPOINT.playFor(p);
-                    Slimefun.getLocalization().sendMessage(p, "gps.waypoint.added", true);
-                }
-            });
+                    },
+                    l);
         });
     }
 

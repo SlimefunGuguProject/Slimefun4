@@ -36,10 +36,8 @@ import org.bukkit.inventory.ItemStack;
  * @author TheBusyBiscuit
  * @author Kry-Vosa
  * @author SoSeDiK
- *
  * @see HologramOwner
  * @see HologramsService
- *
  */
 public class HologramProjector extends SlimefunItem implements HologramOwner {
 
@@ -125,10 +123,12 @@ public class HologramProjector extends SlimefunItem implements HologramOwner {
                     return;
                 }
 
-                ArmorStand hologram = getArmorStand(projector, true);
-                hologram.setCustomName(ChatColors.color(message));
-                StorageCacheUtils.setData(projector.getLocation(), "text", hologram.getCustomName());
-                openEditor(pl, projector);
+                Slimefun.getPlatformScheduler().runAtLocation(projector.getLocation(), (task) -> {
+                    ArmorStand hologram = getArmorStand(projector, true);
+                    hologram.setCustomName(ChatColors.color(message));
+                    StorageCacheUtils.setData(projector.getLocation(), "text", hologram.getCustomName());
+                    openEditor(pl, projector);
+                });
             });
 
             return false;
@@ -152,7 +152,7 @@ public class HologramProjector extends SlimefunItem implements HologramOwner {
             ArmorStand hologram = getArmorStand(projector, true);
             Location l = new Location(
                     projector.getWorld(), projector.getX() + 0.5, projector.getY() + offset, projector.getZ() + 0.5);
-            hologram.teleport(l);
+            Slimefun.getPlatformScheduler().teleportAsync(hologram, l);
 
             blockData.setData(OFFSET_PARAMETER, String.valueOf(offset));
             openEditor(pl, projector);

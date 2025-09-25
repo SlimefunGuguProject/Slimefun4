@@ -2,6 +2,10 @@ package io.github.thebusybiscuit.slimefun4.implementation;
 
 import city.norain.slimefun4.SlimefunExtended;
 import city.norain.slimefun4.timings.SQLProfiler;
+import com.tcoded.folialib.FoliaLib;
+import com.tcoded.folialib.enums.EntityTaskResult;
+import com.tcoded.folialib.impl.PlatformScheduler;
+import com.tcoded.folialib.wrapper.task.WrappedTask;
 import com.xzavier0722.mc.plugin.slimefun4.chat.PlayerChatCatcher;
 import com.xzavier0722.mc.plugin.slimefun4.storage.migrator.BlockStorageMigrator;
 import com.xzavier0722.mc.plugin.slimefun4.storage.migrator.PlayerProfileMigrator;
@@ -115,6 +119,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -125,9 +130,11 @@ import me.mrCookieSlime.CSCoreLibPlugin.general.Inventory.MenuListener;
 import net.guizhanss.slimefun4.updater.AutoUpdateTask;
 import org.apache.commons.lang.Validate;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.Server;
 import org.bukkit.World;
 import org.bukkit.command.Command;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.inventory.Recipe;
@@ -167,6 +174,11 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
      * Keep track of whether this is a fresh install or a regular boot up.
      */
     private boolean isNewlyInstalled = false;
+
+    /**
+     * Folia support library
+     */
+    private final FoliaLib foliaLib = new FoliaLib(this);
 
     // Various things we need
     private final SlimefunConfigManager cfgManager = new SlimefunConfigManager(this);
@@ -326,7 +338,7 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
             Slimefun.logger().warning("请在服务器加载完成后, 使用 /sf migrate confirm 进行迁移!");
             Slimefun.logger().warning("如果不迁移, 你将会丢失先前版本的数据!!!");
             Slimefun.logger().warning("\n");
-            Slimefun.logger().warning("需要使用 MySQL 数据库的用户, 请关服后修改两个配置文件");
+            Slimefun.logger().warning("需要使用 MySQL 数据库的用户, 请关服后修改以下配置文件再进行迁移");
             Slimefun.logger().warning("block-storage.yml 和 profile-storage.yml");
             Slimefun.logger().warning("\n");
             Slimefun.logger().warning("====================================================");
@@ -405,7 +417,7 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
                                         + ")");
                     }
                 }),
-                0);
+                1);
 
         // Setting up our commands
         try {
@@ -429,7 +441,7 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
         // Starting our tasks
         autoSavingService.start(this, config.getInt("options.auto-save-delay-in-minutes"));
         hologramsService.start();
-        ticker.start(this);
+        ticker.start();
 
         logger.log(Level.INFO, "正在加载第三方插件支持...");
         integrations.start();
@@ -438,7 +450,7 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
 
         if (cfgManager.isAutoUpdate()) {
             // 汉化版自动更新
-            Bukkit.getScheduler().scheduleSyncDelayedTask(this, new AutoUpdateTask(this, getFile()));
+            getPlatformScheduler().runNextTick((task) -> new AutoUpdateTask(this, getFile()).run());
         }
 
         // Hooray!
@@ -475,11 +487,10 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
         getSQLProfiler().shutdown();
 
         // Cancel all tasks from this plugin immediately
-        Bukkit.getScheduler().cancelTasks(this);
+        foliaLib.getScheduler().cancelAllTasks();
 
         // Finishes all started movements/removals of block data
-        ticker.setPaused(true);
-        ticker.halt();
+        ticker.shutdown();
         /**try {
          * ticker.halt();
          * ticker.run();
@@ -1125,7 +1136,7 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
      *
      * @return The resulting {@link BukkitTask} or null if Slimefun was disabled
      */
-    public static @Nullable BukkitTask runSync(@Nonnull Runnable runnable, long delay) {
+    public static @Nullable WrappedTask runSync(@Nonnull Runnable runnable, long delay) {
         Validate.notNull(runnable, "Cannot run null");
         Validate.isTrue(delay >= 0, "The delay cannot be negative");
 
@@ -1139,7 +1150,7 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
             return null;
         }
 
-        return instance.getServer().getScheduler().runTaskLater(instance, runnable, delay);
+        return getPlatformScheduler().runLater(runnable, Math.max(1, delay));
     }
 
     /**
@@ -1154,7 +1165,7 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
      *
      * @return The resulting {@link BukkitTask} or null if Slimefun was disabled
      */
-    public static @Nullable BukkitTask runSync(@Nonnull Runnable runnable) {
+    public static @Nullable CompletableFuture<Void> runSync(@Nonnull Runnable runnable) {
         Validate.notNull(runnable, "Cannot run null");
 
         // Run the task instantly within a Unit Test
@@ -1167,12 +1178,88 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
             return null;
         }
 
-        return instance.getServer().getScheduler().runTask(instance, runnable);
+        return instance.getPlatformScheduler().runNextTick((task) -> runnable.run());
+    }
+
+    /**
+     * This method schedules a synchronous task for Slimefun.
+     * <strong>For Slimefun only, not for addons.</strong>
+     *
+     * This method should only be invoked by Slimefun itself.
+     * Addons must schedule their own tasks using their own {@link Plugin} instance.
+     *
+     * @param runnable The {@link Runnable} to run
+     * @return The resulting {@link BukkitTask} or null if Slimefun was disabled
+     */
+    public static @Nullable CompletableFuture<EntityTaskResult> runSync(@Nonnull Runnable runnable, Entity entity) {
+        Validate.notNull(runnable, "Cannot run null");
+
+        // Run the task instantly within a Unit Test
+        if (getMinecraftVersion() == MinecraftVersion.UNIT_TEST) {
+            runnable.run();
+            return null;
+        }
+
+        if (instance == null || !instance.isEnabled()) {
+            return null;
+        }
+
+        return instance.getPlatformScheduler().runAtEntity(entity, (task) -> runnable.run());
+    }
+
+    /**
+     * This method schedules a synchronous task for Slimefun.
+     * <strong>For Slimefun only, not for addons.</strong>
+     *
+     * This method should only be invoked by Slimefun itself.
+     * Addons must schedule their own tasks using their own {@link Plugin} instance.
+     *
+     * @param runnable The {@link Runnable} to run
+     * @return The resulting {@link BukkitTask} or null if Slimefun was disabled
+     */
+    public static @Nullable CompletableFuture<Void> runSync(@Nonnull Runnable runnable, Location l) {
+        Validate.notNull(runnable, "Cannot run null");
+
+        // Run the task instantly within a Unit Test
+        if (getMinecraftVersion() == MinecraftVersion.UNIT_TEST) {
+            runnable.run();
+            return null;
+        }
+
+        if (instance == null || !instance.isEnabled()) {
+            return null;
+        }
+
+        return instance.getPlatformScheduler().runAtLocation(l, (task) -> runnable.run());
+    }
+
+    public static @Nullable CompletableFuture<Void> runSync(@Nonnull Runnable runnable, long delay, Location l) {
+        Validate.notNull(runnable, "Cannot run null");
+
+        // Run the task instantly within a Unit Test
+        if (getMinecraftVersion() == MinecraftVersion.UNIT_TEST) {
+            runnable.run();
+            return null;
+        }
+
+        if (instance == null || !instance.isEnabled()) {
+            return null;
+        }
+
+        return getPlatformScheduler().runAtLocationLater(l, (task) -> runnable.run(), delay);
     }
 
     @Nonnull
     public File getFile() {
         return super.getFile();
+    }
+
+    public static boolean isFolia() {
+        return instance.foliaLib.isFolia();
+    }
+
+    public static PlatformScheduler getPlatformScheduler() {
+        return instance.foliaLib.getScheduler();
     }
 
     public static @Nonnull PlayerChatCatcher getChatCatcher() {

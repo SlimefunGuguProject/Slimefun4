@@ -70,13 +70,15 @@ public class RadiationTask extends AbstractArmorTask {
 
             int exposureLevelAfter = RadiationUtils.getExposure(p);
 
-            Slimefun.runSync(() -> {
-                for (RadiationSymptom symptom : symptoms) {
-                    if (symptom.shouldApply(exposureLevelAfter)) {
-                        symptom.apply(p);
-                    }
-                }
-            });
+            Slimefun.runSync(
+                    () -> {
+                        for (RadiationSymptom symptom : symptoms) {
+                            if (symptom.shouldApply(exposureLevelAfter)) {
+                                symptom.apply(p);
+                            }
+                        }
+                    },
+                    p);
 
             if (exposureLevelAfter > 0 || exposureLevelBefore > 0) {
                 String msg = Slimefun.getLocalization()
