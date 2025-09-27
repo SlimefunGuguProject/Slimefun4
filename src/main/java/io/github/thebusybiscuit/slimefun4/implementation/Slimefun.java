@@ -2,7 +2,6 @@ package io.github.thebusybiscuit.slimefun4.implementation;
 
 import city.norain.slimefun4.SlimefunExtended;
 import city.norain.slimefun4.timings.SQLProfiler;
-import city.norain.slimefun4.utils.LangUtil;
 import com.xzavier0722.mc.plugin.slimefun4.chat.PlayerChatCatcher;
 import com.xzavier0722.mc.plugin.slimefun4.storage.migrator.BlockStorageMigrator;
 import com.xzavier0722.mc.plugin.slimefun4.storage.migrator.PlayerProfileMigrator;
@@ -293,13 +292,6 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
     private void onPluginStart() {
         long timestamp = System.nanoTime();
         Logger logger = getLogger();
-
-        // Check if Paper (<3) is installed
-        if (PaperLib.isPaper()) {
-            logger.log(Level.INFO, "检测到你正在使用 Paper 服务端! 性能优化已应用.");
-        } else {
-            LangUtil.suggestPaper(this);
-        }
 
         // Check if CS-CoreLib is installed (it is no longer needed)
         if (getServer().getPluginManager().getPlugin("CS-CoreLib") != null) {

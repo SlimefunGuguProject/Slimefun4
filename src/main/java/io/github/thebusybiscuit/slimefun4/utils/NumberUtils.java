@@ -251,6 +251,52 @@ public final class NumberUtils {
      * @return The clamped value
      */
     public static int clamp(int min, int value, int max) {
+        // are you serious about this shit argument??
+        if (value < min) {
+            return min;
+        } else if (value > max) {
+            return max;
+        } else {
+            return value;
+        }
+    }
+    /**
+     * This method is a combination of Math.min and Math.max, it clamps the given value
+     * between a minimum and a maximum.
+     *
+     * @param min
+     *            The minimum value
+     * @param value
+     *            The value to clamp
+     * @param max
+     *            The maximum value
+     *
+     * @return The clamped value
+     */
+    public static long clamp(long min, long value, long max) {
+        if (value < min) {
+            return min;
+        } else if (value > max) {
+            return max;
+        } else {
+            return value;
+        }
+    }
+
+    /**
+     * This method is a combination of Math.min and Math.max, it clamps the given value
+     * between a minimum and a maximum.
+     *
+     * @param min
+     *            The minimum value
+     * @param value
+     *            The value to clamp
+     * @param max
+     *            The maximum value
+     *
+     * @return The clamped value
+     */
+    public static double clamp(double min, double value, double max) {
         if (value < min) {
             return min;
         } else if (value > max) {
@@ -294,6 +340,10 @@ public final class NumberUtils {
         return limitedAddition(a, b, Long.MIN_VALUE, Long.MAX_VALUE);
     }
 
+    public static long flowSafeAddition(long limitMax, long a, long b) {
+        return a <= limitMax - b ? a + b : limitMax;
+    }
+
     /**
      * This detects if 2 integers/longs will overflow/underflow past a maximum or minimum value and if they will, returns the corresponding value
      * @param a the first number
@@ -319,14 +369,15 @@ public final class NumberUtils {
     }
 
     public static int longToInt(long l) {
-        if (l <= Integer.MIN_VALUE) {
-            return Integer.MIN_VALUE;
-        }
-
-        if (l >= Integer.MAX_VALUE) {
-            return Integer.MAX_VALUE;
-        }
-
-        return (int) l;
+        return l <= Integer.MIN_VALUE ? Integer.MIN_VALUE : (l >= Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) l);
+        //        if (l <= Integer.MIN_VALUE) {
+        //            return Integer.MIN_VALUE;
+        //        }
+        //
+        //        if (l >= Integer.MAX_VALUE) {
+        //            return Integer.MAX_VALUE;
+        //        }
+        //
+        //        return (int) l;
     }
 }

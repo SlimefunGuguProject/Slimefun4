@@ -14,7 +14,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
  *
  * @deprecated Only used by the legacy {@link BlockStorage} system.
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public class Config {
 
     private final File file;

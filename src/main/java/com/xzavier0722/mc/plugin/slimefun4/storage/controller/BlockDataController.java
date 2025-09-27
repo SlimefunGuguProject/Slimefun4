@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -95,8 +96,6 @@ public class BlockDataController extends ADataController {
     /**
      * 初始化加载中标志
      */
-    private boolean initLoading = false;
-
     BlockDataController() {
         super(DataType.BLOCK_STORAGE);
         delayedWriteTasks = new ConcurrentHashMap<>();
@@ -133,9 +132,7 @@ public class BlockDataController extends ADataController {
                 .runTaskLater(
                         Slimefun.instance(),
                         () -> {
-                            initLoading = true;
                             loadUniversalRecord();
-                            initLoading = false;
                         },
                         1);
     }
@@ -148,11 +145,9 @@ public class BlockDataController extends ADataController {
                 .runTaskLater(
                         Slimefun.instance(),
                         () -> {
-                            initLoading = true;
                             for (var world : Bukkit.getWorlds()) {
                                 loadWorld(world);
                             }
-                            initLoading = false;
                         },
                         1);
     }
@@ -165,13 +160,11 @@ public class BlockDataController extends ADataController {
                 .runTaskLater(
                         Slimefun.instance(),
                         () -> {
-                            initLoading = true;
                             for (var world : Bukkit.getWorlds()) {
                                 for (var chunk : world.getLoadedChunks()) {
-                                    loadChunk(chunk, false);
+                                    loadChunk(chunk, false, true);
                                 }
                             }
-                            initLoading = false;
                         },
                         1);
     }
@@ -492,18 +485,21 @@ public class BlockDataController extends ADataController {
         if (chunkDataLoadMode.readCacheOnly()) {
             return getBlockDataFromCache(l);
         }
-
-        // var chunk = l.getChunk();
-        // fix issue #935
         var chunkData = getChunkDataCache(l, false);
-        var lKey = LocationUtils.getLocKey(l);
+        // fix issue #935
         if (chunkData != null) {
+            var lKey = LocationUtils.getLocKey(l);
             var re = chunkData.getBlockCacheInternal(lKey);
             if (re != null || chunkData.hasBlockCache(lKey) || chunkData.isDataLoaded()) {
                 return re;
             }
         }
 
+        return loadBlockData(l);
+    }
+
+    private SlimefunBlockData loadBlockData(Location l) {
+        var lKey = LocationUtils.getLocKey(l);
         var key = new RecordKey(DataScope.BLOCK_RECORD);
         key.addCondition(FieldKey.LOCATION, lKey);
         key.addField(FieldKey.SLIMEFUN_ID);
@@ -513,11 +509,29 @@ public class BlockDataController extends ADataController {
                 result.isEmpty() ? null : new SlimefunBlockData(l, result.get(0).get(FieldKey.SLIMEFUN_ID));
         if (re != null) {
             // fix issue #935
-            chunkData = getChunkDataCache(l, true);
+            SlimefunChunkData chunkData = getChunkDataCache(l, true);
             chunkData.addBlockCacheInternal(re, false);
             re = chunkData.getBlockCacheInternal(lKey);
         }
         return re;
+    }
+
+    public CompletableFuture<SlimefunBlockData> getBlockDataAsync(Location l) {
+        checkDestroy();
+        if (chunkDataLoadMode.readCacheOnly()) {
+            return CompletableFuture.completedFuture(getBlockDataFromCache(l));
+        }
+
+        var chunkData = getChunkDataCache(l, false);
+        // fix issue #935
+        if (chunkData != null) {
+            var lKey = LocationUtils.getLocKey(l);
+            var re = chunkData.getBlockCacheInternal(lKey);
+            if (re != null || chunkData.hasBlockCache(lKey) || chunkData.isDataLoaded()) {
+                return CompletableFuture.completedFuture(re);
+            }
+        }
+        return CompletableFuture.supplyAsync(() -> loadBlockData(l), this.readExecutor);
     }
 
     /**
@@ -732,17 +746,33 @@ public class BlockDataController extends ADataController {
     }
 
     public void loadChunk(Chunk chunk, boolean isNewChunk) {
+        loadChunk(chunk, isNewChunk, false);
+    }
+
+    public void loadChunk(Chunk chunk, boolean isNewChunk, boolean forceReadData) {
         checkDestroy();
         var chunkData = getChunkDataCache(chunk, true);
+        // what if the database already contains data here but the WORLD CHUNK is newly generated
 
-        if (isNewChunk) {
-            chunkData.setIsDataLoaded(true);
-            Bukkit.getPluginManager().callEvent(new SlimefunChunkDataLoadEvent(chunkData));
-            return;
-        }
+        // escape all return if forceRead Flag is true
+        if (forceReadData) {
+            if (chunkDataLoadMode.readCacheOnly()) {
+                // if readCache only , then all the chunkData get from cache is DataLoaded
+                // since we removed initLoading, so we set DataLoad false here, so it will trigger the loadChunkData
+                chunkData.setIsDataLoaded(false);
+            }
+            // else force loading, escape all returns
+        } else {
+            // not force loading
+            if (isNewChunk) {
+                chunkData.setIsDataLoaded(true);
+                Bukkit.getPluginManager().callEvent(new SlimefunChunkDataLoadEvent(chunkData));
+                return;
+            }
 
-        if (chunkData.isDataLoaded()) {
-            return;
+            if (chunkData.isDataLoaded()) {
+                return;
+            }
         }
 
         loadChunkData(chunkData);
@@ -789,7 +819,7 @@ public class BlockDataController extends ADataController {
         key.addCondition(FieldKey.CHUNK, world.getName() + ";%");
         getData(key, true).forEach(data -> chunkKeys.add(data.get(FieldKey.CHUNK)));
 
-        chunkKeys.forEach(cKey -> loadChunk(LocationUtils.toChunk(world, cKey), false));
+        chunkKeys.forEach(cKey -> loadChunk(LocationUtils.toChunk(world, cKey), false, true));
         logger.log(
                 Level.INFO, "世界 {0} 数据加载完成, 耗时 {1}ms", new Object[] {worldName, (System.currentTimeMillis() - start)});
     }
@@ -1036,6 +1066,16 @@ public class BlockDataController extends ADataController {
         checkDestroy();
         loadChunk(chunk, false);
         return getChunkDataCache(chunk, false);
+    }
+
+    public CompletableFuture<SlimefunChunkData> getChunkDataAsync(Chunk chunk) {
+        checkDestroy();
+        SlimefunChunkData cdata = getChunkDataCache(chunk, true);
+        if (cdata.isDataLoaded()) {
+            return CompletableFuture.completedFuture(cdata);
+        }
+        return CompletableFuture.runAsync(() -> loadChunk(chunk, false), readExecutor)
+                .thenApply((v) -> getChunkDataCache(chunk, false));
     }
 
     public void getChunkDataAsync(Chunk chunk, IAsyncReadCallback<SlimefunChunkData> callback) {
@@ -1395,7 +1435,7 @@ public class BlockDataController extends ADataController {
         return createOnNotExists
                 ? loadedChunk.computeIfAbsent(LocationUtils.getChunkKey(chunk), k -> {
                     var re = new SlimefunChunkData(chunk);
-                    if (!initLoading && chunkDataLoadMode.readCacheOnly()) {
+                    if (chunkDataLoadMode.readCacheOnly()) {
                         re.setIsDataLoaded(true);
                     }
                     return re;

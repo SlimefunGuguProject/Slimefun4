@@ -11,11 +11,12 @@ import java.util.Collection;
 import java.util.Locale;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
-import net.md_5.bungee.api.ChatColor;
-import net.md_5.bungee.api.chat.ClickEvent;
-import net.md_5.bungee.api.chat.ComponentBuilder;
-import net.md_5.bungee.api.chat.HoverEvent;
-import net.md_5.bungee.api.chat.TextComponent;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.event.HoverEvent;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.Style;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
@@ -55,180 +56,151 @@ class VersionsCommand extends SubCommand {
              * so we will just fix this inconsistency for them :)
              */
             String serverSoftware = PaperLib.isSpigot() && !PaperLib.isPaper() ? "Spigot" : Bukkit.getName();
-            ComponentBuilder builder = new ComponentBuilder();
 
-            // @formatter:off
-            builder.append("Slimefun 运行的服务器环境:\n")
-                    .color(ChatColor.GRAY)
-                    .append(serverSoftware)
-                    .color(ChatColor.GREEN)
-                    .append(" " + Bukkit.getVersion() + '\n')
-                    .color(ChatColor.DARK_GREEN)
-                    .append("Slimefun ")
-                    .color(ChatColor.GREEN)
-                    .append(Slimefun.getVersion()
-                            + (Slimefun.getVersion().toLowerCase(Locale.ROOT).contains("release")
-                                    ? ""
-                                    : " @" + EnvUtil.getBranch())
-                            + '\n')
-                    .color(ChatColor.DARK_GREEN)
-                    .append("构建时间 ")
-                    .color(ChatColor.GREEN)
-                    .append(EnvUtil.getBuildTime())
-                    .color(ChatColor.DARK_GREEN)
-                    .append("\n");
+            net.kyori.adventure.text.TextComponent.Builder builder = Component.text();
+
+            builder.append(Component.text("Slimefun 运行的服务器环境:\n", Style.style(NamedTextColor.GRAY)))
+                    .append(Component.text(serverSoftware, Style.style(NamedTextColor.GREEN))
+                            .append(Component.text(
+                                    " " + Bukkit.getVersion() + '\n', Style.style(NamedTextColor.DARK_GREEN))))
+                    .append(Component.text("Slimefun ", Style.style(NamedTextColor.GREEN)))
+                    .append(Component.text(
+                            Slimefun.getVersion()
+                                    + (Slimefun.getVersion()
+                                                    .toLowerCase(Locale.ROOT)
+                                                    .contains("release")
+                                            ? ""
+                                            : " @" + EnvUtil.getBranch())
+                                    + '\n',
+                            Style.style(NamedTextColor.DARK_GREEN)))
+                    .append(Component.text("构建时间 ", Style.style(NamedTextColor.GREEN)))
+                    .append(Component.text(EnvUtil.getBuildTime(), Style.style(NamedTextColor.DARK_GREEN)))
+                    .append(Component.text("\n"));
+
             // @formatter:on
 
             if (Slimefun.getMetricsService().getVersion() != null) {
                 // @formatter:off
-                builder.append("Metrics-组件 ")
-                        .color(ChatColor.GREEN)
-                        .append("#" + Slimefun.getMetricsService().getVersion() + '\n')
-                        .color(ChatColor.DARK_GREEN);
+                builder.append(Component.text("Metrics-组件 ", Style.style(NamedTextColor.GREEN)))
+                        .append(Component.text(
+                                "#" + Slimefun.getMetricsService().getVersion() + '\n',
+                                Style.style(NamedTextColor.DARK_GREEN)));
                 // @formatter:on
             }
 
             addJavaVersion(builder);
 
-            // Specify we are NOT OFFICIAL build so no support from upstream
-            builder.append("\n由 StarWishsama 汉化")
-                    .color(ChatColor.WHITE)
-                    .append("\n请不要将此版本信息截图到 Discord/Github 反馈 Bug" + "\n优先到汉化页面反馈" + "\n")
-                    .color(ChatColor.RED);
+            // Declare that we are NOT OFFICIAL build so no support from upstream
+            builder.append(Component.text("\n由 StarWishsama 汉化", Style.style(NamedTextColor.WHITE)))
+                    .append(Component.text(
+                            "\n请不要将此版本信息截图到 Discord/Github 反馈 Bug\n优先到汉化页面反馈\n", Style.style(NamedTextColor.RED)));
 
             if (Slimefun.getConfigManager().isBypassEnvironmentCheck()) {
-                builder.append("\n").event((HoverEvent) null);
-                builder.append("\n已禁用环境兼容性检查").color(ChatColor.RED);
+                builder.append(Component.text("\n\n已禁用环境兼容性检查", Style.style(NamedTextColor.RED)));
             }
 
             if (Slimefun.getConfigManager().isBypassItemLengthCheck()) {
-                builder.append("\n").event((HoverEvent) null);
-                builder.append("\n已禁用物品长度检查").color(ChatColor.RED);
+                builder.append(Component.text("\n\n已禁用物品长度检查", Style.style(NamedTextColor.RED)));
             }
 
-            builder.append("\n").event((HoverEvent) null);
+            builder.append(Component.text("\n"));
             addPluginVersions(builder);
 
-            sender.spigot().sendMessage(builder.create());
+            sender.sendMessage(builder.build());
         } else {
             Slimefun.getLocalization().sendMessage(sender, "messages.no-permission", true);
         }
     }
 
-    private void addJavaVersion(@Nonnull ComponentBuilder builder) {
+    private void addJavaVersion(@Nonnull net.kyori.adventure.text.TextComponent.Builder builder) {
         int version = NumberUtils.getJavaVersion();
 
         if (version < RECOMMENDED_JAVA_VERSION) {
-            // @formatter:off
-            builder.append("Java " + version)
-                    .color(ChatColor.RED)
-                    .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent[] {
-                        new TextComponent("你使用的 Java 版本已过时!\n!"
-                                + "推荐你使用 Java "
-                                + RECOMMENDED_JAVA_VERSION
-                                + " 或更高版本.\n"
-                                + JAVA_VERSION_NOTICE)
-                    }))
-                    .append("\n")
-                    .event((HoverEvent) null);
-            // @formatter:on
+            Component hover = Component.text("你使用的 Java 版本已过时!\n!"
+                    + "推荐你使用 Java "
+                    + RECOMMENDED_JAVA_VERSION
+                    + " 或更高版本.\n"
+                    + JAVA_VERSION_NOTICE);
+
+            builder.append(Component.text("Java " + version, NamedTextColor.RED).hoverEvent(HoverEvent.showText(hover)))
+                    .append(Component.text("\n"));
         } else {
-            builder.append("Java ")
-                    .color(ChatColor.GREEN)
-                    .append(version + "\n")
-                    .color(ChatColor.DARK_GREEN);
+            builder.append(Component.text("Java ", NamedTextColor.GREEN))
+                    .append(Component.text(version + "\n", NamedTextColor.DARK_GREEN));
         }
     }
 
-    private void addPluginVersions(@Nonnull ComponentBuilder builder) {
+    @SuppressWarnings("deprecation")
+    private void addPluginVersions(@Nonnull net.kyori.adventure.text.TextComponent.Builder builder) {
         Collection<Plugin> addons = Slimefun.getInstalledAddons();
 
         if (addons.isEmpty()) {
-            builder.append("没有安装任何附属插件").color(ChatColor.GRAY).italic(true);
+            builder.append(Component.text("没有安装任何附属插件", NamedTextColor.GRAY).decorate(TextDecoration.ITALIC));
             return;
         }
 
-        builder.append("安装的附属插件: ")
-                .color(ChatColor.GRAY)
-                .append("(" + addons.size() + ")")
-                .color(ChatColor.DARK_GRAY);
+        builder.append(Component.text("安装的附属插件: ", NamedTextColor.GRAY))
+                .append(Component.text("(" + addons.size() + ")", NamedTextColor.DARK_GRAY));
 
         for (Plugin plugin : addons) {
             String version = plugin.getDescription().getVersion();
 
-            HoverEvent hoverEvent = null;
+            HoverEvent<Component> hoverEvent;
             ClickEvent clickEvent = null;
-            ChatColor primaryColor;
-            ChatColor secondaryColor;
+            NamedTextColor primaryColor;
+            NamedTextColor secondaryColor;
 
             if (Bukkit.getPluginManager().isPluginEnabled(plugin)) {
-                primaryColor = ChatColor.GREEN;
-                secondaryColor = ChatColor.DARK_GREEN;
+                primaryColor = NamedTextColor.GREEN;
+                secondaryColor = NamedTextColor.DARK_GREEN;
                 String authors = String.join(", ", plugin.getDescription().getAuthors());
 
                 if (plugin instanceof SlimefunAddon addon && addon.getBugTrackerURL() != null) {
-                    // @formatter:off
-                    hoverEvent = new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent[] {
-                        new TextComponent(new ComponentBuilder()
-                                .append("作者: ")
-                                .append(authors)
-                                .color(ChatColor.YELLOW)
-                                .append("\n> 单击打开反馈页面")
-                                .color(ChatColor.GOLD)
-                                .create())
-                    });
-                    // @formatter:on
+                    Component hoverComp = Component.text()
+                            .append(Component.text("作者: ", NamedTextColor.YELLOW))
+                            .append(Component.text(authors, NamedTextColor.YELLOW))
+                            .append(Component.text("\n> 单击打开反馈页面", NamedTextColor.GOLD))
+                            .build();
 
-                    clickEvent = new ClickEvent(ClickEvent.Action.OPEN_URL, addon.getBugTrackerURL());
+                    hoverEvent = HoverEvent.showText(hoverComp);
+                    clickEvent = ClickEvent.openUrl(addon.getBugTrackerURL());
                 } else {
-                    // @formatter:off
-                    hoverEvent = new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent[] {
-                        new TextComponent(new ComponentBuilder()
-                                .append("作者: ")
-                                .append(authors)
-                                .color(ChatColor.YELLOW)
-                                .create())
-                    });
-                    // @formatter:on
+                    Component hoverComp = Component.text()
+                            .append(Component.text("作者: ", NamedTextColor.YELLOW))
+                            .append(Component.text(authors, NamedTextColor.YELLOW))
+                            .build();
+
+                    hoverEvent = HoverEvent.showText(hoverComp);
                 }
             } else {
-                primaryColor = ChatColor.RED;
-                secondaryColor = ChatColor.DARK_RED;
+                primaryColor = NamedTextColor.RED;
+                secondaryColor = NamedTextColor.DARK_RED;
 
                 if (plugin instanceof SlimefunAddon addon && addon.getBugTrackerURL() != null) {
-                    // @formatter:off
-                    hoverEvent = new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent[] {
-                        new TextComponent(new ComponentBuilder()
-                                .append("此插件已被禁用.\n检查后台是否有报错.")
-                                .color(ChatColor.RED)
-                                .append("\n> 单击打开反馈页面")
-                                .color(ChatColor.DARK_RED)
-                                .create())
-                    });
-                    // @formatter:on
+                    Component hoverComp = Component.text()
+                            .append(Component.text("此插件已被禁用.\n请检查后台是否有报错.", NamedTextColor.RED))
+                            .append(Component.text("\n> 单击打开反馈页面", NamedTextColor.DARK_RED))
+                            .build();
+
+                    hoverEvent = HoverEvent.showText(hoverComp);
 
                     if (addon.getBugTrackerURL() != null) {
-                        clickEvent = new ClickEvent(ClickEvent.Action.OPEN_URL, addon.getBugTrackerURL());
+                        clickEvent = ClickEvent.openUrl(addon.getBugTrackerURL());
                     }
                 } else {
-                    hoverEvent = new HoverEvent(
-                            HoverEvent.Action.SHOW_TEXT,
-                            new TextComponent[] {new TextComponent("插件已被禁用. 可以看看后台是否有报错.")});
+                    Component hoverComp = Component.text("插件已被禁用, 请检查后台是否有报错.");
+                    hoverEvent = HoverEvent.showText(hoverComp);
                 }
             }
 
-            // @formatter:off
-            // We need to reset the hover event or it's added to all components
-            builder.append("\n  " + plugin.getName())
-                    .color(primaryColor)
-                    .event(hoverEvent)
-                    .event(clickEvent)
-                    .append(" v" + version)
-                    .color(secondaryColor)
-                    .append("")
-                    .event((ClickEvent) null)
-                    .event((HoverEvent) null);
-            // @formatter:on
+            Component nameComp =
+                    Component.text("\n  " + plugin.getName(), primaryColor).hoverEvent(hoverEvent);
+
+            if (clickEvent != null) nameComp = nameComp.clickEvent(clickEvent);
+
+            Component versionComp = Component.text(" v" + version, secondaryColor);
+
+            builder.append(nameComp).append(versionComp);
         }
     }
 }

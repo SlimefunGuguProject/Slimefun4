@@ -182,11 +182,11 @@ public class EnergyNet extends Network implements HologramOwner {
                         continue;
                     }
 
-                    int capacity = component.getCapacity();
-                    int charge = component.getCharge(loc);
+                    long capacity = component.getCapacityLong();
+                    long charge = component.getChargeLong(loc);
 
                     if (charge < capacity) {
-                        int availableSpace = capacity - charge;
+                        long availableSpace = capacity - charge;
                         demand = NumberUtils.flowSafeAddition(demand, availableSpace);
 
                         if (remainingEnergy > 0) {
@@ -195,7 +195,7 @@ public class EnergyNet extends Network implements HologramOwner {
                                 remainingEnergy -= availableSpace;
                             } else {
                                 long curCharge = NumberUtils.flowSafeAddition(charge, remainingEnergy);
-                                component.setCharge(loc, NumberUtils.longToInt(curCharge));
+                                component.setCharge(loc, (long) curCharge);
 
                                 remainingEnergy = 0;
                             }
@@ -224,17 +224,17 @@ public class EnergyNet extends Network implements HologramOwner {
             EnergyNetComponent component = entry.getValue();
 
             if (remainingEnergy > 0) {
-                int capacity = component.getCapacity();
+                long capacity = component.getCapacityLong();
 
                 if (remainingEnergy > capacity) {
-                    component.setCharge(loc, capacity);
+                    component.setCharge(loc, (long) capacity);
                     remainingEnergy -= capacity;
                 } else {
-                    component.setCharge(loc, NumberUtils.longToInt(remainingEnergy));
+                    component.setCharge(loc, (long) remainingEnergy);
                     remainingEnergy = 0;
                 }
             } else {
-                component.setCharge(loc, 0);
+                component.setCharge(loc, 0L);
             }
         }
 
@@ -247,18 +247,18 @@ public class EnergyNet extends Network implements HologramOwner {
             }
 
             EnergyNetProvider component = entry.getValue();
-            int capacity = component.getCapacity();
+            long capacity = component.getCapacityLong();
 
             if (remainingEnergy > 0) {
                 if (remainingEnergy > capacity) {
                     component.setCharge(loc, capacity);
                     remainingEnergy -= capacity;
                 } else {
-                    component.setCharge(loc, NumberUtils.longToInt(remainingEnergy));
+                    component.setCharge(loc, remainingEnergy);
                     remainingEnergy = 0;
                 }
             } else {
-                component.setCharge(loc, 0);
+                component.setCharge(loc, 0L);
             }
         }
     }
@@ -293,10 +293,10 @@ public class EnergyNet extends Network implements HologramOwner {
                     continue;
                 }
 
-                int energy = provider.getGeneratedOutput(loc, data);
+                long energy = provider.getGeneratedOutputLong(loc, data);
 
                 if (provider.isChargeable()) {
-                    energy = NumberUtils.flowSafeAddition(energy, provider.getCharge(loc));
+                    energy = NumberUtils.flowSafeAddition(energy, (long) provider.getChargeLong(loc));
                 }
 
                 if (provider.willExplode(loc, data)) {
@@ -331,7 +331,7 @@ public class EnergyNet extends Network implements HologramOwner {
         long supply = 0;
 
         for (Map.Entry<Location, EnergyNetComponent> entry : capacitors.entrySet()) {
-            supply = NumberUtils.flowSafeAddition(supply, entry.getValue().getCharge(entry.getKey()));
+            supply = NumberUtils.flowSafeAddition(supply, entry.getValue().getChargeLong(entry.getKey()));
         }
 
         return supply;

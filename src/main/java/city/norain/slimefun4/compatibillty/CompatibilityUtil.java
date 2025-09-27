@@ -1,6 +1,7 @@
 package city.norain.slimefun4.compatibillty;
 
 import city.norain.slimefun4.SlimefunExtended;
+import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import lombok.experimental.UtilityClass;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -64,7 +65,8 @@ public class CompatibilityUtil {
      * @return 玩家连接或在线
      */
     public boolean isConnected(OfflinePlayer player) {
-        if (SlimefunExtended.getMinecraftVersion().isAtLeast(1, 20)) {
+        if (SlimefunExtended.getMinecraftVersion().isAtLeast(1, 20)
+                && Slimefun.instance().getServer().getOnlineMode()) {
             return player.isConnected();
         } else {
             return player.isOnline();
