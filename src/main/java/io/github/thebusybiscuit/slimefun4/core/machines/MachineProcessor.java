@@ -1,10 +1,15 @@
 package io.github.thebusybiscuit.slimefun4.core.machines;
 
+import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunBlockData;
+import com.xzavier0722.mc.plugin.slimefun4.storage.util.StorageCacheUtils;
 import io.github.bakedlibs.dough.blocks.BlockPosition;
 import io.github.thebusybiscuit.slimefun4.api.events.AsyncMachineOperationFinishEvent;
+import io.github.thebusybiscuit.slimefun4.api.events.AsyncMachineOperationStartEvent;
 import io.github.thebusybiscuit.slimefun4.core.attributes.MachineProcessHolder;
+import io.github.thebusybiscuit.slimefun4.core.attributes.MachineProcessSerializable;
 import io.github.thebusybiscuit.slimefun4.utils.ChestMenuUtils;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -32,6 +37,7 @@ public class MachineProcessor<T extends MachineOperation> {
 
     private final Map<BlockPosition, T> machines = new ConcurrentHashMap<>();
     private final MachineProcessHolder<T> owner;
+    private final MachineProcessSerializable<T> optionalSerializer;
 
     private ItemStack progressBar;
 
@@ -45,6 +51,8 @@ public class MachineProcessor<T extends MachineOperation> {
         Validate.notNull(owner, "The MachineProcessHolder cannot be null.");
 
         this.owner = owner;
+        this.optionalSerializer =
+                this.owner instanceof MachineProcessSerializable<T> serializable ? serializable : null;
     }
 
     /**
@@ -123,13 +131,47 @@ public class MachineProcessor<T extends MachineOperation> {
      *            The {@link MachineOperation} to start
      *
      * @return Whether the {@link MachineOperation} was successfully started. This will return false if another
-     *         {@link MachineOperation} has already been started at that {@link BlockPosition}.
+     *         {@link MachineOperation} has already been started at that {@link BlockPosition} or the StartEvent is cancelled.
      */
     public boolean startOperation(@Nonnull BlockPosition pos, @Nonnull T operation) {
         Validate.notNull(pos, "The BlockPosition must not be null");
         Validate.notNull(operation, "The machine operation cannot be null");
+        // async Machine Operation Start Event
 
-        return machines.putIfAbsent(pos, operation) == null;
+        var currentOperation = machines.computeIfAbsent(pos, (ps) -> {
+            // only if the current operation if absent and Event is not cancelled  can we put the new operation in the
+            // map
+            // other wise it will keep null
+            var event = new AsyncMachineOperationStartEvent(ps, this, operation);
+            if (event.callEvent()) {
+                return operation;
+            } else {
+                return null;
+            }
+        });
+        // if the current Operation is successfully put into the map, returns true
+        if (currentOperation == operation) {
+            // serialize and save to blockData
+            if (optionalSerializer != null) {
+                SlimefunBlockData blockData = StorageCacheUtils.getBlock(pos.toLocation());
+                if (blockData != null) {
+                    StorageCacheUtils.executeAfterLoad(
+                            blockData,
+                            () -> {
+                                blockData.setData(
+                                        MachineProcessSerializable.KEY_OPERATION_INFO,
+                                        optionalSerializer.serialize(pos, operation));
+                                blockData.setData(
+                                        MachineProcessSerializable.KEY_PROGRESS_LEFT,
+                                        String.valueOf(operation.getRemainingTicks()));
+                            },
+                            false);
+                }
+            }
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -171,7 +213,55 @@ public class MachineProcessor<T extends MachineOperation> {
     @Nullable public T getOperation(@Nonnull BlockPosition pos) {
         Validate.notNull(pos, "The BlockPosition must not be null");
 
-        return machines.get(pos);
+        T value = machines.get(pos);
+        if (value != null) {
+            if (optionalSerializer != null) {
+                // try update the progressLeft field
+                SlimefunBlockData sfdata = StorageCacheUtils.getBlock(pos.toLocation());
+                if (sfdata != null) {
+                    StorageCacheUtils.executeAfterLoad(
+                            sfdata,
+                            () -> sfdata.setData(
+                                    MachineProcessSerializable.KEY_PROGRESS_LEFT,
+                                    String.valueOf(value.getRemainingTicks())),
+                            false);
+                }
+            }
+        } else {
+            if (optionalSerializer != null) {
+                // try load if operation is absent
+                SlimefunBlockData sfdata = StorageCacheUtils.getBlock(pos.toLocation());
+                if (sfdata != null && sfdata.isDataLoaded()) {
+                    // this may not be multithread-safe, but who cares?
+                    String infoYaml = sfdata.getData(MachineProcessSerializable.KEY_OPERATION_INFO);
+                    if (infoYaml != null) {
+                        T operationLoaded;
+                        try {
+                            operationLoaded = Objects.requireNonNull(optionalSerializer.deserialize(pos, infoYaml));
+                        } finally {
+                            sfdata.removeData(MachineProcessSerializable.KEY_OPERATION_INFO);
+                        }
+                        String progress = sfdata.getData(MachineProcessSerializable.KEY_PROGRESS_LEFT);
+                        int progressTickLeft;
+                        try {
+                            progressTickLeft =
+                                    progress == null ? operationLoaded.getTotalTicks() : Integer.parseInt(progress);
+                        } catch (Throwable e) {
+                            progressTickLeft = operationLoaded.getTotalTicks();
+                        }
+                        operationLoaded.addProgress(operationLoaded.getTotalTicks() - progressTickLeft);
+                        sfdata.setData(
+                                MachineProcessSerializable.KEY_OPERATION_INFO,
+                                optionalSerializer.serialize(pos, operationLoaded));
+                        sfdata.setData(
+                                MachineProcessSerializable.KEY_PROGRESS_LEFT,
+                                String.valueOf(operationLoaded.getRemainingTicks()));
+                        machines.put(pos, operationLoaded);
+                    }
+                }
+            }
+        }
+        return value;
     }
 
     /**
@@ -215,6 +305,19 @@ public class MachineProcessor<T extends MachineOperation> {
      */
     public boolean endOperation(@Nonnull BlockPosition pos) {
         Validate.notNull(pos, "The BlockPosition cannot be null");
+        // remove the serialized data from the blockData
+        if (optionalSerializer != null) {
+            SlimefunBlockData sfdata = StorageCacheUtils.getBlock(pos.toLocation());
+            if (sfdata != null) {
+                StorageCacheUtils.executeAfterLoad(
+                        sfdata,
+                        () -> {
+                            sfdata.removeData(MachineProcessSerializable.KEY_PROGRESS_LEFT);
+                            sfdata.removeData(MachineProcessSerializable.KEY_OPERATION_INFO);
+                        },
+                        false);
+            }
+        }
 
         T operation = machines.remove(pos);
 
