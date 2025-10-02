@@ -6,6 +6,7 @@ import io.github.thebusybiscuit.slimefun4.api.items.ItemSetting;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
 import io.github.thebusybiscuit.slimefun4.api.items.settings.IntRangeSetting;
 import io.github.thebusybiscuit.slimefun4.api.recipes.RecipeType;
+import io.github.thebusybiscuit.slimefun4.implementation.operations.CraftingOperationSerializable;
 import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nonnull;
@@ -24,7 +25,7 @@ import org.bukkit.inventory.meta.EnchantmentStorageMeta;
  *
  * @author ProfElements
  */
-public class BookBinder extends AContainer {
+public class BookBinder extends AContainer implements CraftingOperationSerializable {
 
     private final ItemSetting<Boolean> bypassVanillaMaxLevel =
             new ItemSetting<>(this, "bypass-vanilla-max-level", false);
