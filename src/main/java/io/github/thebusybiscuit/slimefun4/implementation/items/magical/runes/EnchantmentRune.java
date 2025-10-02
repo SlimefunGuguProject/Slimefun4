@@ -46,25 +46,29 @@ public class EnchantmentRune extends SimpleSlimefunItem<ItemDropHandler> {
     public EnchantmentRune(ItemGroup itemGroup, SlimefunItemStack item, RecipeType recipeType, ItemStack[] recipe) {
         super(itemGroup, item, recipeType, recipe);
 
-        for (Material mat : Material.values()) {
-            List<Enchantment> enchantments = new ArrayList<>();
-
-            for (Enchantment enchantment : Enchantment.values()) {
+        Slimefun.runSync(() -> {
+            for (Material mat : Material.values()) {
                 if (!mat.isItem()) {
                     continue;
                 }
 
-                if (enchantment.equals(Enchantment.BINDING_CURSE) || enchantment.equals(Enchantment.VANISHING_CURSE)) {
-                    continue;
+                List<Enchantment> enchantments = new ArrayList<>();
+
+                for (Enchantment enchantment : Enchantment.values()) {
+
+                    if (enchantment.equals(Enchantment.BINDING_CURSE)
+                            || enchantment.equals(Enchantment.VANISHING_CURSE)) {
+                        continue;
+                    }
+
+                    if (enchantment.canEnchantItem(new ItemStack(mat))) {
+                        enchantments.add(enchantment);
+                    }
                 }
 
-                if (enchantment.canEnchantItem(new ItemStack(mat))) {
-                    enchantments.add(enchantment);
-                }
+                applicableEnchantments.put(mat, enchantments);
             }
-
-            applicableEnchantments.put(mat, enchantments);
-        }
+        });
     }
 
     @Override
