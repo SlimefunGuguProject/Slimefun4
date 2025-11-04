@@ -20,7 +20,13 @@ public abstract class UniversalMenuPreset extends BlockMenuPreset {
         super(id, title);
     }
 
-    public void newInstance(@Nonnull UniversalMenu menu, @Nonnull Block b) {
+    /**
+     * 创建一个新的菜单实例
+     *
+     * @param menu {@link UniversalMenu} 通用菜单
+     * @param b 当前实例对应的方块，方块可能为空
+     */
+    public void newInstance(@Nonnull UniversalMenu menu, @Nullable Block b) {
         // This method can optionally be overridden by implementations
     }
 
@@ -37,7 +43,7 @@ public abstract class UniversalMenuPreset extends BlockMenuPreset {
         }
     }
 
-    protected void clone(@Nonnull UniversalMenu menu, @Nonnull Location lastPresent) {
+    protected void clone(@Nonnull UniversalMenu menu, @Nullable Location lastPresent) {
         menu.setPlayerInventoryClickable(true);
 
         for (int slot : occupiedSlots) {
@@ -48,7 +54,13 @@ public abstract class UniversalMenuPreset extends BlockMenuPreset {
             menu.addItem(getSize() - 1, null);
         }
 
-        newInstance(menu, lastPresent.getBlock());
+        Block b = null;
+
+        if (lastPresent != null) {
+            b = lastPresent.getBlock();
+        }
+
+        newInstance(menu, b);
 
         for (int slot = 0; slot < 54; slot++) {
             if (getMenuClickHandler(slot) != null) {

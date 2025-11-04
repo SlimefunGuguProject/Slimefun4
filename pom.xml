@@ -7,9 +7,7 @@
     <groupId>com.github.slimefun</groupId>
     <artifactId>Slimefun</artifactId>
 
-    <!-- Our default version will be UNOFFICIAL, this will prevent auto updates -->
-    <!-- from overriding our local test file -->
-    <version>2025.1.1</version>
+    <version>DEV-SNAPSHOT</version>
     <inceptionYear>2013</inceptionYear>
     <packaging>jar</packaging>
 
@@ -28,7 +26,7 @@
         <maven.settings.file>${project.basedir}/.mvn/settings.xml</maven.settings.file>
 
         <!-- Paper properties -->
-        <paper.version>1.21</paper.version>
+        <paper.version>1.21.4</paper.version>
         <paper.javadocs>https://papermc.io/javadocs</paper.javadocs>
     </properties>
 
@@ -47,17 +45,22 @@
         </license>
     </licenses>
 
+    <distributionManagement>
+        <repository>
+            <id>gugu-maven-repo</id>
+            <name>Gugu Maven Release Repository</name>
+            <url>https://maven.norain.city/releases</url>
+        </repository>
+        <snapshotRepository>
+            <id>gugu-maven-repo</id>
+            <name>Gugu Maven Snapshot Repository</name>
+            <url>https://maven.norain.city/snapshots</url>
+        </snapshotRepository>
+    </distributionManagement>
+
     <!-- Repositories that host our dependencies -->
     <!-- Well, any that aren't found on maven-central. -->
     <repositories>
-        <!-- Public dough downstream repo -->
-        <repository>
-            <id>dough-downstream</id>
-            <url>https://maven.pkg.github.com/StarWishsama/dough</url>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </repository>
         <repository>
             <!-- Spigot-API -->
             <id>spigot-repo</id>
@@ -67,6 +70,14 @@
             <!-- PaperLib -->
             <id>paper-repo</id>
             <url>https://repo.papermc.io/repository/maven-public/</url>
+        </repository>
+        <!-- Public dough downstream repo -->
+        <repository>
+            <id>gugu-maven-repo</id>
+            <url>https://maven.norain.city/snapshots</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
         </repository>
         <repository>
             <!-- ItemsAdder -->
@@ -231,10 +242,80 @@
                     <commitIdGenerationMode>full</commitIdGenerationMode>
                 </configuration>
             </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+            </plugin>
+
+            <plugin>
+                <!-- Javadocs -->
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>3.11.2</version>
+
+                <configuration>
+                    <outputDirectory>${project.basedir}/javadocs</outputDirectory>
+
+                    <doctitle>Slimefun4 - Javadocs</doctitle>
+                    <windowtitle>Slimefun4 - Javadocs</windowtitle>
+                    <detectOfflineLinks>false</detectOfflineLinks>
+                    <additionalJOption>-html5</additionalJOption>
+
+                    <!-- We can group packages together in our Javadocs -->
+                    <groups>
+                        <group>
+                            <title>Slimefun4 - API</title>
+                            <packages>io.github.thebusybiscuit.slimefun4.api*</packages>
+                        </group>
+                        <group>
+                            <title>Slimefun4 - 核心类</title>
+                            <packages>io.github.thebusybiscuit.slimefun4.core*</packages>
+                        </group>
+                        <group>
+                            <title>Slimefun4 - 实现类</title>
+                            <packages>io.github.thebusybiscuit.slimefun4.implementation*</packages>
+                        </group>
+                        <group>
+                            <title>Slimefun4 - 插件兼容相关类</title>
+                            <packages>io.github.thebusybiscuit.slimefun4.integrations*</packages>
+                        </group>
+                        <group>
+                            <title>Slimefun4 - 工具类</title>
+                            <packages>io.github.thebusybiscuit.slimefun4.utils*</packages>
+                        </group>
+                        <group>
+                            <title>Slimefun4 - 物品</title>
+                            <packages>io.github.thebusybiscuit.slimefun4.implementation.items*</packages>
+                        </group>
+                        <group>
+                            <title>Slimefun4 - 多方块结构</title>
+                            <packages>io.github.thebusybiscuit.slimefun4.implementation.items.multiblocks*</packages>
+                        </group>
+                        <group>
+                            <title>Slimefun4 - 电器</title>
+                            <packages>io.github.thebusybiscuit.slimefun4.implementation.items.electric*</packages>
+                        </group>
+                        <group>
+                            <title>Slimefun4 - 过时包</title>
+                            <packages>me.mrCookieSlime.Slimefun*</packages>
+                        </group>
+                        <group>
+                            <title>数据库相关实现</title>
+                            <packages>com.xzavier0722.mc.plugin.slimefun4.storage*</packages>
+                        </group>
+                        <group>
+                            <title>汉化版额外实现</title>
+                            <packages>city.norain.slimefun4.api*</packages>
+                        </group>
+                    </groups>
+                </configuration>
+            </plugin>
         </plugins>
 
-        <resources>
+        <!-- 私有 Maven Repo 发布相关组件 -->
 
+        <resources>
             <!-- Resources we want to include, e.g. configs or language files -->
             <resource>
                 <directory>${basedir}/src/main/resources</directory>
@@ -303,9 +384,9 @@
 
         <!-- Shaded packages -->
         <dependency>
-            <groupId>com.github.StarWishsama.dough</groupId>
+            <groupId>io.github.baked-libs</groupId>
             <artifactId>dough-api</artifactId>
-            <version>7e74688682</version>
+            <version>1.3.1-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
@@ -337,7 +418,7 @@
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>42.7.4</version>
+            <version>42.7.7</version>
             <scope>compile</scope>
         </dependency>
 

@@ -14,12 +14,19 @@ import org.bukkit.configuration.file.YamlConfiguration;
  *
  * @deprecated Only used by the legacy {@link BlockStorage} system.
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public class Config {
 
     private final File file;
     private FileConfiguration config;
-
+    private static final FileConfiguration BLANK_CONFIGURATION = new YamlConfiguration();
+    /**
+     * internal constructor used for Wrapper
+     */
+    protected Config() {
+        file = new File("");
+        config = BLANK_CONFIGURATION;
+    }
     /**
      * Creates a new Config Object for the specified File
      *

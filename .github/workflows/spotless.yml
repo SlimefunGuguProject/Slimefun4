@@ -1,0 +1,79 @@
+name: Spotless
+
+on:
+  push:
+    branches: [ master, dev ]
+    paths:
+      - 'src/**'
+      - 'pom.xml'
+  pull_request:
+    types: [ opened, synchronize, reopened ]
+    paths:
+      - 'src/**'
+      - 'pom.xml'
+  workflow_dispatch:
+
+env:
+  TZ: 'Asia/Shanghai'
+
+jobs:
+  spotless:
+    runs-on: ubuntu-latest
+    outputs:
+        spotless-status: ${{ steps.spotless-check.outputs.status }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: ${{ vars.JAVA_CI_VERSION || 21 }}
+          java-package: jdk
+          architecture: x64
+          cache: maven
+
+      - name: Spotless check
+        id: spotless-check
+        run: |
+          set +e
+          mvn -B spotless:check --errors
+          STATUS=$?
+          echo "status=$STATUS" >> $GITHUB_OUTPUT
+          set -e
+          exit $STATUS
+        continue-on-error: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+
+      - name: Spotless apply (if needed)
+        id: spotless-apply
+        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.spotless-check.outputs.status != '0' }}
+        run: mvn -B spotless:apply --errors
+
+      - name: Push changes
+        uses: EndBug/add-and-commit@v9.1.4
+        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.spotless-check.outputs.status != '0' && success()}}
+        with:
+          github_token: ${{ secrets.BOT_ACCESS_TOKEN }}
+          add: '.'
+          push: true
+          message: 'chore(style): spotless apply'
+          author_name: 'noraincity-bot'
+          author_email: ${{ secrets.BOT_EMAIL }}
+          committer_name: 'noraincity-bot'
+          committer_email: ${{ secrets.BOT_EMAIL }}
+  call-dev-ci:
+    needs: [ spotless ]
+    if: ${{ needs.spotless.outputs.spotless-status == '0' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref_name == 'dev' }}
+    uses: ./.github/workflows/dev-ci.yml
+    secrets: inherit
+  call-beta-ci:
+    needs: [ spotless ]
+    if: ${{ needs.spotless.outputs.spotless-status == '0' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref_name == 'master' }}
+    uses: ./.github/workflows/build-ci.yml
+    secrets: inherit
+  call-pr-checker:
+    needs: [ spotless ]
+    if: ${{ needs.spotless.outputs.spotless-status == '0' && github.event_name == 'pull_request' }}
+    uses: ./.github/workflows/pr-checker.yml
+    secrets: inherit

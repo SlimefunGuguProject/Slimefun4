@@ -123,11 +123,11 @@ public class SlimefunConfigManager {
             bypassEnvironmentCheck = pluginConfig.getBoolean("options.bypass-environment-check");
             bypassItemLengthCheck = pluginConfig.getBoolean("options.bypass-item-length-check");
 
-            researchesConfig.setDefaultValue("researches.currency-cost-convert-rate", 25.0);
-            researchCurrencyCostConvertRate = researchesConfig.getDouble("researches.currency-cost-convert-rate");
+            pluginConfig.setDefaultValue("researches.currency-cost-convert-rate", 25.0);
+            researchCurrencyCostConvertRate = pluginConfig.getDouble("researches.currency-cost-convert-rate");
 
-            researchesConfig.setDefaultValue("researches.auto-convert", false);
-            researchAutoConvert = researchesConfig.getBoolean("researches.auto-convert");
+            pluginConfig.setDefaultValue("researches.auto-convert", false);
+            researchAutoConvert = pluginConfig.getBoolean("researches.auto-convert");
         } catch (Exception x) {
             plugin.getLogger()
                     .log(

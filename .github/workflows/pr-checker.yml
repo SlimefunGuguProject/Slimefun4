@@ -4,12 +4,9 @@
 name: Pull Request Checker
 
 on:
-  pull_request_target:
-    types: [opened, synchronize, reopened]
-    paths:
-      - '.github/workflows/**'
-      - 'src/**'
-      - 'pom.xml'
+  workflow_call:
+env:
+  TZ: 'Asia/Shanghai'
 
 permissions:
   contents: read
@@ -29,13 +26,13 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
-          java-version: ${{ vars.JAVA_CI_VERSION }}
+          java-version: ${{ vars.JAVA_CI_VERSION || 21 }}
           java-package: jdk
           architecture: x64
           cache: 'maven'
 
       - name: Codestyle Check
-        run: mvn -s .mvn/settings.xml -B spotless:check --errors
+        run: mvn -B spotless:check --errors
 
       # Setup for the preview build
       - name: Environment Setup
@@ -46,10 +43,10 @@ jobs:
           echo "SHORT_COMMIT_HASH=$SHORT_COMMIT_HASH" >> "$GITHUB_ENV"
           echo "SHORT_COMMIT_HASH=$SHORT_COMMIT_HASH" >> "$GITHUB_OUTPUT"
           echo "JAR_VERSION=$JAR_VERSION" >> "$GITHUB_ENV"
-          sed -i "s/<version>UNOFFICIAL<\/version>/<version>$JAR_VERSION<\/version>/g" pom.xml
+          sed -i "s/<version>DEV-SNAPSHOT<\/version>/<version>$JAR_VERSION<\/version>/g" pom.xml
 
       - name: Build with Maven
-        run: mvn -s .mvn/settings.xml package -Dversioning.disable --errors
+        run: mvn package -Dversioning.disable --errors
 
       - name: Upload the artifact
         uses: actions/upload-artifact@v4

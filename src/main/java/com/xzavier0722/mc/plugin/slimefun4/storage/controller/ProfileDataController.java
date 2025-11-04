@@ -1,5 +1,6 @@
 package com.xzavier0722.mc.plugin.slimefun4.storage.controller;
 
+import city.norain.slimefun4.compatibillty.CompatibilityUtil;
 import com.xzavier0722.mc.plugin.slimefun4.storage.callback.IAsyncReadCallback;
 import com.xzavier0722.mc.plugin.slimefun4.storage.common.DataScope;
 import com.xzavier0722.mc.plugin.slimefun4.storage.common.DataType;
@@ -7,6 +8,7 @@ import com.xzavier0722.mc.plugin.slimefun4.storage.common.FieldKey;
 import com.xzavier0722.mc.plugin.slimefun4.storage.common.RecordKey;
 import com.xzavier0722.mc.plugin.slimefun4.storage.common.RecordSet;
 import com.xzavier0722.mc.plugin.slimefun4.storage.util.DataUtils;
+import io.github.thebusybiscuit.slimefun4.api.events.AsyncProfileLoadEvent;
 import io.github.thebusybiscuit.slimefun4.api.player.PlayerBackpack;
 import io.github.thebusybiscuit.slimefun4.api.player.PlayerProfile;
 import io.github.thebusybiscuit.slimefun4.api.researches.Research;
@@ -16,7 +18,9 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
@@ -38,14 +42,49 @@ public class ProfileDataController extends ADataController {
         invalidingBackpackTasks = new ConcurrentHashMap<>();
     }
 
+    public PlayerProfile getProfileFromCache(OfflinePlayer p) {
+        return profileCache.get(p.getUniqueId().toString());
+    }
+
+    public CompletableFuture<PlayerProfile> getProfileAsync(OfflinePlayer p) {
+        checkDestroy();
+        var re = profileCache.get(p.getUniqueId().toString());
+        if (re != null) {
+            return CompletableFuture.completedFuture(re);
+        }
+        return CompletableFuture.supplyAsync(() -> loadProfile(p), readExecutor);
+    }
+
+    public CompletableFuture<PlayerProfile> getOrCreateProfileAsync(OfflinePlayer p) {
+        checkDestroy();
+        var re = profileCache.get(p.getUniqueId().toString());
+        if (re != null) {
+            return CompletableFuture.completedFuture(re);
+        }
+        return CompletableFuture.supplyAsync(
+                        () -> {
+                            var profile = loadProfile(p);
+                            return profile == null ? createProfile(p) : profile;
+                        },
+                        readExecutor)
+                .thenApplyAsync(Function.identity(), callbackExecutor);
+    }
+
     @Nullable public PlayerProfile getProfile(OfflinePlayer p) {
         checkDestroy();
-        var uuid = p.getUniqueId().toString();
+        var uid = p.getUniqueId();
+        var uuid = uid.toString();
         var re = profileCache.get(uuid);
         if (re != null) {
             return re;
         }
+        return loadProfile(p);
+    }
 
+    private PlayerProfile loadProfile(OfflinePlayer p) {
+        PlayerProfile re;
+        var uid = p.getUniqueId();
+        var uuid = uid.toString();
         var key = new RecordKey(DataScope.PLAYER_PROFILE);
         key.addField(FieldKey.PLAYER_BACKPACK_NUM);
         key.addField(FieldKey.PLAYER_NAME);
@@ -68,7 +107,9 @@ public class ProfileDataController extends ADataController {
         getUnlockedResearchKeys(uuid).forEach(rKey -> Research.getResearch(rKey).ifPresent(researches::add));
 
         re = new PlayerProfile(p, bNum, researches);
+        re = registerProfile(re, uid);
         profileCache.put(uuid, re);
+
         return re;
     }
 
@@ -211,19 +252,30 @@ public class ProfileDataController extends ADataController {
     @Nonnull
     public PlayerProfile createProfile(OfflinePlayer p) {
         checkDestroy();
-        var uuid = p.getUniqueId().toString();
+        PlayerProfile re;
+        var uid = p.getUniqueId();
+        var uuid = uid.toString();
         var cache = profileCache.get(uuid);
         if (cache != null) {
             return cache;
         }
 
-        var re = new PlayerProfile(p, 0);
+        re = new PlayerProfile(p, 0);
+        re = registerProfile(re, uid);
         profileCache.put(uuid, re);
 
         var key = new RecordKey(DataScope.PLAYER_PROFILE);
         key.addCondition(FieldKey.PLAYER_UUID, uuid);
         scheduleWriteTask(new UUIDKey(DataScope.NONE, p.getUniqueId()), key, getRecordSet(re), true);
         return re;
+    }
+
+    private PlayerProfile registerProfile(PlayerProfile profile, UUID uid) {
+        AsyncProfileLoadEvent event = new AsyncProfileLoadEvent(profile);
+        Bukkit.getPluginManager().callEvent(event);
+
+        Slimefun.getRegistry().getPlayerProfiles().put(uid, event.getProfile());
+        return event.getProfile();
     }
 
     public void setResearch(String uuid, NamespacedKey researchKey, boolean unlocked) {
@@ -247,6 +299,10 @@ public class ProfileDataController extends ADataController {
         key.addCondition(FieldKey.BACKPACK_ID, re.getUniqueId().toString());
         scheduleWriteTask(new UUIDKey(DataScope.NONE, p.getUniqueId()), key, getRecordSet(re), true);
         return re;
+    }
+
+    public void saveWaypoints(PlayerProfile profile) {
+        scheduleWriteTask(profile::save);
     }
 
     public void saveBackpackInfo(PlayerBackpack bp) {
@@ -345,7 +401,7 @@ public class ProfileDataController extends ADataController {
     public void invalidateCache(String pUuid) {
         var removed = profileCache.remove(pUuid);
         if (removed != null) {
-            removed.markInvalid();
+            removed.markForDeletion();
         }
 
         var task = new Runnable() {
@@ -355,7 +411,7 @@ public class ProfileDataController extends ADataController {
                     return;
                 }
 
-                if (Bukkit.getOfflinePlayer(UUID.fromString(pUuid)).isConnected()) {
+                if (CompatibilityUtil.isConnected(Bukkit.getOfflinePlayer(UUID.fromString(pUuid)))) {
                     return;
                 }
 

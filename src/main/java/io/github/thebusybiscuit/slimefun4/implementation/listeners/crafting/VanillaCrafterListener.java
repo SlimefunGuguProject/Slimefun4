@@ -29,7 +29,7 @@ public class VanillaCrafterListener implements SlimefunCraftingListener {
 
         if (clickedInventory != null
                 && topInventory.getType() == InventoryType.CRAFTER
-                && topInventory.getHolder() instanceof Crafter
+                && topInventory.getHolder(false) instanceof Crafter
                 && e.getWhoClicked() instanceof Player player) {
 
             if (e.getAction() == InventoryAction.HOTBAR_SWAP) {

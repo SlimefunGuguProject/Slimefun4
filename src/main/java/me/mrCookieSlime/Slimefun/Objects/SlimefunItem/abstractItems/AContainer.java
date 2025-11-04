@@ -396,13 +396,13 @@ public abstract class AContainer extends SlimefunItem
         Validate.notNull(l, "Can't attempt to take charge from a null location!");
 
         if (isChargeable()) {
-            int charge = getCharge(l);
+            long charge = getChargeLong(l);
 
             if (charge < getEnergyConsumption()) {
                 return false;
             }
 
-            setCharge(l, charge - getEnergyConsumption());
+            setCharge(l, (long) charge - getEnergyConsumption());
             return true;
         } else {
             return true;

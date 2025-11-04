@@ -577,11 +577,16 @@ public final class SlimefunUtils {
         return line.equals(SOULBOUND_LORE);
     }
 
+    @Deprecated(forRemoval = true)
     public static void updateCapacitorTexture(@Nonnull Location l, int charge, int capacity) {
         Validate.notNull(l, "Cannot update a texture for null");
         Validate.isTrue(capacity > 0, "Capacity must be greater than zero!");
+        updateCapacitorTexture(l, (double) charge / capacity);
+    }
 
-        Slimefun.runSync(new CapacitorTextureUpdateTask(l, charge, capacity));
+    public static void updateCapacitorTexture(@Nonnull Location l, double percentage) {
+
+        Slimefun.runSync(new CapacitorTextureUpdateTask(l, percentage));
     }
 
     /**

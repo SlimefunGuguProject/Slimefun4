@@ -4,6 +4,7 @@ import com.xzavier0722.mc.plugin.slimefun4.storage.util.StorageCacheUtils;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.implementation.items.blocks.EnhancedFurnace;
+import io.github.thebusybiscuit.slimefun4.utils.SlimefunUtils;
 import io.github.thebusybiscuit.slimefun4.utils.tags.SlimefunTag;
 import io.papermc.lib.PaperLib;
 import java.util.Optional;
@@ -77,17 +78,30 @@ public class EnhancedFurnaceListener implements Listener {
 
                 boolean multiplier = SlimefunTag.ENHANCED_FURNACE_LUCK_MATERIALS.isTagged(
                         inventory.getSmelting().getType());
-                int amount = multiplier ? enhancedFurnace.getRandomOutputAmount() : 1;
-                Optional<ItemStack> result =
-                        Slimefun.getMinecraftRecipeService().getFurnaceOutput(inventory.getSmelting());
+                if (multiplier) {
+                    // fix issue #1013: only multiplier = true should we override the result
+                    int amount = enhancedFurnace.getRandomOutputAmount();
+                    if (amount > 1) {
+                        Optional<ItemStack> result =
+                                Slimefun.getMinecraftRecipeService().getFurnaceOutput(inventory.getSmelting());
 
-                if (result.isPresent()) {
-                    ItemStack item = result.get();
-                    int previous = inventory.getResult() != null
-                            ? inventory.getResult().getAmount()
-                            : 0;
-                    amount = Math.min(item.getMaxStackSize() - previous, amount);
-                    e.setResult(new ItemStack(item.getType(), amount));
+                        if (result.isPresent()) {
+                            ItemStack item = result.get();
+                            ItemStack previousResult = e.getResult();
+                            // fix issue #1013: we should respect other plugin's modification,
+                            // if current result is empty or doesn't match the calculated result, then it may be
+                            // modified by datapack or other plugins, do not multiply the result
+                            if (previousResult != null
+                                    && !previousResult.getType().isAir()
+                                    && SlimefunUtils.isItemSimilar(previousResult, item, true, false)) {
+                                int previous = inventory.getResult() != null
+                                        ? inventory.getResult().getAmount()
+                                        : 0;
+                                amount = Math.min(item.getMaxStackSize() - previous, amount);
+                                e.setResult(new ItemStack(item.getType(), amount));
+                            }
+                        }
+                    }
                 }
             }
         }

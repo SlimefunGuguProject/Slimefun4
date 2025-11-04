@@ -1,7 +1,9 @@
 package com.xzavier0722.mc.plugin.slimefun4.storage.task;
 
 import java.util.concurrent.TimeUnit;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class DelayedTask {
     private final Runnable task;
     private long runAfter = 0;
@@ -21,9 +23,14 @@ public class DelayedTask {
             return false;
         }
 
-        executed = true;
-        task.run();
-        return true;
+        try {
+            executed = true;
+            task.run();
+            return true;
+        } catch (Exception e) {
+            log.warn("An error occurred while running delayed task", e);
+            return false;
+        }
     }
 
     public synchronized boolean isExecuted() {
@@ -31,7 +38,11 @@ public class DelayedTask {
     }
 
     public void runUnsafely() {
-        executed = true;
-        task.run();
+        try {
+            executed = true;
+            task.run();
+        } catch (Exception e) {
+            log.warn("An error occurred while running delayed task", e);
+        }
     }
 }

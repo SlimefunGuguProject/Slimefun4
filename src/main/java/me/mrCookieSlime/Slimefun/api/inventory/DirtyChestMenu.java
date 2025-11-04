@@ -1,18 +1,17 @@
 package me.mrCookieSlime.Slimefun.api.inventory;
 
+import city.norain.slimefun4.utils.InventoryUtil;
 import io.github.bakedlibs.dough.inventory.InvUtils;
 import io.github.bakedlibs.dough.items.CustomItemStack;
 import io.github.bakedlibs.dough.items.ItemUtils;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.utils.SlimefunUtils;
 import io.github.thebusybiscuit.slimefun4.utils.itemstack.ItemStackWrapper;
-import java.util.ArrayList;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import me.mrCookieSlime.CSCoreLibPlugin.general.Inventory.ChestMenu;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
-import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -73,9 +72,7 @@ public class DirtyChestMenu extends ChestMenu {
     }
 
     public void close() {
-        for (HumanEntity human : new ArrayList<>(toInventory().getViewers())) {
-            human.closeInventory();
-        }
+        InventoryUtil.closeInventory(toInventory());
     }
 
     public boolean fits(@Nonnull ItemStack item, int... slots) {

@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.implementation.listeners;
 
+import city.norain.slimefun4.compatibillty.CompatibilityUtil;
 import com.xzavier0722.mc.plugin.slimefun4.storage.callback.IAsyncReadCallback;
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunBlockData;
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.attributes.UniversalBlock;
@@ -116,7 +117,8 @@ public class BlockListener implements Listener {
         if (sfItem != null && !(sfItem instanceof NotPlaceable)) {
             // Fixes #994, should check placed block is equals to item material or not.
             if (item.getType() != e.getBlock().getType()) {
-                if (item.getType() != e.getBlock().getBlockData().getPlacementMaterial()) {
+                if (item.getType()
+                        != CompatibilityUtil.getPlacementMaterial(e.getBlock().getBlockData())) {
                     return;
                 }
             }
@@ -139,13 +141,9 @@ public class BlockListener implements Listener {
                     }
 
                     if (sfItem instanceof UniversalBlock) {
-                        var data = Slimefun.getDatabaseManager()
+                        Slimefun.getDatabaseManager()
                                 .getBlockDataController()
                                 .createUniversalBlock(block.getLocation(), sfItem.getId());
-
-                        if (Slimefun.getBlockDataService().isTileEntity(block.getType())) {
-                            Slimefun.getBlockDataService().updateUniversalDataUUID(block, data.getKey());
-                        }
                     } else {
                         Slimefun.getDatabaseManager()
                                 .getBlockDataController()
@@ -293,6 +291,7 @@ public class BlockListener implements Listener {
                         if (e.getPlayer().getGameMode() != GameMode.CREATIVE
                                 || Slimefun.getCfg().getBoolean("options.drop-block-creative")) {
                             block.getWorld().dropItemNaturally(block.getLocation(), drop);
+                            drop.setAmount(0);
                         }
                     }
                 }

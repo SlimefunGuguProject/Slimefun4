@@ -1,6 +1,5 @@
 package io.github.thebusybiscuit.slimefun4.core.networks.energy;
 
-import city.norain.slimefun4.utils.MathUtil;
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunBlockData;
 import com.xzavier0722.mc.plugin.slimefun4.storage.util.StorageCacheUtils;
 import io.github.thebusybiscuit.slimefun4.api.ErrorReport;
@@ -155,8 +154,7 @@ public class EnergyNet extends Network implements HologramOwner {
             } else {
                 long generatorsSupply = tickAllGenerators(timestamp::getAndAdd);
                 long capacitorsSupply = tickAllCapacitors();
-                long supply = generatorsSupply
-                        + capacitorsSupply; // NumberUtils.flowSafeAddition(generatorsSupply, capacitorsSupply);
+                long supply = NumberUtils.flowSafeAddition(generatorsSupply, capacitorsSupply);
                 long remainingEnergy = supply;
                 long demand = 0;
 
@@ -184,19 +182,21 @@ public class EnergyNet extends Network implements HologramOwner {
                         continue;
                     }
 
-                    int capacity = component.getCapacity();
-                    int charge = component.getCharge(loc);
+                    long capacity = component.getCapacityLong();
+                    long charge = component.getChargeLong(loc);
 
                     if (charge < capacity) {
-                        int availableSpace = capacity - charge;
-                        demand = demand + availableSpace; // NumberUtils.flowSafeAddition(demand, availableSpace);
+                        long availableSpace = capacity - charge;
+                        demand = NumberUtils.flowSafeAddition(demand, availableSpace);
 
                         if (remainingEnergy > 0) {
                             if (remainingEnergy > availableSpace) {
                                 component.setCharge(loc, capacity);
                                 remainingEnergy -= availableSpace;
                             } else {
-                                component.setCharge(loc, charge + (int) remainingEnergy);
+                                long curCharge = NumberUtils.flowSafeAddition(charge, remainingEnergy);
+                                component.setCharge(loc, (long) curCharge);
+
                                 remainingEnergy = 0;
                             }
                         }
@@ -224,17 +224,17 @@ public class EnergyNet extends Network implements HologramOwner {
             EnergyNetComponent component = entry.getValue();
 
             if (remainingEnergy > 0) {
-                int capacity = component.getCapacity();
+                long capacity = component.getCapacityLong();
 
                 if (remainingEnergy > capacity) {
-                    component.setCharge(loc, capacity);
+                    component.setCharge(loc, (long) capacity);
                     remainingEnergy -= capacity;
                 } else {
-                    component.setCharge(loc, (int) remainingEnergy);
+                    component.setCharge(loc, (long) remainingEnergy);
                     remainingEnergy = 0;
                 }
             } else {
-                component.setCharge(loc, 0);
+                component.setCharge(loc, 0L);
             }
         }
 
@@ -247,18 +247,18 @@ public class EnergyNet extends Network implements HologramOwner {
             }
 
             EnergyNetProvider component = entry.getValue();
-            int capacity = component.getCapacity();
+            long capacity = component.getCapacityLong();
 
             if (remainingEnergy > 0) {
                 if (remainingEnergy > capacity) {
                     component.setCharge(loc, capacity);
                     remainingEnergy -= capacity;
                 } else {
-                    component.setCharge(loc, (int) remainingEnergy);
+                    component.setCharge(loc, remainingEnergy);
                     remainingEnergy = 0;
                 }
             } else {
-                component.setCharge(loc, 0);
+                component.setCharge(loc, 0L);
             }
         }
     }
@@ -293,10 +293,10 @@ public class EnergyNet extends Network implements HologramOwner {
                     continue;
                 }
 
-                int energy = provider.getGeneratedOutput(loc, data);
+                long energy = provider.getGeneratedOutputLong(loc, data);
 
                 if (provider.isChargeable()) {
-                    energy = MathUtil.saturatedAdd(energy, provider.getCharge(loc));
+                    energy = NumberUtils.flowSafeAddition(energy, (long) provider.getChargeLong(loc));
                 }
 
                 if (provider.willExplode(loc, data)) {
@@ -308,7 +308,7 @@ public class EnergyNet extends Network implements HologramOwner {
                         loc.getWorld().createExplosion(loc, 0F, false);
                     });
                 } else {
-                    supply = supply + energy; // = NumberUtils.flowSafeAddition(supply, energy);
+                    supply = NumberUtils.flowSafeAddition(supply, energy);
                 }
             } catch (Exception | LinkageError throwable) {
                 explodedBlocks.add(loc);
@@ -331,8 +331,7 @@ public class EnergyNet extends Network implements HologramOwner {
         long supply = 0;
 
         for (Map.Entry<Location, EnergyNetComponent> entry : capacitors.entrySet()) {
-            supply = supply + entry.getValue().getCharge(entry.getKey()); // NumberUtils.flowSafeAddition(supply,
-            // entry.getValue().getCharge(entry.getKey()));
+            supply = NumberUtils.flowSafeAddition(supply, entry.getValue().getChargeLong(entry.getKey()));
         }
 
         return supply;

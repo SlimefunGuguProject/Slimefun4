@@ -4,9 +4,9 @@
                       http://maven.apache.org/xsd/settings-1.0.0.xsd">
     <servers>
         <server>
-            <id>dough-downstream</id>
-            <username>StarWishsama</username>
-            <password>&#103;&#104;&#112;&#95;&#110;&#84;&#77;&#99;&#122;&#76;&#121;&#102;&#53;&#110;&#69;&#65;&#82;&#68;&#80;&#51;&#87;&#120;&#70;&#80;&#51;&#84;&#122;&#118;&#68;&#66;&#74;&#110;&#48;&#75;&#48;&#105;&#81;&#109;&#110;&#88;</password>
+            <id>gugu-maven-repo</id>
+            <username>${env.MAVEN_ACCOUNT}</username>
+            <password>${env.MAVEN_PASSWORD}</password>
         </server>
     </servers>
 </settings>

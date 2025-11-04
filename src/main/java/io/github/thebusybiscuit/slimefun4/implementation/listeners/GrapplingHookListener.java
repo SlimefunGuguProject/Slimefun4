@@ -21,6 +21,7 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 import org.bukkit.event.entity.EntityPortalEnterEvent;
+import org.bukkit.event.entity.EntityUnleashEvent;
 import org.bukkit.event.entity.PlayerLeashEntityEvent;
 import org.bukkit.event.entity.ProjectileHitEvent;
 import org.bukkit.event.hanging.HangingBreakByEntityEvent;
@@ -153,6 +154,20 @@ public class GrapplingHookListener implements Listener {
 
         if (slimeItem instanceof GrapplingHook) {
             e.setCancelled(true);
+        }
+    }
+
+    @EventHandler
+    public void onLeashBreak(EntityUnleashEvent e) {
+        if (grapplingHook.isDisabled()) {
+            return;
+        }
+
+        for (GrapplingHookEntity hook : activeHooks.values()) {
+            if (hook.getLeashTarget() == e.getEntity()) {
+                e.setDropLeash(false);
+                return;
+            }
         }
     }
 

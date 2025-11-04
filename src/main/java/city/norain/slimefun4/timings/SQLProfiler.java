@@ -16,7 +16,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
@@ -24,9 +23,12 @@ import lombok.Getter;
 import org.bukkit.command.CommandSender;
 
 public class SQLProfiler {
-    private final ThreadFactory threadFactory = r -> new Thread(r, "Slimefun SQL Profiler");
-
-    private final ExecutorService executor = Executors.newFixedThreadPool(2, threadFactory);
+    private final ExecutorService reportExecutor = Executors.newFixedThreadPool(1, r -> {
+        Thread t = new Thread(r, "Slimefun SQL Reporter");
+        t.setUncaughtExceptionHandler((et, e) -> Slimefun.logger()
+                .log(Level.SEVERE, "A error occurred in sql report generator thread " + et.getName(), e));
+        return t;
+    });
 
     @Getter
     private volatile boolean isProfiling = false;
@@ -38,6 +40,12 @@ public class SQLProfiler {
     private final Set<CommandSender> subscribers = new HashSet<>();
 
     private long startTime = -1L;
+
+    public void initSlowSqlCheck(@Nonnull Slimefun plugin) {
+        plugin.getServer()
+                .getScheduler()
+                .runTaskTimerAsynchronously(plugin, new SlowSqlCheckTask(() -> samplingEntries), 20L, 20L);
+    }
 
     public void start() {
         if (isProfiling) return;
@@ -82,7 +90,13 @@ public class SQLProfiler {
         samplingEntries.clear();
         isProfiling = false;
 
-        executor.execute(this::generateReport);
+        reportExecutor.execute(this::generateReport);
+    }
+
+    public void shutdown() {
+        stop();
+
+        reportExecutor.shutdownNow();
     }
 
     public void generateReport() {

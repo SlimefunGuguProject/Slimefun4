@@ -2,7 +2,6 @@ package io.github.thebusybiscuit.slimefun4.implementation;
 
 import city.norain.slimefun4.SlimefunExtended;
 import city.norain.slimefun4.timings.SQLProfiler;
-import city.norain.slimefun4.utils.LangUtil;
 import com.xzavier0722.mc.plugin.slimefun4.chat.PlayerChatCatcher;
 import com.xzavier0722.mc.plugin.slimefun4.storage.migrator.BlockStorageMigrator;
 import com.xzavier0722.mc.plugin.slimefun4.storage.migrator.PlayerProfileMigrator;
@@ -80,6 +79,7 @@ import io.github.thebusybiscuit.slimefun4.implementation.listeners.SlimefunItemH
 import io.github.thebusybiscuit.slimefun4.implementation.listeners.SlimefunItemInteractListener;
 import io.github.thebusybiscuit.slimefun4.implementation.listeners.SoulboundListener;
 import io.github.thebusybiscuit.slimefun4.implementation.listeners.TalismanListener;
+import io.github.thebusybiscuit.slimefun4.implementation.listeners.VersionedMiddleClickListener;
 import io.github.thebusybiscuit.slimefun4.implementation.listeners.VillagerTradingListener;
 import io.github.thebusybiscuit.slimefun4.implementation.listeners.crafting.AnvilListener;
 import io.github.thebusybiscuit.slimefun4.implementation.listeners.crafting.BrewingStandListener;
@@ -294,13 +294,6 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
         long timestamp = System.nanoTime();
         Logger logger = getLogger();
 
-        // Check if Paper (<3) is installed
-        if (PaperLib.isPaper()) {
-            logger.log(Level.INFO, "检测到你正在使用 Paper 服务端! 性能优化已应用.");
-        } else {
-            LangUtil.suggestPaper(this);
-        }
-
         // Check if CS-CoreLib is installed (it is no longer needed)
         if (getServer().getPluginManager().getPlugin("CS-CoreLib") != null) {
             StartupWarnings.discourageCSCoreLib(logger);
@@ -393,6 +386,7 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
         // loading)
         runSync(
                 new SlimefunStartupTask(this, () -> {
+                    sqlProfiler.initSlowSqlCheck(this);
                     textureService.register(registry.getAllSlimefunItems(), true);
                     permissionsService.update(registry.getAllSlimefunItems(), true);
                     soundService.reload(true);
@@ -479,7 +473,7 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
         }
 
         SlimefunExtended.shutdown();
-        getSQLProfiler().stop();
+        getSQLProfiler().shutdown();
 
         // Cancel all tasks from this plugin immediately
         Bukkit.getScheduler().cancelTasks(this);
@@ -714,7 +708,11 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
         new SoulboundListener(this);
         new AutoCrafterListener(this);
         new SlimefunItemHitListener(this);
-        new MiddleClickListener(this);
+        if (SlimefunExtended.getMinecraftVersion().isAtLeast(1, 21, 5)) {
+            new VersionedMiddleClickListener(this);
+        } else {
+            new MiddleClickListener(this);
+        }
         new BeeListener(this);
         new BeeWingsListener(this, (BeeWings) SlimefunItems.BEE_WINGS.getItem());
         new PiglinListener(this);
