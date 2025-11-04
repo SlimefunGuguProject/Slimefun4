@@ -7,7 +7,7 @@
     <groupId>com.github.slimefun</groupId>
     <artifactId>Slimefun</artifactId>
 
-    <version>DEV-SNAPSHOT</version>
+    <version>2025.1.2</version>
     <inceptionYear>2013</inceptionYear>
     <packaging>jar</packaging>
 
