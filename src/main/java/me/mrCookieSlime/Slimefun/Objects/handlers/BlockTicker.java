@@ -59,11 +59,11 @@ public abstract class BlockTicker implements ItemHandler {
     /**
      * 声明当前 {@link BlockTicker} 是否线程安全
      * </br>
-     * 默认不启用，将这些机器放置到单线程调度器上运行
+     * 默认不启用，此时会将这些机器放置到单线程调度器 (旧方法) 上运行
      *
-     * @return 是否线程安全
+     * @return 是否并发安全
      */
-    public boolean isConcurrentSafe() {
+    public boolean isConcurrent() {
         return false;
     }
 

@@ -243,7 +243,7 @@ public abstract class AbstractEntityAssembler<T extends Entity> extends SimpleSl
             }
 
             @Override
-            public boolean isConcurrentSafe() {
+            public boolean isConcurrent() {
                 return true;
             }
         };

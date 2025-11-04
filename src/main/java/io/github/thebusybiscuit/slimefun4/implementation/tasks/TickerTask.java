@@ -116,9 +116,9 @@ public class TickerTask implements Runnable {
 
         var poolSize = Slimefun.getCfg().getInt("URID.custom-async-ticker.pool-size");
 
-        if (poolSize < 1024) {
-            Slimefun.logger().log(Level.WARNING, "当前设置的 Ticker 线程池任务队列大小过小，请修改成一个大于 1024 的数。");
-            poolSize = 1024;
+        if (poolSize < 0) {
+            Slimefun.logger().log(Level.WARNING, "当前设置的 Ticker 线程池任务队列大小异常，已自动设置为 1024，请修改为一个正常的大小");
+            poolSize = 512;
             Slimefun.getCfg().setValue("URID.custom-async-ticker.pool-size", poolSize);
             change = true;
         }
@@ -126,6 +126,7 @@ public class TickerTask implements Runnable {
         if (change) {
             Slimefun.getCfg().save();
         }
+
         this.asyncTickerService = new SlimefunPoolExecutor(
                 "Slimefun-Ticker-Pool",
                 initSize - 1,
@@ -295,7 +296,7 @@ public class TickerTask implements Runnable {
                         }
                     };
 
-                    if (item.getBlockTicker().isConcurrentSafe()) {
+                    if (item.getBlockTicker().isConcurrent()) {
                         asyncTickerService.execute(func);
                     } else {
                         fallbackTickerService.execute(func);

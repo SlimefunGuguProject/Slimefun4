@@ -77,7 +77,7 @@ public class TrashCan extends SlimefunItem implements InventoryBlock, NotRotatab
             }
 
             @Override
-            public boolean isConcurrentSafe() {
+            public boolean isConcurrent() {
                 return true;
             }
         });

@@ -49,6 +49,7 @@ public class ChestMenu extends SlimefunInventoryHolder {
     @Deprecated(forRemoval = true)
     // 何意味
     private final Set<UUID> viewers = new CopyOnWriteArraySet<>();
+
     private final ReentrantLock lock = new ReentrantLock();
 
     /**

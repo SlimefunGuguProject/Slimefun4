@@ -351,7 +351,7 @@ public abstract class AContainer extends SlimefunItem
             }
 
             @Override
-            public boolean isConcurrentSafe() {
+            public boolean isConcurrent() {
                 return true;
             }
         });

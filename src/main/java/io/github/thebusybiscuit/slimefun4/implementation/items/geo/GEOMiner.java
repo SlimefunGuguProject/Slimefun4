@@ -305,7 +305,7 @@ public class GEOMiner extends SlimefunItem
             }
 
             @Override
-            public boolean isConcurrentSafe() {
+            public boolean isConcurrent() {
                 return true;
             }
         });
