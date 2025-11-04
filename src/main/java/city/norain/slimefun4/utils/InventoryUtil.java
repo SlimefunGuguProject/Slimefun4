@@ -1,8 +1,5 @@
 package city.norain.slimefun4.utils;
 
-import city.norain.slimefun4.compatibillty.CompatibilityUtil;
-import io.github.thebusybiscuit.slimefun4.core.debug.Debug;
-import io.github.thebusybiscuit.slimefun4.core.debug.TestCase;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import java.util.LinkedList;
 import lombok.experimental.UtilityClass;
@@ -14,16 +11,7 @@ import org.bukkit.inventory.Inventory;
 @UtilityClass
 public class InventoryUtil {
     public void openInventory(Player p, Inventory inventory) {
-        Debug.log(TestCase.INVENTORY, "Opening inv in {}", Bukkit.isPrimaryThread() ? "sync" : "async");
-
         if (p == null || inventory == null) {
-            return;
-        }
-
-        if (!CompatibilityUtil.isConnected(p)) {
-            Debug.log(
-                    TestCase.INVENTORY,
-                    "Tried to open an inventory for a player that is not connected: " + p.getName());
             return;
         }
 

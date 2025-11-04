@@ -177,17 +177,18 @@ public final class TeleportationManager {
             return 100;
         }
 
-        int speed = 50_000 + complexity * complexity;
-        int unsafeTime = Math.min(4 * distanceSquared(source, destination) / speed, 40);
+        long speed = 50_000 + (long) complexity * (long) complexity;
+        long unsafeTime = Math.min(4 * distanceSquared(source, destination) / speed, 40);
 
         // Fixes #3573 - Using Math.max is a safer way to ensure values > 0 than relying on addition.
-        return Math.max(1, unsafeTime);
+        // Fixes #1138 - 确保传送时间不会溢出
+        return Math.max(1, NumberUtils.longToInt(unsafeTime));
     }
 
     @ParametersAreNonnullByDefault
-    private int distanceSquared(Location source, Location destination) {
+    private long distanceSquared(Location source, Location destination) {
         if (source.getWorld().getUID().equals(destination.getWorld().getUID())) {
-            int distance = (int) source.distanceSquared(destination);
+            long distance = (long) source.distanceSquared(destination);
             return Math.min(distance, 100_000_000);
         } else {
             return 150_000_000;

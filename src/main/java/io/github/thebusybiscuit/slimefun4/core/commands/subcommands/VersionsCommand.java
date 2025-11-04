@@ -7,6 +7,7 @@ import io.github.thebusybiscuit.slimefun4.core.commands.SubCommand;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.utils.NumberUtils;
 import io.papermc.lib.PaperLib;
+import java.net.URI;
 import java.util.Collection;
 import java.util.Locale;
 import javax.annotation.Nonnull;
@@ -156,14 +157,30 @@ class VersionsCommand extends SubCommand {
                 String authors = String.join(", ", plugin.getDescription().getAuthors());
 
                 if (plugin instanceof SlimefunAddon addon && addon.getBugTrackerURL() != null) {
-                    Component hoverComp = Component.text()
-                            .append(Component.text("作者: ", NamedTextColor.YELLOW))
-                            .append(Component.text(authors, NamedTextColor.YELLOW))
-                            .append(Component.text("\n> 单击打开反馈页面", NamedTextColor.GOLD))
-                            .build();
 
-                    hoverEvent = HoverEvent.showText(hoverComp);
-                    clickEvent = ClickEvent.openUrl(addon.getBugTrackerURL());
+                    try {
+                        String url = addon.getBugTrackerURL();
+                        if (url != null) {
+                            URI uri = URI.create(!url.contains("://") ? "https://" + url : url);
+                            clickEvent = ClickEvent.openUrl(uri.toString());
+                        }
+                        Component hoverComp = Component.text()
+                                .append(Component.text("作者: ", NamedTextColor.YELLOW))
+                                .append(Component.text(authors, NamedTextColor.YELLOW))
+                                .append(Component.text("\n> 单击打开反馈页面", NamedTextColor.GOLD))
+                                .build();
+
+                        hoverEvent = HoverEvent.showText(hoverComp);
+                    } catch (IllegalArgumentException e) {
+                        Component hoverComp = Component.text()
+                                .append(Component.text("作者: ", NamedTextColor.YELLOW))
+                                .append(Component.text(authors, NamedTextColor.YELLOW))
+                                .append(Component.text("\n> 附属提供的反馈链接无效!", NamedTextColor.RED))
+                                .build();
+
+                        hoverEvent = HoverEvent.showText(hoverComp);
+                    }
+
                 } else {
                     Component hoverComp = Component.text()
                             .append(Component.text("作者: ", NamedTextColor.YELLOW))
@@ -177,15 +194,25 @@ class VersionsCommand extends SubCommand {
                 secondaryColor = NamedTextColor.DARK_RED;
 
                 if (plugin instanceof SlimefunAddon addon && addon.getBugTrackerURL() != null) {
-                    Component hoverComp = Component.text()
-                            .append(Component.text("此插件已被禁用.\n请检查后台是否有报错.", NamedTextColor.RED))
-                            .append(Component.text("\n> 单击打开反馈页面", NamedTextColor.DARK_RED))
-                            .build();
+                    try {
+                        String url = addon.getBugTrackerURL();
+                        if (url != null) {
+                            URI uri = URI.create(!url.contains("://") ? "https://" + url : url);
+                            clickEvent = ClickEvent.openUrl(uri.toString());
+                        }
+                        Component hoverComp = Component.text()
+                                .append(Component.text("此插件已被禁用.\n请检查后台是否有报错.", NamedTextColor.RED))
+                                .append(Component.text("\n> 单击打开反馈页面", NamedTextColor.DARK_RED))
+                                .build();
 
-                    hoverEvent = HoverEvent.showText(hoverComp);
+                        hoverEvent = HoverEvent.showText(hoverComp);
+                    } catch (IllegalArgumentException e) {
+                        Component hoverComp = Component.text()
+                                .append(Component.text("此插件已被禁用.\n请检查后台是否有报错.", NamedTextColor.RED))
+                                .append(Component.text("\n> 插件提供的反馈链接无效", NamedTextColor.DARK_RED))
+                                .build();
 
-                    if (addon.getBugTrackerURL() != null) {
-                        clickEvent = ClickEvent.openUrl(addon.getBugTrackerURL());
+                        hoverEvent = HoverEvent.showText(hoverComp);
                     }
                 } else {
                     Component hoverComp = Component.text("插件已被禁用, 请检查后台是否有报错.");

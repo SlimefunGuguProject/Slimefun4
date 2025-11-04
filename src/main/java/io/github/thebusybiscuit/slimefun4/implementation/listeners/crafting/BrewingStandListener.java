@@ -37,7 +37,7 @@ public class BrewingStandListener implements SlimefunCraftingListener {
 
         if (clickedInventory != null
                 && topInventory.getType() == InventoryType.BREWING
-                && topInventory.getHolder() instanceof BrewingStand) {
+                && topInventory.getHolder(false) instanceof BrewingStand) {
             if (e.getAction() == InventoryAction.HOTBAR_SWAP) {
                 e.setCancelled(true);
                 return;

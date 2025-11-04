@@ -27,6 +27,8 @@ jobs:
             javaVersion: '21'
           - mcVersion: '1.21.4'
             javaVersion: '21'
+          - mcVersion: '1.21.8'
+            javaVersion: '21'
           - mcVersion: 'latest'
             javaVersion: '21'
 

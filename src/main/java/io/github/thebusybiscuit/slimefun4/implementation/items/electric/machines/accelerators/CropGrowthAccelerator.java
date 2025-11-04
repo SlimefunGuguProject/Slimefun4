@@ -8,6 +8,7 @@ import io.github.thebusybiscuit.slimefun4.api.recipes.RecipeType;
 import io.github.thebusybiscuit.slimefun4.implementation.items.misc.OrganicFertilizer;
 import io.github.thebusybiscuit.slimefun4.utils.compatibility.VersionedParticle;
 import io.github.thebusybiscuit.slimefun4.utils.tags.SlimefunTag;
+import javax.annotation.Nullable;
 import me.mrCookieSlime.Slimefun.api.inventory.BlockMenu;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.Ageable;
@@ -52,19 +53,7 @@ public abstract class CropGrowthAccelerator extends AbstractGrowthAccelerator {
 
         if (ageable.getAge() < ageable.getMaximumAge()) {
             for (int slot : getInputSlots()) {
-                var item = inv.getItemInSlot(slot);
-
-                if (item == null || item.isEmpty()) {
-                    continue;
-                }
-
-                var sfItem = SlimefunItem.getByItem(item);
-
-                if (sfItem == null) {
-                    continue;
-                }
-
-                if (sfItem instanceof OrganicFertilizer) {
+                if (isFertilizer(inv.getItemInSlot(slot))) {
                     removeCharge(machine.getLocation(), getEnergyConsumption());
                     inv.consumeItem(slot);
 
@@ -85,5 +74,9 @@ public abstract class CropGrowthAccelerator extends AbstractGrowthAccelerator {
         }
 
         return false;
+    }
+
+    protected boolean isFertilizer(@Nullable ItemStack item) {
+        return SlimefunItem.getByItem(item) instanceof OrganicFertilizer;
     }
 }
