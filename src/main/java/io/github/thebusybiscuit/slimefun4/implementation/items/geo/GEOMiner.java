@@ -303,6 +303,11 @@ public class GEOMiner extends SlimefunItem
             public boolean isSynchronized() {
                 return false;
             }
+
+            @Override
+            public boolean isConcurrent() {
+                return true;
+            }
         });
     }
 
@@ -334,11 +339,13 @@ public class GEOMiner extends SlimefunItem
                 .getChunkDataAsync(b.getChunk(), new IAsyncReadCallback<>() {
                     @Override
                     public void onResult(SlimefunChunkData result) {
-                        if (result.getAllData().isEmpty()) {
-                            updateHologram(b, "&4需要先进行地形扫描!");
-                        } else {
-                            start(b, inv);
-                        }
+                        Slimefun.getPlatformScheduler().runAtLocation(b.getLocation(), (task) -> {
+                            if (result.getAllData().isEmpty()) {
+                                updateHologram(b, "&4需要先进行地形扫描!");
+                            } else {
+                                start(b, inv);
+                            }
+                        });
                     }
                 });
     }

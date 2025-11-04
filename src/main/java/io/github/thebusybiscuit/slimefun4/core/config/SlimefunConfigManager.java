@@ -71,6 +71,15 @@ public class SlimefunConfigManager {
     @Getter
     private boolean bypassItemLengthCheck;
 
+    @Getter
+    private int asyncTickerInitSize;
+
+    @Getter
+    private int asyncTickerMaxSize;
+
+    @Getter
+    private int asyncTickerQueueSize;
+
     public SlimefunConfigManager(@Nonnull Slimefun plugin) {
         Validate.notNull(plugin, "The Plugin instance cannot be null");
 
@@ -128,6 +137,16 @@ public class SlimefunConfigManager {
 
             pluginConfig.setDefaultValue("researches.auto-convert", false);
             researchAutoConvert = pluginConfig.getBoolean("researches.auto-convert");
+
+            pluginConfig.setDefaultValue(
+                    "URID.custom.async-ticker.init-size", Runtime.getRuntime().availableProcessors() / 2);
+            pluginConfig.setDefaultValue(
+                    "URID.custom.async-ticker.max-size", Runtime.getRuntime().availableProcessors());
+            pluginConfig.setDefaultValue("URID.custom.async-ticker.queue-size", 1024);
+
+            asyncTickerInitSize = pluginConfig.getInt("URID.custom.async-ticker.init-size");
+            asyncTickerMaxSize = pluginConfig.getInt("URID.custom.async-ticker.max-size");
+            asyncTickerQueueSize = pluginConfig.getInt("URID.custom.async-ticker.queue-size");
         } catch (Exception x) {
             plugin.getLogger()
                     .log(
