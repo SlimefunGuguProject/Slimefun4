@@ -17,12 +17,14 @@ import io.github.thebusybiscuit.slimefun4.implementation.items.teleporter.Telepo
 import io.github.thebusybiscuit.slimefun4.utils.ChestMenuUtils;
 import io.github.thebusybiscuit.slimefun4.utils.HeadTexture;
 import io.github.thebusybiscuit.slimefun4.utils.NumberUtils;
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
 import me.mrCookieSlime.CSCoreLibPlugin.general.Inventory.ChestMenu;
@@ -30,6 +32,7 @@ import org.apache.commons.lang.Validate;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.Server;
 import org.bukkit.World;
 import org.bukkit.World.Environment;
@@ -48,17 +51,23 @@ import org.bukkit.inventory.ItemStack;
  *
  */
 public class GPSNetwork {
+    private static final int PREV_SLOT = 46;
+    private static final int NEXT_SLOT = 52;
 
     private final int[] border = {
-        0, 1, 3, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 26, 27, 35, 36, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53
+        0, 1, 3, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 26, 27, 35, 36, 44, 45, 47, 48, 49, 50, 51, 53
     };
     private final int[] inventory = {19, 20, 21, 22, 23, 24, 25, 28, 29, 30, 31, 32, 33, 34, 37, 38, 39, 40, 41, 42, 43
     };
 
-    private final Map<UUID, Set<Location>> transmitters = new HashMap<>();
+    private final Map<UUID, Set<Location>> transmitters = new ConcurrentHashMap<>();
     private final TeleportationManager teleportation = new TeleportationManager();
 
     private final ResourceManager resourceManager;
+
+    private final Map<UUID, Integer> pages = new ConcurrentHashMap<>();
+
+    private final int maxWaypoints;
 
     /**
      * This constructs a new {@link GPSNetwork}.
@@ -69,6 +78,7 @@ public class GPSNetwork {
      */
     public GPSNetwork(@Nonnull Slimefun plugin) {
         resourceManager = new ResourceManager(plugin);
+        maxWaypoints = plugin.getConfig().getInt("options.max-gps-waypoints", 21);
     }
 
     /**
@@ -211,6 +221,9 @@ public class GPSNetwork {
             }
         }
 
+        menu.addItem(PREV_SLOT, ChestMenuUtils.getBackground(), ChestMenuUtils.getEmptyClickHandler());
+        menu.addItem(NEXT_SLOT, ChestMenuUtils.getBackground(), ChestMenuUtils.getEmptyClickHandler());
+
         menu.open(p);
     }
 
@@ -292,13 +305,23 @@ public class GPSNetwork {
                             "&7" + Slimefun.getLocalization().getMessage(p, "machines.GPS_CONTROL_PANEL.waypoints")));
             menu.addMenuClickHandler(6, ChestMenuUtils.getEmptyClickHandler());
 
-            int index = 0;
-            for (Waypoint waypoint : profile.getWaypoints()) {
-                if (index >= inventory.length) {
-                    break;
-                }
+            List<Waypoint> all = new ArrayList<>(profile.getWaypoints());
+            int pageSize = inventory.length;
+            int total = all.size();
+            int totalPages = Math.max(1, (total + pageSize - 1) / pageSize);
 
-                int slot = inventory[index];
+            int page = pages.getOrDefault(p.getUniqueId(), 1);
+            if (page < 1) page = 1;
+            if (page > totalPages) page = totalPages;
+            pages.put(p.getUniqueId(), page);
+
+            int from = (page - 1) * pageSize;
+            int to = Math.min(from + pageSize, total);
+
+            int index = 0;
+            for (int i = from; i < to; i++) {
+                Waypoint waypoint = all.get(i);
+                int slot = inventory[index++];
 
                 Location l = waypoint.getLocation();
                 menu.addItem(
@@ -315,16 +338,51 @@ public class GPSNetwork {
                 menu.addMenuClickHandler(slot, (pl, s, item, action) -> {
                     profile.removeWaypoint(waypoint);
                     SoundEffect.GPS_NETWORK_OPEN_PANEL_SOUND.playFor(p);
-
                     openWaypointControlPanel(pl);
                     return false;
                 });
-
-                index++;
             }
 
+            if (totalPages > 1) {
+                if (page > 1) {
+                    menu.addItem(
+                            PREV_SLOT,
+                            new CustomItemStack(Material.ARROW, "&a上一页 &7(" + page + "/" + totalPages + ")"));
+                    final int cur = page;
+                    menu.addMenuClickHandler(PREV_SLOT, (pl, s, i, a) -> {
+                        setPage(p, cur - 1);
+                        openWaypointControlPanel(p);
+                        return false;
+                    });
+                } else {
+                    menu.addItem(PREV_SLOT, new CustomItemStack(Material.GRAY_STAINED_GLASS_PANE, "&7上一页（无）"));
+                    menu.addMenuClickHandler(PREV_SLOT, ChestMenuUtils.getEmptyClickHandler());
+                }
+
+                if (page < totalPages) {
+                    menu.addItem(
+                            NEXT_SLOT,
+                            new CustomItemStack(Material.ARROW, "&a下一页 &7(" + page + "/" + totalPages + ")"));
+                    final int cur = page;
+                    menu.addMenuClickHandler(NEXT_SLOT, (pl, s, i, a) -> {
+                        setPage(p, cur + 1);
+                        openWaypointControlPanel(p);
+                        return false;
+                    });
+                } else {
+                    menu.addItem(NEXT_SLOT, new CustomItemStack(Material.GRAY_STAINED_GLASS_PANE, "&7下一页（无）"));
+                    menu.addMenuClickHandler(NEXT_SLOT, ChestMenuUtils.getEmptyClickHandler());
+                }
+            } else {
+                menu.addItem(PREV_SLOT, ChestMenuUtils.getBackground(), ChestMenuUtils.getEmptyClickHandler());
+                menu.addItem(NEXT_SLOT, ChestMenuUtils.getBackground(), ChestMenuUtils.getEmptyClickHandler());
+            }
             menu.open(p);
         });
+    }
+
+    private void setPage(Player p, int page) {
+        pages.put(p.getUniqueId(), Math.max(1, page));
     }
 
     /**
@@ -341,7 +399,7 @@ public class GPSNetwork {
         Validate.notNull(l, "Waypoint Location cannot be null!");
 
         PlayerProfile.get(p, profile -> {
-            if ((profile.getWaypoints().size() + 2) > inventory.length) {
+            if (profile.getWaypoints().size() >= maxWaypoints) {
                 Slimefun.getLocalization().sendMessage(p, "gps.waypoint.max", true);
                 return;
             }
@@ -369,7 +427,7 @@ public class GPSNetwork {
         Validate.notNull(l, "Waypoint Location cannot be null!");
 
         PlayerProfile.get(p, profile -> {
-            if ((profile.getWaypoints().size() + 2) > inventory.length) {
+            if (profile.getWaypoints().size() >= maxWaypoints) {
                 Slimefun.getLocalization().sendMessage(p, "gps.waypoint.max", true);
                 return;
             }
@@ -438,5 +496,14 @@ public class GPSNetwork {
     @Nonnull
     public ResourceManager getResourceManager() {
         return resourceManager;
+    }
+
+    /**
+     * This returns the max waypoints amount for this {@link GPSNetwork}.
+     *
+     * @return The max waypoints amount for this {@link GPSNetwork}
+     */
+    public int getMaxWaypoints() {
+        return maxWaypoints;
     }
 }

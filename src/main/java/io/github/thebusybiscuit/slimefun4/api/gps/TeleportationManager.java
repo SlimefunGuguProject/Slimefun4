@@ -11,9 +11,13 @@ import io.github.thebusybiscuit.slimefun4.utils.HeadTexture;
 import io.github.thebusybiscuit.slimefun4.utils.NumberUtils;
 import io.github.thebusybiscuit.slimefun4.utils.compatibility.VersionedPotionEffectType;
 import io.papermc.lib.PaperLib;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -22,6 +26,7 @@ import org.apache.commons.lang.Validate;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
@@ -38,14 +43,17 @@ import org.bukkit.potion.PotionEffect;
  *
  */
 public final class TeleportationManager {
+    private static final int PREV_SLOT = 46;
+    private static final int NEXT_SLOT = 52;
 
     private final int[] teleporterBorder = {
-        0, 1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 26, 27, 35, 36, 44, 45, 46, 47, 48, 49, 50, 51,
-        52, 53
+        0, 1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 26, 27, 35, 36, 44, 45, 47, 48, 49, 50, 51, 53
     };
     private final int[] teleporterInventory = {
         19, 20, 21, 22, 23, 24, 25, 28, 29, 30, 31, 32, 33, 34, 37, 38, 39, 40, 41, 42, 43
     };
+
+    private final Map<UUID, Integer> pages = new ConcurrentHashMap<>();
 
     /**
      * This {@link Set} holds the {@link UUID} of all Players that are
@@ -89,36 +97,39 @@ public final class TeleportationManager {
                 menu.addMenuClickHandler(4, ChestMenuUtils.getEmptyClickHandler());
 
                 Location source = new Location(b.getWorld(), b.getX() + 0.5D, b.getY() + 2D, b.getZ() + 0.5D);
+
+                int pageSize = teleporterInventory.length;
+                List<Waypoint> all = new ArrayList<>(profile.getWaypoints());
+                int total = all.size();
+                int totalPages = Math.max(1, (total + pageSize - 1) / pageSize);
+
+                int page = pages.getOrDefault(p.getUniqueId(), 1);
+                if (page < 1) page = 1;
+                if (page > totalPages) page = totalPages;
+                pages.put(p.getUniqueId(), page);
+
+                int from = (page - 1) * pageSize;
+                int to = Math.min(from + pageSize, total);
+
                 int index = 0;
-
-                for (Waypoint waypoint : profile.getWaypoints()) {
-                    if (index >= teleporterInventory.length) {
-                        break;
-                    }
-
-                    int slot = teleporterInventory[index];
+                for (int i = from; i < to; i++) {
+                    Waypoint waypoint = all.get(i);
+                    int slot = teleporterInventory[index++];
                     Location l = waypoint.getLocation();
                     double time = NumberUtils.reparseDouble(0.5 * getTeleportationTime(complexity, source, l));
 
-                    // @formatter:off
                     String[] lore = {
                         "",
-                        "&8\u21E8 &7"
-                                + Slimefun.getLocalization().getResourceString(p, "tooltips.world")
-                                + ": &f"
+                        "&8→ &7" + Slimefun.getLocalization().getResourceString(p, "tooltips.world") + ": &f"
                                 + l.getWorld().getName(),
-                        "&8\u21E8 &7X: &f" + l.getX(),
-                        "&8\u21E8 &7Y: &f" + l.getY(),
-                        "&8\u21E8 &7Z: &f" + l.getZ(),
-                        "&8\u21E8 &7"
-                                + Slimefun.getLocalization().getMessage(p, "machines.TELEPORTER.gui.time")
-                                + ": &f"
-                                + time
-                                + "s",
+                        "&8→ &7X: &f" + l.getX(),
+                        "&8→ &7Y: &f" + l.getY(),
+                        "&8→ &7Z: &f" + l.getZ(),
+                        "&8→ &7" + Slimefun.getLocalization().getMessage(p, "machines.TELEPORTER.gui.time") + ": &f"
+                                + time + "s",
                         "",
-                        "&8\u21E8 &c" + Slimefun.getLocalization().getMessage(p, "machines.TELEPORTER.gui.tooltip")
+                        "&8→ &c" + Slimefun.getLocalization().getMessage(p, "machines.TELEPORTER.gui.tooltip")
                     };
-                    // @formatter:on
 
                     menu.addItem(
                             slot,
@@ -129,11 +140,46 @@ public final class TeleportationManager {
                         teleport(pl.getUniqueId(), complexity, source, l, false);
                         return false;
                     });
-
-                    index++;
                 }
 
-                Slimefun.runSync(() -> menu.open(p));
+                if (totalPages > 1) {
+                    if (page > 1) {
+                        menu.addItem(
+                                PREV_SLOT,
+                                new CustomItemStack(Material.ARROW, "&a上一页 &7(" + page + "/" + totalPages + ")"));
+                        final int cur = page;
+                        menu.addMenuClickHandler(PREV_SLOT, (pl, s, i, a) -> {
+                            teleporterUsers.remove(pl.getUniqueId());
+                            pages.put(pl.getUniqueId(), cur - 1);
+                            openTeleporterGUI(pl, ownerUUID, b, complexity);
+                            return false;
+                        });
+                    } else {
+                        menu.addItem(PREV_SLOT, new CustomItemStack(Material.GRAY_STAINED_GLASS_PANE, "&7上一页（无）"));
+                        menu.addMenuClickHandler(PREV_SLOT, ChestMenuUtils.getEmptyClickHandler());
+                    }
+
+                    if (page < totalPages) {
+                        menu.addItem(
+                                NEXT_SLOT,
+                                new CustomItemStack(Material.ARROW, "&a下一页 &7(" + page + "/" + totalPages + ")"));
+                        final int cur = page;
+                        menu.addMenuClickHandler(NEXT_SLOT, (pl, s, i, a) -> {
+                            teleporterUsers.remove(pl.getUniqueId());
+                            pages.put(pl.getUniqueId(), cur + 1);
+                            openTeleporterGUI(pl, ownerUUID, b, complexity);
+                            return false;
+                        });
+                    } else {
+                        menu.addItem(NEXT_SLOT, new CustomItemStack(Material.GRAY_STAINED_GLASS_PANE, "&7下一页（无）"));
+                        menu.addMenuClickHandler(NEXT_SLOT, ChestMenuUtils.getEmptyClickHandler());
+                    }
+                } else {
+                    menu.addItem(PREV_SLOT, ChestMenuUtils.getBackground(), ChestMenuUtils.getEmptyClickHandler());
+                    menu.addItem(NEXT_SLOT, ChestMenuUtils.getBackground(), ChestMenuUtils.getEmptyClickHandler());
+                }
+
+                menu.open(p);
             });
         }
     }
