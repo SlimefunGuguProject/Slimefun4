@@ -179,7 +179,7 @@ public final class TeleportationManager {
                     menu.addItem(NEXT_SLOT, ChestMenuUtils.getBackground(), ChestMenuUtils.getEmptyClickHandler());
                 }
 
-                menu.open(p);
+                Slimefun.runSync(() -> menu.open(p));
             });
         }
     }

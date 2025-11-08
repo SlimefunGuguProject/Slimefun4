@@ -381,8 +381,8 @@ public class GPSNetwork {
         });
     }
 
-    private void setPage(Player p, int page) {
-        pages.put(p.getUniqueId(), Math.max(1, page));
+    private void setPage(Player p, int page, int totalPages) {
+        pages.put(p.getUniqueId(), Math.max(1, Math.min(page, totalPages)));
     }
 
     /**
