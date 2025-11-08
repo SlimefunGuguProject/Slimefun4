@@ -269,6 +269,10 @@ public class GPSNetwork {
             ChestMenu menu = new ChestMenu(
                     ChatColor.BLUE + Slimefun.getLocalization().getMessage(p, "machines.GPS_CONTROL_PANEL.title"));
 
+            menu.addMenuCloseHandler((pl) -> {
+                pages.remove(pl.getUniqueId());
+            });
+
             for (int slot : border) {
                 menu.addItem(slot, ChestMenuUtils.getBackground(), ChestMenuUtils.getEmptyClickHandler());
             }

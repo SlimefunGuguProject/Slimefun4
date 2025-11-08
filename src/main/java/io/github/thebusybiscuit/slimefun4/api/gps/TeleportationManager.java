@@ -82,7 +82,10 @@ public final class TeleportationManager {
             SoundEffect.TELEPORTATION_MANAGER_OPEN_GUI.playFor(p);
             PlayerProfile.fromUUID(ownerUUID, profile -> {
                 ChestMenu menu = new ChestMenu("&3传送机");
-                menu.addMenuCloseHandler(pl -> teleporterUsers.remove(pl.getUniqueId()));
+                menu.addMenuCloseHandler(pl -> {
+                    teleporterUsers.remove(pl.getUniqueId());
+                    pages.remove(pl.getUniqueId());
+                });
 
                 for (int slot : teleporterBorder) {
                     menu.addItem(slot, ChestMenuUtils.getBackground(), ChestMenuUtils.getEmptyClickHandler());
