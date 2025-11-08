@@ -307,19 +307,12 @@ public class GPSNetwork {
 
             List<Waypoint> all = new ArrayList<>(profile.getWaypoints());
             int pageSize = inventory.length;
-            int total = all.size();
-            int totalPages = Math.max(1, (total + pageSize - 1) / pageSize);
-
             int page = pages.getOrDefault(p.getUniqueId(), 1);
-            if (page < 1) page = 1;
-            if (page > totalPages) page = totalPages;
-            pages.put(p.getUniqueId(), page);
-
-            int from = (page - 1) * pageSize;
-            int to = Math.min(from + pageSize, total);
+            PageRange pr = PageRange.compute(all.size(), pageSize, page);
+            pages.put(p.getUniqueId(), pr.page);
 
             int index = 0;
-            for (int i = from; i < to; i++) {
+            for (int i = pr.from; i < pr.to; i++) {
                 Waypoint waypoint = all.get(i);
                 int slot = inventory[index++];
 
@@ -343,14 +336,14 @@ public class GPSNetwork {
                 });
             }
 
-            if (totalPages > 1) {
+            if (pr.totalPages > 1) {
                 if (page > 1) {
                     menu.addItem(
                             PREV_SLOT,
-                            new CustomItemStack(Material.ARROW, "&a上一页 &7(" + page + "/" + totalPages + ")"));
+                            new CustomItemStack(Material.ARROW, "&a上一页 &7(" + page + "/" + pr.totalPages + ")"));
                     final int cur = page;
                     menu.addMenuClickHandler(PREV_SLOT, (pl, s, i, a) -> {
-                        setPage(p, cur - 1);
+                        setPage(p, cur - 1, pr.totalPages);
                         openWaypointControlPanel(p);
                         return false;
                     });
@@ -359,13 +352,13 @@ public class GPSNetwork {
                     menu.addMenuClickHandler(PREV_SLOT, ChestMenuUtils.getEmptyClickHandler());
                 }
 
-                if (page < totalPages) {
+                if (page < pr.totalPages) {
                     menu.addItem(
                             NEXT_SLOT,
-                            new CustomItemStack(Material.ARROW, "&a下一页 &7(" + page + "/" + totalPages + ")"));
+                            new CustomItemStack(Material.ARROW, "&a下一页 &7(" + page + "/" + pr.totalPages + ")"));
                     final int cur = page;
                     menu.addMenuClickHandler(NEXT_SLOT, (pl, s, i, a) -> {
-                        setPage(p, cur + 1);
+                        setPage(p, cur + 1, pr.totalPages);
                         openWaypointControlPanel(p);
                         return false;
                     });
