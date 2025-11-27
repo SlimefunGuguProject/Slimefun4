@@ -21,7 +21,7 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
-          java-version: ${{ vars.JAVA_CI_VERSION }}
+          java-version: ${{ vars.JAVA_CI_VERSION || 21 }}
           java-package: jdk
           architecture: x64
           cache: maven
@@ -33,7 +33,7 @@ jobs:
         name: Upload Beta artifact
         with:
           name: Slimefun Beta Build
-          path: staging
+          path: target/Slimefun-*.jar
       - name: Automatic Releases
         uses: marvinpinto/action-automatic-releases@v1.2.1
         if: github.ref_name == 'master'
@@ -43,4 +43,4 @@ jobs:
           prerelease: true
           title: "Slimefun 自动构建版本"
           files: |
-            target/slimefun-*.jar
+            target/Slimefun-*.jar

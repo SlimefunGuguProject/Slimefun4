@@ -370,14 +370,5 @@ public final class NumberUtils {
 
     public static int longToInt(long l) {
         return l <= Integer.MIN_VALUE ? Integer.MIN_VALUE : (l >= Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) l);
-        //        if (l <= Integer.MIN_VALUE) {
-        //            return Integer.MIN_VALUE;
-        //        }
-        //
-        //        if (l >= Integer.MAX_VALUE) {
-        //            return Integer.MAX_VALUE;
-        //        }
-        //
-        //        return (int) l;
     }
 }

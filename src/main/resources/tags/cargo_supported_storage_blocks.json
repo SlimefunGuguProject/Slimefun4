@@ -10,6 +10,26 @@
     "minecraft:hopper",
     "minecraft:brewing_stand",
     "minecraft:blast_furnace",
-    "minecraft:smoker"
+    "minecraft:smoker",
+    { "id": "minecraft:copper_chest", "required": false },
+    { "id": "minecraft:exposed_copper_chest", "required": false },
+    { "id": "minecraft:weathered_copper_chest", "required": false },
+    { "id": "minecraft:oxidized_copper_chest", "required": false },
+    { "id": "minecraft:waxed_copper_chest", "required": false },
+    { "id": "minecraft:waxed_exposed_copper_chest", "required": false },
+    { "id": "minecraft:waxed_weathered_copper_chest", "required": false },
+    { "id": "minecraft:waxed_oxidized_copper_chest", "required": false },
+    { "id": "minecraft:oak_shelf", "required": false },
+    { "id": "minecraft:spruce_shelf", "required": false },
+    { "id": "minecraft:birch_shelf", "required": false },
+    { "id": "minecraft:jungle_shelf", "required": false },
+    { "id": "minecraft:acacia_shelf", "required": false },
+    { "id": "minecraft:dark_oak_shelf", "required": false },
+    { "id": "minecraft:mangrove_shelf", "required": false },
+    { "id": "minecraft:cherry_shelf", "required": false },
+    { "id": "minecraft:pale_oak_shelf", "required": false },
+    { "id": "minecraft:bamboo_shelf", "required": false },
+    { "id": "minecraft:crimson_shelf", "required": false },
+    { "id": "minecraft:warped_shelf", "required": false }
   ]
 }

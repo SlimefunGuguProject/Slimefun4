@@ -170,12 +170,10 @@ public class ResourceManager {
         String key = resource.getKey().toString().replace(':', '-');
         Slimefun.getDatabaseManager()
                 .getBlockDataController()
-                .getChunkDataAsync(world.getChunkAt(x, z), new IAsyncReadCallback<>() {
-                    @Override
-                    public void onResult(SlimefunChunkData result) {
-                        result.setData(key, String.valueOf(value));
-                    }
-                });
+                .getChunkDataAsync(world.getChunkAt(x, z))
+                // fix issue 1147 : when chunkdata is loaded, this cf method will return completedFuture and data will
+                // be updated at current thread to avoid async readwrite on supply numbers
+                .thenAccept(result -> result.setData(key, String.valueOf(value)));
     }
 
     /**

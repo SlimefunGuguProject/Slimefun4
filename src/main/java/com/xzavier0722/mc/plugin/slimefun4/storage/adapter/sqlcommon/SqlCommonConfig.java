@@ -48,7 +48,7 @@ public abstract class SqlCommonConfig implements ISqlCommonConfig {
 
         config.setMaximumPoolSize(maxConnection);
 
-        config.setLeakDetectionThreshold(8000);
+        config.setLeakDetectionThreshold(15000);
 
         return new HikariDataSource(config);
     }

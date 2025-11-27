@@ -181,12 +181,20 @@ public enum MinecraftVersion {
         if (this.majorVersion != minecraftVersion) {
             return false;
         }
+        // the virtual ones are at the last of array, so it will not cause indexOutOfRange
+        MinecraftVersion nextVersion = values()[this.ordinal() + 1];
+        // checking patchVersion, if next Version is not a virtual version and it is in the same majorVersion as this,
+        // then we should ensure patchVersion is lower than nextVersion
+        return patchVersion >= this.minorVersion
+                && (nextVersion.isVirtual()
+                        || nextVersion.majorVersion != this.majorVersion
+                        || nextVersion.minorVersion > patchVersion);
 
-        if (this.majorVersion == 20) {
-            return this.minorVersion == -1 ? patchVersion < 5 : patchVersion >= this.minorVersion;
-        } else {
-            return this.minorVersion == -1 || patchVersion >= this.minorVersion;
-        }
+        //        if (this.majorVersion == 20) {
+        //            return this.minorVersion == -1 ? patchVersion < 5 : patchVersion >= this.minorVersion;
+        //        } else {
+        //            return this.minorVersion == -1 || patchVersion >= this.minorVersion;
+        //        }
     }
 
     /**
@@ -223,6 +231,15 @@ public enum MinecraftVersion {
         return this.ordinal() >= version.ordinal();
     }
 
+    public boolean isAtLeast(int majorVersion, int minorVersion) {
+        if (this == UNKNOWN) {
+            return false;
+        }
+
+        return this.majorVersion > majorVersion
+                || (this.majorVersion == majorVersion && this.minorVersion >= minorVersion);
+    }
+
     /**
      * This checks whether this {@link MinecraftVersion} is older than the specified {@link MinecraftVersion}.
      *
@@ -232,12 +249,17 @@ public enum MinecraftVersion {
      * @return Whether this {@link MinecraftVersion} is older than the given one
      */
     public boolean isBefore(@Nonnull MinecraftVersion version) {
-        Validate.notNull(version, "A Minecraft version cannot be null!");
+        return !isAtLeast(version);
+        //        Validate.notNull(version, "A Minecraft version cannot be null!");
+        //
+        //        if (this == UNKNOWN) {
+        //            return true;
+        //        }
+        //
+        //        return version.ordinal() > this.ordinal();
+    }
 
-        if (this == UNKNOWN) {
-            return true;
-        }
-
-        return version.ordinal() > this.ordinal();
+    public boolean isBefore(int majorVersion, int minorVersion) {
+        return !isAtLeast(majorVersion, minorVersion);
     }
 }

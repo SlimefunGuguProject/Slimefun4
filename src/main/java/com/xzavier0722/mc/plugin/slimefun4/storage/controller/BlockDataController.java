@@ -1431,6 +1431,14 @@ public class BlockDataController extends ADataController {
         }
     }
 
+    public SlimefunChunkData getChunkDataFromCache(Location chunk) {
+        return getChunkDataCache(chunk, false);
+    }
+
+    public SlimefunChunkData getChunkDataFromCache(Chunk chunk) {
+        return getChunkDataCache(chunk, false);
+    }
+
     private SlimefunChunkData getChunkDataCache(Chunk chunk, boolean createOnNotExists) {
         return createOnNotExists
                 ? loadedChunk.computeIfAbsent(LocationUtils.getChunkKey(chunk), k -> {
