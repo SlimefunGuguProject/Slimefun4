@@ -19,7 +19,7 @@ public class SerializingUtils {
      */
     public static ItemStack[] loadItemStackArray(ConfigurationSection yaml, String prefixPath) {
         List<ItemStack> itemStacks = new ArrayList<>(2);
-        for(int i = 0; ; ++i){
+        for (int i = 0; ; ++i) {
             String keyI = prefixPath + "_" + String.valueOf(i);
             if (yaml.contains(keyI)) {
                 ItemStack stack = yaml.getItemStack(keyI);

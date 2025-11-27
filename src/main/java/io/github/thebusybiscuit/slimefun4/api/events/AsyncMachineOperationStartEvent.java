@@ -6,7 +6,6 @@ import io.github.thebusybiscuit.slimefun4.core.machines.MachineProcessor;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.bukkit.Bukkit;
-import org.bukkit.block.Block;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
