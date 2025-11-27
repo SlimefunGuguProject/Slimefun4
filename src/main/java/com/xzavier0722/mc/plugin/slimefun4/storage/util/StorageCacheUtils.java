@@ -301,7 +301,6 @@ public class StorageCacheUtils {
 
     public static void executeAfterLoad(SlimefunBlockData data, Runnable execute, boolean runOnMainThread) {
         if (data.isDataLoaded()) {
-            // FIXME: should we care about runOnMainThread argument?
             execute.run();
             return;
         }

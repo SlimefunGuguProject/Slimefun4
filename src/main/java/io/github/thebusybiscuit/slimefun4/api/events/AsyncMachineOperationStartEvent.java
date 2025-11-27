@@ -6,10 +6,18 @@ import io.github.thebusybiscuit.slimefun4.core.machines.MachineProcessor;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.bukkit.Bukkit;
+import org.bukkit.block.Block;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 
+/**
+ * This {@link Event} is fired whenever an {@link MachineProcessor} wants to start a {@link MachineOperation} when invoking any of the {@link MachineProcessor#startOperation} method
+ * The event is cancellable, if the event is cancelled, the operation will not be added to the operation map and {@link MachineProcessor#startOperation} will return false
+ *
+ * @author m1919810
+ *
+ */
 public class AsyncMachineOperationStartEvent extends Event implements Cancellable {
     private static final HandlerList handlers = new HandlerList();
 
@@ -66,11 +74,22 @@ public class AsyncMachineOperationStartEvent extends Event implements Cancellabl
         return getHandlerList();
     }
 
+    /**
+     * This returns whether the event is cancelled
+     *
+     * @return cancel flag
+     */
     @Override
     public boolean isCancelled() {
         return this.cancel;
     }
 
+    /**
+     * This sets the cancel flag of the event
+     * If the event is cancelled, the operation will not be added to the operation map and {@link MachineProcessor#startOperation} will return false
+     *
+     * @param b new flag
+     */
     @Override
     public void setCancelled(boolean b) {
         this.cancel = b;

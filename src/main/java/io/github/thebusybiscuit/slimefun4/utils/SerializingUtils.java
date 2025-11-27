@@ -8,9 +8,18 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.inventory.ItemStack;
 
 public class SerializingUtils {
+    /**
+     * This method load an array of itemStack from a given {@link ConfigurationSection},
+     * The structure of the {@link ConfigurationSection} should meet these rules:
+     * The i-th itemStack is stored under the path "{prefixPath}_{i}"
+     * The itemStack must be valid , notnull and not empty, or we will skip that itemStack
+     * @param yaml
+     * @param prefixPath
+     * @return
+     */
     public static ItemStack[] loadItemStackArray(ConfigurationSection yaml, String prefixPath) {
         List<ItemStack> itemStacks = new ArrayList<>(2);
-        for (int i = 0; i < 666_666; ++i) {
+        for(int i = 0; ; ++i){
             String keyI = prefixPath + "_" + String.valueOf(i);
             if (yaml.contains(keyI)) {
                 ItemStack stack = yaml.getItemStack(keyI);
@@ -23,6 +32,14 @@ public class SerializingUtils {
         return itemStacks.toArray(ItemStack[]::new);
     }
 
+    /**
+     * This method save an array of itemStack to a given {@link ConfigurationSection}
+     * Each element of the array must be notnull and not empty, or we will skip that itemStack
+     * The saved yaml can be load back to itemStack array using {@link SerializingUtils#loadItemStackArray(ConfigurationSection, String)}
+     * @param yaml
+     * @param prefixPath
+     * @param itemStacks
+     */
     public static void saveItemStackArray(ConfigurationSection yaml, String prefixPath, ItemStack... itemStacks) {
         List<ItemStack> results = Arrays.stream(itemStacks)
                 .filter(Objects::nonNull)

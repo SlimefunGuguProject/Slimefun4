@@ -8,7 +8,7 @@ public interface MachineProcessSerializable<T extends MachineOperation> extends 
     String KEY_OPERATION_INFO = "p-op-info";
 
     /**
-     * this called when a MachineProcessor trys to load a MachineOperation from a blockData by its KEY_OPERATION_INFO value and KEY_PROGRESS_LEFT value
+     * this called when a MachineProcessor trys to load a MachineOperation from a blockData by using the value under the key {@link MachineProcessSerializable#KEY_OPERATION_INFO} as the operation information and {@link MachineProcessSerializable#KEY_PROGRESS_LEFT} as the progress left
      * @param position
      * @param output
      * @return
@@ -16,7 +16,8 @@ public interface MachineProcessSerializable<T extends MachineOperation> extends 
     T deserialize(BlockPosition position, String output);
 
     /**
-     * this called when a MachineProcessor trys to save a MachineOperation when startOperation called, it will store the return value in KEY_OPERATION-INFO
+     * this called when a MachineProcessor trys to save a MachineOperation when startOperation called, it will store the return value under key {@link  MachineProcessSerializable#KEY_OPERATION_INFO}
+     *
      * @param position
      * @param operation
      * @return
