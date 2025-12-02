@@ -113,6 +113,8 @@ public class ExplosionsListener implements Listener {
                         })) {
                     controller.removeBlock(loc);
                     block.setType(Material.AIR);
+                    // Update all networks connected to this location
+                    Slimefun.getNetworkManager().updateAllNetworks(loc);
                 }
             }
         }
@@ -126,6 +128,9 @@ public class ExplosionsListener implements Listener {
             List<ItemStack> drops = new ArrayList<>();
             handler.onExplode(block, drops);
             Slimefun.getDatabaseManager().getBlockDataController().removeBlock(block.getLocation());
+
+            // Update all networks connected to this location
+            Slimefun.getNetworkManager().updateAllNetworks(block.getLocation());
 
             for (ItemStack drop : drops) {
                 if (drop != null && !drop.getType().isAir()) {
