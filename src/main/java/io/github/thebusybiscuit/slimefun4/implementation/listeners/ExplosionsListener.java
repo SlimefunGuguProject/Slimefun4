@@ -1,6 +1,7 @@
 package io.github.thebusybiscuit.slimefun4.implementation.listeners;
 
 import com.xzavier0722.mc.plugin.slimefun4.storage.callback.IAsyncReadCallback;
+import com.xzavier0722.mc.plugin.slimefun4.storage.controller.BlockDataController;
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunBlockData;
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunUniversalBlockData;
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunUniversalData;
@@ -79,38 +80,7 @@ public class ExplosionsListener implements Listener {
                 blocks.remove();
 
                 var controller = Slimefun.getDatabaseManager().getBlockDataController();
-                if (!(item instanceof WitherProof)
-                        && !item.callItemHandler(BlockBreakHandler.class, handler -> {
-                            if (blockData.isDataLoaded()) {
-                                handleExplosion(handler, block);
-                            } else {
-                                if (blockData instanceof SlimefunBlockData sbd) {
-                                    controller.loadBlockDataAsync(sbd, new IAsyncReadCallback<>() {
-                                        @Override
-                                        public boolean runOnMainThread() {
-                                            return true;
-                                        }
-
-                                        @Override
-                                        public void onResult(SlimefunBlockData result) {
-                                            handleExplosion(handler, block);
-                                        }
-                                    });
-                                } else if (blockData instanceof SlimefunUniversalBlockData ubd) {
-                                    controller.loadUniversalDataAsync(ubd, new IAsyncReadCallback<>() {
-                                        @Override
-                                        public boolean runOnMainThread() {
-                                            return true;
-                                        }
-
-                                        @Override
-                                        public void onResult(SlimefunUniversalData result) {
-                                            handleExplosion(handler, block);
-                                        }
-                                    });
-                                }
-                            }
-                        })) {
+                if (!(item instanceof WitherProof) && !callBreakHandler(item, blockData, block, controller)) {
                     controller.removeBlock(loc);
                     block.setType(Material.AIR);
                     // Update all networks connected to this location
@@ -118,6 +88,44 @@ public class ExplosionsListener implements Listener {
                 }
             }
         }
+    }
+
+    private boolean callBreakHandler(
+            @Nonnull SlimefunItem item,
+            @Nonnull SlimefunUniversalData blockData,
+            @Nonnull Block block,
+            @Nonnull BlockDataController controller) {
+        return item.callItemHandler(BlockBreakHandler.class, handler -> {
+            if (blockData.isDataLoaded()) {
+                handleExplosion(handler, block);
+            } else {
+                if (blockData instanceof SlimefunBlockData sbd) {
+                    controller.loadBlockDataAsync(sbd, new IAsyncReadCallback<>() {
+                        @Override
+                        public boolean runOnMainThread() {
+                            return true;
+                        }
+
+                        @Override
+                        public void onResult(SlimefunBlockData result) {
+                            handleExplosion(handler, block);
+                        }
+                    });
+                } else if (blockData instanceof SlimefunUniversalBlockData ubd) {
+                    controller.loadBlockDataAsync(ubd, new IAsyncReadCallback<>() {
+                        @Override
+                        public boolean runOnMainThread() {
+                            return true;
+                        }
+
+                        @Override
+                        public void onResult(SlimefunUniversalData result) {
+                            handleExplosion(handler, block);
+                        }
+                    });
+                }
+            }
+        });
     }
 
     @ParametersAreNonnullByDefault
