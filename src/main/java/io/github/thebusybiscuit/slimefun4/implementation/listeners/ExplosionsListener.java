@@ -78,6 +78,7 @@ public class ExplosionsListener implements Listener {
             if (item != null) {
                 blocks.remove();
 
+                boolean isWitherProof = item instanceof WitherProof;
                 var controller = Slimefun.getDatabaseManager().getBlockDataController();
                 boolean hasHandler = item.callItemHandler(BlockBreakHandler.class, handler -> {
                     if (blockData.isDataLoaded()) {
@@ -111,13 +112,13 @@ public class ExplosionsListener implements Listener {
                     }
                 });
 
-                if (!(item instanceof WitherProof) && !hasHandler) {
+                if (!isWitherProof && !hasHandler) {
                     controller.removeBlock(loc);
                     block.setType(Material.AIR);
                 }
 
                 // Update all networks connected to this location
-                if (!(item instanceof WitherProof)) {
+                if (!isWitherProof) {
                     Slimefun.getNetworkManager().updateAllNetworks(loc);
                 }
             }
