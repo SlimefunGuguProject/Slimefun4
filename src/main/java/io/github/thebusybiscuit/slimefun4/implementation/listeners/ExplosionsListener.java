@@ -79,41 +79,45 @@ public class ExplosionsListener implements Listener {
                 blocks.remove();
 
                 var controller = Slimefun.getDatabaseManager().getBlockDataController();
-                if (!(item instanceof WitherProof)
-                        && !item.callItemHandler(BlockBreakHandler.class, handler -> {
-                            if (blockData.isDataLoaded()) {
-                                handleExplosion(handler, block);
-                            } else {
-                                if (blockData instanceof SlimefunBlockData sbd) {
-                                    controller.loadBlockDataAsync(sbd, new IAsyncReadCallback<>() {
-                                        @Override
-                                        public boolean runOnMainThread() {
-                                            return true;
-                                        }
-
-                                        @Override
-                                        public void onResult(SlimefunBlockData result) {
-                                            handleExplosion(handler, block);
-                                        }
-                                    });
-                                } else if (blockData instanceof SlimefunUniversalBlockData ubd) {
-                                    controller.loadUniversalDataAsync(ubd, new IAsyncReadCallback<>() {
-                                        @Override
-                                        public boolean runOnMainThread() {
-                                            return true;
-                                        }
-
-                                        @Override
-                                        public void onResult(SlimefunUniversalData result) {
-                                            handleExplosion(handler, block);
-                                        }
-                                    });
+                boolean hasHandler = item.callItemHandler(BlockBreakHandler.class, handler -> {
+                    if (blockData.isDataLoaded()) {
+                        handleExplosion(handler, block);
+                    } else {
+                        if (blockData instanceof SlimefunBlockData sbd) {
+                            controller.loadBlockDataAsync(sbd, new IAsyncReadCallback<>() {
+                                @Override
+                                public boolean runOnMainThread() {
+                                    return true;
                                 }
-                            }
-                        })) {
+
+                                @Override
+                                public void onResult(SlimefunBlockData result) {
+                                    handleExplosion(handler, block);
+                                }
+                            });
+                        } else if (blockData instanceof SlimefunUniversalBlockData ubd) {
+                            controller.loadUniversalDataAsync(ubd, new IAsyncReadCallback<>() {
+                                @Override
+                                public boolean runOnMainThread() {
+                                    return true;
+                                }
+
+                                @Override
+                                public void onResult(SlimefunUniversalData result) {
+                                    handleExplosion(handler, block);
+                                }
+                            });
+                        }
+                    }
+                });
+
+                if (!(item instanceof WitherProof) && !hasHandler) {
                     controller.removeBlock(loc);
                     block.setType(Material.AIR);
-                    // Update all networks connected to this location
+                }
+
+                // Update all networks connected to this location
+                if (!(item instanceof WitherProof)) {
                     Slimefun.getNetworkManager().updateAllNetworks(loc);
                 }
             }
@@ -128,9 +132,6 @@ public class ExplosionsListener implements Listener {
             List<ItemStack> drops = new ArrayList<>();
             handler.onExplode(block, drops);
             Slimefun.getDatabaseManager().getBlockDataController().removeBlock(block.getLocation());
-
-            // Update all networks connected to this location
-            Slimefun.getNetworkManager().updateAllNetworks(block.getLocation());
 
             for (ItemStack drop : drops) {
                 if (drop != null && !drop.getType().isAir()) {
