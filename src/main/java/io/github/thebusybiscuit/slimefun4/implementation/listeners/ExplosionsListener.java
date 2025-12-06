@@ -8,9 +8,11 @@ import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunUniversalD
 import com.xzavier0722.mc.plugin.slimefun4.storage.util.StorageCacheUtils;
 import io.github.thebusybiscuit.slimefun4.api.MinecraftVersion;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
+import io.github.thebusybiscuit.slimefun4.core.attributes.EnergyNetComponent;
 import io.github.thebusybiscuit.slimefun4.core.attributes.WitherProof;
 import io.github.thebusybiscuit.slimefun4.core.handlers.BlockBreakHandler;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
+import io.github.thebusybiscuit.slimefun4.implementation.items.cargo.CargoNode;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -83,8 +85,10 @@ public class ExplosionsListener implements Listener {
                 if (!(item instanceof WitherProof) && !callBreakHandler(item, blockData, block, controller)) {
                     controller.removeBlock(loc);
                     block.setType(Material.AIR);
-                    // Update all networks connected to this location
-                    Slimefun.getNetworkManager().updateAllNetworks(loc);
+                    // Update all networks connected to this location if the item is a network component
+                    if (isNetworkComponent(item)) {
+                        Slimefun.getNetworkManager().updateAllNetworks(loc);
+                    }
                 }
             }
         }
@@ -97,7 +101,7 @@ public class ExplosionsListener implements Listener {
             @Nonnull BlockDataController controller) {
         return item.callItemHandler(BlockBreakHandler.class, handler -> {
             if (blockData.isDataLoaded()) {
-                handleExplosion(handler, block);
+                handleExplosion(handler, item, block);
             } else {
                 if (blockData instanceof SlimefunBlockData sbd) {
                     controller.loadBlockDataAsync(sbd, new IAsyncReadCallback<>() {
@@ -108,7 +112,7 @@ public class ExplosionsListener implements Listener {
 
                         @Override
                         public void onResult(SlimefunBlockData result) {
-                            handleExplosion(handler, block);
+                            handleExplosion(handler, item, block);
                         }
                     });
                 } else if (blockData instanceof SlimefunUniversalBlockData ubd) {
@@ -120,7 +124,7 @@ public class ExplosionsListener implements Listener {
 
                         @Override
                         public void onResult(SlimefunUniversalData result) {
-                            handleExplosion(handler, block);
+                            handleExplosion(handler, item, block);
                         }
                     });
                 }
@@ -129,7 +133,7 @@ public class ExplosionsListener implements Listener {
     }
 
     @ParametersAreNonnullByDefault
-    private void handleExplosion(BlockBreakHandler handler, Block block) {
+    private void handleExplosion(BlockBreakHandler handler, SlimefunItem item, Block block) {
         if (handler.isExplosionAllowed(block)) {
             block.setType(Material.AIR);
 
@@ -137,8 +141,10 @@ public class ExplosionsListener implements Listener {
             handler.onExplode(block, drops);
             Slimefun.getDatabaseManager().getBlockDataController().removeBlock(block.getLocation());
 
-            // Update all networks connected to this location
-            Slimefun.getNetworkManager().updateAllNetworks(block.getLocation());
+            // Update all networks connected to this location if the item is a network component
+            if (isNetworkComponent(item)) {
+                Slimefun.getNetworkManager().updateAllNetworks(block.getLocation());
+            }
 
             for (ItemStack drop : drops) {
                 if (drop != null && !drop.getType().isAir()) {
@@ -146,5 +152,16 @@ public class ExplosionsListener implements Listener {
                 }
             }
         }
+    }
+
+    /**
+     * Checks if the given {@link SlimefunItem} is a network component.
+     * Network components include energy network components and cargo nodes.
+     *
+     * @param item The {@link SlimefunItem} to check
+     * @return true if the item is a network component, false otherwise
+     */
+    private boolean isNetworkComponent(@Nonnull SlimefunItem item) {
+        return item instanceof EnergyNetComponent || item instanceof CargoNode;
     }
 }
