@@ -85,7 +85,7 @@ public class ExplosionsListener implements Listener {
                 if (!(item instanceof WitherProof) && !callBreakHandler(item, blockData, block, controller)) {
                     controller.removeBlock(loc);
                     block.setType(Material.AIR);
-                    // Update all networks connected to this location if the item is a network component
+                    // Update energy and cargo networks connected to this location if the item is a network component
                     if (isNetworkComponent(item)) {
                         Slimefun.getNetworkManager().updateAllNetworks(loc);
                     }
@@ -141,7 +141,7 @@ public class ExplosionsListener implements Listener {
             handler.onExplode(block, drops);
             Slimefun.getDatabaseManager().getBlockDataController().removeBlock(block.getLocation());
 
-            // Update all networks connected to this location if the item is a network component
+            // Update energy and cargo networks connected to this location if the item is a network component
             if (isNetworkComponent(item)) {
                 Slimefun.getNetworkManager().updateAllNetworks(block.getLocation());
             }
