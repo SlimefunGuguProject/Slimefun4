@@ -168,18 +168,23 @@ public abstract class ADataController {
 
             queuedTask = new QueuedWriteTask() {
                 @Override
-                protected void onSuccess() {
-                    scheduledWriteTasks.remove(scopeToUse);
-                }
+                protected void onSuccess() {}
 
                 @Override
                 protected void onError(Throwable e) {
                     Slimefun.logger().log(Level.SEVERE, "Exception thrown while executing write task: ", e);
+                    throw e instanceof RuntimeException ? (RuntimeException) e : new RuntimeException(e);
                 }
             };
             queuedTask.queue(key, task);
             scheduledWriteTasks.put(scopeToUse, queuedTask);
-            writeExecutor.submit(queuedTask);
+            writeExecutor.submit(() -> {
+                try {
+                    runInTransaction(queuedTask);
+                } finally {
+                    scheduledWriteTasks.remove(scopeToUse);
+                }
+            });
         } finally {
             lock.unlock(scopeKey);
         }
@@ -218,6 +223,37 @@ public abstract class ADataController {
     protected void scheduleWriteTask(Runnable run) {
         checkDestroy();
         writeExecutor.submit(run);
+    }
+
+    protected void runInTransaction(Runnable task) {
+        checkDestroy();
+        if (dataAdapter == null) {
+            throw new IllegalStateException("Controller has not been initialized yet.");
+        }
+
+        try {
+            dataAdapter.beginTransaction();
+            task.run();
+            dataAdapter.commitTransaction();
+        } catch (RuntimeException | Error e) {
+            safeRollback();
+            throw e;
+        } catch (Throwable e) {
+            safeRollback();
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void safeRollback() {
+        if (dataAdapter == null) {
+            return;
+        }
+
+        try {
+            dataAdapter.rollbackTransaction();
+        } catch (Exception ex) {
+            logger.log(Level.SEVERE, "Exception thrown while rolling back transaction: ", ex);
+        }
     }
 
     protected List<RecordSet> getData(RecordKey key) {

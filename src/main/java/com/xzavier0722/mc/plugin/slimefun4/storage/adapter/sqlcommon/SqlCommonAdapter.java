@@ -16,6 +16,7 @@ import com.xzavier0722.mc.plugin.slimefun4.storage.patch.DatabasePatchV1;
 import com.xzavier0722.mc.plugin.slimefun4.storage.patch.DatabasePatchV2;
 import com.zaxxer.hikari.HikariDataSource;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.logging.Level;
@@ -32,6 +33,7 @@ public abstract class SqlCommonAdapter<T extends ISqlCommonConfig> implements ID
             universalInvTable;
     protected String tableMetadataTable;
     protected T config;
+    private final ThreadLocal<Connection> transactionConnection = new ThreadLocal<>();
 
     @Override
     public void prepare(T config) {
@@ -42,12 +44,20 @@ public abstract class SqlCommonAdapter<T extends ISqlCommonConfig> implements ID
     protected void executeSql(String sql) {
         var entry = new SQLEntry(sql);
         Slimefun.getSQLProfiler().recordEntry(entry);
-        try (var conn = ds.getConnection()) {
+        Connection conn = null;
+        try {
+            conn = getConnection();
             SqlUtils.execSql(conn, sql);
         } catch (SQLException e) {
             throw new IllegalStateException("An exception thrown while executing sql: " + sql, e);
         } finally {
-            Slimefun.getSQLProfiler().finishEntry(entry);
+            try {
+                releaseConnection(conn);
+            } catch (SQLException e) {
+                throw new IllegalStateException("An exception thrown while releasing connection for sql: " + sql, e);
+            } finally {
+                Slimefun.getSQLProfiler().finishEntry(entry);
+            }
         }
     }
 
@@ -55,12 +65,20 @@ public abstract class SqlCommonAdapter<T extends ISqlCommonConfig> implements ID
         var entry = new SQLEntry(sql);
         Slimefun.getSQLProfiler().recordEntry(entry);
 
-        try (var conn = ds.getConnection()) {
+        Connection conn = null;
+        try {
+            conn = getConnection();
             return SqlUtils.execQuery(conn, sql);
         } catch (SQLException e) {
             throw new IllegalStateException("An exception thrown while executing sql: " + sql, e);
         } finally {
-            Slimefun.getSQLProfiler().finishEntry(entry);
+            try {
+                releaseConnection(conn);
+            } catch (SQLException e) {
+                throw new IllegalStateException("An exception thrown while releasing connection for sql: " + sql, e);
+            } finally {
+                Slimefun.getSQLProfiler().finishEntry(entry);
+            }
         }
     }
 
@@ -157,5 +175,94 @@ public abstract class SqlCommonAdapter<T extends ISqlCommonConfig> implements ID
         } catch (SQLException e) {
             Slimefun.logger().log(Level.SEVERE, "更新数据库时出现问题!", e);
         }
+    }
+
+    @Override
+    public void beginTransaction() {
+        if (transactionConnection.get() != null) {
+            throw new IllegalStateException("Transaction already started on current thread.");
+        }
+
+        try {
+            var conn = ds.getConnection();
+            conn.setAutoCommit(false);
+            transactionConnection.set(conn);
+        } catch (SQLException e) {
+            throw new IllegalStateException("An exception thrown while beginning transaction", e);
+        }
+    }
+
+    @Override
+    public void commitTransaction() {
+        var conn = transactionConnection.get();
+        if (conn == null) {
+            Slimefun.logger()
+                    .log(
+                            Level.WARNING,
+                            "Attempted to commit without an active transaction on thread: {0}",
+                            Thread.currentThread().getName());
+            return;
+        }
+
+        try {
+            conn.commit();
+        } catch (SQLException e) {
+            throw new IllegalStateException("An exception thrown while committing transaction", e);
+        } finally {
+            endTransaction(conn);
+        }
+    }
+
+    @Override
+    public void rollbackTransaction() {
+        var conn = transactionConnection.get();
+        if (conn == null) {
+            Slimefun.logger()
+                    .log(
+                            Level.WARNING,
+                            "Attempted to roll back without an active transaction on thread: {0}",
+                            Thread.currentThread().getName());
+            return;
+        }
+
+        try {
+            conn.rollback();
+        } catch (SQLException e) {
+            throw new IllegalStateException("An exception thrown while rolling back transaction", e);
+        } finally {
+            endTransaction(conn);
+        }
+    }
+
+    private void endTransaction(Connection conn) {
+        try {
+            conn.setAutoCommit(true);
+        } catch (SQLException e) {
+            Slimefun.logger().log(Level.SEVERE, "Failed to reset auto-commit after transaction.", e);
+        }
+
+        try {
+            conn.close();
+        } catch (SQLException e) {
+            Slimefun.logger().log(Level.SEVERE, "Failed to close connection after transaction.", e);
+        }
+
+        transactionConnection.remove();
+    }
+
+    private Connection getConnection() throws SQLException {
+        var conn = transactionConnection.get();
+        if (conn != null) {
+            return conn;
+        }
+        return ds.getConnection();
+    }
+
+    private void releaseConnection(Connection conn) throws SQLException {
+        if (conn == null || transactionConnection.get() == conn) {
+            return;
+        }
+
+        conn.close();
     }
 }

@@ -29,4 +29,10 @@ public interface IDataSourceAdapter<T> {
     void deleteData(RecordKey key);
 
     void patch();
+
+    default void beginTransaction() {}
+
+    default void commitTransaction() {}
+
+    default void rollbackTransaction() {}
 }
