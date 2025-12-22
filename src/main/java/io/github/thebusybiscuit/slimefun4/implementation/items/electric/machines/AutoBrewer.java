@@ -1,6 +1,7 @@
 package io.github.thebusybiscuit.slimefun4.implementation.items.electric.machines;
 
 import city.norain.slimefun4.SlimefunExtended;
+import com.xzavier0722.mc.plugin.slimefun4.storage.util.StorageCacheUtils;
 import io.github.bakedlibs.dough.inventory.InvUtils;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
@@ -16,6 +17,7 @@ import me.mrCookieSlime.Slimefun.Objects.SlimefunItem.abstractItems.AContainer;
 import me.mrCookieSlime.Slimefun.Objects.SlimefunItem.abstractItems.MachineRecipe;
 import me.mrCookieSlime.Slimefun.api.inventory.BlockMenu;
 import org.bukkit.Material;
+import org.bukkit.block.Block;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.PotionMeta;
 import org.bukkit.potion.PotionData;
@@ -63,6 +65,37 @@ public class AutoBrewer extends AContainer implements NotHopperable {
     @ParametersAreNonnullByDefault
     public AutoBrewer(ItemGroup itemGroup, SlimefunItemStack item, RecipeType recipeType, ItemStack[] recipe) {
         super(itemGroup, item, recipeType, recipe);
+    }
+
+    private void tryPushingRedundantPotion(BlockMenu menu) {
+        int left = getInputSlots()[0];
+        int right = getInputSlots()[1];
+
+        ItemStack leftStack = menu.getItemInSlot(left);
+        ItemStack rightStack = menu.getItemInSlot(right);
+
+        boolean leftPotion = leftStack != null && isPotion(leftStack.getType());
+        boolean rightPotion = rightStack != null && isPotion(rightStack.getType());
+
+        if (leftPotion && rightPotion) {
+            int before = rightStack.getAmount();
+            ItemStack copy = rightStack.clone();
+            ItemStack remaining = menu.pushItem(copy, getOutputSlots());
+            int after = remaining != null ? remaining.getAmount() : 0;
+            if (after == 0) {
+                menu.replaceExistingItem(right, null);
+            } else if (after < before) {
+                rightStack.setAmount(after);
+                menu.replaceExistingItem(right, rightStack);
+            }
+        }
+    }
+
+    @Override
+    protected void tick(Block b) {
+        BlockMenu inv = StorageCacheUtils.getMenu(b.getLocation());
+        tryPushingRedundantPotion(inv);
+        super.tick(b);
     }
 
     @Override
@@ -116,6 +149,22 @@ public class AutoBrewer extends AContainer implements NotHopperable {
         }
     }
 
+    private PotionType getExtendedPotionType(PotionType type) {
+        try {
+            return PotionType.valueOf("LONG_" + type.name());
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+
+    private PotionType getStrengthenPotionType(PotionType type) {
+        try {
+            return PotionType.valueOf("STRONG_" + type.name());
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+
     @ParametersAreNonnullByDefault
     private ItemStack brewPostBasePotionType(Material input, Material potionType, PotionMeta potion) {
         PotionType type = potion.getBasePotionType();
@@ -140,12 +189,16 @@ public class AutoBrewer extends AContainer implements NotHopperable {
             }
         } else if (input == Material.REDSTONE && type.isExtendable() && !type.isUpgradeable()) {
             // Fixes #3390 - Potions can only be either extended or upgraded. Not both.
-            potion.setBasePotionType(type);
+            potion.setBasePotionType(getExtendedPotionType(type));
             return new ItemStack(potionType);
         } else if (input == Material.GLOWSTONE_DUST && type.isUpgradeable() && !type.isExtendable()) {
             // Fixes #3390 - Potions can only be either extended or upgraded. Not both.
-            potion.setBasePotionType(type);
+            potion.setBasePotionType(getStrengthenPotionType(type));
             return new ItemStack(potionType);
+        } else if (input == Material.GUNPOWDER && potionType == Material.POTION) {
+            return new ItemStack(Material.SPLASH_POTION);
+        } else if (input == Material.DRAGON_BREATH && potionType == Material.SPLASH_POTION) {
+            return new ItemStack(Material.LINGERING_POTION);
         } else if (type == PotionType.AWKWARD) {
             PotionType potionRecipe = potionRecipes.get(input);
 

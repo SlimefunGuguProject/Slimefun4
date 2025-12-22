@@ -1,21 +1,23 @@
 package io.github.thebusybiscuit.slimefun4.implementation.listeners;
 
 import com.xzavier0722.mc.plugin.slimefun4.storage.callback.IAsyncReadCallback;
-import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunBlockData;
-import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunUniversalBlockData;
-import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunUniversalData;
+import com.xzavier0722.mc.plugin.slimefun4.storage.controller.ASlimefunDataContainer;
 import com.xzavier0722.mc.plugin.slimefun4.storage.util.StorageCacheUtils;
 import io.github.thebusybiscuit.slimefun4.api.MinecraftVersion;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
+import io.github.thebusybiscuit.slimefun4.core.attributes.EnergyNetComponent;
 import io.github.thebusybiscuit.slimefun4.core.attributes.WitherProof;
 import io.github.thebusybiscuit.slimefun4.core.handlers.BlockBreakHandler;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
+import io.github.thebusybiscuit.slimefun4.implementation.items.cargo.CargoNode;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
 import org.bukkit.ExplosionResult;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.entity.EntityType;
@@ -67,59 +69,52 @@ public class ExplosionsListener implements Listener {
     }
 
     private void removeResistantBlocks(@Nonnull Iterator<Block> blocks) {
+        // For explosion handling, only update network once for a random affected block to improve performance.
+        AtomicBoolean networkUpdated = new AtomicBoolean(false);
+
         while (blocks.hasNext()) {
             Block block = blocks.next();
             var loc = block.getLocation();
-            var blockData = StorageCacheUtils.hasBlock(loc)
-                    ? StorageCacheUtils.getBlock(loc)
-                    : StorageCacheUtils.getUniversalBlock(loc);
+            var blockData = StorageCacheUtils.getDataContainer(loc);
             SlimefunItem item = blockData == null ? null : SlimefunItem.getById(blockData.getSfId());
 
             if (item != null) {
                 blocks.remove();
 
-                var controller = Slimefun.getDatabaseManager().getBlockDataController();
-                if (!(item instanceof WitherProof)
-                        && !item.callItemHandler(BlockBreakHandler.class, handler -> {
-                            if (blockData.isDataLoaded()) {
-                                handleExplosion(handler, block);
-                            } else {
-                                if (blockData instanceof SlimefunBlockData sbd) {
-                                    controller.loadBlockDataAsync(sbd, new IAsyncReadCallback<>() {
-                                        @Override
-                                        public boolean runOnMainThread() {
-                                            return true;
-                                        }
-
-                                        @Override
-                                        public void onResult(SlimefunBlockData result) {
-                                            handleExplosion(handler, block);
-                                        }
-                                    });
-                                } else if (blockData instanceof SlimefunUniversalBlockData ubd) {
-                                    controller.loadUniversalDataAsync(ubd, new IAsyncReadCallback<>() {
-                                        @Override
-                                        public boolean runOnMainThread() {
-                                            return true;
-                                        }
-
-                                        @Override
-                                        public void onResult(SlimefunUniversalData result) {
-                                            handleExplosion(handler, block);
-                                        }
-                                    });
-                                }
-                            }
-                        })) {
-                    controller.removeBlock(loc);
+                if (!(item instanceof WitherProof) && !callBreakHandler(item, blockData, block, networkUpdated)) {
+                    Slimefun.getDatabaseManager().getBlockDataController().removeBlock(loc);
                     block.setType(Material.AIR);
+                    updateNearbyNetwork(item, loc, networkUpdated);
                 }
             }
         }
     }
 
+    private boolean callBreakHandler(
+            SlimefunItem item, ASlimefunDataContainer blockData, Block block, AtomicBoolean updateRef) {
+        return !item.callItemHandler(BlockBreakHandler.class, handler -> {
+            if (blockData.isDataLoaded()) {
+                handleExplosion(handler, block, item, updateRef);
+            } else {
+                Slimefun.getDatabaseManager()
+                        .getBlockDataController()
+                        .loadDataAsync(blockData, new IAsyncReadCallback<>() {
+                            @Override
+                            public boolean runOnMainThread() {
+                                return true;
+                            }
+
+                            @Override
+                            public void onResult(ASlimefunDataContainer result) {
+                                handleExplosion(handler, block, item, updateRef);
+                            }
+                        });
+            }
+        });
+    }
+
     @ParametersAreNonnullByDefault
-    private void handleExplosion(BlockBreakHandler handler, Block block) {
+    private void handleExplosion(BlockBreakHandler handler, Block block, SlimefunItem item, AtomicBoolean ref) {
         if (handler.isExplosionAllowed(block)) {
             block.setType(Material.AIR);
 
@@ -132,6 +127,23 @@ public class ExplosionsListener implements Listener {
                     block.getWorld().dropItemNaturally(block.getLocation(), drop);
                 }
             }
+
+            updateNearbyNetwork(item, block.getLocation(), ref);
         }
+    }
+
+    @ParametersAreNonnullByDefault
+    private void updateNearbyNetwork(SlimefunItem item, Location loc, AtomicBoolean updated) {
+        if (updated.get()) {
+            return;
+        }
+
+        if (!(item instanceof EnergyNetComponent) && !(item instanceof CargoNode)) {
+            return;
+        }
+
+        Slimefun.getNetworkManager().updateAllNetworks(loc);
+
+        updated.getAndSet(true);
     }
 }

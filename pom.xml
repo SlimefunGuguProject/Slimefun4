@@ -168,7 +168,7 @@
                             <shadedPattern>io.github.thebusybiscuit.slimefun4.libraries.unirest</shadedPattern>
                         </relocation>
                         <relocation>
-                            <pattern>org.apache.commons.lang</pattern>
+                            <pattern>org.apache.commons.lang3</pattern>
                             <shadedPattern>io.github.thebusybiscuit.slimefun4.libraries.commons.lang</shadedPattern>
                         </relocation>
                         <relocation>
@@ -375,13 +375,6 @@
             <scope>provided</scope>
         </dependency>
 
-        <dependency>
-            <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-core</artifactId>
-            <version>2.24.1</version>
-            <scope>provided</scope>
-        </dependency>
-
         <!-- Shaded packages -->
         <dependency>
             <groupId>io.github.baked-libs</groupId>
@@ -550,9 +543,9 @@
 
         <!-- TODO: Remove this dependency -->
         <dependency>
-            <groupId>commons-lang</groupId>
-            <artifactId>commons-lang</artifactId>
-            <version>2.6</version>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.20.0</version>
             <scope>compile</scope>
         </dependency>
         <!-- Slimefun Compatibility Lib -->

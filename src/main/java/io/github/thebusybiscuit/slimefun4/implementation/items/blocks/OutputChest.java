@@ -51,7 +51,7 @@ public class OutputChest extends SlimefunItem {
 
             // Check if the target block is a Chest
             if (potentialOutput.getType() == Material.CHEST) {
-                SlimefunItem slimefunItem = StorageCacheUtils.getSfItem(potentialOutput.getLocation());
+                SlimefunItem slimefunItem = StorageCacheUtils.getSlimefunItem(potentialOutput.getLocation());
 
                 // Fixes #3012 - Check if the OutputChest is not disabled here.
                 if (slimefunItem instanceof OutputChest && !slimefunItem.isDisabledIn(b.getWorld())) {

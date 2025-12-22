@@ -42,7 +42,7 @@ public class EnhancedFurnaceListener implements Listener {
             return;
         }
 
-        SlimefunItem furnace = StorageCacheUtils.getSfItem(e.getBlock().getLocation());
+        SlimefunItem furnace = StorageCacheUtils.getSlimefunItem(e.getBlock().getLocation());
 
         // Fixes #2958
         if (furnace instanceof EnhancedFurnace enhancedFurnace
@@ -62,7 +62,7 @@ public class EnhancedFurnaceListener implements Listener {
             return;
         }
 
-        SlimefunItem sfItem = StorageCacheUtils.getSfItem(e.getBlock().getLocation());
+        SlimefunItem sfItem = StorageCacheUtils.getSlimefunItem(e.getBlock().getLocation());
 
         if (sfItem instanceof EnhancedFurnace enhancedFurnace
                 && !enhancedFurnace.isDisabledIn(e.getBlock().getWorld())) {

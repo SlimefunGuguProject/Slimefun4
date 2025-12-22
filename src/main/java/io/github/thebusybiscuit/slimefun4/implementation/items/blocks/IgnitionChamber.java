@@ -13,7 +13,7 @@ import io.papermc.lib.PaperLib;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
-import org.apache.commons.lang.Validate;
+import org.apache.commons.lang3.Validate;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -108,7 +108,7 @@ public class IgnitionChamber extends SlimefunItem {
             Block block = b.getRelative(face);
 
             if (block.getType() == Material.DROPPER
-                    && StorageCacheUtils.getSfItem(block.getLocation()) instanceof IgnitionChamber) {
+                    && StorageCacheUtils.getSlimefunItem(block.getLocation()) instanceof IgnitionChamber) {
                 BlockState state =
                         PaperLib.getBlockState(b.getRelative(face), false).getState();
 

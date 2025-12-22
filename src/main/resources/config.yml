@@ -38,6 +38,7 @@ options:
   drop-block-creative: true
   bypass-environment-check: false
   bypass-item-length-check: false
+  max-gps-waypoints: 21
 
 guide:
   # 是否在指南中展示原版物品合成配方

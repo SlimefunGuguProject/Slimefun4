@@ -144,7 +144,35 @@ public class SlimefunItemInteractListener implements Listener {
             if (!p.isSneaking() || event.getItem().getType() == Material.AIR) {
                 event.getInteractEvent().setCancelled(true);
 
-                if (item instanceof UniversalBlock) {
+                if (!(item instanceof UniversalBlock)) {
+                    var blockData = StorageCacheUtils.getBlock(clickedBlock.getLocation());
+
+                    if (blockData == null) {
+                        return;
+                    }
+
+                    if (blockData.isDataLoaded()) {
+                        openMenu(blockData.getBlockMenu(), clickedBlock, p);
+                    } else {
+                        Slimefun.getDatabaseManager()
+                                .getBlockDataController()
+                                .loadBlockDataAsync(blockData, new IAsyncReadCallback<>() {
+                                    @Override
+                                    public boolean runOnMainThread() {
+                                        return true;
+                                    }
+
+                                    @Override
+                                    public void onResult(SlimefunBlockData result) {
+                                        if (!p.isOnline()) {
+                                            return;
+                                        }
+
+                                        openMenu(result.getBlockMenu(), clickedBlock, p);
+                                    }
+                                });
+                    }
+                } else {
                     var uniData = StorageCacheUtils.getUniversalBlock(clickedBlock);
 
                     if (uniData == null) {
@@ -179,34 +207,6 @@ public class SlimefunItemInteractListener implements Listener {
                                         }
 
                                         openMenu(result.getMenu(), clickedBlock, p);
-                                    }
-                                });
-                    }
-                } else {
-                    var blockData = StorageCacheUtils.getBlock(clickedBlock.getLocation());
-
-                    if (blockData == null) {
-                        return;
-                    }
-
-                    if (blockData.isDataLoaded()) {
-                        openMenu(blockData.getBlockMenu(), clickedBlock, p);
-                    } else {
-                        Slimefun.getDatabaseManager()
-                                .getBlockDataController()
-                                .loadBlockDataAsync(blockData, new IAsyncReadCallback<>() {
-                                    @Override
-                                    public boolean runOnMainThread() {
-                                        return true;
-                                    }
-
-                                    @Override
-                                    public void onResult(SlimefunBlockData result) {
-                                        if (!p.isOnline()) {
-                                            return;
-                                        }
-
-                                        openMenu(result.getBlockMenu(), clickedBlock, p);
                                     }
                                 });
                     }

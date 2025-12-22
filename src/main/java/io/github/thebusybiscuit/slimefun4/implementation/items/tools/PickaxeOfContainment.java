@@ -69,7 +69,7 @@ public class PickaxeOfContainment extends SimpleSlimefunItem<ToolUseHandler> {
         If the spawner's BlockStorage has BlockInfo, then it's not a vanilla spawner
         and should not give a broken spawner but a repaired one instead.
         */
-        SlimefunItem item = StorageCacheUtils.getSfItem(b.getLocation());
+        SlimefunItem item = StorageCacheUtils.getSlimefunItem(b.getLocation());
         if (item instanceof RepairedSpawner) {
             spawner = (AbstractMonsterSpawner) SlimefunItems.REPAIRED_SPAWNER.getItem();
         } else if (item == null) {

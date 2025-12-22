@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.core.attributes;
 
+import com.xzavier0722.mc.plugin.slimefun4.storage.controller.ASlimefunDataContainer;
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunBlockData;
 import com.xzavier0722.mc.plugin.slimefun4.storage.util.StorageCacheUtils;
 import io.github.bakedlibs.dough.blocks.BlockPosition;
@@ -13,7 +14,7 @@ import io.github.thebusybiscuit.slimefun4.utils.SlimefunUtils;
 import java.util.logging.Level;
 import javax.annotation.Nonnull;
 import me.mrCookieSlime.CSCoreLibPlugin.Configuration.Config;
-import org.apache.commons.lang.Validate;
+import org.apache.commons.lang3.Validate;
 import org.bukkit.Location;
 
 /**
@@ -80,7 +81,7 @@ public interface EnergyNetComponent extends ItemAttribute {
             return 0;
         }
 
-        var blockData = StorageCacheUtils.getBlock(l);
+        var blockData = StorageCacheUtils.getDataContainer(l);
         if (blockData == null || blockData.isPendingRemove()) {
             return 0;
         }
@@ -109,7 +110,7 @@ public interface EnergyNetComponent extends ItemAttribute {
             return 0;
         }
 
-        var blockData = StorageCacheUtils.getBlock(l);
+        var blockData = StorageCacheUtils.getDataContainer(l);
         if (blockData == null || blockData.isPendingRemove()) {
             return 0;
         }
@@ -123,9 +124,19 @@ public interface EnergyNetComponent extends ItemAttribute {
     }
 
     @Deprecated
+    default int getCharge(@Nonnull Location l, @Nonnull ASlimefunDataContainer data) {
+        return (int) NumberUtils.longToInt(getChargeLong(l, data));
+    }
+
     default int getCharge(@Nonnull Location l, @Nonnull SlimefunBlockData data) {
         return (int) NumberUtils.longToInt(getChargeLong(l, data));
     }
+
+    @Deprecated(forRemoval = true)
+    default long getChargeLong(@Nonnull Location l, @Nonnull SlimefunBlockData data) {
+        return getChargeLong(l, data);
+    }
+
     /**
      * This returns the currently stored charge at a given {@link Location}.
      * object for this {@link Location}.
@@ -137,7 +148,7 @@ public interface EnergyNetComponent extends ItemAttribute {
      *
      * @return The charge stored at that {@link Location}
      */
-    default long getChargeLong(@Nonnull Location l, @Nonnull SlimefunBlockData data) {
+    default long getChargeLong(@Nonnull Location l, @Nonnull ASlimefunDataContainer data) {
         Validate.notNull(l, "Location was null!");
         Validate.notNull(data, "data was null!");
 
@@ -184,7 +195,7 @@ public interface EnergyNetComponent extends ItemAttribute {
 
                 // Do we even need to update the value?
                 if (charge != getCharge(l)) {
-                    var blockData = StorageCacheUtils.getBlock(l);
+                    var blockData = StorageCacheUtils.getDataContainer(l);
 
                     if (blockData == null || blockData.isPendingRemove()) {
                         return;

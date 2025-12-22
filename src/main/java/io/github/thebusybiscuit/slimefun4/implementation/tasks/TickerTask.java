@@ -24,7 +24,7 @@ import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 import lombok.Setter;
 import me.mrCookieSlime.Slimefun.Objects.handlers.BlockTicker;
-import org.apache.commons.lang.Validate;
+import org.apache.commons.lang3.Validate;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.scheduler.BukkitScheduler;
@@ -262,7 +262,7 @@ public class TickerTask implements Runnable {
             });
             Slimefun.logger().log(Level.SEVERE, "在过去的 4 个 Tick 中发生多次错误，该方块对应的机器已被停用。");
             Slimefun.logger().log(Level.SEVERE, "请在 /plugins/Slimefun/error-reports/ 文件夹中查看错误详情。");
-            Slimefun.logger().log(Level.SEVERE, "如果要反馈错误,请向他人发送上述错误报告文件,而不是发送这个窗口的截图");
+            Slimefun.logger().log(Level.SEVERE, "如果你要向他人求助，请向他人发送上述错误报告文件,而不是发送这个窗口的截图");
             Slimefun.logger().log(Level.SEVERE, " ");
             bugs.remove(position);
 

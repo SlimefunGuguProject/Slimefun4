@@ -27,7 +27,8 @@ public class MiningAndroidListener implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onAndroidMine(AndroidMineEvent e) {
-        SlimefunItem slimefunItem = StorageCacheUtils.getSfItem(e.getBlock().getLocation());
+        SlimefunItem slimefunItem =
+                StorageCacheUtils.getSlimefunItem(e.getBlock().getLocation());
 
         // Fixes #2839 - Can't believe we forgot a null check here
         if (slimefunItem != null) {

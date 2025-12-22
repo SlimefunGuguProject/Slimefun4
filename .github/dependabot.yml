@@ -7,8 +7,16 @@ version: 2
 updates:
   - package-ecosystem: "maven" # See documentation for possible values
     directory: "/" # Location of package manifests
-    target-branch: 'dev'
+    target-branch: dev
     schedule:
       interval: "daily"
     commit-message:
-      prefix: "🔧"  
+      prefix: "🔧"
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    target-branch: dev
+    schedule:
+      # Check for updates to GitHub Actions every week
+      interval: "weekly"
+    commit-message:
+      prefix: "🔧"
