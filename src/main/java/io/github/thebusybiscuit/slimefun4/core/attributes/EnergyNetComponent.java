@@ -134,7 +134,7 @@ public interface EnergyNetComponent extends ItemAttribute {
 
     @Deprecated(forRemoval = true)
     default long getChargeLong(@Nonnull Location l, @Nonnull SlimefunBlockData data) {
-        return getChargeLong(l, data);
+        return getChargeLong(l, (ASlimefunDataContainer) data);
     }
 
     /**
