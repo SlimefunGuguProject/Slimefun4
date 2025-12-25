@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.utils.tags;
 
+import com.google.common.base.Preconditions;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -22,7 +23,6 @@ import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
-import org.apache.commons.lang3.Validate;
 import org.bukkit.Bukkit;
 import org.bukkit.Keyed;
 import org.bukkit.Material;
@@ -92,7 +92,7 @@ public class TagParser implements Keyed {
      */
     public void parse(@Nonnull String json, @Nonnull BiConsumer<Set<Material>, Set<Tag<Material>>> callback)
             throws TagMisconfigurationException {
-        Validate.notNull(json, "Cannot parse a null String");
+        Preconditions.checkNotNull(json, "Cannot parse a null String");
 
         try {
             Set<Material> materials = EnumSet.noneOf(Material.class);

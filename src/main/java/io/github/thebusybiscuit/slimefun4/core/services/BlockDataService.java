@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.core.services;
 
+import com.google.common.base.Preconditions;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.utils.tags.SlimefunTag;
 import io.papermc.lib.PaperLib;
@@ -8,7 +9,6 @@ import java.util.UUID;
 import java.util.logging.Level;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import org.apache.commons.lang3.Validate;
 import org.bukkit.Bukkit;
 import org.bukkit.Keyed;
 import org.bukkit.Material;
@@ -88,8 +88,8 @@ public class BlockDataService implements Keyed {
      *            The value to store
      */
     public void setBlockData(@Nonnull Block b, @Nonnull NamespacedKey key, @Nonnull String value) {
-        Validate.notNull(b, "The block cannot be null!");
-        Validate.notNull(value, "The value cannot be null!");
+        Preconditions.checkNotNull(b, "The block cannot be null!");
+        Preconditions.checkNotNull(value, "The value cannot be null!");
 
         /**
          * Don't use PaperLib here, it seems to be quite buggy in block-placing scenarios
@@ -155,7 +155,7 @@ public class BlockDataService implements Keyed {
     }
 
     public Optional<String> getBlockData(@Nonnull Block b, @Nonnull NamespacedKey key) {
-        Validate.notNull(b, "The block cannot be null!");
+        Preconditions.checkNotNull(b, "The block cannot be null!");
 
         BlockState state = PaperLib.getBlockState(b, false).getState();
         PersistentDataContainer container = getPersistentDataContainer(state);

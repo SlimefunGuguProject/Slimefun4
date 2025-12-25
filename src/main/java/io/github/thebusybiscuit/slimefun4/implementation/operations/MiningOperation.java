@@ -1,8 +1,8 @@
 package io.github.thebusybiscuit.slimefun4.implementation.operations;
 
+import com.google.common.base.Preconditions;
 import io.github.thebusybiscuit.slimefun4.core.machines.MachineOperation;
 import javax.annotation.Nonnull;
-import org.apache.commons.lang3.Validate;
 import org.bukkit.inventory.ItemStack;
 
 /**
@@ -20,8 +20,8 @@ public class MiningOperation implements MachineOperation {
     private int currentTicks = 0;
 
     public MiningOperation(@Nonnull ItemStack result, int totalTicks) {
-        Validate.notNull(result, "The result cannot be null");
-        Validate.isTrue(
+        Preconditions.checkNotNull(result, "The result cannot be null");
+        Preconditions.checkArgument(
                 totalTicks >= 0,
                 "The amount of total ticks must be a positive integer or zero, received: " + totalTicks);
 
@@ -31,7 +31,7 @@ public class MiningOperation implements MachineOperation {
 
     @Override
     public void addProgress(int num) {
-        Validate.isTrue(num > 0, "Progress must be positive.");
+        Preconditions.checkArgument(num > 0, "Progress must be positive.");
         currentTicks += num;
     }
 

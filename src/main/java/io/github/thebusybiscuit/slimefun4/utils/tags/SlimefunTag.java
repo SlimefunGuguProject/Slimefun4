@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.utils.tags;
 
+import com.google.common.base.Preconditions;
 import io.github.thebusybiscuit.slimefun4.api.exceptions.TagMisconfigurationException;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.implementation.items.autocrafters.AbstractAutoCrafter;
@@ -23,7 +24,6 @@ import java.util.Set;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import org.apache.commons.lang3.Validate;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Tag;
@@ -432,7 +432,7 @@ public enum SlimefunTag implements Tag<Material> {
      * @return The {@link SlimefunTag} or null if it does not exist.
      */
     public static @Nullable SlimefunTag getTag(@Nonnull String value) {
-        Validate.notNull(value, "A tag cannot be null!");
+        Preconditions.checkNotNull(value, "A tag cannot be null!");
 
         return nameLookup.get(value);
     }

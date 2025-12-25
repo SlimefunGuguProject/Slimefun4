@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.api.researches;
 
+import com.google.common.base.Preconditions;
 import io.github.thebusybiscuit.slimefun4.api.events.ResearchUnlockEvent;
 import io.github.thebusybiscuit.slimefun4.api.player.PlayerProfile;
 import io.github.thebusybiscuit.slimefun4.core.guide.options.SlimefunGuideSettings;
@@ -9,7 +10,6 @@ import io.github.thebusybiscuit.slimefun4.utils.FireworkUtils;
 import java.util.function.Consumer;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import org.apache.commons.lang3.Validate;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
@@ -43,7 +43,7 @@ public class PlayerResearchTask implements Consumer<PlayerProfile> {
      *            The callback to run when the task has completed
      */
     PlayerResearchTask(@Nonnull Research research, boolean isInstant, @Nullable Consumer<Player> callback) {
-        Validate.notNull(research, "The Research must not be null");
+        Preconditions.checkNotNull(research, "The Research must not be null");
 
         this.research = research;
         this.isInstant = isInstant;

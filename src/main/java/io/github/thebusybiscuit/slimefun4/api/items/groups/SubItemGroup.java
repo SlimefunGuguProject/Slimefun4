@@ -1,11 +1,11 @@
 package io.github.thebusybiscuit.slimefun4.api.items.groups;
 
+import com.google.common.base.Preconditions;
 import io.github.thebusybiscuit.slimefun4.api.SlimefunAddon;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
-import org.apache.commons.lang3.Validate;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -32,7 +32,7 @@ public class SubItemGroup extends ItemGroup {
     public SubItemGroup(NamespacedKey key, NestedItemGroup parent, ItemStack item, int tier) {
         super(key, item, tier);
 
-        Validate.notNull(parent, "The parent group cannot be null");
+        Preconditions.checkNotNull(parent, "The parent group cannot be null");
 
         parentItemGroup = parent;
         parent.addSubGroup(this);

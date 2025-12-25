@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.core.networks;
 
+import com.google.common.base.Preconditions;
 import com.xzavier0722.mc.plugin.slimefun4.storage.util.LocationUtils;
 import io.github.bakedlibs.dough.blocks.BlockPosition;
 import io.github.bakedlibs.dough.blocks.ChunkPosition;
@@ -19,7 +20,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Level;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import org.apache.commons.lang3.Validate;
 import org.bukkit.Location;
 import org.bukkit.Server;
 
@@ -64,7 +64,7 @@ public class NetworkManager {
      *            Whether excess items from a {@link CargoNet} should be voided
      */
     public NetworkManager(int maxStepSize, boolean enableVisualizer, boolean deleteExcessItems) {
-        Validate.isTrue(maxStepSize > 0, "The maximal Network size must be above zero!");
+        Preconditions.checkArgument(maxStepSize > 0, "The maximal Network size must be above zero!");
 
         this.enableVisualizer = enableVisualizer;
         this.deleteExcessItems = deleteExcessItems;
@@ -127,7 +127,7 @@ public class NetworkManager {
             return Optional.empty();
         }
 
-        Validate.notNull(type, "Type must not be null");
+        Preconditions.checkNotNull(type, "Type must not be null");
 
         ChunkPosition chunkPos = new ChunkPosition(l);
         List<Network> chunkNetworks = networks.get(chunkPos);
@@ -152,7 +152,7 @@ public class NetworkManager {
             return new ArrayList<>();
         }
 
-        Validate.notNull(type, "Type must not be null");
+        Preconditions.checkNotNull(type, "Type must not be null");
         List<T> list = new ArrayList<>();
 
         ChunkPosition chunkPos = new ChunkPosition(l);
@@ -178,7 +178,7 @@ public class NetworkManager {
      *            The {@link Network} to register
      */
     public void registerNetwork(@Nonnull Network network) {
-        Validate.notNull(network, "Cannot register a null Network");
+        Preconditions.checkNotNull(network, "Cannot register a null Network");
 
         Debug.log(
                 TestCase.ENERGYNET, "Registering network @ " + LocationUtils.locationToString(network.getRegulator()));
@@ -201,7 +201,7 @@ public class NetworkManager {
      *            The {@link Network} to remove
      */
     public void unregisterNetwork(@Nonnull Network network) {
-        Validate.notNull(network, "Cannot unregister a null Network");
+        Preconditions.checkNotNull(network, "Cannot unregister a null Network");
 
         Debug.log(
                 TestCase.ENERGYNET,
@@ -223,7 +223,7 @@ public class NetworkManager {
      *            The {@link Location} to update
      */
     public void updateAllNetworks(@Nonnull Location l) {
-        Validate.notNull(l, "The Location cannot be null");
+        Preconditions.checkNotNull(l, "The Location cannot be null");
 
         Debug.log(TestCase.ENERGYNET, "Updating all networks now.");
 

@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.implementation.items.electric;
 
+import com.google.common.base.Preconditions;
 import io.github.bakedlibs.dough.common.ChatColors;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
@@ -19,7 +20,6 @@ import javax.annotation.ParametersAreNonnullByDefault;
 import me.mrCookieSlime.Slimefun.Objects.SlimefunItem.abstractItems.AGenerator;
 import me.mrCookieSlime.Slimefun.Objects.SlimefunItem.abstractItems.MachineFuel;
 import me.mrCookieSlime.Slimefun.Objects.SlimefunItem.interfaces.InventoryBlock;
-import org.apache.commons.lang3.Validate;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -85,7 +85,7 @@ public abstract class AbstractEnergyProvider extends SlimefunItem
     }
 
     public void registerFuel(@Nonnull MachineFuel fuel) {
-        Validate.notNull(fuel, "Machine Fuel cannot be null!");
+        Preconditions.checkNotNull(fuel, "Machine Fuel cannot be null!");
         fuelTypes.add(fuel);
     }
 

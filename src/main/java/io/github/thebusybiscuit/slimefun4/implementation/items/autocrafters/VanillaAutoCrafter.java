@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.implementation.items.autocrafters;
 
+import com.google.common.base.Preconditions;
 import io.github.bakedlibs.dough.common.CommonPatterns;
 import io.github.bakedlibs.dough.items.CustomItemStack;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
@@ -20,7 +21,6 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 import me.mrCookieSlime.CSCoreLibPlugin.general.Inventory.ChestMenu;
-import org.apache.commons.lang3.Validate;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -128,7 +128,8 @@ public class VanillaAutoCrafter extends AbstractAutoCrafter implements NotDiagon
     @ParametersAreNonnullByDefault
     private void offerRecipe(
             Player p, Block b, List<Recipe> recipes, int index, ChestMenu menu, AsyncRecipeChoiceTask task) {
-        Validate.isTrue(index >= 0 && index < recipes.size(), "page must be between 0 and " + (recipes.size() - 1));
+        Preconditions.checkArgument(
+                index >= 0 && index < recipes.size(), "page must be between 0 and " + (recipes.size() - 1));
 
         menu.replaceExistingItem(46, ChestMenuUtils.getPreviousButton(p, index + 1, recipes.size()));
         menu.addMenuClickHandler(46, (pl, slot, item, action) -> {

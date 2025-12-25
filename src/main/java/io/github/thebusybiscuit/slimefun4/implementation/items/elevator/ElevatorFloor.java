@@ -1,7 +1,7 @@
 package io.github.thebusybiscuit.slimefun4.implementation.items.elevator;
 
+import com.google.common.base.Preconditions;
 import javax.annotation.Nonnull;
-import org.apache.commons.lang3.Validate;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
@@ -37,8 +37,8 @@ class ElevatorFloor {
      * @param block The {@link Block} of this floor
      */
     public ElevatorFloor(@Nonnull String name, int number, @Nonnull Block block) {
-        Validate.notNull(name, "An ElevatorFloor must have a name");
-        Validate.notNull(block, "An ElevatorFloor must have a block");
+        Preconditions.checkNotNull(name, "An ElevatorFloor must have a name");
+        Preconditions.checkNotNull(block, "An ElevatorFloor must have a block");
 
         this.name = name;
         this.number = number;

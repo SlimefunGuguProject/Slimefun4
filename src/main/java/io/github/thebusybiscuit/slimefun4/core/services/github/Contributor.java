@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.core.services.github;
 
+import com.google.common.base.Preconditions;
 import io.github.bakedlibs.dough.data.TriStateOptional;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.utils.HeadTexture;
@@ -13,7 +14,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import org.apache.commons.lang3.Validate;
 import org.bukkit.ChatColor;
 
 /**
@@ -45,8 +45,8 @@ public class Contributor {
      *            A link to their GitHub profile
      */
     public Contributor(@Nonnull String minecraftName, @Nonnull String profile) {
-        Validate.notNull(minecraftName, "Username must never be null!");
-        Validate.notNull(profile, "The profile cannot be null!");
+        Preconditions.checkNotNull(minecraftName, "Username must never be null!");
+        Preconditions.checkNotNull(profile, "The profile cannot be null!");
 
         githubUsername = profile.substring(profile.lastIndexOf('/') + 1);
         minecraftUsername = minecraftName;
@@ -60,7 +60,7 @@ public class Contributor {
      *            The username of this {@link Contributor}
      */
     public Contributor(@Nonnull String username) {
-        Validate.notNull(username, "Username must never be null!");
+        Preconditions.checkNotNull(username, "Username must never be null!");
 
         githubUsername = username;
         minecraftUsername = username;
@@ -77,8 +77,8 @@ public class Contributor {
      *            The amount of contributions made as that role
      */
     public void setContributions(@Nonnull String role, int commits) {
-        Validate.notNull(role, "The role cannot be null!");
-        Validate.isTrue(commits >= 0, "Contributions cannot be negative");
+        Preconditions.checkNotNull(role, "The role cannot be null!");
+        Preconditions.checkArgument(commits >= 0, "Contributions cannot be negative");
 
         contributions.put(role, commits);
     }
@@ -137,7 +137,7 @@ public class Contributor {
      * @return The amount of contributions this {@link Contributor} submitted as the given role
      */
     public int getContributions(@Nonnull String role) {
-        Validate.notNull(role, "The role cannot be null!");
+        Preconditions.checkNotNull(role, "The role cannot be null!");
 
         return contributions.getOrDefault(role, 0);
     }

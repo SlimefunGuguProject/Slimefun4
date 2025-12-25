@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.implementation.items.geo;
 
+import com.google.common.base.Preconditions;
 import com.xzavier0722.mc.plugin.slimefun4.storage.callback.IAsyncReadCallback;
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunBlockData;
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunChunkData;
@@ -33,7 +34,6 @@ import me.mrCookieSlime.Slimefun.Objects.SlimefunItem.interfaces.InventoryBlock;
 import me.mrCookieSlime.Slimefun.Objects.handlers.BlockTicker;
 import me.mrCookieSlime.Slimefun.api.inventory.BlockMenu;
 import me.mrCookieSlime.Slimefun.api.inventory.BlockMenuPreset;
-import org.apache.commons.lang3.Validate;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -126,7 +126,7 @@ public class GEOMiner extends SlimefunItem
      * @return This method will return the current instance of {@link GEOMiner}, so that can be chained.
      */
     public final GEOMiner setCapacity(int capacity) {
-        Validate.isTrue(capacity > 0, "The capacity must be greater than zero!");
+        Preconditions.checkArgument(capacity > 0, "The capacity must be greater than zero!");
 
         if (getState() == ItemState.UNREGISTERED) {
             this.energyCapacity = capacity;
@@ -145,7 +145,7 @@ public class GEOMiner extends SlimefunItem
      * @return This method will return the current instance of {@link GEOMiner}, so that can be chained.
      */
     public final GEOMiner setProcessingSpeed(int speed) {
-        Validate.isTrue(speed > 0, "The speed must be greater than zero!");
+        Preconditions.checkArgument(speed > 0, "The speed must be greater than zero!");
 
         this.processingSpeed = speed;
         return this;
@@ -160,9 +160,10 @@ public class GEOMiner extends SlimefunItem
      * @return This method will return the current instance of {@link GEOMiner}, so that can be chained.
      */
     public final GEOMiner setEnergyConsumption(int energyConsumption) {
-        Validate.isTrue(energyConsumption > 0, "The energy consumption must be greater than zero!");
-        Validate.isTrue(energyCapacity > 0, "You must specify the capacity before you can set the consumption amount.");
-        Validate.isTrue(
+        Preconditions.checkArgument(energyConsumption > 0, "The energy consumption must be greater than zero!");
+        Preconditions.checkArgument(
+                energyCapacity > 0, "You must specify the capacity before you can set the consumption amount.");
+        Preconditions.checkArgument(
                 energyConsumption <= energyCapacity,
                 "The energy consumption cannot be higher than the capacity (" + energyCapacity + ')');
 

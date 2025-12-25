@@ -1,10 +1,10 @@
 package io.github.thebusybiscuit.slimefun4.implementation.items.electric.machines.entities;
 
+import com.google.common.base.Preconditions;
 import java.util.function.Predicate;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
 import me.mrCookieSlime.Slimefun.Objects.SlimefunItem.abstractItems.MachineRecipe;
-import org.apache.commons.lang3.Validate;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.inventory.ItemStack;
 
@@ -23,7 +23,7 @@ public class AnimalProduce extends MachineRecipe implements Predicate<LivingEnti
     @ParametersAreNonnullByDefault
     public AnimalProduce(ItemStack input, ItemStack result, Predicate<LivingEntity> predicate) {
         super(5, new ItemStack[] {input}, new ItemStack[] {result});
-        Validate.notNull(predicate, "The Predicate must not be null");
+        Preconditions.checkNotNull(predicate, "The Predicate must not be null");
 
         this.predicate = predicate;
     }

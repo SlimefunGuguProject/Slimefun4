@@ -1,6 +1,7 @@
 package io.github.thebusybiscuit.slimefun4.implementation.items.androids;
 
 import city.norain.slimefun4.api.menu.UniversalMenu;
+import com.google.common.base.Preconditions;
 import com.xzavier0722.mc.plugin.slimefun4.storage.util.StorageCacheUtils;
 import io.github.thebusybiscuit.slimefun4.utils.HeadTexture;
 import io.github.thebusybiscuit.slimefun4.utils.SlimefunUtils;
@@ -10,7 +11,6 @@ import java.util.function.Predicate;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
-import org.apache.commons.lang3.Validate;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -279,7 +279,7 @@ public enum Instruction {
 
     @ParametersAreNonnullByDefault
     public void execute(ProgrammableAndroid android, Block b, UniversalMenu inventory, BlockFace face) {
-        Validate.notNull(method, "Instruction '" + name() + "' must be executed manually!");
+        Preconditions.checkNotNull(method, "Instruction '" + name() + "' must be executed manually!");
         method.perform(android, b, inventory, face);
     }
 
@@ -295,7 +295,7 @@ public enum Instruction {
      * @return The {@link Instruction} or null if it does not exist.
      */
     @Nullable public static Instruction getInstruction(@Nonnull String value) {
-        Validate.notNull(value, "An Instruction cannot be null!");
+        Preconditions.checkNotNull(value, "An Instruction cannot be null!");
         return nameLookup.get(value);
     }
 }

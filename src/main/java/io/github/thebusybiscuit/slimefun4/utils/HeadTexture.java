@@ -1,11 +1,11 @@
 package io.github.thebusybiscuit.slimefun4.utils;
 
+import com.google.common.base.Preconditions;
 import io.github.bakedlibs.dough.common.CommonPatterns;
 import io.github.bakedlibs.dough.skins.PlayerSkin;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 import javax.annotation.Nonnull;
-import org.apache.commons.lang3.Validate;
 import org.bukkit.inventory.ItemStack;
 
 /**
@@ -123,8 +123,9 @@ public enum HeadTexture {
     private final UUID uuid;
 
     HeadTexture(@Nonnull String texture) {
-        Validate.notNull(texture, "Texture cannot be null");
-        Validate.isTrue(CommonPatterns.HEXADECIMAL.matcher(texture).matches(), "Textures must be in hexadecimal.");
+        Preconditions.checkNotNull(texture, "Texture cannot be null");
+        Preconditions.checkArgument(
+                CommonPatterns.HEXADECIMAL.matcher(texture).matches(), "Textures must be in hexadecimal.");
 
         this.texture = texture;
         this.uuid = UUID.nameUUIDFromBytes(texture.getBytes(StandardCharsets.UTF_8));

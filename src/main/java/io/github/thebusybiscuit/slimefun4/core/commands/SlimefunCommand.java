@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.core.commands;
 
+import com.google.common.base.Preconditions;
 import io.github.bakedlibs.dough.common.ChatColors;
 import io.github.thebusybiscuit.slimefun4.core.commands.subcommands.SlimefunSubCommands;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
@@ -9,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
-import org.apache.commons.lang3.Validate;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -41,7 +41,7 @@ public class SlimefunCommand implements CommandExecutor, Listener {
     }
 
     public void register() {
-        Validate.isTrue(!registered, "Slimefun's subcommands have already been registered!");
+        Preconditions.checkArgument(!registered, "Slimefun's subcommands have already been registered!");
 
         registered = true;
         plugin.getServer().getPluginManager().registerEvents(this, plugin);

@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.implementation.items.autocrafters;
 
+import com.google.common.base.Preconditions;
 import io.github.bakedlibs.dough.items.CustomItemStack;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
@@ -14,7 +15,6 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 import me.mrCookieSlime.CSCoreLibPlugin.general.Inventory.ChestMenu;
-import org.apache.commons.lang3.Validate;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -57,7 +57,7 @@ public class SlimefunAutoCrafter extends AbstractAutoCrafter {
 
     @Override
     @Nullable public AbstractRecipe getSelectedRecipe(@Nonnull Block b) {
-        Validate.notNull(b, "The Block cannot be null!");
+        Preconditions.checkNotNull(b, "The Block cannot be null!");
 
         BlockState state = PaperLib.getBlockState(b, false).getState();
 

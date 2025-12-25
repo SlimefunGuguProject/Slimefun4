@@ -1,11 +1,11 @@
 package io.github.thebusybiscuit.slimefun4.core.services;
 
+import com.google.common.base.Preconditions;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
 import java.util.Optional;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import org.apache.commons.lang3.Validate;
 import org.bukkit.Keyed;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -61,8 +61,8 @@ public class CustomItemDataService implements Keyed {
      *            The id to store on the {@link ItemStack}
      */
     public void setItemData(@Nonnull ItemStack item, @Nonnull String id) {
-        Validate.notNull(item, "The Item cannot be null!");
-        Validate.notNull(id, "Cannot store null on an Item!");
+        Preconditions.checkNotNull(item, "The Item cannot be null!");
+        Preconditions.checkNotNull(id, "Cannot store null on an Item!");
 
         ItemMeta im = item.getItemMeta();
         setItemData(im, id);
@@ -79,8 +79,8 @@ public class CustomItemDataService implements Keyed {
      *            The id to store on the {@link ItemMeta}
      */
     public void setItemData(@Nonnull ItemMeta meta, @Nonnull String id) {
-        Validate.notNull(meta, "The ItemMeta cannot be null!");
-        Validate.notNull(id, "Cannot store null on an ItemMeta!");
+        Preconditions.checkNotNull(meta, "The ItemMeta cannot be null!");
+        Preconditions.checkNotNull(id, "Cannot store null on an ItemMeta!");
 
         PersistentDataContainer container = meta.getPersistentDataContainer();
         container.set(namespacedKey, PersistentDataType.STRING, id);
@@ -114,7 +114,7 @@ public class CustomItemDataService implements Keyed {
      * @return An {@link Optional} describing the result
      */
     public @Nonnull Optional<String> getItemData(@Nonnull ItemMeta meta) {
-        Validate.notNull(meta, "Cannot read data from null!");
+        Preconditions.checkNotNull(meta, "Cannot read data from null!");
 
         PersistentDataContainer container = meta.getPersistentDataContainer();
         return Optional.ofNullable(container.get(namespacedKey, PersistentDataType.STRING));
@@ -133,8 +133,8 @@ public class CustomItemDataService implements Keyed {
      * @return Whether both metas have data on them and its the same.
      */
     public boolean hasEqualItemData(@Nonnull ItemMeta meta1, @Nonnull ItemMeta meta2) {
-        Validate.notNull(meta1, "Cannot read data from null (first arg)");
-        Validate.notNull(meta2, "Cannot read data from null (second arg)");
+        Preconditions.checkNotNull(meta1, "Cannot read data from null (first arg)");
+        Preconditions.checkNotNull(meta2, "Cannot read data from null (second arg)");
 
         Optional<String> data1 = getItemData(meta1);
 

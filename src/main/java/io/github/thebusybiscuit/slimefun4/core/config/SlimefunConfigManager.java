@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.core.config;
 
+import com.google.common.base.Preconditions;
 import io.github.bakedlibs.dough.config.Config;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemSetting;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemState;
@@ -13,7 +14,6 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 import lombok.Getter;
-import org.apache.commons.lang3.Validate;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Server;
 
@@ -72,7 +72,7 @@ public class SlimefunConfigManager {
     private boolean bypassItemLengthCheck;
 
     public SlimefunConfigManager(@Nonnull Slimefun plugin) {
-        Validate.notNull(plugin, "The Plugin instance cannot be null");
+        Preconditions.checkNotNull(plugin, "The Plugin instance cannot be null");
 
         this.plugin = plugin;
         pluginConfig = getConfig(plugin, "config", () -> new Config(plugin));

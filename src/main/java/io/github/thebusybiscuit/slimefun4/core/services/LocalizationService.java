@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.core.services;
 
+import com.google.common.base.Preconditions;
 import io.github.thebusybiscuit.slimefun4.core.services.localization.Language;
 import io.github.thebusybiscuit.slimefun4.core.services.localization.LanguageFile;
 import io.github.thebusybiscuit.slimefun4.core.services.localization.SlimefunLocalization;
@@ -20,7 +21,6 @@ import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
-import org.apache.commons.lang3.Validate;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Server;
 import org.bukkit.configuration.InvalidConfigurationException;
@@ -112,7 +112,7 @@ public class LocalizationService extends SlimefunLocalization {
 
     @Override
     @Nullable public Language getLanguage(@Nonnull String id) {
-        Validate.notNull(id, "The language id cannot be null");
+        Preconditions.checkNotNull(id, "The language id cannot be null");
         return languages.get(id);
     }
 
@@ -124,7 +124,7 @@ public class LocalizationService extends SlimefunLocalization {
 
     @Override
     public boolean hasLanguage(@Nonnull String id) {
-        Validate.notNull(id, "The language id cannot be null");
+        Preconditions.checkNotNull(id, "The language id cannot be null");
 
         // Checks if our jar files contains a messages.yml file for that language
         String file = LanguageFile.MESSAGES.getFilePath(id);
@@ -140,7 +140,7 @@ public class LocalizationService extends SlimefunLocalization {
      * @return Whether or not this {@link Language} is loaded
      */
     public boolean isLanguageLoaded(@Nonnull String id) {
-        Validate.notNull(id, "The language cannot be null!");
+        Preconditions.checkNotNull(id, "The language cannot be null!");
         return languages.containsKey(id);
     }
 
@@ -151,7 +151,7 @@ public class LocalizationService extends SlimefunLocalization {
 
     @Override
     public Language getLanguage(@Nonnull Player p) {
-        Validate.notNull(p, "Player cannot be null!");
+        Preconditions.checkNotNull(p, "Player cannot be null!");
 
         PersistentDataContainer container = p.getPersistentDataContainer();
         String language = container.get(languageKey, PersistentDataType.STRING);
@@ -205,8 +205,8 @@ public class LocalizationService extends SlimefunLocalization {
 
     @Override
     protected void addLanguage(@Nonnull String id, @Nonnull String texture) {
-        Validate.notNull(id, "The language id cannot be null!");
-        Validate.notNull(texture, "The language texture cannot be null");
+        Preconditions.checkNotNull(id, "The language id cannot be null!");
+        Preconditions.checkNotNull(texture, "The language texture cannot be null");
 
         if (hasLanguage(id)) {
             Language language = new Language(id, texture);
@@ -233,7 +233,7 @@ public class LocalizationService extends SlimefunLocalization {
      * @return A percentage {@code (0.0 - 100.0)} for the progress of translation of that {@link Language}
      */
     public double calculateProgress(@Nonnull Language lang) {
-        Validate.notNull(lang, "Cannot get the language progress of null");
+        Preconditions.checkNotNull(lang, "Cannot get the language progress of null");
 
         Set<String> defaultKeys = getTotalKeys(languages.get("en"));
 

@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.implementation.listeners;
 
+import com.google.common.base.Preconditions;
 import com.xzavier0722.mc.plugin.slimefun4.storage.util.StorageCacheUtils;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
@@ -7,7 +8,6 @@ import io.papermc.paper.event.player.PlayerPickItemEvent;
 import java.lang.reflect.Method;
 import java.util.logging.Level;
 import javax.annotation.Nonnull;
-import org.apache.commons.lang3.Validate;
 import org.bukkit.GameMode;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
@@ -23,7 +23,7 @@ public class VersionedMiddleClickListener implements Listener {
         try {
             pickBlockEventClass = (Class<? extends PlayerPickItemEvent>)
                     Class.forName("io.papermc.paper.event.player.PlayerPickBlockEvent");
-            Validate.isTrue(PlayerPickItemEvent.class.isAssignableFrom(pickBlockEventClass));
+            Preconditions.checkArgument(PlayerPickItemEvent.class.isAssignableFrom(pickBlockEventClass));
             getBlockMethod = pickBlockEventClass.getMethod("getBlock");
             getBlockMethod.setAccessible(true);
             plugin.getServer().getPluginManager().registerEvents(this, plugin);

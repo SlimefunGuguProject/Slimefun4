@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.api.network;
 
+import com.google.common.base.Preconditions;
 import com.xzavier0722.mc.plugin.slimefun4.storage.util.LocationUtils;
 import io.github.thebusybiscuit.slimefun4.core.debug.Debug;
 import io.github.thebusybiscuit.slimefun4.core.debug.TestCase;
@@ -12,7 +13,6 @@ import java.util.Queue;
 import java.util.Set;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import org.apache.commons.lang3.Validate;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Particle;
@@ -53,8 +53,8 @@ public abstract class Network {
      *            The {@link Location} marking the regulator of this {@link Network}.
      */
     protected Network(@Nonnull NetworkManager manager, @Nonnull Location regulator) {
-        Validate.notNull(manager, "A NetworkManager must be provided");
-        Validate.notNull(regulator, "No regulator was specified");
+        Preconditions.checkNotNull(manager, "A NetworkManager must be provided");
+        Preconditions.checkNotNull(regulator, "No regulator was specified");
 
         this.manager = manager;
         this.regulator = regulator;

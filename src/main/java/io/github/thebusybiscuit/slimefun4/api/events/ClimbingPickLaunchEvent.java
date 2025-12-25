@@ -1,9 +1,9 @@
 package io.github.thebusybiscuit.slimefun4.api.events;
 
+import com.google.common.base.Preconditions;
 import io.github.thebusybiscuit.slimefun4.implementation.items.tools.ClimbingPick;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
-import org.apache.commons.lang3.Validate;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
@@ -60,7 +60,7 @@ public class ClimbingPickLaunchEvent extends PlayerEvent implements Cancellable 
      *            The {@link Vector} velocity to apply
      */
     public void setVelocity(@Nonnull Vector velocity) {
-        Validate.notNull(velocity);
+        Preconditions.checkNotNull(velocity);
         this.velocity = velocity;
     }
 

@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.core.services;
 
+import com.google.common.base.Preconditions;
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.StorageType;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import java.io.File;
@@ -16,7 +17,6 @@ import java.util.logging.Level;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import javax.annotation.Nonnull;
-import org.apache.commons.lang3.Validate;
 
 /**
  * This Service creates a Backup of your Slimefun world data on every server shutdown.
@@ -86,7 +86,7 @@ public class BackupService implements Runnable {
     }
 
     private void createBackup(@Nonnull ZipOutputStream output) throws IOException {
-        Validate.notNull(output, "The Output Stream cannot be null!");
+        Preconditions.checkNotNull(output, "The Output Stream cannot be null!");
 
         if (Slimefun.getDatabaseManager().getProfileStorageType() == StorageType.SQLITE) {
             addFile(output, new File("data-storage/Slimefun", "profile.db"), "");

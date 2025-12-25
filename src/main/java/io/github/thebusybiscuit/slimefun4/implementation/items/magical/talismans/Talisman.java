@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.implementation.items.magical.talismans;
 
+import com.google.common.base.Preconditions;
 import io.github.bakedlibs.dough.items.CustomItemStack;
 import io.github.bakedlibs.dough.items.ItemUtils;
 import io.github.thebusybiscuit.slimefun4.api.events.TalismanActivateEvent;
@@ -18,7 +19,6 @@ import java.util.concurrent.ThreadLocalRandom;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
-import org.apache.commons.lang3.Validate;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.NamespacedKey;
@@ -311,7 +311,7 @@ public class Talisman extends SlimefunItem {
      *            The {@link Player} who shall receive the message
      */
     public void sendMessage(@Nonnull Player p) {
-        Validate.notNull(p, "The Player must not be null.");
+        Preconditions.checkNotNull(p, "The Player must not be null.");
 
         // Check if this Talisman has a message
         if (!isSilent()) {

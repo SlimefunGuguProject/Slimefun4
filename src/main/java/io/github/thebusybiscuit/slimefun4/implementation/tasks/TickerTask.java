@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.implementation.tasks;
 
+import com.google.common.base.Preconditions;
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.ASlimefunDataContainer;
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunBlockData;
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunUniversalData;
@@ -24,7 +25,6 @@ import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 import lombok.Setter;
 import me.mrCookieSlime.Slimefun.Objects.handlers.BlockTicker;
-import org.apache.commons.lang3.Validate;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.scheduler.BukkitScheduler;
@@ -331,7 +331,7 @@ public class TickerTask implements Runnable {
      */
     @Nonnull
     public Set<Location> getLocations(@Nonnull Chunk chunk) {
-        Validate.notNull(chunk, "The Chunk cannot be null!");
+        Preconditions.checkNotNull(chunk, "The Chunk cannot be null!");
 
         Set<TickLocation> locations = tickingLocations.getOrDefault(new ChunkPosition(chunk), Collections.emptySet());
         return locations.stream().map(TickLocation::getLocation).collect(Collectors.toUnmodifiableSet());
@@ -351,7 +351,7 @@ public class TickerTask implements Runnable {
      */
     @Nonnull
     public Set<TickLocation> getTickLocations(@Nonnull Chunk chunk) {
-        Validate.notNull(chunk, "The Chunk cannot be null!");
+        Preconditions.checkNotNull(chunk, "The Chunk cannot be null!");
 
         return tickingLocations.getOrDefault(new ChunkPosition(chunk), Collections.emptySet());
     }
@@ -367,7 +367,7 @@ public class TickerTask implements Runnable {
     }
 
     public void enableTicker(@Nonnull Location l, @Nullable UUID uuid) {
-        Validate.notNull(l, "Location cannot be null!");
+        Preconditions.checkNotNull(l, "Location cannot be null!");
 
         synchronized (tickingLocations) {
             ChunkPosition chunk = new ChunkPosition(l.getWorld(), l.getBlockX() >> 4, l.getBlockZ() >> 4);
@@ -404,7 +404,7 @@ public class TickerTask implements Runnable {
      *            The {@link Location} to remove
      */
     public void disableTicker(@Nonnull Location l) {
-        Validate.notNull(l, "Location cannot be null!");
+        Preconditions.checkNotNull(l, "Location cannot be null!");
 
         synchronized (tickingLocations) {
             ChunkPosition chunk = new ChunkPosition(l.getWorld(), l.getBlockX() >> 4, l.getBlockZ() >> 4);
@@ -431,7 +431,7 @@ public class TickerTask implements Runnable {
      *            The {@link UUID} to remove
      */
     public void disableTicker(@Nonnull UUID uuid) {
-        Validate.notNull(uuid, "Universal Data ID cannot be null!");
+        Preconditions.checkNotNull(uuid, "Universal Data ID cannot be null!");
 
         synchronized (tickingLocations) {
             tickingLocations.values().forEach(loc -> loc.removeIf(tk -> uuid.equals(tk.getUuid())));

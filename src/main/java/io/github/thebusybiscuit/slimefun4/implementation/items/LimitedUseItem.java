@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.implementation.items;
 
+import com.google.common.base.Preconditions;
 import io.github.bakedlibs.dough.common.ChatColors;
 import io.github.thebusybiscuit.slimefun4.api.SlimefunAddon;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
@@ -15,7 +16,6 @@ import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
-import org.apache.commons.lang3.Validate;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
@@ -67,7 +67,7 @@ public abstract class LimitedUseItem extends SimpleSlimefunItem<ItemUseHandler> 
      * @return The {@link LimitedUseItem} for chaining of setters
      */
     public final @Nonnull LimitedUseItem setMaxUseCount(int count) {
-        Validate.isTrue(count > 0, "The maximum use count must be greater than zero!");
+        Preconditions.checkArgument(count > 0, "The maximum use count must be greater than zero!");
 
         maxUseCount = count;
         return this;

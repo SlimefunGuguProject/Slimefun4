@@ -1,11 +1,11 @@
 package io.github.thebusybiscuit.slimefun4.api.events;
 
+import com.google.common.base.Preconditions;
 import com.xzavier0722.mc.plugin.slimefun4.storage.util.StorageCacheUtils;
 import io.github.bakedlibs.dough.data.TriStateOptional;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import java.util.Optional;
 import javax.annotation.Nonnull;
-import org.apache.commons.lang3.Validate;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -167,12 +167,12 @@ public class PlayerRightClickEvent extends PlayerEvent {
     }
 
     public void setUseItem(@Nonnull Result result) {
-        Validate.notNull(result, "Result cannot be null");
+        Preconditions.checkNotNull(result, "Result cannot be null");
         itemResult = result;
     }
 
     public void setUseBlock(@Nonnull Result result) {
-        Validate.notNull(result, "Result cannot be null");
+        Preconditions.checkNotNull(result, "Result cannot be null");
         blockResult = result;
     }
 

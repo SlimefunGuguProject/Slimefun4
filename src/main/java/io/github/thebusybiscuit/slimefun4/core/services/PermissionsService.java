@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.core.services;
 
+import com.google.common.base.Preconditions;
 import io.github.bakedlibs.dough.config.Config;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
@@ -10,7 +11,6 @@ import java.util.Map;
 import java.util.Optional;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import org.apache.commons.lang3.Validate;
 import org.bukkit.entity.Player;
 import org.bukkit.permissions.Permissible;
 import org.bukkit.permissions.Permission;
@@ -65,7 +65,7 @@ public class PermissionsService {
     }
 
     public void update(@Nonnull SlimefunItem item, boolean save) {
-        Validate.notNull(item, "The Item should not be null!");
+        Preconditions.checkNotNull(item, "The Item should not be null!");
 
         String path = item.getId() + ".permission";
 
@@ -113,7 +113,7 @@ public class PermissionsService {
      */
     @Nonnull
     public Optional<String> getPermission(@Nonnull SlimefunItem item) {
-        Validate.notNull(item, "Cannot get permissions for null");
+        Preconditions.checkNotNull(item, "Cannot get permissions for null");
         String permission = permissions.get(item.getId());
 
         if (permission == null || permission.equals("none")) {
@@ -132,7 +132,7 @@ public class PermissionsService {
      *            The {@link Permission} to set
      */
     public void setPermission(@Nonnull SlimefunItem item, @Nullable String permission) {
-        Validate.notNull(item, "You cannot set the permission for null");
+        Preconditions.checkNotNull(item, "You cannot set the permission for null");
         permissions.put(item.getId(), permission != null ? permission : "none");
     }
 

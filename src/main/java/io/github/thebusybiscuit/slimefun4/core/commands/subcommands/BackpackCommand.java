@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.core.commands.subcommands;
 
+import com.google.common.base.Preconditions;
 import com.xzavier0722.mc.plugin.slimefun4.storage.callback.IAsyncReadCallback;
 import io.github.thebusybiscuit.slimefun4.api.player.PlayerBackpack;
 import io.github.thebusybiscuit.slimefun4.core.commands.SlimefunCommand;
@@ -14,7 +15,6 @@ import java.util.UUID;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
 import me.mrCookieSlime.CSCoreLibPlugin.general.Inventory.ChestMenu;
-import org.apache.commons.lang3.Validate;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
@@ -93,7 +93,7 @@ class BackpackCommand extends SubCommand {
     }
 
     private void openBackpackMenu(@Nonnull OfflinePlayer owner, @Nonnull Player p) {
-        Validate.notNull(p, "The player cannot be null!");
+        Preconditions.checkNotNull(p, "The player cannot be null!");
 
         Slimefun.getDatabaseManager()
                 .getProfileDataController()

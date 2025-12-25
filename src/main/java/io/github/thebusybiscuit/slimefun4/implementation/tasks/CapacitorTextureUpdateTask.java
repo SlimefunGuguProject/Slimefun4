@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.implementation.tasks;
 
+import com.google.common.base.Preconditions;
 import io.github.bakedlibs.dough.skins.PlayerHead;
 import io.github.bakedlibs.dough.skins.PlayerSkin;
 import io.github.thebusybiscuit.slimefun4.implementation.items.electric.Capacitor;
@@ -7,7 +8,6 @@ import io.github.thebusybiscuit.slimefun4.utils.HeadTexture;
 import io.github.thebusybiscuit.slimefun4.utils.NumberUtils;
 import io.papermc.lib.PaperLib;
 import javax.annotation.Nonnull;
-import org.apache.commons.lang3.Validate;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Server;
@@ -42,7 +42,7 @@ public class CapacitorTextureUpdateTask implements Runnable {
      *            The percentage of charge in this {@link Capacitor}
      */
     public CapacitorTextureUpdateTask(@Nonnull Location l, double percentage) {
-        Validate.notNull(l, "The Location cannot be null");
+        Preconditions.checkNotNull(l, "The Location cannot be null");
 
         this.l = l;
         this.filledPercentage = NumberUtils.clamp(0.0D, percentage, 1.0D);

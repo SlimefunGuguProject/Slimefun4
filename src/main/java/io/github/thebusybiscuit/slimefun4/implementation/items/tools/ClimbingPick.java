@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.implementation.items.tools;
 
+import com.google.common.base.Preconditions;
 import io.github.thebusybiscuit.slimefun4.api.MinecraftVersion;
 import io.github.thebusybiscuit.slimefun4.api.events.ClimbingPickLaunchEvent;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
@@ -26,7 +27,6 @@ import java.util.concurrent.ThreadLocalRandom;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
-import org.apache.commons.lang3.Validate;
 import org.bukkit.Bukkit;
 import org.bukkit.Effect;
 import org.bukkit.GameMode;
@@ -121,7 +121,7 @@ public class ClimbingPick extends SimpleSlimefunItem<ItemUseHandler> implements 
      * @return The climbing speed for this {@link Material} or 0.
      */
     public double getClimbingSpeed(@Nonnull Material type) {
-        Validate.notNull(type, "The surface cannot be null");
+        Preconditions.checkNotNull(type, "The surface cannot be null");
         ClimbableSurface surface = surfaces.get(type);
 
         if (surface != null) {

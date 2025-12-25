@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.utils.biomes;
 
+import com.google.common.base.Preconditions;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -16,7 +17,6 @@ import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
-import org.apache.commons.lang3.Validate;
 import org.bukkit.NamespacedKey;
 import org.bukkit.block.Biome;
 
@@ -59,8 +59,8 @@ public class BiomeMapParser<T> {
      */
     @ParametersAreNonnullByDefault
     public BiomeMapParser(NamespacedKey key, BiomeDataConverter<T> valueConverter) {
-        Validate.notNull(key, "The key shall not be null.");
-        Validate.notNull(
+        Preconditions.checkNotNull(key, "The key shall not be null.");
+        Preconditions.checkNotNull(
                 valueConverter, "You must provide a Function to convert raw json values to your desired data type.");
 
         this.key = key;
@@ -95,7 +95,7 @@ public class BiomeMapParser<T> {
     }
 
     public void read(@Nonnull String json) throws BiomeMapException {
-        Validate.notNull(json, "The JSON string should not be null!");
+        Preconditions.checkNotNull(json, "The JSON string should not be null!");
         JsonArray root = null;
 
         try {
@@ -112,7 +112,7 @@ public class BiomeMapParser<T> {
     }
 
     public void read(@Nonnull JsonArray json) throws BiomeMapException {
-        Validate.notNull(json, "The JSON Array should not be null!");
+        Preconditions.checkNotNull(json, "The JSON Array should not be null!");
 
         for (JsonElement element : json) {
             if (element instanceof JsonObject) {
@@ -126,7 +126,7 @@ public class BiomeMapParser<T> {
     }
 
     private void readEntry(@Nonnull JsonObject entry) throws BiomeMapException {
-        Validate.notNull(entry, "The JSON entry should not be null!");
+        Preconditions.checkNotNull(entry, "The JSON entry should not be null!");
 
         /*
          * Check if the entry has a "value" element.
@@ -158,7 +158,7 @@ public class BiomeMapParser<T> {
     }
 
     private @Nonnull Set<Biome> readBiomes(@Nonnull JsonArray array) throws BiomeMapException {
-        Validate.notNull(array, "The JSON array should not be null!");
+        Preconditions.checkNotNull(array, "The JSON array should not be null!");
         Set<Biome> biomes = new HashSet<>();
 
         for (JsonElement element : array) {

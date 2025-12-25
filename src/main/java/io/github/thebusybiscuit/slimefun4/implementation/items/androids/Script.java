@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.implementation.items.androids;
 
+import com.google.common.base.Preconditions;
 import io.github.bakedlibs.dough.config.Config;
 import io.github.bakedlibs.dough.items.CustomItemStack;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
@@ -15,7 +16,6 @@ import java.util.UUID;
 import java.util.logging.Level;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
-import org.apache.commons.lang3.Validate;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
@@ -42,18 +42,18 @@ public final class Script {
      *            The {@link Config}
      */
     private Script(@Nonnull Config config) {
-        Validate.notNull(config);
+        Preconditions.checkNotNull(config);
 
         this.config = config;
         this.name = config.getString("name");
         this.code = config.getString("code");
         String uuid = config.getString("author");
 
-        Validate.notNull(name);
-        Validate.notNull(code);
-        Validate.notNull(uuid);
-        Validate.notNull(config.getStringList("rating.positive"));
-        Validate.notNull(config.getStringList("rating.negative"));
+        Preconditions.checkNotNull(name);
+        Preconditions.checkNotNull(code);
+        Preconditions.checkNotNull(uuid);
+        Preconditions.checkNotNull(config.getStringList("rating.positive"));
+        Preconditions.checkNotNull(config.getStringList("rating.negative"));
 
         OfflinePlayer player = Bukkit.getOfflinePlayer(UUID.fromString(uuid));
         this.author = player.getName() != null ? player.getName() : config.getString("author_name");

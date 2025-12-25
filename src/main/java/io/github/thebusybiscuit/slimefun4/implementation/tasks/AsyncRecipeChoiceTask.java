@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.implementation.tasks;
 
+import com.google.common.base.Preconditions;
 import io.github.bakedlibs.dough.collections.LoopIterator;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.implementation.guide.SurvivalSlimefunGuide;
@@ -8,7 +9,6 @@ import java.util.Map;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import javax.annotation.Nonnull;
-import org.apache.commons.lang3.Validate;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Tag;
@@ -44,7 +44,7 @@ public class AsyncRecipeChoiceTask implements Runnable {
      *            The {@link Inventory} to start this task for
      */
     public void start(@Nonnull Inventory inv) {
-        Validate.notNull(inv, "Inventory must not be null");
+        Preconditions.checkNotNull(inv, "Inventory must not be null");
 
         inventory = inv;
         id = Bukkit.getScheduler()
@@ -53,7 +53,7 @@ public class AsyncRecipeChoiceTask implements Runnable {
     }
 
     public void add(int slot, @Nonnull MaterialChoice choice) {
-        Validate.notNull(choice, "Cannot add a null RecipeChoice");
+        Preconditions.checkNotNull(choice, "Cannot add a null RecipeChoice");
 
         lock.writeLock().lock();
 
@@ -65,7 +65,7 @@ public class AsyncRecipeChoiceTask implements Runnable {
     }
 
     public void add(int slot, @Nonnull Tag<Material> tag) {
-        Validate.notNull(tag, "Cannot add a null Tag");
+        Preconditions.checkNotNull(tag, "Cannot add a null Tag");
 
         lock.writeLock().lock();
 

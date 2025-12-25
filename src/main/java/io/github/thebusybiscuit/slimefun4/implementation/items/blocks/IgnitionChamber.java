@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.implementation.items.blocks;
 
+import com.google.common.base.Preconditions;
 import com.xzavier0722.mc.plugin.slimefun4.storage.util.StorageCacheUtils;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
@@ -13,7 +14,6 @@ import io.papermc.lib.PaperLib;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
-import org.apache.commons.lang3.Validate;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -65,8 +65,8 @@ public class IgnitionChamber extends SlimefunItem {
      */
     @ParametersAreNonnullByDefault
     public static boolean useFlintAndSteel(Player p, Block smelteryBlock) {
-        Validate.notNull(p, "The Player must not be null!");
-        Validate.notNull(smelteryBlock, "The smeltery block cannot be null!");
+        Preconditions.checkNotNull(p, "The Player must not be null!");
+        Preconditions.checkNotNull(smelteryBlock, "The smeltery block cannot be null!");
 
         Inventory inv = findIgnitionChamber(smelteryBlock);
 

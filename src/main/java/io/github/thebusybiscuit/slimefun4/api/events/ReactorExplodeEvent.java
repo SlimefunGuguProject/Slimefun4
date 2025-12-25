@@ -1,9 +1,9 @@
 package io.github.thebusybiscuit.slimefun4.api.events;
 
+import com.google.common.base.Preconditions;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.implementation.items.electric.reactors.Reactor;
 import javax.annotation.Nonnull;
-import org.apache.commons.lang3.Validate;
 import org.bukkit.Location;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
@@ -22,8 +22,8 @@ public class ReactorExplodeEvent extends Event {
     private final Reactor reactor;
 
     public ReactorExplodeEvent(@Nonnull Location l, @Nonnull Reactor reactor) {
-        Validate.notNull(l, "A Location must be provided");
-        Validate.notNull(reactor, "A Reactor cannot be null");
+        Preconditions.checkNotNull(l, "A Location must be provided");
+        Preconditions.checkNotNull(reactor, "A Reactor cannot be null");
 
         this.location = l;
         this.reactor = reactor;

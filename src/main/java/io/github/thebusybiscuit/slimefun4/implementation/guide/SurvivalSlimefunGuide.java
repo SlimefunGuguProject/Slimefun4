@@ -1,6 +1,7 @@
 package io.github.thebusybiscuit.slimefun4.implementation.guide;
 
 import city.norain.slimefun4.VaultIntegration;
+import com.google.common.base.Preconditions;
 import io.github.bakedlibs.dough.chat.ChatInput;
 import io.github.bakedlibs.dough.items.CustomItemStack;
 import io.github.bakedlibs.dough.items.ItemUtils;
@@ -39,7 +40,6 @@ import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
 import me.mrCookieSlime.CSCoreLibPlugin.general.Inventory.ChestMenu;
 import me.mrCookieSlime.CSCoreLibPlugin.general.Inventory.ChestMenu.MenuClickHandler;
-import org.apache.commons.lang3.Validate;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.Tag;
@@ -660,9 +660,9 @@ public class SurvivalSlimefunGuide implements SlimefunGuideImplementation {
 
     @ParametersAreNonnullByDefault
     public void createHeader(Player p, PlayerProfile profile, ChestMenu menu) {
-        Validate.notNull(p, "The Player cannot be null!");
-        Validate.notNull(profile, "The Profile cannot be null!");
-        Validate.notNull(menu, "The Inventory cannot be null!");
+        Preconditions.checkNotNull(p, "The Player cannot be null!");
+        Preconditions.checkNotNull(profile, "The Profile cannot be null!");
+        Preconditions.checkNotNull(menu, "The Inventory cannot be null!");
 
         for (int i = 0; i < 9; i++) {
             menu.addItem(i, ChestMenuUtils.getBackground(), ChestMenuUtils.getEmptyClickHandler());

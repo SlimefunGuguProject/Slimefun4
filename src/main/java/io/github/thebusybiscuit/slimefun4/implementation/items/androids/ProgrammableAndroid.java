@@ -3,6 +3,7 @@ package io.github.thebusybiscuit.slimefun4.implementation.items.androids;
 import city.norain.slimefun4.api.menu.UniversalMenu;
 import city.norain.slimefun4.api.menu.UniversalMenuPreset;
 import city.norain.slimefun4.utils.TaskUtil;
+import com.google.common.base.Preconditions;
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunUniversalBlockData;
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunUniversalData;
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.attributes.UniversalBlock;
@@ -50,7 +51,6 @@ import me.mrCookieSlime.Slimefun.Objects.SlimefunItem.abstractItems.MachineFuel;
 import me.mrCookieSlime.Slimefun.Objects.SlimefunItem.interfaces.InventoryBlock;
 import me.mrCookieSlime.Slimefun.Objects.handlers.BlockTicker;
 import me.mrCookieSlime.Slimefun.api.item_transport.ItemTransportFlow;
-import org.apache.commons.lang3.Validate;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -679,17 +679,19 @@ public class ProgrammableAndroid extends SlimefunItem
 
     @Nonnull
     public String getScript(@Nonnull SlimefunUniversalBlockData ubd) {
-        Validate.notNull(ubd, "SlimefunUniversalBlockData for android not specified");
+        Preconditions.checkNotNull(ubd, "SlimefunUniversalBlockData for android not specified");
         String script = ubd.getData("script");
         return script != null ? script : DEFAULT_SCRIPT;
     }
 
     public void setScript(@Nonnull SlimefunUniversalBlockData ubd, @Nonnull String script) {
-        Validate.notNull(ubd, "SlimefunUniversalBlockData for android not specified");
-        Validate.notNull(script, "No script given");
-        Validate.isTrue(script.startsWith(Instruction.START.name() + '-'), "A script must begin with a 'START' token.");
-        Validate.isTrue(script.endsWith('-' + Instruction.REPEAT.name()), "A script must end with a 'REPEAT' token.");
-        Validate.isTrue(
+        Preconditions.checkNotNull(ubd, "SlimefunUniversalBlockData for android not specified");
+        Preconditions.checkNotNull(script, "No script given");
+        Preconditions.checkArgument(
+                script.startsWith(Instruction.START.name() + '-'), "A script must begin with a 'START' token.");
+        Preconditions.checkArgument(
+                script.endsWith('-' + Instruction.REPEAT.name()), "A script must end with a 'REPEAT' token.");
+        Preconditions.checkArgument(
                 CommonPatterns.DASH.split(script).length <= MAX_SCRIPT_LENGTH,
                 "Scripts may not have more than " + MAX_SCRIPT_LENGTH + " segments");
 
@@ -733,7 +735,7 @@ public class ProgrammableAndroid extends SlimefunItem
     }
 
     public void registerFuelType(@Nonnull MachineFuel fuel) {
-        Validate.notNull(fuel, "Cannot register null as a Fuel type");
+        Preconditions.checkNotNull(fuel, "Cannot register null as a Fuel type");
 
         fuelTypes.add(fuel);
     }
@@ -983,7 +985,7 @@ public class ProgrammableAndroid extends SlimefunItem
 
     @ParametersAreNonnullByDefault
     public void addItems(Block b, ItemStack... items) {
-        Validate.notNull(b, "The Block cannot be null.");
+        Preconditions.checkNotNull(b, "The Block cannot be null.");
 
         Optional<UUID> uuid =
                 TaskUtil.runSyncMethod(() -> Slimefun.getBlockDataService().getUniversalDataUUID(b));

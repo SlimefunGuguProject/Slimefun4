@@ -168,10 +168,6 @@
                             <shadedPattern>io.github.thebusybiscuit.slimefun4.libraries.unirest</shadedPattern>
                         </relocation>
                         <relocation>
-                            <pattern>org.apache.commons.lang</pattern>
-                            <shadedPattern>io.github.thebusybiscuit.slimefun4.libraries.commons.lang</shadedPattern>
-                        </relocation>
-                        <relocation>
                             <pattern>net.guizhanss.guizhanlib</pattern>
                             <shadedPattern>io.github.thebusybiscuit.slimefun4.libraries.guizhanlib</shadedPattern>
                         </relocation>
@@ -541,13 +537,6 @@
             </exclusions>
         </dependency>
 
-        <!-- TODO: Remove this dependency -->
-        <dependency>
-            <groupId>commons-lang</groupId>
-            <artifactId>commons-lang</artifactId>
-            <version>2.6</version>
-            <scope>compile</scope>
-        </dependency>
         <!-- Slimefun Compatibility Lib -->
         <dependency>
             <groupId>com.github.Xzavier0722</groupId>

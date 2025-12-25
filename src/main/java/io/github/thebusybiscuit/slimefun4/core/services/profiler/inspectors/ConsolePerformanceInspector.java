@@ -1,10 +1,10 @@
 package io.github.thebusybiscuit.slimefun4.core.services.profiler.inspectors;
 
+import com.google.common.base.Preconditions;
 import io.github.thebusybiscuit.slimefun4.core.services.profiler.PerformanceInspector;
 import io.github.thebusybiscuit.slimefun4.core.services.profiler.SummaryOrderType;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
-import org.apache.commons.lang3.Validate;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
 
@@ -45,8 +45,8 @@ public class ConsolePerformanceInspector implements PerformanceInspector {
      */
     @ParametersAreNonnullByDefault
     public ConsolePerformanceInspector(CommandSender console, boolean verbose, SummaryOrderType orderType) {
-        Validate.notNull(console, "CommandSender cannot be null");
-        Validate.notNull(orderType, "SummaryOrderType cannot be null");
+        Preconditions.checkNotNull(console, "CommandSender cannot be null");
+        Preconditions.checkNotNull(orderType, "SummaryOrderType cannot be null");
 
         this.console = console;
         this.verbose = verbose;

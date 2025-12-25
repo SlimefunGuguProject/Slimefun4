@@ -1,10 +1,10 @@
 package io.github.thebusybiscuit.slimefun4.api.events;
 
+import com.google.common.base.Preconditions;
 import io.github.thebusybiscuit.slimefun4.implementation.items.tools.ExplosiveTool;
 import java.util.List;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
-import org.apache.commons.lang3.Validate;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
@@ -36,10 +36,10 @@ public class ExplosiveToolBreakBlocksEvent extends PlayerEvent implements Cancel
             Player player, Block block, List<Block> blocks, ItemStack item, ExplosiveTool explosiveTool) {
         super(player);
 
-        Validate.notNull(block, "The center block cannot be null!");
-        Validate.notNull(blocks, "Blocks cannot be null");
-        Validate.notNull(item, "Item cannot be null");
-        Validate.notNull(explosiveTool, "ExplosiveTool cannot be null");
+        Preconditions.checkNotNull(block, "The center block cannot be null!");
+        Preconditions.checkNotNull(blocks, "Blocks cannot be null");
+        Preconditions.checkNotNull(item, "Item cannot be null");
+        Preconditions.checkNotNull(explosiveTool, "ExplosiveTool cannot be null");
 
         this.mainBlock = block;
         this.additionalBlocks = blocks;

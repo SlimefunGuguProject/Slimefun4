@@ -1,9 +1,9 @@
 package io.github.thebusybiscuit.slimefun4.api;
 
+import com.google.common.base.Preconditions;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.papermc.lib.PaperLib;
 import javax.annotation.Nonnull;
-import org.apache.commons.lang3.Validate;
 import org.bukkit.Server;
 
 /**
@@ -207,7 +207,7 @@ public enum MinecraftVersion {
      * @return Whether this {@link MinecraftVersion} is newer or equal to the given {@link MinecraftVersion}
      */
     public boolean isAtLeast(@Nonnull MinecraftVersion version) {
-        Validate.notNull(version, "A Minecraft version cannot be null!");
+        Preconditions.checkNotNull(version, "A Minecraft version cannot be null!");
 
         if (this == UNKNOWN) {
             return false;

@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.implementation.items.blocks;
 
+import com.google.common.base.Preconditions;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
@@ -12,7 +13,6 @@ import java.util.Optional;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
-import org.apache.commons.lang3.Validate;
 import org.bukkit.ChatColor;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.CreatureSpawner;
@@ -49,7 +49,7 @@ public abstract class AbstractMonsterSpawner extends SlimefunItem implements Dis
      */
     @Nonnull
     public Optional<EntityType> getEntityType(@Nonnull ItemStack item) {
-        Validate.notNull(item, "The Item cannot be null");
+        Preconditions.checkNotNull(item, "The Item cannot be null");
 
         ItemMeta meta = item.getItemMeta();
 
@@ -89,7 +89,7 @@ public abstract class AbstractMonsterSpawner extends SlimefunItem implements Dis
      */
     @Nonnull
     public ItemStack getItemForEntityType(@Nullable EntityType type) {
-        // Validate.notNull(type, "The EntityType cannot be null");
+        // Preconditions.checkNotNull(type, "The EntityType cannot be null");
 
         ItemStack item = getItem().clone();
         ItemMeta meta = item.getItemMeta();

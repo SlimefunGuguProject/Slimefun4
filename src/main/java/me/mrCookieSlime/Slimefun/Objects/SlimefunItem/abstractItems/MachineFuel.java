@@ -1,9 +1,9 @@
 package me.mrCookieSlime.Slimefun.Objects.SlimefunItem.abstractItems;
 
+import com.google.common.base.Preconditions;
 import io.github.thebusybiscuit.slimefun4.utils.SlimefunUtils;
 import io.github.thebusybiscuit.slimefun4.utils.itemstack.ItemStackWrapper;
 import java.util.function.Predicate;
-import org.apache.commons.lang3.Validate;
 import org.bukkit.inventory.ItemStack;
 
 // This class will be rewritten in the "Recipe Rewrite"
@@ -21,8 +21,8 @@ public class MachineFuel implements Predicate<ItemStack> {
     }
 
     public MachineFuel(int seconds, ItemStack fuel, ItemStack output) {
-        Validate.notNull(fuel, "Fuel must never be null!");
-        Validate.isTrue(seconds > 0, "Fuel must last at least one second!");
+        Preconditions.checkNotNull(fuel, "Fuel must never be null!");
+        Preconditions.checkArgument(seconds > 0, "Fuel must last at least one second!");
 
         this.ticks = seconds * 2;
         this.fuel = fuel;

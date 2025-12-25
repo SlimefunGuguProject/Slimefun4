@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.utils;
 
+import com.google.common.base.Preconditions;
 import io.github.bakedlibs.dough.common.ChatColors;
 import io.github.thebusybiscuit.slimefun4.core.attributes.Rechargeable;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
@@ -9,7 +10,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 import javax.annotation.Nonnull;
-import org.apache.commons.lang3.Validate;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataContainer;
@@ -35,10 +35,10 @@ public final class ChargeUtils {
     private ChargeUtils() {}
 
     public static void setCharge(@Nonnull ItemMeta meta, float charge, float capacity) {
-        Validate.notNull(meta, "Meta cannot be null!");
-        Validate.isTrue(charge >= 0, "Charge has to be equal to or greater than 0!");
-        Validate.isTrue(capacity > 0, "Capacity has to be greater than 0!");
-        Validate.isTrue(charge <= capacity, "Charge may not be bigger than the capacity!");
+        Preconditions.checkNotNull(meta, "Meta cannot be null!");
+        Preconditions.checkArgument(charge >= 0, "Charge has to be equal to or greater than 0!");
+        Preconditions.checkArgument(capacity > 0, "Capacity has to be greater than 0!");
+        Preconditions.checkArgument(charge <= capacity, "Charge may not be bigger than the capacity!");
 
         BigDecimal decimal = BigDecimal.valueOf(charge).setScale(2, RoundingMode.HALF_UP);
         float value = decimal.floatValue();
@@ -62,7 +62,7 @@ public final class ChargeUtils {
     }
 
     public static float getCharge(@Nonnull ItemMeta meta) {
-        Validate.notNull(meta, "Meta cannot be null!");
+        Preconditions.checkNotNull(meta, "Meta cannot be null!");
 
         NamespacedKey key = Slimefun.getRegistry().getItemChargeDataKey();
         PersistentDataContainer container = meta.getPersistentDataContainer();

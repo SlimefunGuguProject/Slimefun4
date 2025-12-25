@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.api.gps;
 
+import com.google.common.base.Preconditions;
 import com.xzavier0722.mc.plugin.slimefun4.storage.util.StorageCacheUtils;
 import io.github.bakedlibs.dough.chat.ChatInput;
 import io.github.bakedlibs.dough.common.ChatColors;
@@ -28,7 +29,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
 import me.mrCookieSlime.CSCoreLibPlugin.general.Inventory.ChestMenu;
-import org.apache.commons.lang3.Validate;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -367,8 +367,8 @@ public class GPSNetwork {
      *            The {@link Location} of the new waypoint
      */
     public void createWaypoint(@Nonnull Player p, @Nonnull Location l) {
-        Validate.notNull(p, "Player cannot be null!");
-        Validate.notNull(l, "Waypoint Location cannot be null!");
+        Preconditions.checkNotNull(p, "Player cannot be null!");
+        Preconditions.checkNotNull(l, "Waypoint Location cannot be null!");
 
         PlayerProfile.get(p, profile -> {
             if (profile.getWaypoints().size() >= maxWaypoints) {
@@ -394,9 +394,9 @@ public class GPSNetwork {
      *            The {@link Location} of this waypoint
      */
     public void addWaypoint(@Nonnull Player p, @Nonnull String name, @Nonnull Location l) {
-        Validate.notNull(p, "Player cannot be null!");
-        Validate.notNull(name, "Waypoint name cannot be null!");
-        Validate.notNull(l, "Waypoint Location cannot be null!");
+        Preconditions.checkNotNull(p, "Player cannot be null!");
+        Preconditions.checkNotNull(name, "Waypoint name cannot be null!");
+        Preconditions.checkNotNull(l, "Waypoint Location cannot be null!");
 
         PlayerProfile.get(p, profile -> {
             if (profile.getWaypoints().size() >= maxWaypoints) {
