@@ -50,7 +50,7 @@ class BlockDataCommand extends SubCommand {
         }
 
         Block target = player.getTargetBlockExact(8, FluidCollisionMode.NEVER);
-        var blockData = StorageCacheUtils.getBlock(target.getLocation());
+        var blockData = StorageCacheUtils.getDataContainer(target.getLocation());
 
         if (target == null || target.getType().isAir() || blockData == null) {
             ChatUtils.sendMessage(player, "&c你需要看向一个 Slimefun 方块才能执行该指令!");

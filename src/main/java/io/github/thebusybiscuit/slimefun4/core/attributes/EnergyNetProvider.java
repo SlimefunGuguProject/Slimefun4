@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.core.attributes;
 
+import com.xzavier0722.mc.plugin.slimefun4.storage.controller.ASlimefunDataContainer;
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.BlockDataConfigWrapper;
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunBlockData;
 import io.github.thebusybiscuit.slimefun4.core.networks.energy.EnergyNet;
@@ -31,6 +32,11 @@ public interface EnergyNetProvider extends EnergyNetComponent {
         return EnergyNetComponentType.GENERATOR;
     }
 
+    @Deprecated(forRemoval = true)
+    default long getGeneratedOutputLong(@Nonnull Location l, @Nonnull SlimefunBlockData data) {
+        return getGeneratedOutput(l, data);
+    }
+
     /**
      * This method returns how much energy this {@link EnergyNetProvider} provides to the {@link EnergyNet}.
      * We call this method every time we tick a energy regulator, so make sure to keep it light and fast.
@@ -40,8 +46,13 @@ public interface EnergyNetProvider extends EnergyNetComponent {
      * @param data The stored block data
      * @return The generated output energy of this {@link EnergyNetProvider}.
      */
-    default long getGeneratedOutputLong(@Nonnull Location l, @Nonnull SlimefunBlockData data) {
+    default long getGeneratedOutputLong(@Nonnull Location l, @Nonnull ASlimefunDataContainer data) {
         return getGeneratedOutput(l, data);
+    }
+
+    @Deprecated(forRemoval = true)
+    default int getGeneratedOutput(@Nonnull Location l, @Nonnull SlimefunBlockData data) {
+        return getGeneratedOutput(l, new BlockDataConfigWrapper(data));
     }
 
     /**
@@ -53,7 +64,7 @@ public interface EnergyNetProvider extends EnergyNetComponent {
      * @param data The stored block data
      * @return The generated output energy of this {@link EnergyNetProvider}.
      */
-    default int getGeneratedOutput(@Nonnull Location l, @Nonnull SlimefunBlockData data) {
+    default int getGeneratedOutput(@Nonnull Location l, @Nonnull ASlimefunDataContainer data) {
         return getGeneratedOutput(l, new BlockDataConfigWrapper(data));
     }
 
@@ -68,6 +79,11 @@ public interface EnergyNetProvider extends EnergyNetComponent {
         return 0;
     }
 
+    @Deprecated(forRemoval = true)
+    default boolean willExplode(@Nonnull Location l, @Nonnull SlimefunBlockData data) {
+        return willExplode(l, new BlockDataConfigWrapper(data));
+    }
+
     /**
      * This method returns whether the given {@link Location} is going to explode on the
      * next tick.
@@ -76,7 +92,7 @@ public interface EnergyNetProvider extends EnergyNetComponent {
      * @param data The stored block data
      * @return Whether or not this {@link Location} will explode.
      */
-    default boolean willExplode(@Nonnull Location l, @Nonnull SlimefunBlockData data) {
+    default boolean willExplode(@Nonnull Location l, @Nonnull ASlimefunDataContainer data) {
         return willExplode(l, new BlockDataConfigWrapper(data));
     }
 

@@ -30,7 +30,7 @@ import java.util.function.Consumer;
 import java.util.logging.Level;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import org.apache.commons.lang.Validate;
+import org.apache.commons.lang3.Validate;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -264,7 +264,7 @@ public class PlayerProfile {
             }
         }
 
-        if (waypoints.size() < 21) {
+        if (waypoints.size() < Slimefun.getGPSNetwork().getMaxWaypoints()) {
             waypoints.add(waypoint);
 
             waypointsFile.setValue(waypoint.getId(), waypoint.getLocation());

@@ -33,7 +33,7 @@ import me.mrCookieSlime.Slimefun.Objects.SlimefunItem.interfaces.InventoryBlock;
 import me.mrCookieSlime.Slimefun.Objects.handlers.BlockTicker;
 import me.mrCookieSlime.Slimefun.api.inventory.BlockMenu;
 import me.mrCookieSlime.Slimefun.api.inventory.BlockMenuPreset;
-import org.apache.commons.lang.Validate;
+import org.apache.commons.lang3.Validate;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -333,21 +333,27 @@ public class GEOMiner extends SlimefunItem
             }
             return;
         }
-
-        Slimefun.getDatabaseManager()
-                .getBlockDataController()
-                .getChunkDataAsync(b.getChunk(), new IAsyncReadCallback<>() {
-                    @Override
-                    public void onResult(SlimefunChunkData result) {
-                        Slimefun.getPlatformScheduler().runAtLocation(b.getLocation(), (task) -> {
-                            if (result.getAllData().isEmpty()) {
-                                updateHologram(b, "&4需要先进行地形扫描!");
-                            } else {
-                                start(b, inv);
-                            }
-                        });
-                    }
-                });
+        // fix issue 1147 : concurrent geo mining leads to duplication in geo resources
+        SlimefunChunkData chunkData =
+                Slimefun.getDatabaseManager().getBlockDataController().getChunkDataFromCache(b.getLocation());
+        if (chunkData != null && chunkData.isDataLoaded()) {
+            // the data is fully loaded
+            if (chunkData.getAllData().isEmpty()) {
+                updateHologram(b, "&4需要先进行地形扫描!");
+            } else {
+                start(b, inv);
+            }
+        } else {
+            // load chunk
+            Slimefun.getDatabaseManager()
+                    .getBlockDataController()
+                    .getChunkDataAsync(b.getChunk(), new IAsyncReadCallback<>() {
+                        @Override
+                        public void onResult(SlimefunChunkData result) {
+                            updateHologram(b, "&4区块数据加载中...");
+                        }
+                    });
+        }
     }
 
     private void start(@Nonnull Block b, @Nonnull BlockMenu inv) {

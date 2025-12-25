@@ -39,8 +39,7 @@ public class DispenserListener implements Listener {
         Block b = e.getBlock();
 
         if (b.getType() == Material.DISPENSER && b.getRelative(BlockFace.DOWN).getType() != Material.HOPPER) {
-            var blockData = StorageCacheUtils.getBlock(b.getLocation());
-            SlimefunItem machine = blockData == null ? null : SlimefunItem.getById(blockData.getSfId());
+            SlimefunItem machine = StorageCacheUtils.getSlimefunItem(b.getLocation());
 
             // Fixes #2959
             if (machine != null && !machine.isDisabledIn(e.getBlock().getWorld())) {

@@ -6,14 +6,16 @@ import java.util.Set;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import me.mrCookieSlime.CSCoreLibPlugin.Configuration.Config;
-import org.apache.commons.lang.NotImplementedException;
+import org.apache.commons.lang3.NotImplementedException;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 @Deprecated
 public class BlockDataConfigWrapper extends Config {
-    private final SlimefunBlockData blockData;
+    private final ASlimefunDataContainer blockData;
 
-    public BlockDataConfigWrapper(SlimefunBlockData blockData) {
+    public BlockDataConfigWrapper(ASlimefunDataContainer blockData) {
         // fix the problem that Config.loadYaml continuously throw IO Exception during ticking old plugin's machines:
         super();
         this.blockData = blockData;

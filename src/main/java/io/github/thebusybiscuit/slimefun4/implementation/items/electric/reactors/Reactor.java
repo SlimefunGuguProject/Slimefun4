@@ -279,7 +279,7 @@ public abstract class Reactor extends AbstractEnergyProvider
     protected ReactorMode getReactorMode(@Nonnull Location l) {
         ReactorMode mode = ReactorMode.GENERATOR;
 
-        var blockData = StorageCacheUtils.getBlock(l);
+        var blockData = StorageCacheUtils.getDataContainer(l);
         if (blockData != null && ReactorMode.PRODUCTION.toString().equals(blockData.getData(MODE))) {
             mode = ReactorMode.PRODUCTION;
         }

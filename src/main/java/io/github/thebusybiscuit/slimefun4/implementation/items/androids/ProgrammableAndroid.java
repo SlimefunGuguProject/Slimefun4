@@ -8,7 +8,6 @@ import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunUniversalD
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.attributes.UniversalBlock;
 import com.xzavier0722.mc.plugin.slimefun4.storage.util.LocationUtils;
 import com.xzavier0722.mc.plugin.slimefun4.storage.util.StorageCacheUtils;
-import io.github.bakedlibs.dough.blocks.BlockPosition;
 import io.github.bakedlibs.dough.chat.ChatInput;
 import io.github.bakedlibs.dough.common.ChatColors;
 import io.github.bakedlibs.dough.common.CommonPatterns;
@@ -51,7 +50,7 @@ import me.mrCookieSlime.Slimefun.Objects.SlimefunItem.abstractItems.MachineFuel;
 import me.mrCookieSlime.Slimefun.Objects.SlimefunItem.interfaces.InventoryBlock;
 import me.mrCookieSlime.Slimefun.Objects.handlers.BlockTicker;
 import me.mrCookieSlime.Slimefun.api.item_transport.ItemTransportFlow;
-import org.apache.commons.lang.Validate;
+import org.apache.commons.lang3.Validate;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -1030,13 +1029,9 @@ public class ProgrammableAndroid extends SlimefunItem
                 return;
             }
 
-            Slimefun.getTickerTask().disableTicker(from.getLocation());
-
             // Bro encountered a ghost 💀
             if (StorageCacheUtils.hasSlimefunBlock(to.getLocation())) {
-                var data = StorageCacheUtils.getBlock(to.getLocation()) == null
-                        ? StorageCacheUtils.getBlock(to.getLocation())
-                        : StorageCacheUtils.getUniversalBlock(to);
+                var data = StorageCacheUtils.getDataContainer(to.getLocation());
                 if (data != null && !data.isPendingRemove()) {
                     // Since it's a ghost, we just hunt it.
                     Slimefun.getDatabaseManager().getBlockDataController().removeBlock(to.getLocation());
@@ -1050,8 +1045,7 @@ public class ProgrammableAndroid extends SlimefunItem
                 }
             }));
 
-            Slimefun.getBlockDataService()
-                    .updateUniversalDataUUID(to, uniData.getUUID().toString());
+            Slimefun.getDatabaseManager().getBlockDataController().move(uniData, to.getLocation());
 
             Slimefun.runSync(
                     () -> {
@@ -1065,10 +1059,6 @@ public class ProgrammableAndroid extends SlimefunItem
                     to.getLocation());
 
             from.setType(Material.AIR);
-            uniData.setLastPresent(new BlockPosition(to.getLocation()));
-            uniData.getMenu().update(to.getLocation());
-
-            Slimefun.getTickerTask().enableTicker(to.getLocation(), uniData.getUUID());
         }
     }
 

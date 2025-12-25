@@ -30,7 +30,7 @@ import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 import lombok.Setter;
 import me.mrCookieSlime.Slimefun.Objects.handlers.BlockTicker;
-import org.apache.commons.lang.Validate;
+import org.apache.commons.lang3.Validate;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
 
@@ -39,7 +39,9 @@ import org.bukkit.Location;
  * synchronous or not.
  *
  * @author TheBusyBiscuit
+ *
  * @see BlockTicker
+ *
  */
 public class TickerTask implements Runnable {
 
@@ -231,33 +233,45 @@ public class TickerTask implements Runnable {
 
         SlimefunItem item = SlimefunItem.getById(blockData.getSfId());
 
-        if (item == null) {
-            return;
-        }
+        if (item != null && item.getBlockTicker() != null) {
+            if (item.isDisabledIn(l.getWorld())) {
+                return;
+            }
 
-        callBlockTicker(l, item, blockData, tickers);
+            try {
+                if (item.getBlockTicker().isSynchronized()) {
+                    Slimefun.getProfiler().scheduleEntries(1);
+                    item.getBlockTicker().update();
+
+                    /**
+                     * We are inserting a new timestamp because synchronized actions
+                     * are always ran with a 50ms delay (1 game tick)
+                     */
+                    Slimefun.runSync(() -> {
+                        if (blockData.isPendingRemove()) {
+                            return;
+                        }
+                        tickBlock(l, item, blockData, System.nanoTime());
+                    });
+                } else {
+                    long timestamp = Slimefun.getProfiler().newEntry();
+                    item.getBlockTicker().update();
+                    tickBlock(l, item, blockData, timestamp);
+                }
+
+                tickers.add(item.getBlockTicker());
+            } catch (Exception x) {
+                reportErrors(l, item, x);
+            }
+        }
     }
 
     @ParametersAreNonnullByDefault
     private void tickUniversalLocation(UUID uuid, Location l, @Nonnull Set<BlockTicker> tickers) {
-        var uniData = StorageCacheUtils.getUniversalBlock(uuid);
-        if (uniData == null || !uniData.isDataLoaded() || uniData.isPendingRemove()) {
-            return;
-        }
+        var data = StorageCacheUtils.getUniversalBlock(uuid);
+        var item = SlimefunItem.getById(data.getSfId());
 
-        var item = SlimefunItem.getById(uniData.getSfId());
-
-        if (item == null) {
-            return;
-        }
-
-        callBlockTicker(l, item, uniData, tickers);
-    }
-
-    @ParametersAreNonnullByDefault
-    private void callBlockTicker(
-            Location l, SlimefunItem item, ASlimefunDataContainer data, @Nonnull Set<BlockTicker> tickers) {
-        if (item.getBlockTicker() != null) {
+        if (item != null && item.getBlockTicker() != null) {
             if (item.isDisabledIn(l.getWorld())) {
                 return;
             }
@@ -313,7 +327,7 @@ public class TickerTask implements Runnable {
     @ParametersAreNonnullByDefault
     private void tickBlock(Location l, SlimefunItem item, ASlimefunDataContainer data, long timestamp) {
         try {
-            if (item.getBlockTicker().useUniversalData()) {
+            if (item.getBlockTicker().isUniversal()) {
                 if (data instanceof SlimefunUniversalData universalData) {
                     item.getBlockTicker().tick(l.getBlock(), item, universalData);
                 } else {
@@ -348,7 +362,7 @@ public class TickerTask implements Runnable {
             });
             Slimefun.logger().log(Level.SEVERE, "该位置上的机器在过去一段时间内多次报错，对应机器已被停用。");
             Slimefun.logger().log(Level.SEVERE, "请在 /plugins/Slimefun/error-reports/ 文件夹中查看错误详情。");
-            Slimefun.logger().log(Level.SEVERE, "在反馈时，请向他人发送上述错误报告文件，而不是发送这段话的截图");
+            Slimefun.logger().log(Level.SEVERE, "如果你要向他人求助，请向他人发送上述错误报告文件,而不是发送这个窗口的截图");
             Slimefun.logger().log(Level.SEVERE, " ");
             bugs.remove(position);
 
@@ -410,7 +424,9 @@ public class TickerTask implements Runnable {
      * The {@link Chunk} does not have to be loaded.
      * If no {@link Location} is present, the returned {@link Set} will be empty.
      *
-     * @param chunk The {@link Chunk}
+     * @param chunk
+     *            The {@link Chunk}
+     *
      * @return A {@link Set} of all ticking {@link Location Locations}
      */
     @Nonnull
@@ -428,7 +444,9 @@ public class TickerTask implements Runnable {
      *
      * 其中包含的 {@link Location} 可以是已加载或卸载的 {@link Chunk}
      *
-     * @param chunk {@link Chunk}
+     * @param chunk
+     *            {@link Chunk}
+     *
      * @return 包含所有机器 Tick {@link TickLocation 位置}的只读 {@link Map}
      */
     @Nonnull
@@ -441,7 +459,8 @@ public class TickerTask implements Runnable {
     /**
      * This enables the ticker at the given {@link Location} and adds it to our "queue".
      *
-     * @param l The {@link Location} to activate
+     * @param l
+     *            The {@link Location} to activate
      */
     public void enableTicker(@Nonnull Location l) {
         enableTicker(l, null);
@@ -481,7 +500,8 @@ public class TickerTask implements Runnable {
      * This method disables the ticker at the given {@link Location} and removes it from our internal
      * "queue".
      *
-     * @param l The {@link Location} to remove
+     * @param l
+     *            The {@link Location} to remove
      */
     public void disableTicker(@Nonnull Location l) {
         Validate.notNull(l, "Location cannot be null!");
@@ -504,9 +524,11 @@ public class TickerTask implements Runnable {
      * This method disables the ticker at the given {@link UUID} and removes it from our internal
      * "queue".
      *
-     * We don't recommend disable by this way unless you only have UUID of universal data.
+     * DO NOT USE THIS until you cannot disable by location,
+     * or enjoy extremely slow.
      *
-     * @param uuid The {@link UUID} to remove
+     * @param uuid
+     *            The {@link UUID} to remove
      */
     public void disableTicker(@Nonnull UUID uuid) {
         Validate.notNull(uuid, "Universal Data ID cannot be null!");

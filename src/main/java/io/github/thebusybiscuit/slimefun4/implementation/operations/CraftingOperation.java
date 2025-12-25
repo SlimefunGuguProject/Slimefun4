@@ -3,7 +3,7 @@ package io.github.thebusybiscuit.slimefun4.implementation.operations;
 import io.github.thebusybiscuit.slimefun4.core.machines.MachineOperation;
 import javax.annotation.Nonnull;
 import me.mrCookieSlime.Slimefun.Objects.SlimefunItem.abstractItems.MachineRecipe;
-import org.apache.commons.lang.Validate;
+import org.apache.commons.lang3.Validate;
 import org.bukkit.inventory.ItemStack;
 
 /**

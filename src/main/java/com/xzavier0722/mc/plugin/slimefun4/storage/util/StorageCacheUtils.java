@@ -42,11 +42,20 @@ public class StorageCacheUtils {
 
     @ParametersAreNonnullByDefault
     public static boolean hasUniversalBlock(Location l) {
-        return TaskUtil.runSyncMethod(
-                () -> Slimefun.getBlockDataService()
-                        .getUniversalDataUUID(l.getBlock())
-                        .isPresent(),
-                l);
+        var uniDataByNBT = TaskUtil.runSyncMethod(
+            () -> Slimefun.getBlockDataService()
+                .getUniversalDataUUID(l.getBlock())
+                .isPresent(),
+            l);
+
+        if (uniDataByNBT) {
+            return true;
+        }
+
+        return Slimefun.getDatabaseManager()
+            .getBlockDataController()
+            .getUniversalBlockDataFromCache(l)
+            .isPresent();
     }
 
     @ParametersAreNonnullByDefault
@@ -55,13 +64,32 @@ public class StorageCacheUtils {
     }
 
     @ParametersAreNonnullByDefault
+    @Nullable public static ASlimefunDataContainer getDataContainer(Location l) {
+        var blockData = getBlock(l);
+        if (blockData != null) {
+            return blockData;
+        }
+
+        return getUniversalBlock(l);
+    }
+
+    @ParametersAreNonnullByDefault
     public static boolean isBlock(Location l, String id) {
         var blockData = getBlock(l);
         return blockData != null && id.equals(blockData.getSfId());
     }
 
+    /**
+     * @deprecated use {@link #getSlimefunItem(Location)} instead
+     */
+    @Deprecated(forRemoval = true)
     @ParametersAreNonnullByDefault
     @Nullable public static SlimefunItem getSfItem(Location l) {
+        return getSlimefunItem(l);
+    }
+
+    @ParametersAreNonnullByDefault
+    @Nullable public static SlimefunItem getSlimefunItem(Location l) {
         var blockData = getBlock(l);
 
         if (blockData != null) {
@@ -156,9 +184,14 @@ public class StorageCacheUtils {
 
     @ParametersAreNonnullByDefault
     @Nullable public static SlimefunUniversalBlockData getUniversalBlock(UUID uuid, Location l) {
+        return getUniversalBlock(uuid, l, true);
+    }
+
+    @ParametersAreNonnullByDefault
+    @Nullable public static SlimefunUniversalBlockData getUniversalBlock(UUID uuid, Location l, boolean updateLastPresent) {
         var uniData = getUniversalBlock(uuid);
 
-        if (uniData != null) {
+        if (uniData != null && updateLastPresent) {
             uniData.setLastPresent(new BlockPosition(l));
         }
 
@@ -291,6 +324,10 @@ public class StorageCacheUtils {
                 loadingData.remove(data);
             }
         });
+    }
+
+    public static void move(ASlimefunDataContainer data, Location to) {
+        Slimefun.getDatabaseManager().getBlockDataController().move(data, to);
     }
 
     public static void executeAfterLoad(ASlimefunDataContainer data, Runnable execute, boolean runOnMainThread) {

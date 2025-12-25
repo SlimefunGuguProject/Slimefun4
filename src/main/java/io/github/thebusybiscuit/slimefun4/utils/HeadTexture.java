@@ -5,7 +5,7 @@ import io.github.bakedlibs.dough.skins.PlayerSkin;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 import javax.annotation.Nonnull;
-import org.apache.commons.lang.Validate;
+import org.apache.commons.lang3.Validate;
 import org.bukkit.inventory.ItemStack;
 
 /**
