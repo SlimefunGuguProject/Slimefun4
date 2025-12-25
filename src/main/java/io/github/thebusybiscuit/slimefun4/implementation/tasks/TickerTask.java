@@ -327,7 +327,7 @@ public class TickerTask implements Runnable {
     @ParametersAreNonnullByDefault
     private void tickBlock(Location l, SlimefunItem item, ASlimefunDataContainer data, long timestamp) {
         try {
-            if (item.getBlockTicker().isUniversal()) {
+            if (item.getBlockTicker().useUniversalData()) {
                 if (data instanceof SlimefunUniversalData universalData) {
                     item.getBlockTicker().tick(l.getBlock(), item, universalData);
                 } else {
