@@ -128,10 +128,7 @@ public class BlockDataController extends ADataController {
             case LOAD_ON_STARTUP -> loadLoadedWorlds();
         }
 
-        Slimefun.getPlatformScheduler()
-                .runLater(
-                    this::loadUniversalRecord,
-                        1);
+        Slimefun.getPlatformScheduler().runLater(this::loadUniversalRecord, 1);
     }
 
     /**

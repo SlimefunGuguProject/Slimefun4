@@ -13,6 +13,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 import lombok.Getter;
+import lombok.Setter;
 import org.apache.commons.lang.Validate;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Server;
@@ -72,12 +73,15 @@ public class SlimefunConfigManager {
     private boolean bypassItemLengthCheck;
 
     @Getter
+    @Setter
     private int asyncTickerInitSize;
 
     @Getter
+    @Setter
     private int asyncTickerMaxSize;
 
     @Getter
+    @Setter
     private int asyncTickerQueueSize;
 
     public SlimefunConfigManager(@Nonnull Slimefun plugin) {
@@ -113,6 +117,8 @@ public class SlimefunConfigManager {
     public boolean load(boolean reload) {
         boolean isSuccessful = true;
 
+        var serverHalfProcs = Math.max(1, Runtime.getRuntime().availableProcessors() / 2);
+
         try {
             pluginConfig.reload();
             itemsConfig.reload();
@@ -138,23 +144,42 @@ public class SlimefunConfigManager {
             pluginConfig.setDefaultValue("researches.auto-convert", false);
             researchAutoConvert = pluginConfig.getBoolean("researches.auto-convert");
 
+            pluginConfig.setDefaultValue("URID.custom-async-ticker.init-size", serverHalfProcs);
             pluginConfig.setDefaultValue(
-                    "URID.custom.async-ticker.init-size", Runtime.getRuntime().availableProcessors() / 2);
-            pluginConfig.setDefaultValue(
-                    "URID.custom.async-ticker.max-size", Runtime.getRuntime().availableProcessors());
-            pluginConfig.setDefaultValue("URID.custom.async-ticker.queue-size", 1024);
+                    "URID.custom-async-ticker.max-size", Runtime.getRuntime().availableProcessors());
+            pluginConfig.setDefaultValue("URID.custom-async-ticker.queue-size", 1024);
 
-            asyncTickerInitSize = pluginConfig.getInt("URID.custom.async-ticker.init-size");
-            asyncTickerMaxSize = pluginConfig.getInt("URID.custom.async-ticker.max-size");
-            asyncTickerQueueSize = pluginConfig.getInt("URID.custom.async-ticker.queue-size");
+            asyncTickerInitSize = pluginConfig.getInt("URID.custom-async-ticker.init-size");
+            asyncTickerMaxSize = pluginConfig.getInt("URID.custom-async-ticker.max-size");
+            asyncTickerQueueSize = pluginConfig.getInt("URID.custom-async-ticker.queue-size");
         } catch (Exception x) {
             plugin.getLogger()
                     .log(
                             Level.SEVERE,
                             x,
-                            () -> "An Exception was caught while (re)loading the config files for Slimefun v"
+                            () -> "An Exception was caught while loading the config files for Slimefun v"
                                     + plugin.getDescription().getVersion());
             isSuccessful = false;
+        }
+
+        if (asyncTickerInitSize < 0) {
+            asyncTickerInitSize = serverHalfProcs;
+            Slimefun.logger().log(Level.WARNING, "当前设置的 Ticker 线程池初始大小异常，已自动修改为默认值");
+        }
+
+        if (asyncTickerMaxSize < 0) {
+            asyncTickerMaxSize = Runtime.getRuntime().availableProcessors();
+            Slimefun.logger().log(Level.WARNING, "当前设置的 Ticker 线程池最大大小异常，已自动修改为默认值");
+        }
+
+        if (asyncTickerInitSize > asyncTickerMaxSize) {
+            asyncTickerInitSize = serverHalfProcs;
+            Slimefun.logger().log(Level.WARNING, "当前设置的 Ticker 线程池初始大小过大，已自动修改为默认值");
+        }
+
+        if (asyncTickerQueueSize < 0) {
+            asyncTickerInitSize = 1024;
+            Slimefun.logger().log(Level.WARNING, "当前设置的 Ticker 线程池任务队列大小异常，已自动修改为默认值");
         }
 
         if (!reload) {

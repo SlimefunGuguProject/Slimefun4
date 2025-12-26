@@ -96,38 +96,8 @@ public class TickerTask implements Runnable {
         this.tickRate = Slimefun.getCfg().getInt("URID.custom-ticker-delay");
 
         var initSize = Slimefun.getConfigManager().getAsyncTickerInitSize();
-        var maxSize = Slimefun.getCfg().getInt("URID.custom-async-ticker.max-size");
-
-        boolean change = false;
-
-        if (maxSize < 0) {
-            maxSize = initSize;
-            Slimefun.logger().log(Level.WARNING, "当前设置的 Ticker 线程池最大大小异常，已自动设置为 {0}，请你修改为一个正常的大小", maxSize);
-            Slimefun.getCfg().setValue("URID.custom-async-ticker.max-size", maxSize);
-            change = true;
-        }
-
-        if (initSize > maxSize) {
-            initSize = maxSize;
-            Slimefun.logger().log(Level.WARNING, "当前设置的 Ticker 线程池初始大小过大，已被重设至 {0}，建议修改为小于 {1} 的值。", new Object[] {
-                maxSize, maxSize - 1
-            });
-            Slimefun.getCfg().setValue("URID.custom.async-ticker.init-size", initSize);
-            change = true;
-        }
-
-        var poolSize = Slimefun.getCfg().getInt("URID.custom-async-ticker.pool-size");
-
-        if (poolSize < 0) {
-            Slimefun.logger().log(Level.WARNING, "当前设置的 Ticker 线程池任务队列大小异常，已自动设置为 1024，请修改为一个正常的大小");
-            poolSize = 512;
-            Slimefun.getCfg().setValue("URID.custom-async-ticker.pool-size", poolSize);
-            change = true;
-        }
-
-        if (change) {
-            Slimefun.getCfg().save();
-        }
+        var maxSize = Slimefun.getConfigManager().getAsyncTickerMaxSize();
+        var poolSize = Slimefun.getConfigManager().getAsyncTickerQueueSize();
 
         this.asyncTickerService = new SlimefunPoolExecutor(
                 "Slimefun-Ticker-Pool",
@@ -139,7 +109,7 @@ public class TickerTask implements Runnable {
                 tickerThreadFactory,
                 (r, e) -> {
                     // 任务队列已满，使用备用的单线程池执行该任务
-                    fallbackTickerService.execute(r);
+                    fallbackTickerService.submit(r);
                 });
 
         this.fallbackTickerService = new SlimefunPoolExecutor(

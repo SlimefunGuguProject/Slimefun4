@@ -43,19 +43,19 @@ public class StorageCacheUtils {
     @ParametersAreNonnullByDefault
     public static boolean hasUniversalBlock(Location l) {
         var uniDataByNBT = TaskUtil.runSyncMethod(
-            () -> Slimefun.getBlockDataService()
-                .getUniversalDataUUID(l.getBlock())
-                .isPresent(),
-            l);
+                () -> Slimefun.getBlockDataService()
+                        .getUniversalDataUUID(l.getBlock())
+                        .isPresent(),
+                l);
 
         if (uniDataByNBT) {
             return true;
         }
 
         return Slimefun.getDatabaseManager()
-            .getBlockDataController()
-            .getUniversalBlockDataFromCache(l)
-            .isPresent();
+                .getBlockDataController()
+                .getUniversalBlockDataFromCache(l)
+                .isPresent();
     }
 
     @ParametersAreNonnullByDefault
