@@ -1,6 +1,5 @@
 package com.xzavier0722.mc.plugin.slimefun4.storage.controller;
 
-import io.github.thebusybiscuit.slimefun4.libraries.commons.lang.NotImplementedException;
 import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
@@ -67,7 +66,7 @@ public class BlockDataConfigWrapper extends Config {
     @Override
     public void setDefaultValue(@Nonnull String path, @Nullable Object value) {
         if (!(value instanceof String str)) {
-            throw new NotImplementedException();
+            throw new RuntimeException("Value must be of type String");
         }
         if (getString(path) == null) {
             blockData.setData(path, str);
@@ -81,7 +80,7 @@ public class BlockDataConfigWrapper extends Config {
         }
 
         if (!(value instanceof String str)) {
-            throw new NotImplementedException();
+            throw new RuntimeException("Value must be of type String");
         }
         blockData.setData(path, str);
     }
