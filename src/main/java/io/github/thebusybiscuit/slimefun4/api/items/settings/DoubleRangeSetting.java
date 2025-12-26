@@ -4,7 +4,7 @@ import io.github.thebusybiscuit.slimefun4.api.items.ItemSetting;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
-import org.apache.commons.lang3.Validate;
+import org.apache.commons.lang.Validate;
 
 /**
  * This variation of {@link ItemSetting} allows you to define an {@link Double} range
