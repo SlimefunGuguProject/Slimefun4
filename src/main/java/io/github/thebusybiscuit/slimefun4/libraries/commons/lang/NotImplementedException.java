@@ -1,16 +1,15 @@
 package io.github.thebusybiscuit.slimefun4.libraries.commons.lang;
 
-import io.github.thebusybiscuit.slimefun4.libraries.commons.lang.exception.Nestable;
-import io.github.thebusybiscuit.slimefun4.libraries.commons.lang.exception.NestableDelegate;
 import java.io.PrintStream;
 import java.io.PrintWriter;
+import org.apache.commons.lang.exception.Nestable;
+import org.apache.commons.lang.exception.NestableDelegate;
 
 @Deprecated(forRemoval = true)
 public class NotImplementedException extends UnsupportedOperationException implements Nestable {
     private static final String DEFAULT_MESSAGE = "Code is not implemented";
     private static final long serialVersionUID = -6894122266938754088L;
-    private NestableDelegate delegate =
-            new io.github.thebusybiscuit.slimefun4.libraries.commons.lang.exception.NestableDelegate(this);
+    private NestableDelegate delegate = new NestableDelegate(this);
     private Throwable cause;
 
     public NotImplementedException() {
