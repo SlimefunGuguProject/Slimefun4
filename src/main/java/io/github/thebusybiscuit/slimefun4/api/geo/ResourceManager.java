@@ -23,7 +23,7 @@ import java.util.OptionalInt;
 import java.util.concurrent.ThreadLocalRandom;
 import javax.annotation.Nonnull;
 import me.mrCookieSlime.CSCoreLibPlugin.general.Inventory.ChestMenu;
-import org.apache.commons.lang3.Validate;
+import org.apache.commons.lang.Validate;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Chunk;
