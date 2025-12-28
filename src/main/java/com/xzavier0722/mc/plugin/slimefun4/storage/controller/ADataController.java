@@ -104,7 +104,7 @@ public abstract class ADataController {
         callbackExecutor = new SlimefunPoolExecutor(
                 "SF-" + dataType.name() + "-Callback-Executor",
                 1,
-                Runtime.getRuntime().availableProcessors() / 2,
+                Math.max(1, Runtime.getRuntime().availableProcessors() / 2),
                 10,
                 TimeUnit.SECONDS,
                 new LinkedBlockingQueue<>(),
