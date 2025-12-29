@@ -1,5 +1,7 @@
 package io.github.thebusybiscuit.slimefun4.implementation.tasks;
 
+import city.norain.slimefun4.utils.SlimefunPoolExecutor;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.ASlimefunDataContainer;
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunBlockData;
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunUniversalData;
@@ -17,6 +19,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
@@ -27,7 +33,6 @@ import me.mrCookieSlime.Slimefun.Objects.handlers.BlockTicker;
 import org.apache.commons.lang.Validate;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
-import org.bukkit.scheduler.BukkitScheduler;
 
 /**
  * The {@link TickerTask} is responsible for ticking every {@link BlockTicker},
@@ -52,24 +57,71 @@ public class TickerTask implements Runnable {
      */
     private final Map<BlockPosition, Integer> bugs = new ConcurrentHashMap<>();
 
-    private int tickRate;
-    private boolean halted = false;
-    private boolean running = false;
+    private final ThreadFactory tickerThreadFactory = new ThreadFactoryBuilder()
+            .setNameFormat("SF-Ticker-%d")
+            .setDaemon(true)
+            .setUncaughtExceptionHandler(
+                    (t, e) -> Slimefun.logger().log(Level.SEVERE, e, () -> "tick 时发生异常 (@" + t.getName() + ")"))
+            .build();
 
+    /**
+     * 负责并发运行部分可异步的 Tick 任务的 {@link ExecutorService} 实例.
+     */
+    private ExecutorService asyncTickerService;
+
+    private ExecutorService fallbackTickerService;
+
+    private int tickRate;
+
+    /**
+     * 该标记代表 TickerTask 已被终止.
+     */
+    private volatile boolean halted = false;
+
+    /**
+     * 该标记代表 TickerTask 正在运行.
+     */
+    private volatile boolean running = false;
+
+    /**
+     * 该标记代表 TickerTask 暂时被暂停.
+     */
     @Setter
     private volatile boolean paused = false;
 
     /**
      * This method starts the {@link TickerTask} on an asynchronous schedule.
-     *
-     * @param plugin
-     *            The instance of our {@link Slimefun}
      */
-    public void start(@Nonnull Slimefun plugin) {
+    public void start() {
         this.tickRate = Slimefun.getCfg().getInt("URID.custom-ticker-delay");
 
-        BukkitScheduler scheduler = plugin.getServer().getScheduler();
-        scheduler.runTaskTimerAsynchronously(plugin, this, 100L, tickRate);
+        var initSize = Slimefun.getConfigManager().getAsyncTickerInitSize();
+        var maxSize = Slimefun.getConfigManager().getAsyncTickerMaxSize();
+        var poolSize = Slimefun.getConfigManager().getAsyncTickerQueueSize();
+
+        this.asyncTickerService = new SlimefunPoolExecutor(
+                "Slimefun-Ticker-Pool",
+                initSize - 1,
+                maxSize - 1,
+                1,
+                TimeUnit.MINUTES,
+                new LinkedBlockingQueue<>(poolSize),
+                tickerThreadFactory,
+                (r, e) -> {
+                    // 任务队列已满，使用备用的单线程池执行该任务
+                    fallbackTickerService.submit(r);
+                });
+
+        this.fallbackTickerService = new SlimefunPoolExecutor(
+                "Slimefun-Ticker-Fallback-Service",
+                1,
+                1,
+                0,
+                TimeUnit.SECONDS,
+                new LinkedBlockingQueue<>(),
+                tickerThreadFactory);
+
+        Slimefun.getPlatformScheduler().runTimerAsync(this, 100L, tickRate);
     }
 
     /**
@@ -99,9 +151,7 @@ public class TickerTask implements Runnable {
             if (!halted) {
                 Set<Map.Entry<ChunkPosition, Set<TickLocation>>> loc;
 
-                synchronized (tickingLocations) {
-                    loc = new HashSet<>(tickingLocations.entrySet());
-                }
+                loc = new HashSet<>(tickingLocations.entrySet());
 
                 for (Map.Entry<ChunkPosition, Set<TickLocation>> entry : loc) {
                     tickChunk(entry.getKey(), tickers, new HashSet<>(entry.getValue()));
@@ -113,7 +163,6 @@ public class TickerTask implements Runnable {
                 ticker.startNewTick();
             }
 
-            reset();
             Slimefun.getProfiler().stop();
         } catch (Exception | LinkageError x) {
             Slimefun.logger()
@@ -122,6 +171,7 @@ public class TickerTask implements Runnable {
                             x,
                             () -> "An Exception was caught while ticking the Block Tickers Task for Slimefun v"
                                     + Slimefun.getVersion());
+        } finally {
             reset();
         }
     }
@@ -205,16 +255,36 @@ public class TickerTask implements Runnable {
                      * We are inserting a new timestamp because synchronized actions
                      * are always ran with a 50ms delay (1 game tick)
                      */
-                    Slimefun.runSync(() -> {
-                        if (data.isPendingRemove()) {
-                            return;
-                        }
-                        tickBlock(l, item, data, System.nanoTime());
-                    });
+                    Slimefun.runSync(
+                            () -> {
+                                if (data.isPendingRemove()) {
+                                    return;
+                                }
+                                tickBlock(l, item, data, System.nanoTime());
+                            },
+                            l);
                 } else {
                     long timestamp = Slimefun.getProfiler().newEntry();
                     item.getBlockTicker().update();
-                    tickBlock(l, item, data, timestamp);
+
+                    Runnable func = () -> {
+                        try {
+                            if (Slimefun.isFolia()) {
+                                Slimefun.getPlatformScheduler()
+                                        .runAtLocation(l, task -> tickBlock(l, item, data, timestamp));
+                            } else {
+                                tickBlock(l, item, data, timestamp);
+                            }
+                        } catch (Exception x) {
+                            reportErrors(l, item, x);
+                        }
+                    };
+
+                    if (item.getBlockTicker().isConcurrent()) {
+                        asyncTickerService.execute(func);
+                    } else {
+                        fallbackTickerService.execute(func);
+                    }
                 }
 
                 tickers.add(item.getBlockTicker());
@@ -227,7 +297,7 @@ public class TickerTask implements Runnable {
     @ParametersAreNonnullByDefault
     private void tickBlock(Location l, SlimefunItem item, ASlimefunDataContainer data, long timestamp) {
         try {
-            if (item.getBlockTicker().isUniversal()) {
+            if (item.getBlockTicker().useUniversalData()) {
                 if (data instanceof SlimefunUniversalData universalData) {
                     item.getBlockTicker().tick(l.getBlock(), item, universalData);
                 } else {
@@ -260,7 +330,7 @@ public class TickerTask implements Runnable {
             Slimefun.logger().log(Level.SEVERE, "X: {0} Y: {1} Z: {2} ({3})", new Object[] {
                 l.getBlockX(), l.getBlockY(), l.getBlockZ(), item.getId()
             });
-            Slimefun.logger().log(Level.SEVERE, "在过去的 4 个 Tick 中发生多次错误，该方块对应的机器已被停用。");
+            Slimefun.logger().log(Level.SEVERE, "该位置上的机器在过去一段时间内多次报错，对应机器已被停用。");
             Slimefun.logger().log(Level.SEVERE, "请在 /plugins/Slimefun/error-reports/ 文件夹中查看错误详情。");
             Slimefun.logger().log(Level.SEVERE, "如果你要向他人求助，请向他人发送上述错误报告文件,而不是发送这个窗口的截图");
             Slimefun.logger().log(Level.SEVERE, " ");
@@ -435,6 +505,33 @@ public class TickerTask implements Runnable {
 
         synchronized (tickingLocations) {
             tickingLocations.values().forEach(loc -> loc.removeIf(tk -> uuid.equals(tk.getUuid())));
+        }
+    }
+
+    public void shutdown() {
+        setPaused(true);
+        halt();
+
+        try {
+            asyncTickerService.shutdown();
+            if (!asyncTickerService.awaitTermination(10, TimeUnit.SECONDS)) {
+                asyncTickerService.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            asyncTickerService.shutdownNow();
+        } finally {
+            asyncTickerService = null;
+        }
+
+        try {
+            fallbackTickerService.shutdown();
+            if (!fallbackTickerService.awaitTermination(10, TimeUnit.SECONDS)) {
+                fallbackTickerService.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            fallbackTickerService.shutdownNow();
+        } finally {
+            fallbackTickerService = null;
         }
     }
 }

@@ -1,29 +1,29 @@
 package io.github.thebusybiscuit.slimefun4.implementation.tasks.player;
 
+import com.tcoded.folialib.wrapper.task.WrappedTask;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import javax.annotation.Nonnull;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 abstract class AbstractPlayerTask implements Runnable {
 
     protected final Player p;
-    private int id;
+    private WrappedTask task;
 
     AbstractPlayerTask(@Nonnull Player p) {
         this.p = p;
     }
 
-    private void setID(int id) {
-        this.id = id;
+    private void setTask(@Nonnull WrappedTask task) {
+        this.task = task;
     }
 
     public void schedule(long delay) {
-        setID(Bukkit.getScheduler().scheduleSyncDelayedTask(Slimefun.instance(), this, delay));
+        setTask(Slimefun.getPlatformScheduler().runLaterAsync(this, delay));
     }
 
     public void scheduleRepeating(long delay, long interval) {
-        setID(Bukkit.getScheduler().scheduleSyncRepeatingTask(Slimefun.instance(), this, delay, interval));
+        setTask(Slimefun.getPlatformScheduler().runTimer(this, delay, interval));
     }
 
     @Override
@@ -37,7 +37,7 @@ abstract class AbstractPlayerTask implements Runnable {
      * This method cancels this {@link AbstractPlayerTask}.
      */
     public final void cancel() {
-        Bukkit.getScheduler().cancelTask(id);
+        Slimefun.getPlatformScheduler().cancelTask(task);
     }
 
     /**

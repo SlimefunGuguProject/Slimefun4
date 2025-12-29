@@ -43,7 +43,7 @@ jobs:
           echo "SHORT_COMMIT_HASH=$SHORT_COMMIT_HASH" >> "$GITHUB_ENV"
           echo "SHORT_COMMIT_HASH=$SHORT_COMMIT_HASH" >> "$GITHUB_OUTPUT"
           echo "JAR_VERSION=$JAR_VERSION" >> "$GITHUB_ENV"
-          sed -i "s/<version>DEV-SNAPSHOT<\/version>/<version>$JAR_VERSION<\/version>/g" pom.xml
+          sed -i "0,/<version>[^<]*<\/version>/{s/<version>[^<]*<\/version>/<version>$JAR_VERSION<\/version>/}" pom.xml
 
       - name: Build with Maven
         run: mvn package -Dversioning.disable --errors

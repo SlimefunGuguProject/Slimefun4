@@ -1,7 +1,7 @@
 package io.github.thebusybiscuit.slimefun4.implementation.items.multiblocks;
 
+import city.norain.slimefun4.dough.TaskQueue;
 import io.github.bakedlibs.dough.items.ItemUtils;
-import io.github.bakedlibs.dough.scheduling.TaskQueue;
 import io.github.thebusybiscuit.slimefun4.api.events.MultiBlockCraftEvent;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
@@ -101,23 +101,30 @@ public class AutomatedPanningMachine extends MultiBlockMachine {
 
         TaskQueue queue = new TaskQueue();
 
-        queue.thenRepeatEvery(20, 5, () -> b.getWorld()
-                .playEffect(b.getRelative(BlockFace.DOWN).getLocation(), Effect.STEP_SOUND, material));
-        queue.thenRun(20, () -> {
-            if (finalOutput.getType() != Material.AIR) {
-                Optional<Inventory> outputChest = OutputChest.findOutputChestFor(b.getRelative(BlockFace.DOWN), output);
+        queue.thenRepeatEvery(
+                20,
+                5,
+                () -> b.getWorld().playEffect(b.getRelative(BlockFace.DOWN).getLocation(), Effect.STEP_SOUND, material),
+                b.getLocation());
+        queue.thenRun(
+                20,
+                () -> {
+                    if (finalOutput.getType() != Material.AIR) {
+                        Optional<Inventory> outputChest =
+                                OutputChest.findOutputChestFor(b.getRelative(BlockFace.DOWN), output);
 
-                if (outputChest.isPresent()) {
-                    outputChest.get().addItem(finalOutput.clone());
-                } else {
-                    b.getWorld().dropItemNaturally(b.getLocation(), finalOutput.clone());
-                }
+                        if (outputChest.isPresent()) {
+                            outputChest.get().addItem(finalOutput.clone());
+                        } else {
+                            b.getWorld().dropItemNaturally(b.getLocation(), finalOutput.clone());
+                        }
 
-                SoundEffect.AUTOMATED_PANNING_MACHINE_SUCCESS_SOUND.playAt(b);
-            } else {
-                SoundEffect.AUTOMATED_PANNING_MACHINE_FAIL_SOUND.playAt(b);
-            }
-        });
+                        SoundEffect.AUTOMATED_PANNING_MACHINE_SUCCESS_SOUND.playAt(b);
+                    } else {
+                        SoundEffect.AUTOMATED_PANNING_MACHINE_FAIL_SOUND.playAt(b);
+                    }
+                },
+                b.getLocation());
 
         queue.execute(Slimefun.instance());
     }
