@@ -1,6 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.implementation.items.electric.generators;
 
-import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunBlockData;
+import com.xzavier0722.mc.plugin.slimefun4.storage.controller.ASlimefunDataContainer;
 import io.github.thebusybiscuit.slimefun4.api.events.PlayerRightClickEvent;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemSetting;
@@ -92,7 +92,7 @@ public class SolarGenerator extends SlimefunItem implements EnergyNetProvider {
     }
 
     @Override
-    public int getGeneratedOutput(Location l, SlimefunBlockData data) {
+    public int getGeneratedOutput(Location l, ASlimefunDataContainer data) {
         World world = l.getWorld();
 
         if (world.getEnvironment() != Environment.NORMAL) {

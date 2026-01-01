@@ -34,7 +34,7 @@ public interface EnergyNetProvider extends EnergyNetComponent {
 
     @Deprecated(forRemoval = true)
     default long getGeneratedOutputLong(@Nonnull Location l, @Nonnull SlimefunBlockData data) {
-        return getGeneratedOutput(l, data);
+        return getGeneratedOutput(l, (ASlimefunDataContainer) data);
     }
 
     /**
@@ -52,7 +52,7 @@ public interface EnergyNetProvider extends EnergyNetComponent {
 
     @Deprecated(forRemoval = true)
     default int getGeneratedOutput(@Nonnull Location l, @Nonnull SlimefunBlockData data) {
-        return getGeneratedOutput(l, new BlockDataConfigWrapper(data));
+        return getGeneratedOutput(l, (ASlimefunDataContainer) data);
     }
 
     /**
@@ -81,7 +81,7 @@ public interface EnergyNetProvider extends EnergyNetComponent {
 
     @Deprecated(forRemoval = true)
     default boolean willExplode(@Nonnull Location l, @Nonnull SlimefunBlockData data) {
-        return willExplode(l, new BlockDataConfigWrapper(data));
+        return willExplode(l, (ASlimefunDataContainer) data);
     }
 
     /**

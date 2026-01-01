@@ -1,6 +1,6 @@
 package me.mrCookieSlime.Slimefun.Objects.SlimefunItem.abstractItems;
 
-import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunBlockData;
+import com.xzavier0722.mc.plugin.slimefun4.storage.controller.ASlimefunDataContainer;
 import com.xzavier0722.mc.plugin.slimefun4.storage.util.StorageCacheUtils;
 import io.github.bakedlibs.dough.items.CustomItemStack;
 import io.github.bakedlibs.dough.protection.Interaction;
@@ -150,7 +150,7 @@ public abstract class AGenerator extends AbstractEnergyProvider implements Machi
     }
 
     @Override
-    public int getGeneratedOutput(Location l, SlimefunBlockData data) {
+    public int getGeneratedOutput(Location l, ASlimefunDataContainer data) {
         BlockMenu inv = StorageCacheUtils.getMenu(l);
         FuelOperation operation = processor.getOperation(l);
 
