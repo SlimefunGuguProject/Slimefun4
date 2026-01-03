@@ -29,4 +29,13 @@ public abstract class ASlimefunDataContainer extends ADataContainer {
         super(key, other);
         this.sfId = sfId;
     }
+
+    @Override
+    protected void checkData() {
+        super.checkData();
+
+        if (pendingRemove) {
+            throw new IllegalStateException("Unable to access data that is pending removal!");
+        }
+    }
 }
