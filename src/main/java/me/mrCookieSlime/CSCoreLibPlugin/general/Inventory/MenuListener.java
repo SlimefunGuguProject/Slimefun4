@@ -11,6 +11,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.plugin.Plugin;
 
 /**
@@ -24,6 +25,17 @@ public class MenuListener implements Listener {
 
     public MenuListener(Plugin plugin) {
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
+    }
+
+    @EventHandler
+    public void onOpen(InventoryOpenEvent e) {
+        // getHolder() involves Block.getState() in BlockInventory cases
+        var holder = e.getInventory().getHolder(false);
+
+        if (holder instanceof ChestMenu menu) {
+            menu.removeViewer(e.getPlayer().getUniqueId());
+            menu.getMenuOpeningHandler().onOpen((Player) e.getPlayer());
+        }
     }
 
     @EventHandler
