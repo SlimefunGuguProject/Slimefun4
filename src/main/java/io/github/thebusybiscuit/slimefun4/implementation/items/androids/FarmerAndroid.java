@@ -37,7 +37,7 @@ public class FarmerAndroid extends ProgrammableAndroid {
     @Override
     protected void farm(Block b, UniversalMenu menu, Block block, boolean isAdvanced) {
         OfflinePlayer owner = Bukkit.getOfflinePlayer(
-                UUID.fromString(StorageCacheUtils.getUniversalBlock(menu.getUuid(), b.getLocation(), "owner")));
+                UUID.fromString(StorageCacheUtils.getUniversalBlockData(menu.getUuid(), b.getLocation(), "owner")));
         if (!Slimefun.getProtectionManager().hasPermission(owner, block, Interaction.BREAK_BLOCK)) {
             return;
         }

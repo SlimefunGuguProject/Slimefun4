@@ -203,18 +203,10 @@ public class DirtyChestMenu extends ChestMenu {
 
     @Override
     public void replaceExistingItem(int slot, ItemStack item) {
-        if (locked()) {
-            throw new IllegalStateException("Cannot consume item when menu is locked");
-        }
-
         replaceExistingItem(slot, item, true);
     }
 
     public void replaceExistingItem(int slot, ItemStack item, boolean event) {
-        if (locked()) {
-            throw new IllegalStateException("Cannot consume item when menu is locked");
-        }
-
         if (event) {
             ItemStack previous = getItemInSlot(slot);
             item = preset.onItemStackChange(this, slot, previous, item);
