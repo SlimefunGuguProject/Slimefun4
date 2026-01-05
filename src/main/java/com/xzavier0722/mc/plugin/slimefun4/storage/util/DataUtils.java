@@ -2,22 +2,15 @@ package com.xzavier0722.mc.plugin.slimefun4.storage.util;
 
 import city.norain.slimefun4.utils.StringUtil;
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.StorageType;
-import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.core.debug.Debug;
 import io.github.thebusybiscuit.slimefun4.core.debug.TestCase;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
-import java.util.Map;
 import java.util.logging.Level;
-
 import javax.annotation.Nullable;
-
-import lombok.SneakyThrows;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.io.BukkitObjectInputStream;
 import org.bukkit.util.io.BukkitObjectOutputStream;
@@ -39,16 +32,16 @@ public class DataUtils {
         }
 
         try (var stream = new ByteArrayOutputStream();
-             var bs = new BukkitObjectOutputStream(stream)) {
+                var bs = new BukkitObjectOutputStream(stream)) {
             bs.writeObject(itemStack);
             var itemStr = Base64Coder.encodeLines(stream.toByteArray());
 
             if (!Slimefun.getConfigManager().isBypassItemLengthCheck()
-                && Slimefun.getDatabaseManager().getBlockDataStorageType() == StorageType.MYSQL
-                && itemStr.length() > 65535) {
+                    && Slimefun.getDatabaseManager().getBlockDataStorageType() == StorageType.MYSQL
+                    && itemStr.length() > 65535) {
 
                 throw new IllegalArgumentException("检测到过大物品, 请联系物品对应插件开发者解决: " + StringUtil.itemStackToString(itemStack)
-                    + ", size = " + itemStr.length());
+                        + ", size = " + itemStr.length());
             }
 
             return itemStr;
@@ -65,18 +58,15 @@ public class DataUtils {
      * @param base64Str 要反序列化的 Base64 字符串
      * @return 反序列化后的 {@link ItemStack} 对象
      */
-    @Nullable
-    public static ItemStack deserializeItemStack(String base64Str) throws Exception {
+    @Nullable public static ItemStack deserializeItemStack(String base64Str) throws Exception {
         if (base64Str == null || base64Str.isEmpty() || base64Str.isBlank()) {
             return null;
         }
 
         Debug.log(TestCase.BACKPACK, "Deserializing itemstack: " + base64Str);
 
-        try (
-            var stream = new ByteArrayInputStream(Base64Coder.decodeLines(base64Str));
-            var bs = new BukkitObjectInputStream(stream)
-        ) {
+        try (var stream = new ByteArrayInputStream(Base64Coder.decodeLines(base64Str));
+                var bs = new BukkitObjectInputStream(stream)) {
             var result = (ItemStack) bs.readObject();
 
             Debug.log(TestCase.BACKPACK, "Deserialized itemstack: " + result);
