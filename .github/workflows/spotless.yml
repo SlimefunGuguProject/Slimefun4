@@ -47,12 +47,12 @@ jobs:
 
       - name: Spotless apply (if needed)
         id: spotless-apply
-        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.spotless-check.outputs.status != '0' }}
+        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref_name == 'dev' && steps.spotless-check.outputs.status != '0' }}
         run: mvn -B spotless:apply --errors
 
       - name: Push changes
         uses: EndBug/add-and-commit@v9.1.4
-        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.spotless-check.outputs.status != '0' && success()}}
+        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref_name == 'dev' && steps.spotless-check.outputs.status != '0' && success()}}
         with:
           github_token: ${{ secrets.BOT_ACCESS_TOKEN }}
           add: '.'
