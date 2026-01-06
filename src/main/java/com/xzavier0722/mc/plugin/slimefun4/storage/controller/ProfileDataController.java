@@ -195,8 +195,15 @@ public class ProfileDataController extends ADataController {
 
         var invResult = getData(key);
         var re = new ItemStack[size];
-        invResult.forEach(
-                each -> re[each.getInt(FieldKey.INVENTORY_SLOT)] = each.getItemStack(FieldKey.INVENTORY_ITEM));
+        for (RecordSet each : invResult) {
+            var slot = each.getInt(FieldKey.INVENTORY_SLOT);
+            try {
+                re[slot] = each.getItemStack(FieldKey.INVENTORY_ITEM);
+            } catch (Exception e) {
+                re[slot] = null;
+                logger.log(Level.SEVERE, "无法反序列化玩家背包物品, 已替换为空气 [" + uuid + ":" + slot + "]", e);
+            }
+        }
 
         return re;
     }
