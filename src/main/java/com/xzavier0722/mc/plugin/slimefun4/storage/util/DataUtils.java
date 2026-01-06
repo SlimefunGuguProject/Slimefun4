@@ -58,7 +58,7 @@ public class DataUtils {
      * @param base64Str 要反序列化的 Base64 字符串
      * @return 反序列化后的 {@link ItemStack} 对象
      */
-    @Nullable public static ItemStack deserializeItemStack(String base64Str) throws Exception {
+    @Nullable public static ItemStack deserializeItemStack(String base64Str) {
         if (base64Str == null || base64Str.isEmpty() || base64Str.isBlank()) {
             return null;
         }
@@ -76,6 +76,8 @@ public class DataUtils {
             }
 
             return result;
+        } catch (Exception ex) {
+            throw new RuntimeException("反序列化物品时出现错误, 对应物品无法显示", ex);
         }
     }
 

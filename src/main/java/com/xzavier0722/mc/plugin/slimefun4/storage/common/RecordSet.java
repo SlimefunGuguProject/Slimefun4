@@ -1,13 +1,10 @@
 package com.xzavier0722.mc.plugin.slimefun4.storage.common;
 
 import com.xzavier0722.mc.plugin.slimefun4.storage.util.DataUtils;
-import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import java.util.logging.Level;
-import java.util.stream.Collectors;
 import javax.annotation.ParametersAreNonnullByDefault;
 import lombok.ToString;
 import org.bukkit.inventory.ItemStack;
@@ -59,18 +56,7 @@ public class RecordSet {
 
     @ParametersAreNonnullByDefault
     public ItemStack getItemStack(FieldKey key) {
-        try {
-            return DataUtils.deserializeItemStack(data.get(key));
-        } catch (Exception e) {
-            Slimefun.logger().log(Level.SEVERE, "反序列化数据库中的物品失败! 对应物品将不会显示", e);
-            Slimefun.logger().log(Level.SEVERE, "相关物品信息: [{0}]", new Object[] {
-                data.entrySet().stream()
-                        .filter((entry) -> entry.getKey() != key)
-                        .map(entry -> entry.getKey().name() + "=" + entry.getValue())
-                        .collect(Collectors.toSet())
-            });
-            return null;
-        }
+        return DataUtils.deserializeItemStack(data.get(key));
     }
 
     @ParametersAreNonnullByDefault

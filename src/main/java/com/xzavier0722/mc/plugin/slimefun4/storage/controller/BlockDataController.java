@@ -987,8 +987,22 @@ public class BlockDataController extends ADataController {
                 if (menuPreset != null) {
                     var inv = new ItemStack[54];
 
-                    invData.forEach(record ->
-                            inv[record.getInt(FieldKey.INVENTORY_SLOT)] = record.getItemStack(FieldKey.INVENTORY_ITEM));
+                    for (RecordSet record : invData) {
+                        var slot = record.getInt(FieldKey.INVENTORY_SLOT);
+
+                        try {
+                            inv[slot] = record.getItemStack(FieldKey.INVENTORY_ITEM);
+                        } catch (Exception ex) {
+                            inv[slot] = null;
+                            Slimefun.logger()
+                                    .log(
+                                            Level.SEVERE,
+                                            "加载目标物品失败, 请检查实际数据 ["
+                                                    + LocationUtils.locationToString(blockData.getLocation()) + ":"
+                                                    + slot + "]",
+                                            ex);
+                        }
+                    }
 
                     blockData.setBlockMenu(new BlockMenu(menuPreset, blockData.getLocation(), inv));
 
@@ -1002,6 +1016,8 @@ public class BlockDataController extends ADataController {
             if (sfItem != null && sfItem.isTicking()) {
                 Slimefun.getTickerTask().enableTicker(blockData.getLocation());
             }
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to load block data: " + blockData.getKey(), e);
         } finally {
             lock.unlock(key);
         }
@@ -1090,9 +1106,21 @@ public class BlockDataController extends ADataController {
 
                     var inv = new ItemStack[54];
 
-                    getData(menuKey)
-                            .forEach(recordSet -> inv[recordSet.getInt(FieldKey.INVENTORY_SLOT)] =
-                                    recordSet.getItemStack(FieldKey.INVENTORY_ITEM));
+                    for (RecordSet recordSet : getData(menuKey)) {
+                        var slot = recordSet.getInt(FieldKey.INVENTORY_SLOT);
+                        try {
+                            inv[slot] = recordSet.getItemStack(FieldKey.INVENTORY_ITEM);
+                        } catch (Exception ex) {
+                            inv[slot] = null;
+                            Slimefun.logger()
+                                    .log(
+                                            Level.SEVERE,
+                                            "加载目标物品失败, 请检查实际数据 ["
+                                                    + uniData.getKey() + ":"
+                                                    + slot + "]",
+                                            ex);
+                        }
+                    }
 
                     Location location = null;
 
@@ -1112,7 +1140,7 @@ public class BlockDataController extends ADataController {
                 }
             }
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "Failed to load universal data: " + uniData.getKey(), e);
+            throw new RuntimeException("Failed to load universal data: " + uniData.getKey(), e);
         } finally {
             lock.unlock(key);
         }
@@ -1581,8 +1609,19 @@ public class BlockDataController extends ADataController {
             if (preset != null) {
                 final var inv = new ItemStack[54];
 
-                invData.forEach(record ->
-                        inv[record.getInt(FieldKey.INVENTORY_SLOT)] = record.getItemStack(FieldKey.INVENTORY_ITEM));
+                for (RecordSet record : invData) {
+                    var slot = record.getInt(FieldKey.INVENTORY_SLOT);
+                    try {
+                        inv[slot] = record.getItemStack(FieldKey.INVENTORY_ITEM);
+                    } catch (Exception ex) {
+                        inv[slot] = null;
+                        Slimefun.logger()
+                                .log(
+                                        Level.SEVERE,
+                                        "加载目标物品失败, 请检查实际数据 [" + universalData.getKey() + ":" + slot + "]",
+                                        ex);
+                    }
+                }
 
                 universalData.setMenu(new UniversalMenu(preset, universalData.getUUID(), l, inv));
 
