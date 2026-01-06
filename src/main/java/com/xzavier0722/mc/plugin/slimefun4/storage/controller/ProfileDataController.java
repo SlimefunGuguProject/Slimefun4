@@ -1,6 +1,5 @@
 package com.xzavier0722.mc.plugin.slimefun4.storage.controller;
 
-import city.norain.slimefun4.compatibillty.CompatibilityUtil;
 import com.xzavier0722.mc.plugin.slimefun4.storage.callback.IAsyncReadCallback;
 import com.xzavier0722.mc.plugin.slimefun4.storage.common.DataScope;
 import com.xzavier0722.mc.plugin.slimefun4.storage.common.DataType;
@@ -117,6 +116,16 @@ public class ProfileDataController extends ADataController {
         scheduleReadTask(() -> invokeCallback(callback, getProfile(p)));
     }
 
+    public CompletableFuture<PlayerBackpack> getBackpackAsync(OfflinePlayer owner, int num) {
+        checkDestroy();
+        var uuid = owner.getUniqueId().toString();
+        var re = backpackCache.get(uuid, num);
+        if (re != null) {
+            return CompletableFuture.completedFuture(re);
+        }
+        return CompletableFuture.supplyAsync(() -> getBackpack(owner, num), readExecutor);
+    }
+
     @Nullable public PlayerBackpack getBackpack(OfflinePlayer owner, int num) {
         checkDestroy();
         var uuid = owner.getUniqueId().toString();
@@ -152,7 +161,17 @@ public class ProfileDataController extends ADataController {
         return re;
     }
 
+    public CompletableFuture<PlayerBackpack> getBackpackAsync(String uuid) {
+        checkDestroy();
+        var re = backpackCache.get(uuid);
+        if (re != null) {
+            return CompletableFuture.completedFuture(re);
+        }
+        return CompletableFuture.supplyAsync(() -> getBackpack(uuid), readExecutor);
+    }
+
     @Nullable public PlayerBackpack getBackpack(String uuid) {
+        checkDestroy();
         var re = backpackCache.get(uuid);
         if (re != null) {
             return re;
@@ -321,7 +340,15 @@ public class ProfileDataController extends ADataController {
         scheduleWriteTask(new UUIDKey(DataScope.NONE, uuid), key, getRecordSet(profile), false);
     }
 
-    public void saveBackpackInventory(PlayerBackpack bp, Set<Integer> slots) {
+    @Deprecated(forRemoval = true)
+    public void saveBackpackInventory(PlayerBackpack bp, Set<Integer> slotsIgnored) {
+        // we decided to compute slots internal, and the argument is ignored to avoid potential data desync
+        saveBackpackInventory(bp);
+    }
+
+    public void saveBackpackInventory(PlayerBackpack bp) {
+        Set<Integer> slots = bp.getSnapshot().getChangedSlots(bp.getInventory());
+        bp.refreshSnapshot();
         var id = bp.getUniqueId().toString();
         var inv = bp.getInventory();
         slots.forEach(slot -> {
@@ -346,8 +373,10 @@ public class ProfileDataController extends ADataController {
         });
     }
 
+    @Deprecated(forRemoval = true)
     public void saveBackpackInventory(PlayerBackpack bp, Integer... slots) {
-        saveBackpackInventory(bp, Set.of(slots));
+        // we decided to compute slots internal, and the argument is ignored to avoid potential data desync
+        saveBackpackInventory(bp);
     }
 
     public UUID getPlayerUuid(String pName) {
@@ -408,10 +437,6 @@ public class ProfileDataController extends ADataController {
             @Override
             public void run() {
                 if (invalidingBackpackTasks.remove(pUuid) != this) {
-                    return;
-                }
-
-                if (CompatibilityUtil.isConnected(Bukkit.getOfflinePlayer(UUID.fromString(pUuid)))) {
                     return;
                 }
 

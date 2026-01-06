@@ -3,6 +3,7 @@ package io.github.thebusybiscuit.slimefun4.api.player;
 import city.norain.slimefun4.holder.SlimefunInventoryHolder;
 import city.norain.slimefun4.utils.InventoryUtil;
 import com.xzavier0722.mc.plugin.slimefun4.storage.callback.IAsyncReadCallback;
+import com.xzavier0722.mc.plugin.slimefun4.storage.util.InvSnapshot;
 import io.github.bakedlibs.dough.common.ChatColors;
 import io.github.bakedlibs.dough.common.CommonPatterns;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
@@ -11,10 +12,12 @@ import io.github.thebusybiscuit.slimefun4.implementation.listeners.BackpackListe
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
+import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.OfflinePlayer;
@@ -47,6 +50,11 @@ public class PlayerBackpack extends SlimefunInventoryHolder {
     private String name;
     private int size;
     private boolean isInvalid = false;
+    // This snapshot holds the inventory's content , it should be recreated after each save by using
+    // PlayerBackpack#refreshSnapshot
+    @Nonnull
+    @Getter
+    private InvSnapshot snapshot;
 
     public static void getAsync(ItemStack item, Consumer<PlayerBackpack> callback, boolean runCbOnMainThread) {
         if (item == null || !item.hasItemMeta() || !item.getItemMeta().hasLore()) {
@@ -109,6 +117,40 @@ public class PlayerBackpack extends SlimefunInventoryHolder {
                                 }
                             });
         }
+    }
+
+    public static CompletableFuture<PlayerBackpack> getAsync(ItemStack item) {
+        if (item == null || !item.hasItemMeta() || !item.getItemMeta().hasLore()) {
+            return CompletableFuture.completedFuture(null);
+        }
+
+        var bUuid = getBackpackUUID(item.getItemMeta());
+        if (bUuid.isPresent()) {
+            return Slimefun.getDatabaseManager().getProfileDataController().getBackpackAsync(bUuid.get());
+        }
+
+        // Old backpack item
+        OptionalInt id = OptionalInt.empty();
+        String uuid = "";
+
+        for (String line : item.getItemMeta().getLore()) {
+            if (line.startsWith(ChatColors.color("&7ID: ")) && line.indexOf('#') != -1) {
+                String[] splitLine = CommonPatterns.HASH.split(line);
+
+                if (CommonPatterns.NUMERIC.matcher(splitLine[1]).matches()) {
+                    uuid = splitLine[0].replace(ChatColors.color("&7ID: "), "");
+                    id = OptionalInt.of(Integer.parseInt(splitLine[1]));
+                }
+            }
+        }
+
+        if (id.isPresent()) {
+            int number = id.getAsInt();
+            return Slimefun.getDatabaseManager()
+                    .getProfileDataController()
+                    .getBackpackAsync(Bukkit.getOfflinePlayer(UUID.fromString(uuid)), number);
+        }
+        return CompletableFuture.completedFuture(null);
     }
 
     public static Optional<String> getBackpackUUID(ItemMeta meta) {
@@ -208,14 +250,22 @@ public class PlayerBackpack extends SlimefunInventoryHolder {
         this.size = size;
         inventory = newInv();
 
-        if (contents == null) {
-            return;
+        if (contents != null) {
+            if (size != contents.length) {
+                throw new IllegalArgumentException("Invalid contents: size mismatched!");
+            }
+            inventory.setContents(contents);
         }
 
-        if (size != contents.length) {
-            throw new IllegalArgumentException("Invalid contents: size mismatched!");
-        }
-        inventory.setContents(contents);
+        this.snapshot = new InvSnapshot(inventory);
+    }
+
+    /**
+     * This refreshes the internal snapshot,
+     * It should be called after every database writing task
+     */
+    public void refreshSnapshot() {
+        this.snapshot = new InvSnapshot(inventory);
     }
 
     /**
