@@ -1113,12 +1113,7 @@ public class BlockDataController extends ADataController {
                         } catch (Exception ex) {
                             inv[slot] = null;
                             Slimefun.logger()
-                                    .log(
-                                            Level.SEVERE,
-                                            "加载目标物品失败, 请检查实际数据 ["
-                                                    + uniData.getKey() + ":"
-                                                    + slot + "]",
-                                            ex);
+                                    .log(Level.SEVERE, "加载目标物品失败, 请检查实际数据 [" + uniData.getKey() + ":" + slot + "]", ex);
                         }
                     }
 
