@@ -39,12 +39,10 @@ public abstract class ADataController {
     /**
      * 数据库读取调度器
      */
-    @Getter
     protected ExecutorService readExecutor;
     /**
      * 数据库写入调度器
      */
-    @Getter
     protected ExecutorService writeExecutor;
 
     protected ExecutorService serialWriteExecutor;
