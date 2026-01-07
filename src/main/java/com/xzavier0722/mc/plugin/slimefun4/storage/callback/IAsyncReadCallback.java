@@ -14,7 +14,6 @@ import java.util.function.Consumer;
  * {@link ThreadUtils#getMainThreadExecutor()} or {@link ThreadUtils#getMainDelayedExecutor()}
  * @param <T>
  */
-@Deprecated
 public interface IAsyncReadCallback<T> {
     default boolean runOnMainThread() {
         return false;
