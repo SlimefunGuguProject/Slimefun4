@@ -348,31 +348,35 @@ public class ProfileDataController extends ADataController {
         saveBackpackInventory(bp);
     }
 
-    public void saveBackpackInventory(PlayerBackpack bp) {
-        Set<Integer> slots = bp.getSnapshot().getChangedSlots(bp.getInventory());
-        bp.refreshSnapshot();
-        var id = bp.getUniqueId().toString();
-        var inv = bp.getInventory();
-        slots.forEach(slot -> {
-            var key = new RecordKey(DataScope.BACKPACK_INVENTORY);
-            key.addCondition(FieldKey.BACKPACK_ID, id);
-            key.addCondition(FieldKey.INVENTORY_SLOT, slot + "");
-            key.addField(FieldKey.INVENTORY_ITEM);
-            var is = inv.getItem(slot);
-            if (is == null) {
-                scheduleDeleteTask(new UUIDKey(DataScope.NONE, bp.getOwner().getUniqueId()), key, false);
-            } else {
-                try {
-                    var data = new RecordSet();
-                    data.put(FieldKey.BACKPACK_ID, id);
-                    data.put(FieldKey.INVENTORY_SLOT, slot + "");
-                    data.put(FieldKey.INVENTORY_ITEM, is);
-                    scheduleWriteTask(new UUIDKey(DataScope.NONE, bp.getOwner().getUniqueId()), key, data, false);
-                } catch (IllegalArgumentException e) {
-                    Slimefun.logger().log(Level.WARNING, e.getMessage());
+    public void saveBackpackInventory(@Nonnull PlayerBackpack bp) {
+        // avoid asynchronize save
+        synchronized (bp) {
+            Set<Integer> slots = bp.getSnapshot().getChangedSlots(bp.getInventory());
+            bp.refreshSnapshot();
+            var id = bp.getUniqueId().toString();
+            var inv = bp.getInventory();
+            slots.forEach(slot -> {
+                var key = new RecordKey(DataScope.BACKPACK_INVENTORY);
+                key.addCondition(FieldKey.BACKPACK_ID, id);
+                key.addCondition(FieldKey.INVENTORY_SLOT, slot + "");
+                key.addField(FieldKey.INVENTORY_ITEM);
+                var is = inv.getItem(slot);
+                if (is == null) {
+                    scheduleDeleteTask(new UUIDKey(DataScope.NONE, bp.getOwner().getUniqueId()), key, false);
+                } else {
+                    try {
+                        var data = new RecordSet();
+                        data.put(FieldKey.BACKPACK_ID, id);
+                        data.put(FieldKey.INVENTORY_SLOT, slot + "");
+                        data.put(FieldKey.INVENTORY_ITEM, is);
+                        scheduleWriteTask(
+                                new UUIDKey(DataScope.NONE, bp.getOwner().getUniqueId()), key, data, false);
+                    } catch (IllegalArgumentException e) {
+                        Slimefun.logger().log(Level.WARNING, e.getMessage());
+                    }
                 }
-            }
-        });
+            });
+        }
     }
 
     @Deprecated(forRemoval = true)

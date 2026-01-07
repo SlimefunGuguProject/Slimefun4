@@ -10,9 +10,14 @@ import org.bukkit.Bukkit;
 
 public class ThreadUtils {
     private static final Executor MAIN_THREAD_EXECUTOR;
+    private static final Executor MAIN_DELAYED_EXECUTOR;
 
     public static Executor getMainThreadExecutor() {
         return MAIN_THREAD_EXECUTOR;
+    }
+
+    public static Executor getMainDelayedExecutor() {
+        return MAIN_DELAYED_EXECUTOR;
     }
 
     /**
@@ -109,5 +114,6 @@ public class ThreadUtils {
             };
         }
         MAIN_THREAD_EXECUTOR = executor;
+        MAIN_DELAYED_EXECUTOR = Slimefun::runSync;
     }
 }

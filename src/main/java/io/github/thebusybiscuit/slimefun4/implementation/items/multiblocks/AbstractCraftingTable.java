@@ -1,20 +1,15 @@
 package io.github.thebusybiscuit.slimefun4.implementation.items.multiblocks;
 
-import io.github.bakedlibs.dough.common.ChatColors;
-import io.github.bakedlibs.dough.common.CommonPatterns;
 import io.github.bakedlibs.dough.items.ItemUtils;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
 import io.github.thebusybiscuit.slimefun4.api.player.PlayerBackpack;
 import io.github.thebusybiscuit.slimefun4.core.multiblocks.MultiBlockMachine;
-import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.implementation.items.backpacks.SlimefunBackpack;
 import io.github.thebusybiscuit.slimefun4.utils.SlimefunUtils;
 import io.github.thebusybiscuit.slimefun4.utils.ThreadUtils;
-import java.util.Optional;
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -79,66 +74,27 @@ abstract class AbstractCraftingTable extends MultiBlockMachine {
             }
         }
 
+        if (input == null) {
+            return false;
+        }
+
         // Fixes #2574 - Carry over the Soulbound status
         if (SlimefunUtils.isSoulbound(input)) {
             SlimefunUtils.setSoulbound(output, true);
         }
 
         int size = backpack.getSize();
-        Optional<String> id = retrieveUuid(input);
+        PlayerBackpack.getAsync(input)
+                .thenAcceptAsync(
+                        (result) -> {
+                            if (result != null) {
+                                result.setSize(size);
+                                PlayerBackpack.bindItem(output, result);
+                            }
+                            onReadyCb.run();
+                        },
+                        ThreadUtils.getMainDelayedExecutor());
 
-        if (id.isPresent()) {
-            Slimefun.getDatabaseManager()
-                    .getProfileDataController()
-                    .getBackpackAsync(id.get())
-                    .thenAcceptAsync(
-                            (result) -> {
-                                if (result != null) {
-                                    result.setSize(size);
-                                    PlayerBackpack.bindItem(output, result);
-                                }
-                                onReadyCb.run();
-                            },
-                            ThreadUtils.getMainThreadExecutor());
-            return true;
-        } else {
-            id = retrieveID(input);
-            if (id.isPresent()) {
-                Slimefun.getDatabaseManager()
-                        .getProfileDataController()
-                        .getBackpackAsync(p, Integer.parseInt(id.get()))
-                        .thenAcceptAsync(
-                                (result) -> {
-                                    if (result != null) {
-                                        result.setSize(size);
-                                        PlayerBackpack.bindItem(output, result);
-                                    }
-                                    onReadyCb.run();
-                                },
-                                ThreadUtils.getMainThreadExecutor());
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private @Nonnull Optional<String> retrieveID(@Nullable ItemStack backpack) {
-        if (backpack != null) {
-            for (String line : backpack.getItemMeta().getLore()) {
-                if (line.startsWith(ChatColors.color("&7ID: ")) && line.contains("#")) {
-                    return Optional.of(CommonPatterns.HASH.split(line.replace(ChatColors.color("&7ID: "), ""))[1]);
-                }
-            }
-        }
-
-        return Optional.empty();
-    }
-
-    private @Nonnull Optional<String> retrieveUuid(@Nullable ItemStack backpack) {
-        if (backpack == null) {
-            return Optional.empty();
-        }
-
-        return PlayerBackpack.getBackpackUUID(backpack.getItemMeta());
+        return true;
     }
 }

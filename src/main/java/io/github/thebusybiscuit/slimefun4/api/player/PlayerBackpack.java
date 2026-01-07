@@ -62,7 +62,7 @@ public class PlayerBackpack extends SlimefunInventoryHolder {
             return;
         }
         Executor executor = runCbOnMainThread
-                ? ThreadUtils.getMainThreadExecutor()
+                ? ThreadUtils.getMainDelayedExecutor()
                 : Slimefun.getDatabaseManager().getProfileDataController().getCallbackExecutor();
         var bUuid = getBackpackUUID(item.getItemMeta());
         if (bUuid.isPresent()) {
