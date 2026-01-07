@@ -20,6 +20,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.OverridingMethodsMustInvokeSuper;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -38,10 +39,12 @@ public abstract class ADataController {
     /**
      * 数据库读取调度器
      */
+    @Getter
     protected ExecutorService readExecutor;
     /**
      * 数据库写入调度器
      */
+    @Getter
     protected ExecutorService writeExecutor;
 
     protected ExecutorService serialWriteExecutor;
@@ -49,6 +52,7 @@ public abstract class ADataController {
     /**
      * 数据库回调调度器
      */
+    @Getter
     protected ExecutorService callbackExecutor;
     /**
      * 标记当前控制器是否已被关闭

@@ -2,17 +2,18 @@ package io.github.thebusybiscuit.slimefun4.api.player;
 
 import city.norain.slimefun4.holder.SlimefunInventoryHolder;
 import city.norain.slimefun4.utils.InventoryUtil;
-import com.xzavier0722.mc.plugin.slimefun4.storage.callback.IAsyncReadCallback;
 import com.xzavier0722.mc.plugin.slimefun4.storage.util.InvSnapshot;
 import io.github.bakedlibs.dough.common.ChatColors;
 import io.github.bakedlibs.dough.common.CommonPatterns;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.implementation.items.backpacks.SlimefunBackpack;
 import io.github.thebusybiscuit.slimefun4.implementation.listeners.BackpackListener;
+import io.github.thebusybiscuit.slimefun4.utils.ThreadUtils;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -50,7 +51,7 @@ public class PlayerBackpack extends SlimefunInventoryHolder {
     private String name;
     private int size;
     private boolean isInvalid = false;
-    // This snapshot holds the inventory's content , it should be recreated after each save by using
+    // This snapshot holds the inventory's last save content , it should be recreated after each save by using
     // PlayerBackpack#refreshSnapshot
     @Nonnull
     @Getter
@@ -60,30 +61,27 @@ public class PlayerBackpack extends SlimefunInventoryHolder {
         if (item == null || !item.hasItemMeta() || !item.getItemMeta().hasLore()) {
             return;
         }
-
+        Executor executor = runCbOnMainThread
+                ? ThreadUtils.getMainThreadExecutor()
+                : Slimefun.getDatabaseManager().getProfileDataController().getCallbackExecutor();
         var bUuid = getBackpackUUID(item.getItemMeta());
         if (bUuid.isPresent()) {
             Slimefun.getDatabaseManager()
                     .getProfileDataController()
-                    .getBackpackAsync(bUuid.get(), new IAsyncReadCallback<>() {
-                        @Override
-                        public boolean runOnMainThread() {
-                            return runCbOnMainThread;
-                        }
-
-                        @Override
-                        public void onResult(PlayerBackpack result) {
-                            callback.accept(result);
-                        }
-                    });
-
+                    .getBackpackAsync(bUuid.get())
+                    .thenAcceptAsync(
+                            (result) -> {
+                                if (result != null) {
+                                    callback.accept(result);
+                                }
+                            },
+                            executor);
             return;
         }
 
         // Old backpack item
         OptionalInt id = OptionalInt.empty();
         String uuid = "";
-
         for (String line : item.getItemMeta().getLore()) {
             if (line.startsWith(ChatColors.color("&7ID: ")) && line.indexOf('#') != -1) {
                 String[] splitLine = CommonPatterns.HASH.split(line);
@@ -99,15 +97,10 @@ public class PlayerBackpack extends SlimefunInventoryHolder {
             int number = id.getAsInt();
             Slimefun.getDatabaseManager()
                     .getProfileDataController()
-                    .getBackpackAsync(
-                            Bukkit.getOfflinePlayer(UUID.fromString(uuid)), number, new IAsyncReadCallback<>() {
-                                @Override
-                                public boolean runOnMainThread() {
-                                    return runCbOnMainThread;
-                                }
-
-                                @Override
-                                public void onResult(PlayerBackpack result) {
+                    .getBackpackAsync(Bukkit.getOfflinePlayer(UUID.fromString(uuid)), number)
+                    .thenAcceptAsync(
+                            (result) -> {
+                                if (result != null) {
                                     var meta = item.getItemMeta();
                                     meta.getPersistentDataContainer()
                                             .set(KEY_BACKPACK_UUID, PersistentDataType.STRING, result.uuid.toString());
@@ -115,7 +108,8 @@ public class PlayerBackpack extends SlimefunInventoryHolder {
                                     // TODO: upgrade lore
                                     callback.accept(result);
                                 }
-                            });
+                            },
+                            executor);
         }
     }
 
@@ -263,6 +257,7 @@ public class PlayerBackpack extends SlimefunInventoryHolder {
     /**
      * This refreshes the internal snapshot,
      * It should be called after every database writing task
+     * It should not be called elsewhere
      */
     public void refreshSnapshot() {
         this.snapshot = new InvSnapshot(inventory);
@@ -354,6 +349,7 @@ public class PlayerBackpack extends SlimefunInventoryHolder {
     public void markInvalid() {
         isInvalid = true;
         InventoryUtil.closeInventory(this.inventory);
+        Slimefun.getDatabaseManager().getProfileDataController().saveBackpackInventory(this);
     }
 
     public boolean isInvalid() {

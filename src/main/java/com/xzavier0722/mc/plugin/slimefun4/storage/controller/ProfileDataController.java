@@ -236,10 +236,12 @@ public class ProfileDataController extends ADataController {
                 .collect(Collectors.toSet());
     }
 
+    @Deprecated
     public void getBackpackAsync(OfflinePlayer owner, int num, IAsyncReadCallback<PlayerBackpack> callback) {
         scheduleReadTask(() -> invokeCallback(callback, getBackpack(owner, num)));
     }
 
+    @Deprecated
     public void getBackpackAsync(String uuid, IAsyncReadCallback<PlayerBackpack> callback) {
         scheduleReadTask(() -> invokeCallback(callback, getBackpack(uuid)));
     }
