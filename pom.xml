@@ -440,7 +440,7 @@
         <dependency>
             <groupId>com.sk89q.worldedit</groupId>
             <artifactId>worldedit-bukkit</artifactId>
-            <version>7.3.6</version>
+            <version>7.3.18</version>
             <scope>provided</scope>
 
             <exclusions>
