@@ -4,6 +4,7 @@ import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
 import io.github.thebusybiscuit.slimefun4.api.recipes.RecipeType;
 import io.github.thebusybiscuit.slimefun4.implementation.SlimefunItems;
+import io.github.thebusybiscuit.slimefun4.implementation.operations.CraftingOperationSerializable;
 import io.github.thebusybiscuit.slimefun4.utils.SlimefunUtils;
 import me.mrCookieSlime.Slimefun.Objects.SlimefunItem.abstractItems.AContainer;
 import me.mrCookieSlime.Slimefun.Objects.SlimefunItem.abstractItems.MachineRecipe;
@@ -20,7 +21,7 @@ import org.bukkit.inventory.meta.ItemMeta;
  * @author TheBusyBiscuit
  *
  */
-public class AutoAnvil extends AContainer {
+public class AutoAnvil extends AContainer implements CraftingOperationSerializable {
 
     private final int repairFactor;
 
