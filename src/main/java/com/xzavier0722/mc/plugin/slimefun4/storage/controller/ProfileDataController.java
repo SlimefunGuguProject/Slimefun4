@@ -349,7 +349,7 @@ public class ProfileDataController extends ADataController {
     }
 
     public void saveBackpackInventory(@Nonnull PlayerBackpack bp) {
-        // avoid asynchronize save
+        // avoid asynchronous save
         synchronized (bp) {
             Set<Integer> slots = bp.getSnapshot().getChangedSlots(bp.getInventory());
             bp.refreshSnapshot();
