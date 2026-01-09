@@ -45,10 +45,24 @@ import org.bukkit.inventory.ItemStack;
 public abstract class AContainer extends SlimefunItem
         implements InventoryBlock, EnergyNetComponent, MachineProcessHolder<CraftingOperation> {
 
+    /**
+     * The border slots for the menu layout.
+     */
     private static final int[] BORDER = {0, 1, 2, 3, 4, 5, 6, 7, 8, 13, 31, 36, 37, 38, 39, 40, 41, 42, 43, 44};
+
+    /**
+     * The input border slots for the menu layout.
+     */
     private static final int[] BORDER_IN = {9, 10, 11, 12, 18, 21, 27, 28, 29, 30};
+
+    /**
+     * The output border slots for the menu layout.
+     */
     private static final int[] BORDER_OUT = {14, 15, 16, 17, 23, 26, 32, 33, 34, 35};
 
+    /**
+     * The list of registered machine recipes.
+     */
     protected final List<MachineRecipe> recipes = new ArrayList<>();
     private final MachineProcessor<CraftingOperation> processor = new MachineProcessor<>(this);
 

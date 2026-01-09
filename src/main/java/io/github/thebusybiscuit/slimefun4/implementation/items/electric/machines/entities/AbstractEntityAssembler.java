@@ -40,6 +40,7 @@ import org.bukkit.inventory.ItemStack;
 /**
  * This is an abstract super class for Entity Assemblers.
  *
+ * @param <T> the type of {@link Entity} this assembler spawns
  * @author TheBusyBiscuit
  * @see WitherAssembler
  * @see IronGolemAssembler
@@ -61,6 +62,14 @@ public abstract class AbstractEntityAssembler<T extends Entity> extends SimpleSl
 
     private int lifetime = 0;
 
+    /**
+     * Constructs a new AbstractEntityAssembler.
+     *
+     * @param itemGroup   The item group this item belongs to
+     * @param item        The item stack for this entity assembler
+     * @param recipeType  The recipe type used to craft this item
+     * @param recipe      The recipe to craft this item
+     */
     @ParametersAreNonnullByDefault
     protected AbstractEntityAssembler(
             ItemGroup itemGroup, SlimefunItemStack item, RecipeType recipeType, ItemStack[] recipe) {
@@ -291,6 +300,11 @@ public abstract class AbstractEntityAssembler<T extends Entity> extends SimpleSl
         }
     }
 
+    /**
+     * Constructs the menu preset for this entity assembler.
+     *
+     * @param preset The {@link BlockMenuPreset} to construct
+     */
     protected void constructMenu(BlockMenuPreset preset) {
         preset.addItem(
                 1,
@@ -311,15 +325,46 @@ public abstract class AbstractEntityAssembler<T extends Entity> extends SimpleSl
         return EnergyNetComponentType.CONSUMER;
     }
 
+    /**
+     * Returns the amount of energy consumed per assembly operation.
+     *
+     * @return The energy consumption
+     */
     public abstract int getEnergyConsumption();
 
+    /**
+     * Returns the item used as the head/ingredient for entity assembly.
+     *
+     * @return The head item
+     */
     public abstract ItemStack getHead();
 
+    /**
+     * Returns the item used as the body/ingredient for entity assembly.
+     *
+     * @return The body item
+     */
     public abstract ItemStack getBody();
 
+    /**
+     * Returns the material used for the head border in the GUI.
+     *
+     * @return The head border material
+     */
     public abstract Material getHeadBorder();
 
+    /**
+     * Returns the material used for the body border in the GUI.
+     *
+     * @return The body border material
+     */
     public abstract Material getBodyBorder();
 
+    /**
+     * Spawns the entity at the given location.
+     *
+     * @param l The location to spawn the entity
+     * @return The spawned entity
+     */
     public abstract T spawnEntity(Location l);
 }

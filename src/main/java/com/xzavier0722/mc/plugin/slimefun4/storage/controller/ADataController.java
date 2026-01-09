@@ -57,8 +57,16 @@ public abstract class ADataController {
      */
     private volatile boolean destroyed = false;
 
+    /**
+     * The logger for this data controller.
+     */
     protected final Logger logger;
 
+    /**
+     * Constructs a new ADataController.
+     *
+     * @param dataType The data type this controller manages
+     */
     protected ADataController(DataType dataType) {
         this.dataType = dataType;
         scheduledWriteTasks = new ConcurrentHashMap<>();
@@ -68,6 +76,10 @@ public abstract class ADataController {
 
     /**
      * 初始化 {@link ADataController}
+     *
+     * @param dataAdapter   The data source adapter
+     * @param maxReadThread Maximum number of read threads
+     * @param maxWriteThread Maximum number of write threads
      */
     @OverridingMethodsMustInvokeSuper
     public void init(IDataSourceAdapter<?> dataAdapter, int maxReadThread, int maxWriteThread) {

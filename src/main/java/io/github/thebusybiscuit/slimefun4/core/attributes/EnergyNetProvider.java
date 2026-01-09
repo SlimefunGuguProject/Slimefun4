@@ -35,9 +35,9 @@ public interface EnergyNetProvider extends EnergyNetComponent {
     /**
      * @deprecated use {@link EnergyNetProvider#getGeneratedOutput(Location, ASlimefunDataContainer)} instead
      *
-     * @param l
-     * @param data
-     * @return
+     * @param l The {@link Location} of this {@link EnergyNetProvider}
+     * @param data The stored {@link SlimefunBlockData}
+     * @return The generated output energy of this {@link EnergyNetProvider}
      */
     @Deprecated(forRemoval = true)
     default int getGeneratedOutput(@Nonnull Location l, @Nonnull SlimefunBlockData data) {
@@ -70,9 +70,9 @@ public interface EnergyNetProvider extends EnergyNetComponent {
      *
      * This method only for backward compatibility.
      *
-     * @param l
-     * @param data
-     * @return
+     * @param l The {@link Location} of this {@link EnergyNetProvider}
+     * @param data The stored {@link Config}
+     * @return The generated output energy of this {@link EnergyNetProvider}
      */
     @Deprecated(forRemoval = true)
     default int getGeneratedOutput(@Nonnull Location l, @Nonnull Config data) {
