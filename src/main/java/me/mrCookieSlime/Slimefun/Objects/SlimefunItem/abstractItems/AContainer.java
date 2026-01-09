@@ -64,6 +64,7 @@ public abstract class AContainer extends SlimefunItem
      * The list of registered machine recipes.
      */
     protected final List<MachineRecipe> recipes = new ArrayList<>();
+
     private final MachineProcessor<CraftingOperation> processor = new MachineProcessor<>(this);
 
     private int energyConsumedPerTick = -1;

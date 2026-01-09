@@ -1,6 +1,5 @@
 package com.xzavier0722.mc.plugin.slimefun4.storage.callback;
 
-import com.xzavier0722.mc.plugin.slimefun4.storage.controller.ADataController;
 import io.github.thebusybiscuit.slimefun4.utils.ThreadUtils;
 import java.util.function.Consumer;
 
