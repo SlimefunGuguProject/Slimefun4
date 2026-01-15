@@ -706,6 +706,7 @@ public class ProgrammableAndroid extends SlimefunItem
                 // Coal, Charcoal & Bamboo
                 registerFuelType(new MachineFuel(8, new ItemStack(Material.COAL)));
                 registerFuelType(new MachineFuel(8, new ItemStack(Material.CHARCOAL)));
+                registerFuelType(new MachineFuel(4, new ItemStack(Material.WHITE_CARPET)));
                 registerFuelType(new MachineFuel(1, new ItemStack(Material.BAMBOO)));
 
                 // Logs
