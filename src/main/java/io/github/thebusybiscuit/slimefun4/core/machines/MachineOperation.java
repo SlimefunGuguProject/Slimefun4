@@ -2,6 +2,8 @@ package io.github.thebusybiscuit.slimefun4.core.machines;
 
 import io.github.bakedlibs.dough.blocks.BlockPosition;
 import io.github.thebusybiscuit.slimefun4.core.attributes.MachineProcessHolder;
+import io.github.thebusybiscuit.slimefun4.implementation.operations.CraftingOperation;
+import org.bukkit.configuration.ConfigurationSection;
 
 /**
  * This represents a {@link MachineOperation} which is handled
@@ -63,4 +65,10 @@ public interface MachineOperation {
      * Implement to specify behaviour that should happen in this case.
      */
     default void onCancel(BlockPosition position) {}
+
+    public static String TOTAL_TICKS = "total-ticks";
+
+    default void serializeOperation(ConfigurationSection yaml, CraftingOperation operation) {
+        yaml.set(TOTAL_TICKS, operation.getTotalTicks());
+    }
 }
