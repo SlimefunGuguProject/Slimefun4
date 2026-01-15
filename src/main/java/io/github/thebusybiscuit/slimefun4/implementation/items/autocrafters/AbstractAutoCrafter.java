@@ -96,6 +96,9 @@ public abstract class AbstractAutoCrafter extends SlimefunItem implements Energy
     protected final NamespacedKey recipeEnabledKey;
 
     // @formatter:off
+    /**
+     * The background slots for the menu layout.
+     */
     protected final int[] background = {
         0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 14, 15, 16, 17, 18, 19, 23, 25, 26, 27, 28, 32, 33, 34, 35, 36, 37, 38, 39,
         40, 41, 42, 43, 44
@@ -103,6 +106,14 @@ public abstract class AbstractAutoCrafter extends SlimefunItem implements Energy
 
     // @formatter:on
 
+    /**
+     * Constructs a new AbstractAutoCrafter.
+     *
+     * @param itemGroup   The item group this item belongs to
+     * @param item        The item stack for this auto crafter
+     * @param recipeType  The recipe type used to craft this item
+     * @param recipe      The recipe to craft this item
+     */
     @ParametersAreNonnullByDefault
     protected AbstractAutoCrafter(
             ItemGroup itemGroup, SlimefunItemStack item, RecipeType recipeType, ItemStack[] recipe) {
@@ -264,6 +275,16 @@ public abstract class AbstractAutoCrafter extends SlimefunItem implements Energy
         return predicate.test(item);
     }
 
+    /**
+     * This method checks if any item in the inventory matches the given predicate.
+     * It updates the itemQuantities map to track consumed items.
+     *
+     * @param inv            The {@link Inventory} to check
+     * @param itemQuantities The map of item quantities per slot
+     * @param predicate      The {@link Predicate} to match items against
+     *
+     * @return Whether any item in the inventory matches the predicate
+     */
     @ParametersAreNonnullByDefault
     public boolean matchesAny(Inventory inv, Map<Integer, Integer> itemQuantities, Predicate<ItemStack> predicate) {
         ItemStack[] contents = inv.getContents();
