@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-class BackpackCache {
+public class BackpackCache {
     private final Map<String, Map<Integer, PlayerBackpack>> numCache;
     private final Map<String, PlayerBackpack> uuidCache;
 
@@ -20,16 +20,16 @@ class BackpackCache {
         uuidCache.put(backpack.getUniqueId().toString(), backpack);
     }
 
-    PlayerBackpack get(String pUuid, int num) {
+    public PlayerBackpack get(String pUuid, int num) {
         var map = numCache.get(pUuid);
         return map == null ? null : map.get(num);
     }
 
-    PlayerBackpack get(String uuid) {
+    public PlayerBackpack get(String uuid) {
         return uuidCache.get(uuid);
     }
 
-    void invalidate(String pUuid) {
+    public void invalidate(String pUuid) {
         var cache = numCache.remove(pUuid);
         if (cache == null) {
             return;

@@ -39,6 +39,11 @@ public interface RecipeDisplayItem extends ItemAttribute {
     @Nonnull
     List<ItemStack> getDisplayRecipes();
 
+    /**
+     * Gets the local path for the label in the guide.
+     *
+     * @return The local path for the label
+     */
     @Nonnull
     default String getLabelLocalPath() {
         return "guide.tooltips.recipes.machine";

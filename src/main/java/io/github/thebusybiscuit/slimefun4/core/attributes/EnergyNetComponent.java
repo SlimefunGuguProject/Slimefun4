@@ -123,11 +123,11 @@ public interface EnergyNetComponent extends ItemAttribute {
         return getCharge(l, blockData);
     }
 
-    @Deprecated
     default int getCharge(@Nonnull Location l, @Nonnull ASlimefunDataContainer data) {
         return (int) NumberUtils.longToInt(getChargeLong(l, data));
     }
 
+    @Deprecated
     default int getCharge(@Nonnull Location l, @Nonnull SlimefunBlockData data) {
         return (int) NumberUtils.longToInt(getChargeLong(l, data));
     }

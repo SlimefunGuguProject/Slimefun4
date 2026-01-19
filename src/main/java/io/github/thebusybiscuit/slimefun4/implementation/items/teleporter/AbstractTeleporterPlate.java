@@ -26,6 +26,14 @@ import org.bukkit.inventory.ItemStack;
  */
 public abstract class AbstractTeleporterPlate extends SlimefunItem {
 
+    /**
+     * Constructs a new AbstractTeleporterPlate.
+     *
+     * @param itemGroup   The item group this item belongs to
+     * @param item        The item stack for this teleporter plate
+     * @param recipeType  The recipe type used to craft this item
+     * @param recipe      The recipe to craft this item
+     */
     @ParametersAreNonnullByDefault
     protected AbstractTeleporterPlate(
             ItemGroup itemGroup, SlimefunItemStack item, RecipeType recipeType, ItemStack[] recipe) {

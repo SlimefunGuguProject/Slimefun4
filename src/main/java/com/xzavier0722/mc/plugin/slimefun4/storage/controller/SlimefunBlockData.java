@@ -51,6 +51,11 @@ public class SlimefunBlockData extends ASlimefunDataContainer {
     @ParametersAreNonnullByDefault
     public void setData(String key, String val) {
         checkData();
+
+        if (isPendingRemove()) {
+            throw new IllegalStateException("不能修改即将删除的方块数据");
+        }
+
         setCacheInternal(key, val, true);
         Slimefun.getDatabaseManager().getBlockDataController().scheduleDelayedBlockDataUpdate(this, key);
     }
