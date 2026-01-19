@@ -399,14 +399,14 @@ public abstract class Reactor extends AbstractEnergyProvider
 
         if (explosion) {
             Slimefun.runSync(
-                () -> {
-                    ReactorExplodeEvent event = new ReactorExplodeEvent(l, Reactor.this);
-                    Bukkit.getPluginManager().callEvent(event);
+                    () -> {
+                        ReactorExplodeEvent event = new ReactorExplodeEvent(l, Reactor.this);
+                        Bukkit.getPluginManager().callEvent(event);
 
-                    ((SlimefunBlockData) data).getBlockMenu().close();
-                    removeHologram(l.getBlock());
-                },
-                l);
+                        ((SlimefunBlockData) data).getBlockMenu().close();
+                        removeHologram(l.getBlock());
+                    },
+                    l);
 
             explosionsQueue.remove(l);
             processor.endOperation(l);

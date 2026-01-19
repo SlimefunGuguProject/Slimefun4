@@ -176,6 +176,11 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
      */
     private boolean isNewlyInstalled = false;
 
+    /**
+     * Folia support library
+     */
+    private final FoliaLib foliaLib = new FoliaLib(this);
+
     // Various things we need
     private final SlimefunConfigManager cfgManager = new SlimefunConfigManager(this);
     private final SlimefunDatabaseManager databaseManager = new SlimefunDatabaseManager(this);
