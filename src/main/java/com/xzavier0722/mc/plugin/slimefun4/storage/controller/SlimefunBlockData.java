@@ -53,7 +53,8 @@ public class SlimefunBlockData extends ASlimefunDataContainer {
         checkData();
 
         if (isPendingRemove()) {
-            throw new IllegalStateException("不能修改即将删除的方块数据");
+            // someone is modifying a removed blockData or a virtual blockData, DO NOT SAVE
+            return;
         }
 
         setCacheInternal(key, val, true);

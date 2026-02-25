@@ -321,7 +321,6 @@ public final class SlimefunUtils {
             }
             return false;
         } else if (item.hasItemMeta()) {
-            Debug.log(TestCase.CARGO_INPUT_TESTING, "SlimefunUtils#isItemSimilar - item.hasItemMeta()");
             ItemMeta itemMeta = item.getItemMeta();
 
             if (sfitem instanceof SlimefunItemStack sfItemStack) {
@@ -350,61 +349,40 @@ public final class SlimefunUtils {
 
                 ItemMetaSnapshot meta = ((SlimefunItemStack) sfitem).getItemMetaSnapshot();
                 return equalsItemMeta(itemMeta, meta, checkLore);
-            } else if (sfitem instanceof ItemStackWrapper && sfitem.hasItemMeta()) {
-                Debug.log(TestCase.CARGO_INPUT_TESTING, "  is wrapper");
-                /*
-                 * Cargo optimization (PR #3258)
-                 *
-                 * Slimefun items may be ItemStackWrapper's in the context of cargo
-                 * so let's try to do an ID comparison before meta comparison
-                 */
-                Debug.log(TestCase.CARGO_INPUT_TESTING, "  sfitem is ItemStackWrapper - possible SF Item: {}", sfitem);
-
-                ItemMeta possibleSfItemMeta = sfitem.getItemMeta();
-                String id = Slimefun.getItemDataService().getItemData(itemMeta).orElse(null);
-                String possibleItemId = Slimefun.getItemDataService()
-                        .getItemData(possibleSfItemMeta)
-                        .orElse(null);
-                // Prioritize SlimefunItem id comparison over ItemMeta comparison
-                if (id != null && possibleItemId != null) {
-                    /*
-                     * PR #3417
-                     *
-                     * Some items can't rely on just IDs matching and will implement Distinctive Item
-                     * in which case we want to use the method provided to compare
-                     */
-                    // to fix issue #976
-                    var match = id.equals(possibleItemId);
-                    if (match) {
-                        Optional<DistinctiveItem> optionalDistinctive = getDistinctiveItem(id);
-                        if (optionalDistinctive.isPresent()) {
-                            return optionalDistinctive.get().canStack(possibleSfItemMeta, itemMeta);
-                        }
-                    }
-                    Debug.log(TestCase.CARGO_INPUT_TESTING, "  Use Item ID match: {}", match);
-                    return match;
-                } else {
-                    Debug.log(
-                            TestCase.CARGO_INPUT_TESTING,
-                            "  one of item have no Slimefun ID, checking meta {} == {} (lore: {})",
-                            itemMeta,
-                            possibleSfItemMeta,
-                            checkLore);
-
-                    return equalsItemMeta(itemMeta, possibleSfItemMeta, checkLore, checkCustomModelData);
-                }
-            } else if (sfitem.hasItemMeta()) {
-                ItemMeta sfItemMeta = sfitem.getItemMeta();
-                Debug.log(
-                        TestCase.CARGO_INPUT_TESTING,
-                        "  Comparing meta (vanilla items?) - {} == {} (lore: {})",
-                        itemMeta,
-                        sfItemMeta,
-                        checkLore);
-                return equalsItemMeta(itemMeta, sfItemMeta, checkLore, checkCustomModelData);
             } else {
-                return false;
+                // issue # 1178 should compare sfid even if the second one isn't a ItemStackWrapper
+                if (sfitem.hasItemMeta()) {
+                    ItemMeta possibleSfItemMeta = sfitem.getItemMeta();
+                    String id =
+                            Slimefun.getItemDataService().getItemData(itemMeta).orElse(null);
+                    String possibleItemId = Slimefun.getItemDataService()
+                            .getItemData(possibleSfItemMeta)
+                            .orElse(null);
+                    // Prioritize SlimefunItem id comparison over ItemMeta comparison
+                    if (id != null && possibleItemId != null) {
+                        /*
+                         * PR #3417
+                         *
+                         * Some items can't rely on just IDs matching and will implement Distinctive Item
+                         * in which case we want to use the method provided to compare
+                         */
+                        // to fix issue #976
+                        var match = id.equals(possibleItemId);
+                        if (match) {
+                            Optional<DistinctiveItem> optionalDistinctive = getDistinctiveItem(id);
+                            if (optionalDistinctive.isPresent()) {
+                                return optionalDistinctive.get().canStack(possibleSfItemMeta, itemMeta);
+                            }
+                        }
+                        return match;
+                    } else {
+                        return equalsItemMeta(itemMeta, possibleSfItemMeta, checkLore, checkCustomModelData);
+                    }
+                } else {
+                    return false;
+                }
             }
+
         } else {
             return !sfitem.hasItemMeta();
         }

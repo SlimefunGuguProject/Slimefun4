@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.implementation.items.backpacks;
 
+import city.norain.slimefun4.utils.InventoryUtil;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
@@ -32,7 +33,7 @@ public class EnderBackpack extends SimpleSlimefunItem<ItemUseHandler> implements
     public @Nonnull ItemUseHandler getItemHandler() {
         return e -> {
             Player p = e.getPlayer();
-            p.openInventory(p.getEnderChest());
+            InventoryUtil.openInventory(p, p.getEnderChest());
             SoundEffect.ENDER_BACKPACK_OPEN_SOUND.playFor(p);
             e.cancel();
         };

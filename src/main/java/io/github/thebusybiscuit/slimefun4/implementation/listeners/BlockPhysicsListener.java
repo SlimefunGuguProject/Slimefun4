@@ -1,16 +1,12 @@
 package io.github.thebusybiscuit.slimefun4.implementation.listeners;
 
-import com.xzavier0722.mc.plugin.slimefun4.storage.callback.IAsyncReadCallback;
-import com.xzavier0722.mc.plugin.slimefun4.storage.controller.ASlimefunDataContainer;
 import com.xzavier0722.mc.plugin.slimefun4.storage.util.StorageCacheUtils;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.core.attributes.WitherProof;
-import io.github.thebusybiscuit.slimefun4.core.handlers.BlockBreakHandler;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.utils.tags.SlimefunTag;
 import io.papermc.lib.PaperLib;
 import io.papermc.lib.features.blockstatesnapshot.BlockStateSnapshotResult;
-import java.util.ArrayList;
 import java.util.Objects;
 import javax.annotation.Nonnull;
 import org.bukkit.Location;
@@ -67,55 +63,32 @@ public class BlockPhysicsListener implements Listener {
                 }
             }
 
-            case WITHER, WITHER_SKULL -> {
+            case WITHER -> {
+                // fix issue 1126
+                // the wither break is handled in the WitherListener, then the data is removed there, so it will
+                // conflict with this listener
                 var block = e.getBlock();
                 var item = SlimefunItem.getById(blockData.getSfId());
-
                 var controller = Slimefun.getDatabaseManager().getBlockDataController();
-                if (item != null
-                        && !(item instanceof WitherProof)
-                        && !item.callItemHandler(BlockBreakHandler.class, handler -> {
-                            if (blockData.isDataLoaded()) {
-                                callHandler(handler, block);
-                            } else {
-                                blockData.setPendingRemove(true);
-                                controller.loadDataAsync(blockData, new IAsyncReadCallback<>() {
-                                    @Override
-                                    public boolean runOnMainThread() {
-                                        return true;
-                                    }
-
-                                    @Override
-                                    public void onResult(ASlimefunDataContainer result) {
-                                        callHandler(handler, block);
-                                        blockData.setPendingRemove(false);
-                                    }
-                                });
-                            }
-                        })) {
+                if (item != null) {
+                    if (item instanceof WitherProof witherProof) {
+                        witherProof.onAttackEvent(e);
+                        if (!e.isCancelled()) {
+                            return;
+                        }
+                    }
                     controller.removeBlock(block.getLocation());
                     block.setType(Material.AIR);
+                    for (var drop : item.getDrops()) {
+                        if (drop != null && !drop.getType().isAir()) {
+                            block.getWorld().dropItemNaturally(block.getLocation(), drop);
+                        }
+                    }
                 }
             }
-
+                // fix: issue 1126 there is not such EntityChangeBlockEvent about WitherSkull
                 // Don't move my machine :|
             case ENDERMAN -> e.setCancelled(true);
-        }
-    }
-
-    private void callHandler(BlockBreakHandler handler, Block b) {
-        if (handler.isExplosionAllowed(b)) {
-            b.setType(Material.AIR);
-
-            var drops = new ArrayList<ItemStack>();
-            handler.onExplode(b, drops);
-            Slimefun.getDatabaseManager().getBlockDataController().removeBlock(b.getLocation());
-
-            for (var drop : drops) {
-                if (drop != null && !drop.getType().isAir()) {
-                    b.getWorld().dropItemNaturally(b.getLocation(), drop);
-                }
-            }
         }
     }
 

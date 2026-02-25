@@ -13,7 +13,6 @@ import io.github.thebusybiscuit.slimefun4.implementation.items.cargo.CargoNode;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
 import org.bukkit.ExplosionResult;
@@ -69,9 +68,6 @@ public class ExplosionsListener implements Listener {
     }
 
     private void removeResistantBlocks(@Nonnull Iterator<Block> blocks) {
-        // For explosion handling, only update network once for a random affected block to improve performance.
-        AtomicBoolean networkUpdated = new AtomicBoolean(false);
-
         while (blocks.hasNext()) {
             Block block = blocks.next();
             var loc = block.getLocation();
@@ -80,21 +76,28 @@ public class ExplosionsListener implements Listener {
 
             if (item != null) {
                 blocks.remove();
-
-                if (!(item instanceof WitherProof) && !callBreakHandler(item, blockData, block, networkUpdated)) {
-                    Slimefun.getDatabaseManager().getBlockDataController().removeBlock(loc);
-                    block.setType(Material.AIR);
-                    updateNearbyNetwork(item, loc, networkUpdated);
+                // add WitherProof api
+                if (item instanceof WitherProof) {
+                    continue;
+                } else {
+                    Runnable destroyTask = () -> {
+                        block.setType(Material.AIR);
+                        Slimefun.getDatabaseManager().getBlockDataController().removeBlock(loc);
+                        updateNearbyNetwork(item, loc);
+                    };
+                    // fix # 1187, the callBreakHandler returns true if there is no handler exist actually, so it
+                    // shouldn't be added a !
+                    callBreakHandler(item, blockData, block, destroyTask);
                 }
             }
         }
     }
 
-    private boolean callBreakHandler(
-            SlimefunItem item, ASlimefunDataContainer blockData, Block block, AtomicBoolean updateRef) {
-        return !item.callItemHandler(BlockBreakHandler.class, handler -> {
+    private void callBreakHandler(
+            SlimefunItem item, ASlimefunDataContainer blockData, Block block, Runnable destroyBlockCb) {
+        if (!item.callItemHandler(BlockBreakHandler.class, handler -> {
             if (blockData.isDataLoaded()) {
-                handleExplosion(handler, block, item, updateRef);
+                handleExplosion(handler, block, item, destroyBlockCb);
             } else {
                 Slimefun.getDatabaseManager()
                         .getBlockDataController()
@@ -106,21 +109,21 @@ public class ExplosionsListener implements Listener {
 
                             @Override
                             public void onResult(ASlimefunDataContainer result) {
-                                handleExplosion(handler, block, item, updateRef);
+                                handleExplosion(handler, block, item, destroyBlockCb);
                             }
                         });
             }
-        });
+        })) {
+            destroyBlockCb.run();
+        }
     }
 
     @ParametersAreNonnullByDefault
-    private void handleExplosion(BlockBreakHandler handler, Block block, SlimefunItem item, AtomicBoolean ref) {
+    private void handleExplosion(BlockBreakHandler handler, Block block, SlimefunItem item, Runnable destroyBlockCb) {
         if (handler.isExplosionAllowed(block)) {
-            block.setType(Material.AIR);
-
-            List<ItemStack> drops = new ArrayList<>();
+            // fix : 1187, machine should drop themselves first, in explosion
+            List<ItemStack> drops = new ArrayList<>(item.getDrops());
             handler.onExplode(block, drops);
-            Slimefun.getDatabaseManager().getBlockDataController().removeBlock(block.getLocation());
 
             for (ItemStack drop : drops) {
                 if (drop != null && !drop.getType().isAir()) {
@@ -128,22 +131,15 @@ public class ExplosionsListener implements Listener {
                 }
             }
 
-            updateNearbyNetwork(item, block.getLocation(), ref);
+            destroyBlockCb.run();
         }
     }
 
     @ParametersAreNonnullByDefault
-    private void updateNearbyNetwork(SlimefunItem item, Location loc, AtomicBoolean updated) {
-        if (updated.get()) {
-            return;
-        }
-
+    private void updateNearbyNetwork(SlimefunItem item, Location loc) {
         if (!(item instanceof EnergyNetComponent) && !(item instanceof CargoNode)) {
             return;
         }
-
         Slimefun.getNetworkManager().updateAllNetworks(loc);
-
-        updated.getAndSet(true);
     }
 }

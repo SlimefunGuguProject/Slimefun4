@@ -313,7 +313,8 @@ public class PlayerBackpack extends SlimefunInventoryHolder {
         if (isInvalid) {
             return;
         }
-        p.openInventory(inventory);
+
+        InventoryUtil.openInventory(p, inventory);
     }
 
     /**
