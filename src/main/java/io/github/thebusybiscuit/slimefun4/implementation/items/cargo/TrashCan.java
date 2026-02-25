@@ -60,6 +60,10 @@ public class TrashCan extends SlimefunItem implements InventoryBlock, NotRotatab
             public void tick(Block b, SlimefunItem item, SlimefunBlockData data) {
                 BlockMenu menu = data.getBlockMenu();
 
+                if (menu.locked()) {
+                    return;
+                }
+
                 try {
                     menu.lock(false);
 
