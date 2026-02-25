@@ -400,8 +400,15 @@ public class ChestMenu extends SlimefunInventoryHolder {
     }
 
     public void lock() {
+        lock(true);
+    }
+
+    public void lock(boolean closeInv) {
         lock.lock();
-        InventoryUtil.closeInventory(this.inventory);
+
+        if (closeInv) {
+            InventoryUtil.closeInventory(this.inventory);
+        }
     }
 
     public void unlock() {

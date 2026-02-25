@@ -61,7 +61,7 @@ public class TrashCan extends SlimefunItem implements InventoryBlock, NotRotatab
                 BlockMenu menu = data.getBlockMenu();
 
                 try {
-                    menu.lock();
+                    menu.lock(false);
 
                     for (int slot : getInputSlots()) {
                         menu.replaceExistingItem(slot, null);
