@@ -7,6 +7,7 @@ import io.github.thebusybiscuit.slimefun4.utils.SlimefunUtils;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nonnull;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -26,8 +27,8 @@ import org.bukkit.inventory.ItemStack;
  */
 public class SoulboundListener implements Listener {
 
-    private final Map<UUID, Map<Integer, ItemStack>> soulbound = new HashMap<>();
-    private final Map<UUID, WrappedTask> returnTasks = new HashMap<>();
+    private final Map<UUID, Map<Integer, ItemStack>> soulbound = new ConcurrentHashMap<>();
+    private final Map<UUID, WrappedTask> returnTasks = new ConcurrentHashMap<>();
 
     public SoulboundListener(@Nonnull Slimefun plugin) {
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
@@ -75,27 +76,21 @@ public class SoulboundListener implements Listener {
         }
 
         if (event.getEntity() instanceof Player p) {
-            if (returnTasks.containsKey(p.getUniqueId())) {
-                return;
-            }
-
-            WrappedTask task = Slimefun.getPlatformScheduler()
+            returnTasks.computeIfAbsent(p.getUniqueId(), uuid -> Slimefun.getPlatformScheduler()
                     .runAtEntityLater(
                             p,
                             () -> {
                                 if (p.getHealth() > 0) {
                                     returnSoulboundItems(p);
 
-                                    WrappedTask returnTask = returnTasks.remove(p.getUniqueId());
+                                    WrappedTask returnTask = returnTasks.remove(uuid);
 
                                     if (returnTask != null) {
                                         returnTask.cancel();
                                     }
                                 }
                             },
-                            10L);
-
-            returnTasks.put(event.getEntity().getUniqueId(), task);
+                            10L));
         }
     }
 
