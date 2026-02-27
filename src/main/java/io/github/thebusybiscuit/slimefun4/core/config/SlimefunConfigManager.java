@@ -162,13 +162,13 @@ public class SlimefunConfigManager {
             isSuccessful = false;
         }
 
-        if (asyncTickerInitSize < 0) {
+        if (asyncTickerInitSize < 1) {
             asyncTickerInitSize = serverHalfProcs;
             Slimefun.logger().log(Level.WARNING, "当前设置的 Ticker 线程池初始大小异常，已自动修改为默认值");
         }
 
-        if (asyncTickerMaxSize < 0) {
-            asyncTickerMaxSize = Runtime.getRuntime().availableProcessors();
+        if (asyncTickerMaxSize < 2) {
+            asyncTickerMaxSize = Math.max(2, Runtime.getRuntime().availableProcessors());
             Slimefun.logger().log(Level.WARNING, "当前设置的 Ticker 线程池最大大小异常，已自动修改为默认值");
         }
 
@@ -177,8 +177,8 @@ public class SlimefunConfigManager {
             Slimefun.logger().log(Level.WARNING, "当前设置的 Ticker 线程池初始大小过大，已自动修改为默认值");
         }
 
-        if (asyncTickerQueueSize < 0) {
-            asyncTickerInitSize = 1024;
+        if (asyncTickerQueueSize < 1) {
+            asyncTickerQueueSize = 1024;
             Slimefun.logger().log(Level.WARNING, "当前设置的 Ticker 线程池任务队列大小异常，已自动修改为默认值");
         }
 
