@@ -162,25 +162,7 @@ public class SlimefunConfigManager {
             isSuccessful = false;
         }
 
-        if (asyncTickerInitSize < 0) {
-            asyncTickerInitSize = serverHalfProcs;
-            Slimefun.logger().log(Level.WARNING, "当前设置的 Ticker 线程池初始大小异常，已自动修改为默认值");
-        }
-
-        if (asyncTickerMaxSize < 0) {
-            asyncTickerMaxSize = Runtime.getRuntime().availableProcessors();
-            Slimefun.logger().log(Level.WARNING, "当前设置的 Ticker 线程池最大大小异常，已自动修改为默认值");
-        }
-
-        if (asyncTickerInitSize > asyncTickerMaxSize) {
-            asyncTickerInitSize = serverHalfProcs;
-            Slimefun.logger().log(Level.WARNING, "当前设置的 Ticker 线程池初始大小过大，已自动修改为默认值");
-        }
-
-        if (asyncTickerQueueSize < 0) {
-            asyncTickerInitSize = 1024;
-            Slimefun.logger().log(Level.WARNING, "当前设置的 Ticker 线程池任务队列大小异常，已自动修改为默认值");
-        }
+        validateAsyncTickerConfig(serverHalfProcs);
 
         if (!reload) {
             return true;
@@ -257,6 +239,47 @@ public class SlimefunConfigManager {
         }
 
         return isSuccessful;
+    }
+
+    /**
+     * Validates the async ticker thread pool settings against the actual
+     * {@link java.util.concurrent.ThreadPoolExecutor} requirements and falls back
+     * to sensible defaults when an invalid value is detected.
+     *
+     * <p>Requirements (derived from how {@code TickerTask} builds the executor):
+     * <ul>
+     *   <li>{@code init-size} &ge; 1 &mdash; {@code corePoolSize = initSize - 1} must be &ge; 0</li>
+     *   <li>{@code max-size} &ge; 2 &mdash; {@code maximumPoolSize = maxSize - 1} must be &ge; 1</li>
+     *   <li>{@code init-size} &le; {@code max-size} &mdash; corePoolSize must not exceed maximumPoolSize</li>
+     *   <li>{@code queue-size} &ge; 1 &mdash; {@link java.util.concurrent.LinkedBlockingQueue} capacity must be &ge; 1</li>
+     * </ul>
+     *
+     * @param defaultInitSize the default value to use when {@code init-size} needs to be reset
+     */
+    private void validateAsyncTickerConfig(int defaultInitSize) {
+        // corePoolSize = initSize - 1, must be >= 0  →  initSize >= 1
+        if (asyncTickerInitSize < 1) {
+            asyncTickerInitSize = defaultInitSize;
+            Slimefun.logger().log(Level.WARNING, "当前设置的 Ticker 线程池初始大小异常，已自动修改为默认值");
+        }
+
+        // maximumPoolSize = maxSize - 1, must be >= 1  →  maxSize >= 2
+        if (asyncTickerMaxSize < 2) {
+            asyncTickerMaxSize = Math.max(2, Runtime.getRuntime().availableProcessors());
+            Slimefun.logger().log(Level.WARNING, "当前设置的 Ticker 线程池最大大小异常，已自动修改为默认值");
+        }
+
+        // corePoolSize must not exceed maximumPoolSize  →  initSize <= maxSize
+        if (asyncTickerInitSize > asyncTickerMaxSize) {
+            asyncTickerInitSize = defaultInitSize;
+            Slimefun.logger().log(Level.WARNING, "当前设置的 Ticker 线程池初始大小过大，已自动修改为默认值");
+        }
+
+        // LinkedBlockingQueue capacity must be > 0  →  queueSize >= 1
+        if (asyncTickerQueueSize < 1) {
+            asyncTickerQueueSize = 1024;
+            Slimefun.logger().log(Level.WARNING, "当前设置的 Ticker 线程池任务队列大小异常，已自动修改为默认值");
+        }
     }
 
     /**
