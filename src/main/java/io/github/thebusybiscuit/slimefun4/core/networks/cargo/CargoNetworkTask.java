@@ -119,23 +119,22 @@ class CargoNetworkTask implements Runnable {
         Inventory inv = inventories.get(inputTarget.getLocation());
 
         if (inv != null) {
+            ItemStack rest;
+
             // Check if the original slot hasn't been occupied in the meantime
             if (inv.getItem(previousSlot) == null) {
-                ItemStack rest = Slimefun.getVirtualItemService()
-                        .addItem(inv, item, InventoryContext.CARGO_INSERT, previousSlot);
-                if (rest != null && !manager.isItemDeletionEnabled()) {
-                    SlimefunUtils.spawnItem(
-                            inputTarget.getLocation().add(0, 1, 0), rest, ItemSpawnReason.CARGO_OVERFLOW);
+                rest = Slimefun.getVirtualItemService().addItem(inv, item, InventoryContext.CARGO_INSERT, previousSlot);
+                if (rest != null) {
+                    rest = Slimefun.getVirtualItemService().addItem(inv, rest, InventoryContext.CARGO_INSERT);
                 }
             } else {
                 // Try to add the item into another available slot then
-                ItemStack rest = Slimefun.getVirtualItemService().addItem(inv, item, InventoryContext.CARGO_INSERT);
+                rest = Slimefun.getVirtualItemService().addItem(inv, item, InventoryContext.CARGO_INSERT);
+            }
 
-                if (rest != null && !manager.isItemDeletionEnabled()) {
-                    // If the item still couldn't be inserted, simply drop it on the ground
-                    SlimefunUtils.spawnItem(
-                            inputTarget.getLocation().add(0, 1, 0), rest, ItemSpawnReason.CARGO_OVERFLOW);
-                }
+            if (rest != null && !manager.isItemDeletionEnabled()) {
+                // If the item still couldn't be inserted, simply drop it on the ground
+                SlimefunUtils.spawnItem(inputTarget.getLocation().add(0, 1, 0), rest, ItemSpawnReason.CARGO_OVERFLOW);
             }
         } else {
             DirtyChestMenu menu = CargoUtils.getChestMenu(inputTarget);

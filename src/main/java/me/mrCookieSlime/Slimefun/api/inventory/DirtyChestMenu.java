@@ -123,7 +123,7 @@ public class DirtyChestMenu extends ChestMenu {
                 int maxStackSize = Math.min(
                         virtualItems.getMaxStackSize(slotItem, InventoryContext.MENU_FIT, slotItem.getMaxStackSize()),
                         toInventory().getMaxStackSize());
-                var slotRemain = maxStackSize - slotItem.getAmount();
+                var slotRemain = Math.max(0, maxStackSize - slotItem.getAmount());
 
                 remain -= slotRemain;
 

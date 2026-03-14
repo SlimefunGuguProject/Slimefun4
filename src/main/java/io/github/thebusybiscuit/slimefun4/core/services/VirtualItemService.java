@@ -196,11 +196,62 @@ public final class VirtualItemService {
             return leftovers.values().iterator().next();
         }
 
+        if (!isVirtualItem(item) && slots.length > 0) {
+            return addItemDirectly(inventory, item, context, slots);
+        }
+
         ItemStack[] contents = Arrays.stream(inventory.getContents())
                 .map(stack -> stack == null ? null : stack.clone())
                 .toArray(ItemStack[]::new);
         int amountLeft = insertIntoSnapshot(contents, inventory.getMaxStackSize(), item, context, slots);
         inventory.setContents(contents);
+
+        if (amountLeft <= 0) {
+            return null;
+        }
+
+        ItemStack remainder = item.clone();
+        remainder.setAmount(amountLeft);
+        return remainder;
+    }
+
+    private @Nullable ItemStack addItemDirectly(
+            @Nonnull Inventory inventory, @Nonnull ItemStack item, @Nonnull InventoryContext context, int... slots) {
+        int amountLeft = item.getAmount();
+        int inventoryMaxStackSize = inventory.getMaxStackSize();
+
+        for (int slot : slots) {
+            if (slot < 0 || slot >= inventory.getSize()) {
+                continue;
+            }
+
+            ItemStack itemInSlot = inventory.getItem(slot);
+
+            if (itemInSlot == null || itemInSlot.getType().isAir()) {
+                int maxStackSize = Math.min(item.getMaxStackSize(), inventoryMaxStackSize);
+                int movedAmount = Math.min(amountLeft, maxStackSize);
+
+                ItemStack inserted = item.clone();
+                inserted.setAmount(movedAmount);
+                inventory.setItem(slot, inserted);
+                amountLeft -= movedAmount;
+            } else if (itemInSlot.isSimilar(item)) {
+                int maxStackSize = Math.min(itemInSlot.getMaxStackSize(), inventoryMaxStackSize);
+                int freeSpace = Math.max(0, maxStackSize - itemInSlot.getAmount());
+
+                if (freeSpace <= 0) {
+                    continue;
+                }
+
+                int movedAmount = Math.min(amountLeft, freeSpace);
+                itemInSlot.setAmount(itemInSlot.getAmount() + movedAmount);
+                amountLeft -= movedAmount;
+            }
+
+            if (amountLeft <= 0) {
+                return null;
+            }
+        }
 
         if (amountLeft <= 0) {
             return null;
