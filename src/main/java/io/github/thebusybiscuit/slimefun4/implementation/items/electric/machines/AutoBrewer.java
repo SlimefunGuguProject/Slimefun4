@@ -2,11 +2,12 @@ package io.github.thebusybiscuit.slimefun4.implementation.items.electric.machine
 
 import city.norain.slimefun4.SlimefunExtended;
 import com.xzavier0722.mc.plugin.slimefun4.storage.util.StorageCacheUtils;
-import io.github.bakedlibs.dough.inventory.InvUtils;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
+import io.github.thebusybiscuit.slimefun4.api.items.virtual.VirtualItemHandler.InventoryContext;
 import io.github.thebusybiscuit.slimefun4.api.recipes.RecipeType;
 import io.github.thebusybiscuit.slimefun4.core.attributes.NotHopperable;
+import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.utils.compatibility.VersionedPotionType;
 import java.util.EnumMap;
 import java.util.Map;
@@ -126,7 +127,8 @@ public class AutoBrewer extends AContainer implements NotHopperable {
 
             output.setItemMeta(potion);
 
-            if (!InvUtils.fits(menu.toInventory(), output, getOutputSlots())) {
+            if (!Slimefun.getVirtualItemService()
+                    .fits(menu.toInventory(), output, InventoryContext.MACHINE_OUTPUT, getOutputSlots())) {
                 return null;
             }
 

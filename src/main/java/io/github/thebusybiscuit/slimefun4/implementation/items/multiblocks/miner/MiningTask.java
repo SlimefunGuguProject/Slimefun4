@@ -1,10 +1,10 @@
 package io.github.thebusybiscuit.slimefun4.implementation.items.multiblocks.miner;
 
 import io.github.bakedlibs.dough.blocks.BlockPosition;
-import io.github.bakedlibs.dough.inventory.InvUtils;
 import io.github.bakedlibs.dough.items.ItemUtils;
 import io.github.bakedlibs.dough.protection.Interaction;
 import io.github.bakedlibs.dough.scheduling.TaskQueue;
+import io.github.thebusybiscuit.slimefun4.api.items.virtual.VirtualItemHandler.InventoryContext;
 import io.github.thebusybiscuit.slimefun4.core.services.sounds.SoundEffect;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.utils.compatibility.VersionedParticle;
@@ -279,8 +279,8 @@ class MiningTask implements Runnable {
                 if (state instanceof Chest chestState) {
                     Inventory inv = chestState.getBlockInventory();
 
-                    if (InvUtils.fits(inv, item)) {
-                        inv.addItem(item);
+                    if (Slimefun.getVirtualItemService().fits(inv, item, InventoryContext.OUTPUT_CHEST)) {
+                        Slimefun.getVirtualItemService().addItem(inv, item, InventoryContext.OUTPUT_CHEST);
                         return true;
                     } else {
                         stop(MinerStoppingReason.CHEST_FULL);
