@@ -33,6 +33,7 @@ import io.github.thebusybiscuit.slimefun4.core.services.PerWorldSettingsService;
 import io.github.thebusybiscuit.slimefun4.core.services.PermissionsService;
 import io.github.thebusybiscuit.slimefun4.core.services.ThreadService;
 import io.github.thebusybiscuit.slimefun4.core.services.UpdaterService;
+import io.github.thebusybiscuit.slimefun4.core.services.VirtualItemService;
 import io.github.thebusybiscuit.slimefun4.core.services.github.GitHubService;
 import io.github.thebusybiscuit.slimefun4.core.services.holograms.HologramsService;
 import io.github.thebusybiscuit.slimefun4.core.services.profiler.SlimefunProfiler;
@@ -194,6 +195,7 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
     private final SoundService soundService = new SoundService(this);
     private final ThreadService threadService = new ThreadService(this);
     private final AnalyticsService analyticsService = new AnalyticsService(this);
+    private final VirtualItemService virtualItemService = new VirtualItemService();
 
     // Some other things we need
     private final IntegrationsManager integrations = new IntegrationsManager(this);
@@ -901,6 +903,11 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
     public static @Nonnull BlockDataService getBlockDataService() {
         validateInstance();
         return instance.blockDataService;
+    }
+
+    public static @Nonnull VirtualItemService getVirtualItemService() {
+        validateInstance();
+        return instance.virtualItemService;
     }
 
     /**

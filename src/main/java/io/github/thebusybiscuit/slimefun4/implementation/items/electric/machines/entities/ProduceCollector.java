@@ -1,7 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.implementation.items.electric.machines.entities;
 
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunBlockData;
-import io.github.bakedlibs.dough.inventory.InvUtils;
 import io.github.bakedlibs.dough.items.CustomItemStack;
 import io.github.thebusybiscuit.slimefun4.api.MinecraftVersion;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
@@ -9,6 +8,7 @@ import io.github.thebusybiscuit.slimefun4.api.items.ItemSetting;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
 import io.github.thebusybiscuit.slimefun4.api.items.settings.IntRangeSetting;
+import io.github.thebusybiscuit.slimefun4.api.items.virtual.VirtualItemHandler.InventoryContext;
 import io.github.thebusybiscuit.slimefun4.api.recipes.RecipeType;
 import io.github.thebusybiscuit.slimefun4.core.attributes.RecipeDisplayItem;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
@@ -133,7 +133,12 @@ public class ProduceCollector extends AContainer implements RecipeDisplayItem {
                 ItemStack item = inv.getItemInSlot(slot);
 
                 if (!SlimefunUtils.isItemSimilar(item, produce.getInput()[0], true)
-                        || !InvUtils.fits(inv.toInventory(), produce.getOutput()[0], getOutputSlots())) {
+                        || !Slimefun.getVirtualItemService()
+                                .fits(
+                                        inv.toInventory(),
+                                        produce.getOutput()[0],
+                                        InventoryContext.MACHINE_OUTPUT,
+                                        getOutputSlots())) {
                     continue;
                 }
 

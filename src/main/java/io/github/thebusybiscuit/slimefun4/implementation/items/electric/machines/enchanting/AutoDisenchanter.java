@@ -1,10 +1,10 @@
 package io.github.thebusybiscuit.slimefun4.implementation.items.electric.machines.enchanting;
 
-import io.github.bakedlibs.dough.inventory.InvUtils;
 import io.github.thebusybiscuit.slimefun4.api.events.AutoDisenchantEvent;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
+import io.github.thebusybiscuit.slimefun4.api.items.virtual.VirtualItemHandler.InventoryContext;
 import io.github.thebusybiscuit.slimefun4.api.recipes.RecipeType;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import java.util.HashMap;
@@ -65,7 +65,12 @@ public class AutoDisenchanter extends AbstractEnchantmentMachine {
             Bukkit.getPluginManager().callEvent(event);
 
             if (event.isCancelled()) {
-                if (InvUtils.fitAll(menu.toInventory(), new ItemStack[] {item}, getOutputSlots())) {
+                if (Slimefun.getVirtualItemService()
+                        .fitAll(
+                                menu.toInventory(),
+                                new ItemStack[] {item},
+                                InventoryContext.MACHINE_OUTPUT,
+                                getOutputSlots())) {
                     menu.replaceExistingItem(slot, null);
                     menu.pushItem(item, getOutputSlots());
                 }
@@ -119,7 +124,12 @@ public class AutoDisenchanter extends AbstractEnchantmentMachine {
                     new ItemStack[] {book, item},
                     new ItemStack[] {disenchantedItem, enchantedBook});
 
-            if (!InvUtils.fitAll(menu.toInventory(), recipe.getOutput(), getOutputSlots())) {
+            if (!Slimefun.getVirtualItemService()
+                    .fitAll(
+                            menu.toInventory(),
+                            recipe.getOutput(),
+                            InventoryContext.MACHINE_OUTPUT,
+                            getOutputSlots())) {
                 return null;
             }
 

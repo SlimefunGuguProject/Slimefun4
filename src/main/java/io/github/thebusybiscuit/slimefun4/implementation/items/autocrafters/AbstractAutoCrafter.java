@@ -12,6 +12,8 @@ import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemState;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
+import io.github.thebusybiscuit.slimefun4.api.items.virtual.VirtualItemHandler.MatchContext;
+import io.github.thebusybiscuit.slimefun4.api.items.virtual.VirtualItemHandler.RemainderContext;
 import io.github.thebusybiscuit.slimefun4.api.recipes.RecipeType;
 import io.github.thebusybiscuit.slimefun4.core.attributes.EnergyNetComponent;
 import io.github.thebusybiscuit.slimefun4.core.handlers.BlockBreakHandler;
@@ -272,7 +274,7 @@ public abstract class AbstractAutoCrafter extends SlimefunItem implements Energy
      */
     @ParametersAreNonnullByDefault
     protected boolean matches(ItemStack item, Predicate<ItemStack> predicate) {
-        return predicate.test(item);
+        return Slimefun.getVirtualItemService().matchesPredicate(item, predicate, MatchContext.AUTO_CRAFTER_PREDICATE);
     }
 
     /**
@@ -560,6 +562,11 @@ public abstract class AbstractAutoCrafter extends SlimefunItem implements Energy
      * @return The leftover item or null if the item is fully consumed
      */
     @Nullable private ItemStack getLeftoverItem(@Nonnull ItemStack item) {
+        var virtualLeftover = Slimefun.getVirtualItemService().getRemainder(item, RemainderContext.AUTO_CRAFTER);
+        if (virtualLeftover.handled()) {
+            return virtualLeftover.item();
+        }
+
         Material type = item.getType();
 
         return switch (type) {

@@ -1,13 +1,13 @@
 package io.github.thebusybiscuit.slimefun4.core.multiblocks;
 
 import com.google.common.base.Preconditions;
-import io.github.bakedlibs.dough.inventory.InvUtils;
 import io.github.bakedlibs.dough.protection.Interaction;
 import io.github.thebusybiscuit.slimefun4.api.SlimefunAddon;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemSpawnReason;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
+import io.github.thebusybiscuit.slimefun4.api.items.virtual.VirtualItemHandler.InventoryContext;
 import io.github.thebusybiscuit.slimefun4.api.recipes.RecipeType;
 import io.github.thebusybiscuit.slimefun4.core.attributes.NotPlaceable;
 import io.github.thebusybiscuit.slimefun4.core.attributes.RecipeDisplayItem;
@@ -180,7 +180,8 @@ public abstract class MultiBlockMachine extends SlimefunItem implements NotPlace
          * It's functionally the same as the old fit check for the dispenser,
          * only refactored.
          */
-        if (!outputChest.isPresent() && InvUtils.fits(placeCheckerInv, product)) {
+        if (!outputChest.isPresent()
+                && Slimefun.getVirtualItemService().fits(placeCheckerInv, product, InventoryContext.MACHINE_OUTPUT)) {
             return dispInv;
         } else {
             return outputChest.orElse(null);
@@ -203,9 +204,10 @@ public abstract class MultiBlockMachine extends SlimefunItem implements NotPlace
         Inventory outputInv = findOutputInventory(outputItem, block, blockInv);
 
         if (outputInv != null) {
-            outputInv.addItem(outputItem);
+            Slimefun.getVirtualItemService().addItem(outputInv, outputItem, InventoryContext.MACHINE_OUTPUT);
         } else {
-            ItemStack rest = blockInv.addItem(outputItem).get(0);
+            ItemStack rest =
+                    Slimefun.getVirtualItemService().addItem(blockInv, outputItem, InventoryContext.MACHINE_OUTPUT);
 
             // fallback: drop item
             if (rest != null) {
