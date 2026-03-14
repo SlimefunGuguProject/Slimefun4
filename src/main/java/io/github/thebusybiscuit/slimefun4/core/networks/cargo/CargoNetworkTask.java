@@ -4,6 +4,7 @@ import com.xzavier0722.mc.plugin.slimefun4.storage.util.StorageCacheUtils;
 import io.github.bakedlibs.dough.blocks.BlockPosition;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemSpawnReason;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
+import io.github.thebusybiscuit.slimefun4.api.items.virtual.VirtualItemHandler.InventoryContext;
 import io.github.thebusybiscuit.slimefun4.core.networks.NetworkManager;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.implementation.SlimefunItems;
@@ -120,10 +121,15 @@ class CargoNetworkTask implements Runnable {
         if (inv != null) {
             // Check if the original slot hasn't been occupied in the meantime
             if (inv.getItem(previousSlot) == null) {
-                inv.setItem(previousSlot, item);
+                ItemStack rest = Slimefun.getVirtualItemService()
+                        .addItem(inv, item, InventoryContext.CARGO_INSERT, previousSlot);
+                if (rest != null && !manager.isItemDeletionEnabled()) {
+                    SlimefunUtils.spawnItem(
+                            inputTarget.getLocation().add(0, 1, 0), rest, ItemSpawnReason.CARGO_OVERFLOW);
+                }
             } else {
                 // Try to add the item into another available slot then
-                ItemStack rest = inv.addItem(item).get(0);
+                ItemStack rest = Slimefun.getVirtualItemService().addItem(inv, item, InventoryContext.CARGO_INSERT);
 
                 if (rest != null && !manager.isItemDeletionEnabled()) {
                     // If the item still couldn't be inserted, simply drop it on the ground

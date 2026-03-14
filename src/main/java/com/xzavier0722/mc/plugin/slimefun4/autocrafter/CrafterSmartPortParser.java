@@ -1,9 +1,9 @@
 package com.xzavier0722.mc.plugin.slimefun4.autocrafter;
 
 import com.xzavier0722.mc.plugin.slimefun4.storage.util.StorageCacheUtils;
+import io.github.thebusybiscuit.slimefun4.api.items.virtual.VirtualItemHandler.InventoryContext;
+import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.implementation.items.autocrafters.AbstractAutoCrafter;
-import io.github.thebusybiscuit.slimefun4.utils.SlimefunUtils;
-import io.github.thebusybiscuit.slimefun4.utils.itemstack.ItemStackWrapper;
 import java.util.Collection;
 import java.util.Map;
 import java.util.function.Predicate;
@@ -21,24 +21,8 @@ public class CrafterSmartPortParser implements CrafterInteractable {
 
     @Override
     public boolean canOutput(ItemStack item) {
-        ItemStackWrapper wrapper = ItemStackWrapper.wrap(item);
-
-        int amountLeft = wrapper.getAmount();
-        for (int slot : CrafterSmartPort.OUTPUT_SLOTS) {
-            ItemStack itemInSlot = inv.getItemInSlot(slot);
-            if (itemInSlot == null) {
-                return true;
-            }
-            if (SlimefunUtils.isItemSimilar(itemInSlot, wrapper, true, false)) {
-                int slotItemAmount = itemInSlot.getAmount();
-                int maxAmount = itemInSlot.getMaxStackSize();
-                if (slotItemAmount + amountLeft <= maxAmount) {
-                    return true;
-                }
-                amountLeft -= maxAmount - slotItemAmount;
-            }
-        }
-        return false;
+        return Slimefun.getVirtualItemService()
+                .fits(inv.toInventory(), item, InventoryContext.MACHINE_OUTPUT, CrafterSmartPort.OUTPUT_SLOTS);
     }
 
     @Override

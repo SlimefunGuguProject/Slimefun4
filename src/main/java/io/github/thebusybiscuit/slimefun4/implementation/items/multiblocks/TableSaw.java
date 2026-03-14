@@ -6,6 +6,7 @@ import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemSetting;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
+import io.github.thebusybiscuit.slimefun4.api.items.virtual.VirtualItemHandler.ConsumeContext;
 import io.github.thebusybiscuit.slimefun4.core.multiblocks.MultiBlockMachine;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.implementation.items.blocks.OutputChest;
@@ -135,7 +136,13 @@ public class TableSaw extends MultiBlockMachine {
         }
 
         if (p.getGameMode() != GameMode.CREATIVE) {
-            ItemUtils.consumeItem(item, true);
+            var consumed = Slimefun.getVirtualItemService().consume(item, 1, true, ConsumeContext.MENU_CONSUME);
+            if (consumed.handled()) {
+                p.getInventory()
+                        .setItemInMainHand(consumed.item() == null ? new ItemStack(Material.AIR) : consumed.item());
+            } else {
+                ItemUtils.consumeItem(item, true);
+            }
         }
 
         outputItems(b, event.getOutput());
