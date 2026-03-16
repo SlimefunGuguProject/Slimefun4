@@ -138,7 +138,7 @@ public final class VirtualItemService {
 
     public boolean fits(
             @Nonnull Inventory inventory, @Nonnull ItemStack item, @Nonnull InventoryContext context, int... slots) {
-        if (!isVirtualItem(item)) {
+        if (!isVirtualItem(item) && SlimefunItem.getByItem(item) == null) {
             if (slots.length == 0) {
                 return InvUtils.fits(inventory, item);
             }
@@ -334,7 +334,9 @@ public final class VirtualItemService {
 
     private int[] resolveSlots(int inventorySize, int... slots) {
         if (slots.length > 0) {
-            return slots;
+            return Arrays.stream(slots)
+                    .filter(slot -> slot >= 0 && slot < inventorySize)
+                    .toArray();
         }
 
         int[] resolvedSlots = new int[inventorySize];

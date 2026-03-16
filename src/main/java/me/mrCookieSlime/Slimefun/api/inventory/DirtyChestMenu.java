@@ -106,18 +106,18 @@ public class DirtyChestMenu extends ChestMenu {
             }
 
             if (isSfItem) {
-                if (!slotItem.hasItemMeta()) {
-                    continue;
-                }
-
                 ComparisonResult comparison = virtualItems.matches(slotItem, item, MatchContext.STACK_MERGE);
                 if (comparison == ComparisonResult.NO_MATCH) {
                     continue;
                 }
 
-                if (comparison == ComparisonResult.NOT_HANDLED
-                        && (!SlimefunUtils.isItemSimilarWithoutVirtualItems(slotItem, wrapper, true, false))) {
-                    continue;
+                if (comparison == ComparisonResult.NOT_HANDLED) {
+                    if (!slotItem.hasItemMeta()) {
+                        continue;
+                    }
+                    if (!SlimefunUtils.isItemSimilarWithoutVirtualItems(slotItem, wrapper, true, false)) {
+                        continue;
+                    }
                 }
 
                 int maxStackSize = Math.min(
