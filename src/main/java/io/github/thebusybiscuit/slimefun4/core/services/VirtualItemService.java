@@ -195,7 +195,7 @@ public final class VirtualItemService {
 
         boolean hasVirtualItems = hasVirtualItemsInSlots(inventory, slots);
 
-        if (!hasVirtualItems && !isVirtualItem(item) && slots.length == 0) {
+        if (!hasVirtualItems && !isVirtualItem(item) && SlimefunItem.getByItem(item) == null && slots.length == 0) {
             Map<Integer, ItemStack> leftovers = inventory.addItem(item.clone());
             if (leftovers.isEmpty()) {
                 return null;
@@ -204,7 +204,7 @@ public final class VirtualItemService {
             return leftovers.values().iterator().next();
         }
 
-        if (!hasVirtualItems && !isVirtualItem(item) && slots.length > 0) {
+        if (!hasVirtualItems && !isVirtualItem(item) && SlimefunItem.getByItem(item) == null && slots.length > 0) {
             return addItemDirectly(inventory, item, context, slots);
         }
 

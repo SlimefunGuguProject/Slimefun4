@@ -82,6 +82,11 @@ public class DirtyChestMenu extends ChestMenu {
     public boolean fits(@Nonnull ItemStack item, int... slots) {
         var virtualItems = Slimefun.getVirtualItemService();
         var isSfItem = SlimefunItem.getByItem(item) != null || virtualItems.isVirtualItem(item);
+
+        if (slots.length == 0) {
+            return virtualItems.fits(toInventory(), item, InventoryContext.MENU_FIT);
+        }
+
         var wrapper = ItemStackWrapper.wrap(item);
         var remain = item.getAmount();
 
