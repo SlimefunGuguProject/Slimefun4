@@ -7,6 +7,7 @@ import io.github.thebusybiscuit.slimefun4.api.items.ItemSetting;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
 import io.github.thebusybiscuit.slimefun4.api.items.virtual.VirtualItemHandler.ConsumeContext;
+import io.github.thebusybiscuit.slimefun4.api.items.virtual.VirtualItemHandler.InventoryContext;
 import io.github.thebusybiscuit.slimefun4.core.multiblocks.MultiBlockMachine;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.implementation.items.blocks.OutputChest;
@@ -169,7 +170,11 @@ public class TableSaw extends MultiBlockMachine {
         Optional<Inventory> outputChest = OutputChest.findOutputChestFor(b, output);
 
         if (outputChest.isPresent()) {
-            outputChest.get().addItem(output);
+            ItemStack rest =
+                    Slimefun.getVirtualItemService().addItem(outputChest.get(), output, InventoryContext.OUTPUT_CHEST);
+            if (rest != null) {
+                b.getWorld().dropItemNaturally(b.getLocation(), rest);
+            }
         } else {
             b.getWorld().dropItemNaturally(b.getLocation(), output);
         }

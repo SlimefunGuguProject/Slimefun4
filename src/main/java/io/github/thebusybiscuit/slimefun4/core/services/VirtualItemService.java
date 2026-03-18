@@ -80,17 +80,19 @@ public final class VirtualItemService {
 
     public boolean matchesPredicate(
             @Nonnull ItemStack item, @Nonnull Predicate<ItemStack> predicate, @Nonnull MatchContext context) {
-        if (predicate.test(item)) {
-            return true;
-        }
-
         VirtualItemHandler currentHandler = handler;
-        if (currentHandler == null || !currentHandler.isVirtualItem(item)) {
-            return false;
+        if (currentHandler != null && currentHandler.isVirtualItem(item)) {
+            ComparisonResult comparison = currentHandler.matchesPredicate(item, predicate, context);
+            if (comparison == ComparisonResult.MATCH) {
+                return true;
+            }
+
+            if (comparison == ComparisonResult.NO_MATCH) {
+                return false;
+            }
         }
 
-        ComparisonResult comparison = currentHandler.matchesPredicate(item, predicate, context);
-        return comparison == ComparisonResult.MATCH;
+        return predicate.test(item);
     }
 
     public int getMaxStackSize(@Nonnull ItemStack item, @Nonnull InventoryContext context, int defaultMaxStackSize) {
@@ -138,7 +140,7 @@ public final class VirtualItemService {
 
     public boolean fits(
             @Nonnull Inventory inventory, @Nonnull ItemStack item, @Nonnull InventoryContext context, int... slots) {
-        if (!isVirtualItem(item) && SlimefunItem.getByItem(item) == null) {
+        if (!hasVirtualItemsInSlots(inventory, slots) && !isVirtualItem(item) && SlimefunItem.getByItem(item) == null) {
             if (slots.length == 0) {
                 return InvUtils.fits(inventory, item);
             }
@@ -160,6 +162,10 @@ public final class VirtualItemService {
                 hasVirtualItems = true;
                 break;
             }
+        }
+
+        if (!hasVirtualItems) {
+            hasVirtualItems = hasVirtualItemsInSlots(inventory, slots);
         }
 
         if (!hasVirtualItems) {
@@ -187,7 +193,9 @@ public final class VirtualItemService {
             @Nonnull Inventory inventory, @Nonnull ItemStack item, @Nonnull InventoryContext context, int... slots) {
         Validate.notNull(item, "The item cannot be null");
 
-        if (!isVirtualItem(item) && slots.length == 0) {
+        boolean hasVirtualItems = hasVirtualItemsInSlots(inventory, slots);
+
+        if (!hasVirtualItems && !isVirtualItem(item) && slots.length == 0) {
             Map<Integer, ItemStack> leftovers = inventory.addItem(item.clone());
             if (leftovers.isEmpty()) {
                 return null;
@@ -196,7 +204,7 @@ public final class VirtualItemService {
             return leftovers.values().iterator().next();
         }
 
-        if (!isVirtualItem(item) && slots.length > 0) {
+        if (!hasVirtualItems && !isVirtualItem(item) && slots.length > 0) {
             return addItemDirectly(inventory, item, context, slots);
         }
 
@@ -330,6 +338,21 @@ public final class VirtualItemService {
     private boolean isHookRelevant(
             @Nonnull VirtualItemHandler currentHandler, @Nullable ItemStack left, @Nullable ItemStack right) {
         return currentHandler.isVirtualItem(left) || currentHandler.isVirtualItem(right);
+    }
+
+    private boolean hasVirtualItemsInSlots(@Nonnull Inventory inventory, int... slots) {
+        VirtualItemHandler currentHandler = handler;
+        if (currentHandler == null) {
+            return false;
+        }
+
+        for (int slot : resolveSlots(inventory.getSize(), slots)) {
+            if (currentHandler.isVirtualItem(inventory.getItem(slot))) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private int[] resolveSlots(int inventorySize, int... slots) {
