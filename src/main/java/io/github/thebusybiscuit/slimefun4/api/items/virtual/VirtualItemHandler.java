@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.api.items.virtual;
 
+import io.github.thebusybiscuit.slimefun4.api.items.ItemHandler;
 import java.util.function.Predicate;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -11,8 +12,17 @@ import org.bukkit.inventory.ItemStack;
  *
  * <p>Implementations are expected to keep all hot-path methods cheap. They should only inspect
  * compact metadata that was precomputed when the virtual item was created.
+ *
+ * <p>Register this handler on a {@link io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem}
+ * via {@link io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem#addItemHandler(ItemHandler...)}.
  */
-public interface VirtualItemHandler {
+public interface VirtualItemHandler extends ItemHandler {
+
+    @Override
+    @Nonnull
+    default Class<? extends ItemHandler> getIdentifier() {
+        return VirtualItemHandler.class;
+    }
 
     /**
      * The context in which two stacks are being compared.
