@@ -204,7 +204,9 @@ public abstract class MultiBlockMachine extends SlimefunItem implements NotPlace
         Inventory outputInv = findOutputInventory(outputItem, block, blockInv);
 
         if (outputInv != null) {
-            Slimefun.getVirtualItemService().addItem(outputInv, outputItem, InventoryContext.MACHINE_OUTPUT);
+            InventoryContext context =
+                    (outputInv == blockInv) ? InventoryContext.MACHINE_OUTPUT : InventoryContext.OUTPUT_CHEST;
+            Slimefun.getVirtualItemService().addItem(outputInv, outputItem, context);
         } else {
             ItemStack rest =
                     Slimefun.getVirtualItemService().addItem(blockInv, outputItem, InventoryContext.MACHINE_OUTPUT);
