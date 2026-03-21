@@ -44,6 +44,16 @@ public final class VirtualItemService {
                 return leftHandler.matches(left, right, context);
             }
 
+            ComparisonResult leftResult = leftHandler.matches(left, right, context);
+            if (leftResult != ComparisonResult.NOT_HANDLED) {
+                return leftResult;
+            }
+
+            ComparisonResult rightResult = rightHandler.matches(left, right, context);
+            if (rightResult != ComparisonResult.NOT_HANDLED) {
+                return rightResult;
+            }
+
             return ComparisonResult.NO_MATCH;
         }
 
