@@ -21,7 +21,7 @@ public class CrafterSmartPortParser implements CrafterInteractable {
 
     @Override
     public boolean canOutput(ItemStack item) {
-        return Slimefun.getVirtualItemService()
+        return Slimefun.getItemStackService()
                 .fits(inv.toInventory(), item, InventoryContext.MACHINE_OUTPUT, CrafterSmartPort.OUTPUT_SLOTS);
     }
 

@@ -300,7 +300,7 @@ public final class SlimefunUtils {
             boolean checkAmount,
             boolean checkDistinctiveItem,
             boolean checkCustomModelData) {
-        ComparisonResult comparison = Slimefun.getVirtualItemService().matches(item, sfitem, MatchContext.GENERIC);
+        ComparisonResult comparison = Slimefun.getItemStackService().matches(item, sfitem, MatchContext.GENERIC);
         if (comparison == ComparisonResult.MATCH) {
             return true;
         }

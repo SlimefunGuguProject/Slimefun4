@@ -127,7 +127,7 @@ public class AutoBrewer extends AContainer implements NotHopperable {
 
             output.setItemMeta(potion);
 
-            if (!Slimefun.getVirtualItemService()
+            if (!Slimefun.getItemStackService()
                     .fits(menu.toInventory(), output, InventoryContext.MACHINE_OUTPUT, getOutputSlots())) {
                 return null;
             }

@@ -123,13 +123,13 @@ class CargoNetworkTask implements Runnable {
 
             // Check if the original slot hasn't been occupied in the meantime
             if (inv.getItem(previousSlot) == null) {
-                rest = Slimefun.getVirtualItemService().addItem(inv, item, InventoryContext.CARGO_INSERT, previousSlot);
+                rest = Slimefun.getItemStackService().addItem(inv, item, InventoryContext.CARGO_INSERT, previousSlot);
                 if (rest != null) {
-                    rest = Slimefun.getVirtualItemService().addItem(inv, rest, InventoryContext.CARGO_INSERT);
+                    rest = Slimefun.getItemStackService().addItem(inv, rest, InventoryContext.CARGO_INSERT);
                 }
             } else {
                 // Try to add the item into another available slot then
-                rest = Slimefun.getVirtualItemService().addItem(inv, item, InventoryContext.CARGO_INSERT);
+                rest = Slimefun.getItemStackService().addItem(inv, item, InventoryContext.CARGO_INSERT);
             }
 
             if (rest != null && !manager.isItemDeletionEnabled()) {

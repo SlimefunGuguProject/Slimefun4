@@ -88,7 +88,7 @@ public class BookBinder extends AContainer {
                             new ItemStack[] {target, item},
                             new ItemStack[] {book});
 
-                    if (!Slimefun.getVirtualItemService()
+                    if (!Slimefun.getItemStackService()
                             .fitAll(
                                     menu.toInventory(),
                                     recipe.getOutput(),

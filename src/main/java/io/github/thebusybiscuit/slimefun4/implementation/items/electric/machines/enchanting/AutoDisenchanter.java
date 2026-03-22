@@ -65,7 +65,7 @@ public class AutoDisenchanter extends AbstractEnchantmentMachine {
             Bukkit.getPluginManager().callEvent(event);
 
             if (event.isCancelled()) {
-                if (Slimefun.getVirtualItemService()
+                if (Slimefun.getItemStackService()
                         .fitAll(
                                 menu.toInventory(),
                                 new ItemStack[] {item},
@@ -124,7 +124,7 @@ public class AutoDisenchanter extends AbstractEnchantmentMachine {
                     new ItemStack[] {book, item},
                     new ItemStack[] {disenchantedItem, enchantedBook});
 
-            if (!Slimefun.getVirtualItemService()
+            if (!Slimefun.getItemStackService()
                     .fitAll(
                             menu.toInventory(),
                             recipe.getOutput(),

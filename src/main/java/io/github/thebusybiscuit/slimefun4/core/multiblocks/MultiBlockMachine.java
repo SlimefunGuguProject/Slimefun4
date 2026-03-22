@@ -181,7 +181,7 @@ public abstract class MultiBlockMachine extends SlimefunItem implements NotPlace
          * only refactored.
          */
         if (!outputChest.isPresent()
-                && Slimefun.getVirtualItemService().fits(placeCheckerInv, product, InventoryContext.MACHINE_OUTPUT)) {
+                && Slimefun.getItemStackService().fits(placeCheckerInv, product, InventoryContext.MACHINE_OUTPUT)) {
             return dispInv;
         } else {
             return outputChest.orElse(null);
@@ -206,10 +206,10 @@ public abstract class MultiBlockMachine extends SlimefunItem implements NotPlace
         if (outputInv != null) {
             InventoryContext context =
                     (outputInv == blockInv) ? InventoryContext.MACHINE_OUTPUT : InventoryContext.OUTPUT_CHEST;
-            Slimefun.getVirtualItemService().addItem(outputInv, outputItem, context);
+            Slimefun.getItemStackService().addItem(outputInv, outputItem, context);
         } else {
             ItemStack rest =
-                    Slimefun.getVirtualItemService().addItem(blockInv, outputItem, InventoryContext.MACHINE_OUTPUT);
+                    Slimefun.getItemStackService().addItem(blockInv, outputItem, InventoryContext.MACHINE_OUTPUT);
 
             // fallback: drop item
             if (rest != null) {

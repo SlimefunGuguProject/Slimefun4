@@ -80,7 +80,7 @@ public class DirtyChestMenu extends ChestMenu {
     }
 
     public boolean fits(@Nonnull ItemStack item, int... slots) {
-        var virtualItems = Slimefun.getVirtualItemService();
+        var virtualItems = Slimefun.getItemStackService();
         var isSfItem = SlimefunItem.getByItem(item) != null || virtualItems.isVirtualItem(item);
 
         if (slots.length == 0) {
@@ -169,7 +169,7 @@ public class DirtyChestMenu extends ChestMenu {
 
         ItemStackWrapper wrapper = null;
         int amount = item.getAmount();
-        var virtualItems = Slimefun.getVirtualItemService();
+        var virtualItems = Slimefun.getItemStackService();
 
         for (int slot : slots) {
             if (amount <= 0) {
@@ -248,7 +248,7 @@ public class DirtyChestMenu extends ChestMenu {
         }
 
         ItemStack item = getItemInSlot(slot);
-        var virtualItems = Slimefun.getVirtualItemService();
+        var virtualItems = Slimefun.getItemStackService();
         var result = virtualItems.consume(item, amount, replaceConsumables, ConsumeContext.MENU_CONSUME);
         if (result.handled()) {
             replaceExistingItem(slot, result.item());

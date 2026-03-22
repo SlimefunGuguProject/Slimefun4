@@ -49,10 +49,10 @@ public class ChestInventoryParser implements CrafterInteractable {
 
     @Override
     public boolean addItem(ItemStack item) {
-        return Slimefun.getVirtualItemService().addItem(inv, item, InventoryContext.MACHINE_OUTPUT) == null;
+        return Slimefun.getItemStackService().addItem(inv, item, InventoryContext.MACHINE_OUTPUT) == null;
     }
 
     private boolean isFit(ItemStack item) {
-        return Slimefun.getVirtualItemService().fits(inv, item, InventoryContext.MACHINE_OUTPUT);
+        return Slimefun.getItemStackService().fits(inv, item, InventoryContext.MACHINE_OUTPUT);
     }
 }

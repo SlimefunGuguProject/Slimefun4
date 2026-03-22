@@ -51,8 +51,7 @@ abstract class AbstractCraftingTable extends MultiBlockMachine {
             if (stack != null) {
                 stack = stack.clone();
 
-                var consumed =
-                        Slimefun.getVirtualItemService().consume(stack, 1, true, ConsumeContext.VIRTUAL_CRAFTING);
+                var consumed = Slimefun.getItemStackService().consume(stack, 1, true, ConsumeContext.VIRTUAL_CRAFTING);
                 if (consumed.handled()) {
                     stack = consumed.item();
                 } else {

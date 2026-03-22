@@ -64,7 +64,7 @@ public class OutputChest extends SlimefunItem {
                         Inventory inv = chest.getInventory();
 
                         // Check if the Item fits into that inventory.
-                        if (Slimefun.getVirtualItemService().fits(inv, item, InventoryContext.OUTPUT_CHEST)) {
+                        if (Slimefun.getItemStackService().fits(inv, item, InventoryContext.OUTPUT_CHEST)) {
                             return Optional.of(inv);
                         }
                     }

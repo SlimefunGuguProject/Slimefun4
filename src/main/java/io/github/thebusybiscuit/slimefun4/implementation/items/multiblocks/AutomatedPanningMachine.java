@@ -98,7 +98,7 @@ public class AutomatedPanningMachine extends MultiBlockMachine {
 
         ItemStack finalOutput = event.getOutput();
         if (p.getGameMode() != GameMode.CREATIVE) {
-            var consumed = Slimefun.getVirtualItemService().consume(input, 1, false, ConsumeContext.VIRTUAL_CRAFTING);
+            var consumed = Slimefun.getItemStackService().consume(input, 1, false, ConsumeContext.VIRTUAL_CRAFTING);
             if (consumed.handled()) {
                 p.getInventory()
                         .setItemInMainHand(consumed.item() == null ? new ItemStack(Material.AIR) : consumed.item());
@@ -116,7 +116,7 @@ public class AutomatedPanningMachine extends MultiBlockMachine {
                 Optional<Inventory> outputChest = OutputChest.findOutputChestFor(b.getRelative(BlockFace.DOWN), output);
 
                 if (outputChest.isPresent()) {
-                    Slimefun.getVirtualItemService()
+                    Slimefun.getItemStackService()
                             .addItem(outputChest.get(), finalOutput.clone(), InventoryContext.OUTPUT_CHEST);
                 } else {
                     b.getWorld().dropItemNaturally(b.getLocation(), finalOutput.clone());

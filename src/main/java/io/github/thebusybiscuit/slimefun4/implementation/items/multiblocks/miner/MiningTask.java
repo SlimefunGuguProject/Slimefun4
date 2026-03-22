@@ -279,8 +279,8 @@ class MiningTask implements Runnable {
                 if (state instanceof Chest chestState) {
                     Inventory inv = chestState.getBlockInventory();
 
-                    if (Slimefun.getVirtualItemService().fits(inv, item, InventoryContext.OUTPUT_CHEST)) {
-                        Slimefun.getVirtualItemService().addItem(inv, item, InventoryContext.OUTPUT_CHEST);
+                    if (Slimefun.getItemStackService().fits(inv, item, InventoryContext.OUTPUT_CHEST)) {
+                        Slimefun.getItemStackService().addItem(inv, item, InventoryContext.OUTPUT_CHEST);
                         return true;
                     } else {
                         stop(MinerStoppingReason.CHEST_FULL);

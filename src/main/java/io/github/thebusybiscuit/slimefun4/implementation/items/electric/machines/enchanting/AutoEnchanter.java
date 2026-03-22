@@ -69,7 +69,7 @@ public class AutoEnchanter extends AbstractEnchantmentMachine {
             Bukkit.getPluginManager().callEvent(event);
 
             if (event.isCancelled()) {
-                if (Slimefun.getVirtualItemService()
+                if (Slimefun.getItemStackService()
                         .fitAll(
                                 menu.toInventory(),
                                 new ItemStack[] {item},
@@ -155,7 +155,7 @@ public class AutoEnchanter extends AbstractEnchantmentMachine {
                     new ItemStack[] {target, enchantedBook},
                     new ItemStack[] {enchantedItem, new ItemStack(Material.BOOK)});
 
-            if (!Slimefun.getVirtualItemService()
+            if (!Slimefun.getItemStackService()
                     .fitAll(
                             menu.toInventory(),
                             recipe.getOutput(),

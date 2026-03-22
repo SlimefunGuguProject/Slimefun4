@@ -313,12 +313,12 @@ final class CargoUtils {
             ItemStack itemInSlot = menu.getItemInSlot(slot);
 
             if (itemInSlot == null || itemInSlot.getType().isAir()) {
-                if (!Slimefun.getVirtualItemService().canInsertIntoEmptySlot(stack, InventoryContext.CARGO_INSERT)) {
+                if (!Slimefun.getItemStackService().canInsertIntoEmptySlot(stack, InventoryContext.CARGO_INSERT)) {
                     continue;
                 }
 
                 int maxStackSize = Math.min(
-                        Slimefun.getVirtualItemService()
+                        Slimefun.getItemStackService()
                                 .getMaxStackSize(stack, InventoryContext.CARGO_INSERT, stack.getMaxStackSize()),
                         menu.toInventory().getMaxStackSize());
                 if (stack.getAmount() > maxStackSize) {
@@ -334,7 +334,7 @@ final class CargoUtils {
             }
 
             int maxStackSize = Math.min(
-                    Slimefun.getVirtualItemService()
+                    Slimefun.getItemStackService()
                             .getMaxStackSize(
                                     itemInSlot,
                                     InventoryContext.CARGO_INSERT,
@@ -348,7 +348,7 @@ final class CargoUtils {
             }
 
             ComparisonResult comparison =
-                    Slimefun.getVirtualItemService().matches(itemInSlot, stack, MatchContext.STACK_MERGE);
+                    Slimefun.getItemStackService().matches(itemInSlot, stack, MatchContext.STACK_MERGE);
             if (comparison == ComparisonResult.NO_MATCH) {
                 continue;
             }
@@ -396,12 +396,12 @@ final class CargoUtils {
             ItemStack itemInSlot = contents[slot];
 
             if (itemInSlot == null || itemInSlot.getType().isAir()) {
-                if (!Slimefun.getVirtualItemService().canInsertIntoEmptySlot(stack, InventoryContext.CARGO_INSERT)) {
+                if (!Slimefun.getItemStackService().canInsertIntoEmptySlot(stack, InventoryContext.CARGO_INSERT)) {
                     continue;
                 }
 
                 int maxStackSize = Math.min(
-                        Slimefun.getVirtualItemService()
+                        Slimefun.getItemStackService()
                                 .getMaxStackSize(stack, InventoryContext.CARGO_INSERT, stack.getMaxStackSize()),
                         inv.getMaxStackSize());
                 if (stack.getAmount() > maxStackSize) {
@@ -417,7 +417,7 @@ final class CargoUtils {
             } else {
                 int currentAmount = itemInSlot.getAmount();
                 int maxStackSize = Math.min(
-                        Slimefun.getVirtualItemService()
+                        Slimefun.getItemStackService()
                                 .getMaxStackSize(
                                         itemInSlot,
                                         InventoryContext.CARGO_INSERT,
@@ -430,7 +430,7 @@ final class CargoUtils {
                 }
 
                 ComparisonResult comparison =
-                        Slimefun.getVirtualItemService().matches(itemInSlot, stack, MatchContext.STACK_MERGE);
+                        Slimefun.getItemStackService().matches(itemInSlot, stack, MatchContext.STACK_MERGE);
                 if (comparison == ComparisonResult.NO_MATCH) {
                     continue;
                 }

@@ -24,7 +24,7 @@ import org.apache.commons.lang.Validate;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
-public final class VirtualItemService {
+public final class ItemStackService {
 
     public boolean isVirtualItem(@Nullable ItemStack item) {
         return resolveHandler(item) != null;

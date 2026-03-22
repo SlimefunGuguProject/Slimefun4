@@ -133,7 +133,7 @@ public class ProduceCollector extends AContainer implements RecipeDisplayItem {
                 ItemStack item = inv.getItemInSlot(slot);
 
                 if (!SlimefunUtils.isItemSimilar(item, produce.getInput()[0], true)
-                        || !Slimefun.getVirtualItemService()
+                        || !Slimefun.getItemStackService()
                                 .fits(
                                         inv.toInventory(),
                                         produce.getOutput()[0],

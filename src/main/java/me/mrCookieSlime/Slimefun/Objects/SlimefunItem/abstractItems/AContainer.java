@@ -441,7 +441,7 @@ public abstract class AContainer extends SlimefunItem
         for (MachineRecipe recipe : recipes) {
             for (ItemStack input : recipe.getInput()) {
                 for (int slot : getInputSlots()) {
-                    if (Slimefun.getVirtualItemService()
+                    if (Slimefun.getItemStackService()
                             .isSimilar(inventory.get(slot), input, MatchContext.RECIPE_INPUT, true, true)) {
                         found.put(slot, input.getAmount());
                         break;
@@ -450,7 +450,7 @@ public abstract class AContainer extends SlimefunItem
             }
 
             if (found.size() == recipe.getInput().length) {
-                if (!Slimefun.getVirtualItemService()
+                if (!Slimefun.getItemStackService()
                         .fitAll(
                                 inv.toInventory(),
                                 recipe.getOutput(),

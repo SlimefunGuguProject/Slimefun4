@@ -274,7 +274,7 @@ public abstract class AbstractAutoCrafter extends SlimefunItem implements Energy
      */
     @ParametersAreNonnullByDefault
     protected boolean matches(ItemStack item, Predicate<ItemStack> predicate) {
-        return Slimefun.getVirtualItemService().matchesPredicate(item, predicate, MatchContext.AUTO_CRAFTER_PREDICATE);
+        return Slimefun.getItemStackService().matchesPredicate(item, predicate, MatchContext.AUTO_CRAFTER_PREDICATE);
     }
 
     /**
@@ -562,7 +562,7 @@ public abstract class AbstractAutoCrafter extends SlimefunItem implements Energy
      * @return The leftover item or null if the item is fully consumed
      */
     @Nullable private ItemStack getLeftoverItem(@Nonnull ItemStack item) {
-        var virtualLeftover = Slimefun.getVirtualItemService().getRemainder(item, RemainderContext.AUTO_CRAFTER);
+        var virtualLeftover = Slimefun.getItemStackService().getRemainder(item, RemainderContext.AUTO_CRAFTER);
         if (virtualLeftover.handled()) {
             return virtualLeftover.item();
         }

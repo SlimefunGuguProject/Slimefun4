@@ -97,7 +97,7 @@ public class EnhancedCraftingTable extends AbstractCraftingTable {
 
                 if (item != null && item.getType() != Material.AIR) {
                     var consumed =
-                            Slimefun.getVirtualItemService().consume(item, 1, true, ConsumeContext.VIRTUAL_CRAFTING);
+                            Slimefun.getItemStackService().consume(item, 1, true, ConsumeContext.VIRTUAL_CRAFTING);
                     if (consumed.handled()) {
                         inv.setItem(j, consumed.item());
                     } else {
