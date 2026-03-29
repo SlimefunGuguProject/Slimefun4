@@ -3,6 +3,7 @@ package com.xzavier0722.mc.plugin.slimefun4.storage.controller;
 import java.util.Map;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
+import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 import lombok.Getter;
 
@@ -26,13 +27,17 @@ public abstract class ASlimefunDataContainer extends ADataContainer {
     private static final WeakHashMap<ASlimefunDataContainer, Map<String, String>> capturedPendingRemoveData =
             new WeakHashMap<>();
 
-    protected void setWhilePendingRemove(String key, String value) {
+    protected void setWhilePendingRemove(String key, @Nullable String value) {
         if (pendingRemove) {
             Map<String, String> map;
             synchronized (capturedPendingRemoveData) {
                 map = capturedPendingRemoveData.computeIfAbsent(this, (k) -> new ConcurrentHashMap<>());
             }
-            map.put(key, value);
+            if (value != null) {
+                map.put(key, value);
+            } else {
+                map.remove(key);
+            }
         }
     }
 
