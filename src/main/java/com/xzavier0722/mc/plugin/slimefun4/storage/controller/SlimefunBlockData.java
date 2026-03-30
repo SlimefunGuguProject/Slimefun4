@@ -76,7 +76,7 @@ public class SlimefunBlockData extends ASlimefunDataContainer {
 
     @Override
     @ParametersAreNonnullByDefault
-    public void updateDataBaseKey(String key) {
+    public void scheduleUpdateData(String key) {
         Slimefun.getDatabaseManager().getBlockDataController().scheduleDelayedBlockDataUpdate(this, key);
     }
 }

@@ -45,7 +45,9 @@ public abstract class ASlimefunDataContainer extends ADataContainer {
         if (val) {
             pendingRemove = true;
         } else {
-            // save keys during the remove
+            // save keys during the pendingRemove period
+            // if the data is truly removed , then it will be gc and the captured data will be automatically removed
+            // from the capture map
             pendingRemove = false;
             Map<String, String> map;
             synchronized (capturedPendingRemoveData) {
@@ -69,7 +71,7 @@ public abstract class ASlimefunDataContainer extends ADataContainer {
             setWhilePendingRemove(key, val);
             return;
         } else {
-            updateDataBaseKey(key);
+            scheduleUpdateData(key);
         }
     }
 
@@ -79,13 +81,13 @@ public abstract class ASlimefunDataContainer extends ADataContainer {
             if (isPendingRemove()) {
                 setWhilePendingRemove(key, null);
             } else {
-                updateDataBaseKey(key);
+                scheduleUpdateData(key);
             }
         }
     }
 
     @ParametersAreNonnullByDefault
-    public abstract void updateDataBaseKey(String key);
+    public abstract void scheduleUpdateData(String key);
 
     public ASlimefunDataContainer(String key, String sfId) {
         super(key);
