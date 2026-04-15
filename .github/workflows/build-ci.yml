@@ -17,6 +17,8 @@ jobs:
       packages: read
     steps:
       - uses: actions/checkout@v4
+      - name: Make gradlew executable
+        run: chmod +x gradlew
       - uses: actions/setup-java@v5
         with:
           distribution: 'zulu'
