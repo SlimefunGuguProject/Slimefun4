@@ -62,8 +62,10 @@ class BlockDataCommand extends SubCommand {
         switch (args[1]) {
             case "get" -> {
                 String value = blockData.getData(key);
-                ChatUtils.sendMessage(player, "&a该方块 &b%key% &a的值为: &e%value%", msg -> msg.replace("%key%", key)
-                        .replace("%value%", value == null ? "null" : value));
+                ChatUtils.sendMessage(
+                        player,
+                        "&a该方块 &b%key% &a的值为: &e%value%",
+                        msg -> msg.replace("%key%", key).replace("%value%", value == null ? "null" : value));
             }
             case "set" -> {
                 if (args.length < 4) {
@@ -84,8 +86,10 @@ class BlockDataCommand extends SubCommand {
                 String value = args[3];
 
                 blockData.setData(key, value);
-                ChatUtils.sendMessage(player, "&a已设置该方块 &b%key% &a的值为: &e%value%", msg -> msg.replace("%key%", key)
-                        .replace("%value%", value));
+                ChatUtils.sendMessage(
+                        player,
+                        "&a已设置该方块 &b%key% &a的值为: &e%value%",
+                        msg -> msg.replace("%key%", key).replace("%value%", value));
             }
             case "remove" -> {
                 if (key.equalsIgnoreCase("id")) {

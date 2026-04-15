@@ -4,7 +4,7 @@
 
 # 设置环境
 
-我们提供了一个自动化格式检查系统，请使用 `mvn install` 进行初始化。
+我们提供了一个自动化格式检查系统，请使用 `./gradlew spotlessApply` 进行初始化。
 
 本项目已经提供 `.editorconfig` 用于控制代码样式。如果你有自己的代码样式风格，请在对本仓库进行贡献前切换为当前仓库的风格配置。
 
@@ -38,7 +38,7 @@
 
 请不要过度缩减代码长度, 空格少了 Slimefun 也不会因此跑得更快.
 
-我们使用了 Spotless 作为代码格式化工具，在提交前你**必须**使用 `mvn spotless:check spotless:apply` 来自动格式化你的代码，否则将会被格式检查器拦截 PR。
+我们使用了 Spotless 作为代码格式化工具，在提交前你**必须**使用 `./gradlew spotlessCheck spotlessApply` 来自动格式化你的代码，否则将会被格式检查器拦截 PR。
 
 # 提交代码类型
 

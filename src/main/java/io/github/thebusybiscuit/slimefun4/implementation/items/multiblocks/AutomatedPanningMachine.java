@@ -109,8 +109,11 @@ public class AutomatedPanningMachine extends MultiBlockMachine {
 
         TaskQueue queue = new TaskQueue();
 
-        queue.thenRepeatEvery(20, 5, () -> b.getWorld()
-                .playEffect(b.getRelative(BlockFace.DOWN).getLocation(), Effect.STEP_SOUND, material));
+        queue.thenRepeatEvery(
+                20,
+                5,
+                () -> b.getWorld()
+                        .playEffect(b.getRelative(BlockFace.DOWN).getLocation(), Effect.STEP_SOUND, material));
         queue.thenRun(20, () -> {
             if (finalOutput.getType() != Material.AIR) {
                 Optional<Inventory> outputChest = OutputChest.findOutputChestFor(b.getRelative(BlockFace.DOWN), output);

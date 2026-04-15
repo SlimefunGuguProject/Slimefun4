@@ -1,5 +1,4 @@
-# This workflow will build a Java project with Maven
-# For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-maven
+# This workflow will build a Java project with Gradle
 
 name: Pull Request Checker
 
@@ -29,10 +28,10 @@ jobs:
           java-version: ${{ vars.JAVA_CI_VERSION || 21 }}
           java-package: jdk
           architecture: x64
-          cache: 'maven'
+          cache: 'gradle'
 
       - name: Codestyle Check
-        run: mvn -B spotless:check --errors
+        run: ./gradlew spotlessCheck --no-daemon
 
       # Setup for the preview build
       - name: Environment Setup
@@ -43,16 +42,15 @@ jobs:
           echo "SHORT_COMMIT_HASH=$SHORT_COMMIT_HASH" >> "$GITHUB_ENV"
           echo "SHORT_COMMIT_HASH=$SHORT_COMMIT_HASH" >> "$GITHUB_OUTPUT"
           echo "JAR_VERSION=$JAR_VERSION" >> "$GITHUB_ENV"
-          sed -i "s/<version>DEV-SNAPSHOT<\/version>/<version>$JAR_VERSION<\/version>/g" pom.xml
 
       - name: Build with Maven
-        run: mvn package -Dversioning.disable --errors
+        run: ./gradlew build -PprojectVersion="$JAR_VERSION" --no-daemon
 
       - name: Upload the artifact
         uses: actions/upload-artifact@v7
         with:
           name: slimefun-${{ github.event.number }}-${{ env.SHORT_COMMIT_HASH }}
-          path: 'target/Slimefun-${{ env.JAR_VERSION }}.jar'
+          path: 'build/libs/Slimefun-${{ env.JAR_VERSION }}.jar'
 
   call-workflows:
     needs: [ build ]

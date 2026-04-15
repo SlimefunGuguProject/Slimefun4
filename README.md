@@ -12,9 +12,8 @@ Looking for English (or Original) Version? [**Click here**](https://github.com/S
 
 ⚡ 汉化不易, 欢迎支持[爱发电](https://afdian.net/a/nora1ncity)
 
-加入爱发电订阅计划可抢先获得最新版本的 Slimefun 构建，以及更高的问题处理优先级。
-
-注意：**非年度计划用户**可在距上次公开仓库更新后 15+ 天获取自动同步的源代码，并非闭源。我们十分遵循 GPLv3 协议 :)
+加入爱发电订阅计划可抢先获得最新版本的 Slimefun 构建，以及是优先技术支持。
+注意：**非年度计划用户**可在距上次公开仓库更新后 15 天获取自动同步的源代码，并非闭源。我们十分遵循 GPLv3 协议 :)
 
 了解订阅计划：[订阅计划](https://builds.guizhanss.com/sf-subscription)
 
@@ -23,7 +22,7 @@ Looking for English (or Original) Version? [**Click here**](https://github.com/S
 [![Issues](https://img.shields.io/github/issues/SlimefunGuguProject/Slimefun4.svg?style=popout)](https://github.com/SlimefunGuguProject/Slimefun4/issues)
 ![下载数](https://img.shields.io/github/downloads/SlimefunGuguProject/Slimefun4/total)
 
-使用汉化版之后，**禁止**使用汉化版在官方问题追踪器创建新问题!  
+使用汉化版之后，**禁止**在官方问题追踪器创建新问题!  
 如果你执意要这么做, 请在反馈时使用**官方**开发版并且使用**英语**提交问题。  
 否则，请在此处创建问题或加群讨论。
 
@@ -54,43 +53,40 @@ Slimefun 让每个玩家可以自行决定在魔法或科技方面发展。
 
 (可以查看: [如何安装 Slimefun](https://slimefun-wiki.guizhanss.cn/Installing-Slimefun))
 
-Slimefun 4 可以在[鬼斩构建站](https://builds.guizhanss.com/SlimefunGuguProject/Slimefun4)**免费下载**。
+Slimefun 4 可以在[鬼斩构建站](https://builds.guizhanss.com)页面中**免费下载**。
 
 以下是两种版本的区别:
 
-|                      | 测试版 (最新更新)                                                                                | "稳定版"                                                                                        |
-|----------------------|-------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------|
-| **支持的 Minecraft 版本** | :video_game: 1.19.X - 1.21.X                                                              | :video_game: 1.16.X - 1.21.4                                                                 |
-| **Java 版本**          | :computer: **Java 17+**                                                                   | :computer: **Java 17+**                                                                      |
-| **自动更新系统**           | :heavy_check_mark:                                                                        | :heavy_check_mark:                                                                           |
-| **频繁更新**             | :heavy_check_mark:                                                                        | :x:                                                                                          |
-| **享有最新内容**           | :heavy_check_mark:                                                                        | :x:                                                                                          |
-| **Bug 反馈**           | :heavy_check_mark:                                                                        | :x:                                                                                          |
+|                      | 测试版 (最新更新)                                                                                | "稳定版"                                                                                 |
+|----------------------|-------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------|
+| **支持的 Minecraft 版本** | :video_game: 1.18.X - 1.20.X                                                              | :video_game: 1.16.X - 1.20.X                                                          |
+| **Java 版本**          | :computer: **Java 21+**                                                                   | :computer: **Java 17+**                                                               |
+| **自动更新系统**           | :heavy_check_mark:                                                                        | :x:                                                                                   |
+| **频繁更新**             | :heavy_check_mark:                                                                        | :x:                                                                                   |
+| **享有最新内容**           | :heavy_check_mark:                                                                        | :x:                                                                                   |
+| **Discord 支持**       | :heavy_check_mark:                                                                        | :x:                                                                                   |
+| **Bug 反馈**           | :heavy_check_mark:                                                                        | :x:                                                                                   |
+| **在发布前进行测试**         | :x:                                                                                       | :heavy_check_mark:                                                                    |
+| **有无更新日志**           | :x:                                                                                       | :memo: **[更新日志(英文)](https://github.com/Slimefun/Slimefun4/blob/master/CHANGELOG.md)** |
 | **下载链接**             | :package: **[下载 最新版](https://builds.guizhanss.com/SlimefunGuguProject/Slimefun4/master)** | :package: **[下载 "稳定版"](https://builds.guizhanss.com/SlimefunGuguProject/Slimefun4/release)** |
-
-
-**请注意：此处支持的 Minecraft 版本不代表最新版的可用范围，可能指的是某个历史版本支持，对于支持的版本标注仅供参考**
 
 **! 建议你使用最新的测试版，可以获得最新的内容更新和 Bug 修复！**
 
 ## :computer: (开发) 添加依赖
 
-<details>
-
-<summary>如何添加 Slimefun 4 作为依赖</summary>
 首先添加我们的私有仓库：
 
 Maven:
 
-正式版：
 ```xml
 <repository>
     <id>gugu-maven-repo</id>
     <url>https://maven.norain.city/releases</url>
 </repository>
+
 ```
 
-开发版 (Slimefun Insider / DEV 分支):
+开发版:
 ```xml
 <repository>
     <id>gugu-maven-repo</id>
@@ -101,10 +97,9 @@ Maven:
 </repository>
 ```
 
-Gradle: 在 `build.gradle` 中添加以下内容:
+Gradle: 在 `build.gradle.kts` 中添加以下内容:
 
-正式版：
-```groovy
+```kotlin
 repositories {
     maven {
         url "https://maven.norain.city/releases"
@@ -112,8 +107,8 @@ repositories {
 }
 ```
 
-开发版 (Slimefun Insider / DEV 分支):
-```groovy
+对于开发版：
+```kotlin
 repositories {
     maven {
         url "https://maven.norain.city/snapshots"
@@ -135,29 +130,21 @@ Maven:
 
 Gradle:
 
-```groovy
+```kotlin
 dependencies {
-    compileOnly 'com.github.SlimefunGuguProject:Slimefun4:DEV-SNAPSHOT'
+    compileOnly("com.github.SlimefunGuguProject:Slimefun4:DEV-SNAPSHOT")
 }
 ```
-</details>
 
 
-## :computer: 编译 Slimefun
+## :computer: 如何编译
 要编译 Slimefun4，你必须先安装 [Git](https://git-scm.com/)
 
-在你想存放代码的位置打开终端或命令提示符，运行以下命令：
+然后运行 `git clone https://github.com/SlimefunGuguProject/Slimefun4.git` 克隆仓库到本地。
 
-```bash
-git clone https://github.com/SlimefunGuguProject/Slimefun4.git --depth=1
-```
-这会将 Slimefun 的代码拉取到本地。
-
-最后，打开 `Slimefun4` 文件夹，并在该文件夹打开终端或命令提示符输入下列命令进行编译：
-- 如果你是 Windows 系统: `.\mvnw.cmd package`
-- 如果你是类 Unix 系统: `.\mvnw package`
-
-编译完成后，你可以在 `Slimefun4/target` 文件夹中找到编译好的插件文件。
+最后进行编译：
+- 如果你是 Windows 系统: `./gradlew.bat build`
+- 如果你是类 Unix 系统: `./gradlew build`
 
 ## :framed_picture: 截图
 
@@ -184,8 +171,8 @@ git clone https://github.com/SlimefunGuguProject/Slimefun4.git --depth=1
 ### 官方 Discord
 
 你可以在 Discord 上找到 Slimefun 的社区服务器，并与 **超过 7000** 个来自全世界的用户进行交流。  
-单击下面的图片加入 Discord 服务器反馈问题和提出意见，或者讨论关于此插件的内容。  
-Slimefun 官方经常会举办一些社区活动，加入以了解更多。  
+单击下面的徽标加入 Discord 服务器反馈问题和提出意见，或者讨论关于此插件的内容。  
+Slimefun 官方经常会举办一些社区活动，加入我们了解更多。  
 **注意**：Slimefun 官方在 Discord 服务器 **不**
 接受任何形式的问题反馈，请使用 [问题追踪器](https://github.com/SlimefunGuguProject/Slimefun4/issues) 反馈问题！
 
@@ -205,7 +192,7 @@ Slimefun 有一个为新玩家准备的 (详细且经常维护的 - *咳咳*) Wi
 官方 Wiki：https://github.com/Slimefun/Slimefun4/wiki  
 非官方中文 Wiki：https://slimefun-wiki.guizhanss.cn/
 
-#### :star: 有用的文档 (中文)
+#### :star: 有用的文章 (中文)
 
 * [什么是 Slimefun?](https://slimefun-wiki.guizhanss.cn/Slimefun-in-a-nutshell)
 * [如何安装 Slimefun](https://slimefun-wiki.guizhanss.cn/Installing-Slimefun)
@@ -223,29 +210,30 @@ Slimefun 有一个为新玩家准备的 (详细且经常维护的 - *咳咳*) Wi
 
 Slimefun 4 是一个以 [GNU GPLv3 协议](https://github.com/Slimefun/Slimefun4/blob/master/LICENSE) 开源的项目。
 已经有超过 100 人对这个项目做出了贡献，这些人真是太棒了。  
-我们鼓励你通过提交 PR 的方式为 Slimefun 4 做出贡献，你的贡献将会使我们保持活力 <3。
+我们鼓励通过提交 PR 的方式为 Slimefun 4 做出贡献，你的贡献将会使插件保持活力 <3。
 
 ## :exclamation: 免责声明
 
-Slimefun4 使用多个系统收集插件的使用数据，还有自动更新用于向你推送新版本。
-插件不会收集以各种形式储存的个人隐私信息，具体收集的信息类型可见以下内容。
+Slimefun4 使用多种系统收集使用数据，以及使用自动更新让你知晓关于这个项目的最新信息。
+我们不会收集从你那里获取的任何个人信息，但是有些服务可能仍会收集或下载某种形式的数据。
 
-当然，你可以在任何时候关闭数据遥测以及关闭自动更新
+你可以在任何时候选择退出数据收集和关闭自动更新
 
 <details>
   <summary>自动更新</summary>
 
 Slimefun 汉化版 使用 Github API + GuizhanBuild API 以检测和下载更新。  
-我们默认启用了自动更新，但你可以在 `/plugins/Slimefun/config.yml` 里选择关闭。  
-我们强烈推荐你打开自动更新，以确保你能获得最新功能/修复的更新。
+这一功能被默认启用，但你可以在 `/plugins/Slimefun/config.yml` 里选择关闭。  
+我们强烈推荐你使用自动更新，以确保你能获得最新功能/修复的更新。
 
 </details>
 
 <details>
-  <summary>服务器匿名数据</summary>
+  <summary>指标与统计</summary>
 
-Slimefun4 使用 [bStats](https://bstats.org/plugin/bukkit/Slimefun/4574) 收集关于插件的匿名信息，因为我们对服务器玩家如何使用插件很感兴趣。  
-不过所有公开在 bStats 上的数据均为匿名，我们绝对无法根据上报的数据追溯到具体的服务器或玩家。  
+Slimefun4 使用 [bStats](https://bstats.org/plugin/bukkit/Slimefun/4574) 收集关于插件的匿名信息。  
+这些仅是为了统计目的，因为我们对服务器和玩家如何使用插件很感兴趣。  
+所有公开的数据均为匿名，我们绝对无法根据上报的数据追溯到某个服务器或是某个玩家。  
 所有收集的数据均可公开访问: https://bstats.org/plugin/bukkit/Slimefun/4574
 
 你也可以在 `/plugins/bStats/config.yml` 下关闭数据收集。  
@@ -254,7 +242,7 @@ Slimefun4 使用 [bStats](https://bstats.org/plugin/bukkit/Slimefun/4574) 收集
 </details>
 
 <details>
-  <summary>GitHub 数据</summary>
+  <summary>GitHub 整合</summary>
 
 Slimefun4 使用 [GitHub API](https://api.github.com/) 收集关于此开源项目的使用数据。  
 请放心，你的 Minecraft 服务器信息不会被发送到 Github。

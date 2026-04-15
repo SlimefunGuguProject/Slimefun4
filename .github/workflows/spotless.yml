@@ -5,12 +5,16 @@ on:
     branches: [ master, dev ]
     paths:
       - 'src/**'
-      - 'pom.xml'
+      - 'build.gradle.kts'
+      - 'settings.gradle.kts'
+      - 'gradle/libs.versions.toml'
   pull_request:
     types: [ opened, synchronize, reopened ]
     paths:
       - 'src/**'
-      - 'pom.xml'
+      - 'build.gradle.kts'
+      - 'settings.gradle.kts'
+      - 'gradle/libs.versions.toml'
   workflow_dispatch:
 
 env:
@@ -32,13 +36,13 @@ jobs:
           java-version: ${{ vars.JAVA_CI_VERSION || 21 }}
           java-package: jdk
           architecture: x64
-          cache: maven
+          cache: gradle
 
       - name: Spotless check
         id: spotless-check
         run: |
           set +e
-          mvn -B spotless:check --errors
+          ./gradlew spotlessCheck --no-daemon
           STATUS=$?
           echo "status=$STATUS" >> $GITHUB_OUTPUT
           set -e
@@ -48,7 +52,7 @@ jobs:
       - name: Spotless apply (if needed)
         id: spotless-apply
         if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref_name == 'dev' && steps.spotless-check.outputs.status != '0' }}
-        run: mvn -B spotless:apply --errors
+        run: ./gradlew spotlessApply --no-daemon
 
       - name: Push changes
         uses: EndBug/add-and-commit@v9.1.4

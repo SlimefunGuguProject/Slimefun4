@@ -226,8 +226,8 @@ public class FluidPump extends SimpleSlimefunItem<BlockTicker> implements Invent
             case LAVA -> new ItemStack(Material.LAVA_BUCKET);
             case WATER, BUBBLE_COLUMN -> new ItemStack(Material.WATER_BUCKET);
             default ->
-            // Fallback for any new liquids
-            new ItemStack(Material.BUCKET);
+                // Fallback for any new liquids
+                new ItemStack(Material.BUCKET);
         };
     }
 

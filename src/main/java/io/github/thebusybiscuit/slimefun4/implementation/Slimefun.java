@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.implementation;
 
+import city.norain.slimefun4.ServerVersion;
 import city.norain.slimefun4.SlimefunExtended;
 import city.norain.slimefun4.timings.SQLProfiler;
 import com.xzavier0722.mc.plugin.slimefun4.chat.PlayerChatCatcher;
@@ -590,33 +591,36 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
             }
 
             // Now check the actual Version of Minecraft
-            int version = PaperLib.getMinecraftVersion();
-            int patchVersion = PaperLib.getMinecraftPatchVersion();
+            // the Minecraft version id (e.g. "1.20.4", "1.20.2-pre2", "23w31a")
+            ServerVersion serverVerDetail = SlimefunExtended.getServerVerDetail(getServer());
 
-            if (version > 0) {
-                // Check all supported versions of Minecraft
-                for (MinecraftVersion supportedVersion : MinecraftVersion.values()) {
-                    if (supportedVersion.isMinecraftVersion(version, patchVersion)) {
-                        minecraftVersion = supportedVersion;
-                        return false;
-                    }
-                }
-
-                // Looks like you are using an unsupported Minecraft Version
-                StartupWarnings.invalidMinecraftVersion(
-                        getLogger(), version, getDescription().getVersion());
-                return true;
-            } else {
-                getLogger().log(Level.WARNING, "我们无法识别你正在使用的 Minecraft 版本 (1.{0}.x)", version);
-
-                /*
-                 * If we are unsure about it, we will assume "supported".
-                 * They could be using a non-Bukkit based Software which still
-                 * might support Bukkit-based plugins.
-                 * Use at your own risk in this case.
-                 */
+            if (serverVerDetail == null) {
+                getLogger()
+                        .log(
+                                Level.WARNING,
+                                "我们无法识别你正在使用的 Minecraft 版本 ({0})",
+                                getServer().getMinecraftVersion());
                 return false;
             }
+
+            int major = serverVerDetail.getMajor();
+            int minor = serverVerDetail.getMinor();
+            int patch = serverVerDetail.getPatch();
+
+            // Check all supported versions of Minecraft
+            for (MinecraftVersion supportedVersion : MinecraftVersion.values()) {
+                if (supportedVersion.isMinecraftVersion(major, minor, patch)) {
+                    minecraftVersion = supportedVersion;
+                    return false;
+                }
+            }
+
+            // Looks like you are using an unsupported Minecraft Version
+            StartupWarnings.invalidMinecraftVersion(
+                    getLogger(),
+                    getServer().getMinecraftVersion(),
+                    getDescription().getVersion());
+            return true;
         } catch (Exception | LinkageError x) {
             getLogger()
                     .log(
@@ -710,7 +714,7 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
         new SoulboundListener(this);
         new AutoCrafterListener(this);
         new SlimefunItemHitListener(this);
-        if (SlimefunExtended.getMinecraftVersion().isAtLeast(1, 21, 5)) {
+        if (SlimefunExtended.isAtLeast(1, 21, 5)) {
             new VersionedMiddleClickListener(this);
         } else {
             new MiddleClickListener(this);

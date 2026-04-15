@@ -55,7 +55,7 @@ public class AutoBrewer extends AContainer implements NotHopperable {
         fermentations.put(PotionType.POISON, VersionedPotionType.HARMING);
         fermentations.put(PotionType.NIGHT_VISION, PotionType.INVISIBILITY);
 
-        if (SlimefunExtended.getMinecraftVersion().isAtLeast(1, 21)) {
+        if (SlimefunExtended.isAtLeast(1, 21)) {
             potionRecipes.put(Material.BREEZE_ROD, PotionType.WIND_CHARGED);
             potionRecipes.put(Material.COBWEB, PotionType.WEAVING);
             potionRecipes.put(Material.SLIME_BLOCK, PotionType.OOZING);
@@ -144,7 +144,7 @@ public class AutoBrewer extends AContainer implements NotHopperable {
 
     @ParametersAreNonnullByDefault
     private @Nullable ItemStack brew(Material input, Material potionType, PotionMeta potion) {
-        if (SlimefunExtended.getMinecraftVersion().isAtLeast(1, 20, 2)) {
+        if (SlimefunExtended.isAtLeast(1, 20, 2)) {
             return brewPostBasePotionType(input, potionType, potion);
         } else {
             return brewPreBasePotionType(input, potionType, potion);

@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.api;
 
+import city.norain.slimefun4.SlimefunExtended;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.papermc.lib.PaperLib;
 import javax.annotation.Nonnull;
@@ -19,43 +20,49 @@ public enum MinecraftVersion {
      * This constant represents Minecraft (Java Edition) Version 1.16
      * (The "Nether Update")
      */
-    MINECRAFT_1_16(16, "1.16.x"),
+    MINECRAFT_1_16(1, 16, "1.16.x"),
 
     /**
      * This constant represents Minecraft (Java Edition) Version 1.17
      * (The "Caves and Cliffs: Part I" Update)
      */
-    MINECRAFT_1_17(17, "1.17.x"),
+    MINECRAFT_1_17(1, 17, "1.17.x"),
 
     /**
      * This constant represents Minecraft (Java Edition) Version 1.18
      * (The "Caves and Cliffs: Part II" Update)
      */
-    MINECRAFT_1_18(18, "1.18.x"),
+    MINECRAFT_1_18(1, 18, "1.18.x"),
 
     /**
      * This constant represents Minecraft (Java Edition) Version 1.19
      * ("The Wild Update")
      */
-    MINECRAFT_1_19(19, "1.19.x"),
+    MINECRAFT_1_19(1, 19, "1.19.x"),
 
     /**
      * This constant represents Minecraft (Java Edition) Version 1.20
      * ("The Trails &amp; Tales Update")
      */
-    MINECRAFT_1_20(20, "1.20.x"),
+    MINECRAFT_1_20(1, 20, "1.20.x"),
 
     /**
      * This constant represents Minecraft (Java Edition) Version 1.20.5
      * ("The Armored Paws Update")
      */
-    MINECRAFT_1_20_5(20, 5, "1.20.5+"),
+    MINECRAFT_1_20_5(1, 20, 5, "1.20.5+"),
 
     /**
      * This constant represents Minecraft (Java Edition) Version 1.21
      * ("The Tricky Trials Update")
      */
-    MINECRAFT_1_21(21, "1.21.x"),
+    MINECRAFT_1_21(1, 21, "1.21.x"),
+
+    /**
+     * This constant represents Minecraft (Java Edition) Version 26.1
+     * (Tiny Takeover Update)
+     */
+    MINECRAFT_26_1(26, 1, "26.1.x"),
 
     /**
      * This constant represents an exceptional state in which we were unable
@@ -73,6 +80,7 @@ public enum MinecraftVersion {
     private final boolean virtual;
     private final int majorVersion;
     private final int minorVersion;
+    private final int patchVersion;
 
     /**
      * This constructs a new {@link MinecraftVersion} with the given name.
@@ -82,10 +90,11 @@ public enum MinecraftVersion {
      * @param majorVersion The major version of minecraft as an {@link Integer}
      * @param name         The display name of this {@link MinecraftVersion}
      */
-    MinecraftVersion(int majorVersion, @Nonnull String name) {
+    MinecraftVersion(int majorVersion, int minorVersion, @Nonnull String name) {
         this.name = name;
         this.majorVersion = majorVersion;
-        this.minorVersion = -1;
+        this.minorVersion = minorVersion;
+        this.patchVersion = -1;
         this.virtual = false;
     }
 
@@ -98,10 +107,11 @@ public enum MinecraftVersion {
      * @param minor        The minor (patch in semver, minor in MC land) version of minecraft as an {@link Integer}
      * @param name         The display name of this {@link MinecraftVersion}
      */
-    MinecraftVersion(int majorVersion, int minor, @Nonnull String name) {
+    MinecraftVersion(int majorVersion, int minor, int patch, @Nonnull String name) {
         this.name = name;
         this.majorVersion = majorVersion;
         this.minorVersion = minor;
+        this.patchVersion = patch;
         this.virtual = false;
     }
 
@@ -117,6 +127,7 @@ public enum MinecraftVersion {
         this.name = name;
         this.majorVersion = 0;
         this.minorVersion = -1;
+        this.patchVersion = -1;
         this.virtual = virtual;
     }
 
@@ -154,6 +165,7 @@ public enum MinecraftVersion {
      * @param minecraftVersion The {@link Integer} version to match
      * @return Whether this {@link MinecraftVersion} matches the specified version id
      */
+    @Deprecated(since = "2026.1")
     public boolean isMinecraftVersion(int minecraftVersion) {
         return this.isMinecraftVersion(minecraftVersion, -1);
     }
@@ -198,6 +210,39 @@ public enum MinecraftVersion {
     }
 
     /**
+     * This tests if the given minecraft version matches with this
+     * {@link MinecraftVersion}.
+     * <p>
+     * This method accepts full semantic version numbers.
+     * <p>
+     * Example: {@literal 26.1.1} is equivalent to {@code major = 26, minor = 1, patch = 1}
+     *
+     * @param major The major version to match
+     * @param minor The minor version to match
+     * @param patch The patch version to match
+     * @return Whether this {@link MinecraftVersion} matches the specified version
+     */
+    public boolean isMinecraftVersion(int major, int minor, int patch) {
+        if (isVirtual()) {
+            return false;
+        }
+
+        if (this.majorVersion != major || this.minorVersion != minor) {
+            return false;
+        }
+
+        // the virtual ones are at the last of array, so it will not cause indexOutOfRange
+        MinecraftVersion nextVersion = values()[this.ordinal() + 1];
+        // checking patch, if next Version is not a virtual version and it is in the same major/minor as this,
+        // then we should ensure patch is lower than nextVersion
+        return patch >= this.patchVersion
+                && (nextVersion.isVirtual()
+                        || nextVersion.majorVersion != this.majorVersion
+                        || nextVersion.minorVersion != this.minorVersion
+                        || nextVersion.patchVersion > patch);
+    }
+
+    /**
      * This method checks whether this {@link MinecraftVersion} is newer or equal to
      * the given {@link MinecraftVersion},
      *
@@ -236,8 +281,7 @@ public enum MinecraftVersion {
             return false;
         }
 
-        return this.majorVersion > majorVersion
-                || (this.majorVersion == majorVersion && this.minorVersion >= minorVersion);
+        return SlimefunExtended.isAtLeast(majorVersion, minorVersion);
     }
 
     /**

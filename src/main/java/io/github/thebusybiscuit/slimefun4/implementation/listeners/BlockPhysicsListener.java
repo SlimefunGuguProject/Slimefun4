@@ -86,8 +86,8 @@ public class BlockPhysicsListener implements Listener {
                     }
                 }
             }
-                // fix: issue 1126 there is not such EntityChangeBlockEvent about WitherSkull
-                // Don't move my machine :|
+            // fix: issue 1126 there is not such EntityChangeBlockEvent about WitherSkull
+            // Don't move my machine :|
             case ENDERMAN -> e.setCancelled(true);
         }
     }

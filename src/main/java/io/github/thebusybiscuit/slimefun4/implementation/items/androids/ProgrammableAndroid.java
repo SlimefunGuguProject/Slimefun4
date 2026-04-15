@@ -254,8 +254,9 @@ public class ProgrammableAndroid extends SlimefunItem
             case 1 -> AndroidFuelSource.SOLID;
             case 2 -> AndroidFuelSource.LIQUID;
             case 3 -> AndroidFuelSource.NUCLEAR;
-            default -> throw new IllegalStateException(
-                    "Cannot convert the following Android tier to a fuel type: " + getTier());
+            default ->
+                throw new IllegalStateException(
+                        "Cannot convert the following Android tier to a fuel type: " + getTier());
         };
     }
 
