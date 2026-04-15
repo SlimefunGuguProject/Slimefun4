@@ -113,6 +113,10 @@ tasks.named<ProcessResources>("processResources") {
     }
 }
 
+tasks.named("sourcesJar") {
+    dependsOn(tasks.named("generateGitProperties"))
+}
+
 tasks.named<ShadowJar>("shadowJar") {
     archiveBaseName.set("Slimefun")
     archiveVersion.set(project.version.toString())
