@@ -19,7 +19,7 @@ hikaricp = { module = "com.zaxxer:HikariCP", version = "5.1.0" }
 postgresql = { module = "org.postgresql:postgresql", version = "42.7.7" }
 worldedit-core = { module = "com.sk89q.worldedit:worldedit-core", version = "7.3.6" }
 worldedit-bukkit = { module = "com.sk89q.worldedit:worldedit-bukkit", version = "7.3.6" }
-mcmmo = { module = "com.gmail.nossr50.mcMMO:mcMMO", version = "2.1.225" }
+mcmmo = { module = "com.gmail.nossr50.mcMMO:mcMMO", version = "2.2.049" }
 placeholderapi = { module = "me.clip:placeholderapi", version = "2.11.6" }
 clearlag-core = { module = "me.minebuilders:clearlag-core", version = "3.1.6" }
 itemsadder-api = { module = "com.github.LoneDev6:itemsadder-api", version = "3.6.1" }
