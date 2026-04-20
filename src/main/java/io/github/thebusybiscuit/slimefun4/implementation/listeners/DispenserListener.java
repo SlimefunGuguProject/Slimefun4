@@ -5,7 +5,6 @@ import com.xzavier0722.mc.plugin.slimefun4.storage.util.StorageCacheUtils;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.core.handlers.BlockDispenseHandler;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
-import io.papermc.lib.PaperLib;
 import javax.annotation.Nonnull;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -44,7 +43,7 @@ public class DispenserListener implements Listener {
             // Fixes #2959
             if (machine != null && !machine.isDisabledIn(e.getBlock().getWorld())) {
                 machine.callItemHandler(BlockDispenseHandler.class, handler -> {
-                    BlockState state = PaperLib.getBlockState(b, false).getState();
+                    BlockState state = b.getState(false);
 
                     if (state instanceof Dispenser dispenser) {
                         BlockFace face = ((Directional) b.getBlockData()).getFacing();

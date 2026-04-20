@@ -10,7 +10,6 @@ import io.github.thebusybiscuit.slimefun4.api.recipes.RecipeType;
 import io.github.thebusybiscuit.slimefun4.core.services.sounds.SoundEffect;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.utils.SlimefunUtils;
-import io.papermc.lib.PaperLib;
 import java.util.List;
 import javax.annotation.ParametersAreNonnullByDefault;
 import org.bukkit.Bukkit;
@@ -47,7 +46,7 @@ public class ArmorForge extends AbstractCraftingTable {
     @Override
     public void onInteract(Player p, Block b) {
         Block possibleDispenser = b.getRelative(BlockFace.DOWN);
-        BlockState state = PaperLib.getBlockState(possibleDispenser, false).getState();
+        BlockState state = possibleDispenser.getState(false);
 
         if (state instanceof Dispenser dispenser) {
             Inventory inv = dispenser.getInventory();

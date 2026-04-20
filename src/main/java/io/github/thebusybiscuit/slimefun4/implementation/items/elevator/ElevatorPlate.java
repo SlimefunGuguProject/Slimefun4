@@ -14,7 +14,6 @@ import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.implementation.items.SimpleSlimefunItem;
 import io.github.thebusybiscuit.slimefun4.utils.ChatUtils;
 import io.github.thebusybiscuit.slimefun4.utils.ChestMenuUtils;
-import io.papermc.lib.PaperLib;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -254,7 +253,7 @@ public class ElevatorPlate extends SimpleSlimefunItem<BlockUseHandler> {
                     yaw,
                     player.getEyeLocation().getPitch());
 
-            PaperLib.teleportAsync(player, destination).thenAccept(teleported -> {
+            player.teleportAsync(destination).thenAccept(teleported -> {
                 if (teleported.booleanValue()) {
                     player.sendTitle(ChatColor.WHITE + ChatColors.color(floor.getName()), null, 20, 60, 20);
                 }

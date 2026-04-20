@@ -9,7 +9,6 @@ import io.github.thebusybiscuit.slimefun4.core.services.sounds.SoundEffect;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.implementation.tasks.AsyncRecipeChoiceTask;
 import io.github.thebusybiscuit.slimefun4.utils.ChestMenuUtils;
-import io.papermc.lib.PaperLib;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -59,7 +58,7 @@ public class SlimefunAutoCrafter extends AbstractAutoCrafter {
     @Nullable public AbstractRecipe getSelectedRecipe(@Nonnull Block b) {
         Validate.notNull(b, "The Block cannot be null!");
 
-        BlockState state = PaperLib.getBlockState(b, false).getState();
+        BlockState state = b.getState(false);
 
         if (state instanceof Skull skull) {
             // Read the stored value from persistent data storage

@@ -5,8 +5,6 @@ import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.core.attributes.WitherProof;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.utils.tags.SlimefunTag;
-import io.papermc.lib.PaperLib;
-import io.papermc.lib.features.blockstatesnapshot.BlockStateSnapshotResult;
 import java.util.Objects;
 import javax.annotation.Nonnull;
 import org.bukkit.Location;
@@ -140,11 +138,11 @@ public class BlockPhysicsListener implements Listener {
             return;
         }
 
-        BlockStateSnapshotResult state = PaperLib.getBlockState(block, false);
+        var state = block.getState(false);
 
         // Check the skull if it had lost its data, but name still remained.
-        if (state.getState() instanceof Skull) {
-            Skull skull = (Skull) state.getState();
+        if (state instanceof Skull) {
+            Skull skull = (Skull) state;
 
             if (skull.hasOwner() && Objects.equals(skull.getOwningPlayer().getName(), "CS-CoreLib")) {
                 e.setCancelled(true);

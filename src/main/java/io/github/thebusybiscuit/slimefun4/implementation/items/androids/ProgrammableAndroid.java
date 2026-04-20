@@ -32,7 +32,6 @@ import io.github.thebusybiscuit.slimefun4.utils.ChestMenuUtils;
 import io.github.thebusybiscuit.slimefun4.utils.HeadTexture;
 import io.github.thebusybiscuit.slimefun4.utils.NumberUtils;
 import io.github.thebusybiscuit.slimefun4.utils.SlimefunUtils;
-import io.papermc.lib.PaperLib;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -879,7 +878,7 @@ public class ProgrammableAndroid extends SlimefunItem
     protected void depositItems(UniversalMenu menu, Block facedBlock) {
         if (facedBlock.getType() == Material.DISPENSER
                 && StorageCacheUtils.isBlock(facedBlock.getLocation(), "ANDROID_INTERFACE_ITEMS")) {
-            BlockState state = PaperLib.getBlockState(facedBlock, false).getState();
+            BlockState state = facedBlock.getState(false);
 
             if (state instanceof Dispenser dispenser) {
                 for (int slot : getOutputSlots()) {
@@ -903,7 +902,7 @@ public class ProgrammableAndroid extends SlimefunItem
     protected void refuel(UniversalMenu menu, Block facedBlock) {
         if (facedBlock.getType() == Material.DISPENSER
                 && StorageCacheUtils.isBlock(facedBlock.getLocation(), "ANDROID_INTERFACE_FUEL")) {
-            BlockState state = PaperLib.getBlockState(facedBlock, false).getState();
+            BlockState state = facedBlock.getState(false);
 
             if (state instanceof Dispenser dispenser) {
                 for (int slot = 0; slot < 9; slot++) {
