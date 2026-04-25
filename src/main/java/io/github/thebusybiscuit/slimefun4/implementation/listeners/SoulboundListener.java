@@ -76,21 +76,23 @@ public class SoulboundListener implements Listener {
         }
 
         if (event.getEntity() instanceof Player p) {
-            returnTasks.computeIfAbsent(p.getUniqueId(), uuid -> Slimefun.getPlatformScheduler()
-                    .runAtEntityLater(
-                            p,
-                            () -> {
-                                if (p.getHealth() > 0) {
-                                    returnSoulboundItems(p);
+            returnTasks.computeIfAbsent(
+                    p.getUniqueId(),
+                    uuid -> Slimefun.getPlatformScheduler()
+                            .runAtEntityLater(
+                                    p,
+                                    () -> {
+                                        if (p.getHealth() > 0) {
+                                            returnSoulboundItems(p);
 
-                                    WrappedTask returnTask = returnTasks.remove(uuid);
+                                            WrappedTask returnTask = returnTasks.remove(uuid);
 
-                                    if (returnTask != null) {
-                                        returnTask.cancel();
-                                    }
-                                }
-                            },
-                            10L));
+                                            if (returnTask != null) {
+                                                returnTask.cancel();
+                                            }
+                                        }
+                                    },
+                                    10L));
         }
     }
 

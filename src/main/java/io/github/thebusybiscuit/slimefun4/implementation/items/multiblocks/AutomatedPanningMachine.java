@@ -123,7 +123,7 @@ public class AutomatedPanningMachine extends MultiBlockMachine {
 
                         if (outputChest.isPresent()) {
                             Slimefun.getItemStackService()
-                                .addItem(outputChest.get(), finalOutput.clone(), InventoryContext.OUTPUT_CHEST);
+                                    .addItem(outputChest.get(), finalOutput.clone(), InventoryContext.OUTPUT_CHEST);
                         } else {
                             b.getWorld().dropItemNaturally(b.getLocation(), finalOutput.clone());
                         }
