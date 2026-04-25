@@ -10,10 +10,12 @@ import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
 import io.github.thebusybiscuit.slimefun4.api.recipes.RecipeType;
 import io.github.thebusybiscuit.slimefun4.core.services.sounds.SoundEffect;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
+import io.github.thebusybiscuit.slimefun4.implementation.handlers.VanillaInventoryDropHandler;
 import io.github.thebusybiscuit.slimefun4.utils.InfiniteBlockGenerator;
 import io.github.thebusybiscuit.slimefun4.utils.compatibility.VersionedParticle;
 import io.github.thebusybiscuit.slimefun4.utils.tags.SlimefunTag;
-import java.util.Collection;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -23,7 +25,8 @@ import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
-import org.bukkit.block.Container;
+import org.bukkit.block.BlockState;
+import org.bukkit.block.ShulkerBox;
 import org.bukkit.inventory.ItemStack;
 
 /**
@@ -71,9 +74,7 @@ public class MinerAndroid extends ProgrammableAndroid {
     @Override
     @ParametersAreNonnullByDefault
     protected void dig(Block b, UniversalMenu menu, Block block) {
-        Collection<ItemStack> drops = block.getDrops(effectivePickaxe);
-
-        if (!SlimefunTag.UNBREAKABLE_MATERIALS.isTagged(block.getType()) && !drops.isEmpty()) {
+        if (!SlimefunTag.UNBREAKABLE_MATERIALS.isTagged(block.getType())) {
             OfflinePlayer owner = Bukkit.getOfflinePlayer(
                     UUID.fromString(StorageCacheUtils.getUniversalBlockData(menu.getUuid(), b.getLocation(), "owner")));
 
@@ -87,7 +88,7 @@ public class MinerAndroid extends ProgrammableAndroid {
 
                 // We only want to break non-Slimefun blocks
                 if (!StorageCacheUtils.hasSlimefunBlock(block.getLocation())) {
-                    breakBlock(menu, drops, block);
+                    breakBlock(menu, block);
                 }
             }
         }
@@ -96,9 +97,7 @@ public class MinerAndroid extends ProgrammableAndroid {
     @Override
     @ParametersAreNonnullByDefault
     protected void moveAndDig(Block b, UniversalMenu menu, BlockFace face, Block block) {
-        Collection<ItemStack> drops = block.getDrops(effectivePickaxe);
-
-        if (!SlimefunTag.UNBREAKABLE_MATERIALS.isTagged(block.getType()) && !drops.isEmpty()) {
+        if (!SlimefunTag.UNBREAKABLE_MATERIALS.isTagged(block.getType())) {
             OfflinePlayer owner = Bukkit.getOfflinePlayer(
                     UUID.fromString(StorageCacheUtils.getUniversalBlockData(menu.getUuid(), b.getLocation(), "owner")));
 
@@ -112,7 +111,7 @@ public class MinerAndroid extends ProgrammableAndroid {
 
                 // We only want to break non-Slimefun blocks
                 if (!StorageCacheUtils.hasSlimefunBlock(block.getLocation())) {
-                    breakBlock(menu, drops, block);
+                    breakBlock(menu, block);
                     move(b, face, block);
                 }
             } else {
@@ -124,26 +123,30 @@ public class MinerAndroid extends ProgrammableAndroid {
     }
 
     @ParametersAreNonnullByDefault
-    private void breakBlock(UniversalMenu menu, Collection<ItemStack> drops, Block block) {
+    private void breakBlock(UniversalMenu menu, Block block) {
 
         if (!block.getWorld().getWorldBorder().isInside(block.getLocation())) {
             return;
         }
 
         block.getWorld().playEffect(block.getLocation(), Effect.STEP_SOUND, block.getType());
+        List<ItemStack> drops = new ArrayList<>();
+        // filter inventory first
+        BlockState state = block.getState(false);
+        // the shulker box handle its content in blocks.getDrop()
+        if (!(state instanceof ShulkerBox)) {
+            // drop while clear the inventory
+            VanillaInventoryDropHandler.dropVanillaBlockInventory(block.getState(false), drops);
+        }
+        // drop the original block content
+        drops.addAll(block.getDrops(effectivePickaxe));
 
         // Push our drops to the inventory
+        // Drop what does not fit
         for (ItemStack drop : drops) {
-            menu.pushItem(drop, getOutputSlots());
-        }
-
-        if (block.getState() instanceof Container container) {
-            for (ItemStack content : container.getInventory().getContents()) {
-                if (content == null || content.getType().isAir()) {
-                    continue;
-                }
-
-                block.getWorld().dropItemNaturally(block.getLocation(), content);
+            ItemStack dropLeft = menu.pushItem(drop, getOutputSlots());
+            if (dropLeft != null && !dropLeft.getType().isAir() && dropLeft.getAmount() > 0) {
+                block.getWorld().dropItemNaturally(block.getLocation(), dropLeft);
             }
         }
 

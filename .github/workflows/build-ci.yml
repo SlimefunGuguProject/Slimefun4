@@ -1,5 +1,4 @@
-# This workflow will build a Java project with Maven
-# For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-maven
+# This workflow will build a Java project with Gradle
 
 name: Slimefun Beta Builder
 
@@ -18,22 +17,30 @@ jobs:
       packages: read
     steps:
       - uses: actions/checkout@v4
+      - name: Make gradlew executable
+        run: chmod +x gradlew
       - uses: actions/setup-java@v5
         with:
           distribution: 'zulu'
           java-version: ${{ vars.JAVA_CI_VERSION || 21 }}
           java-package: jdk
           architecture: x64
-          cache: maven
+          cache: gradle
       - name: Codestyle Check
-        run: mvn -B spotless:check --errors
+        run: ./gradlew spotlessCheck --no-daemon
       - name: Build Slimefun
-        run: mvn -B package --errors
-      - uses: actions/upload-artifact@v4
+        run: ./gradlew build --no-daemon
+      - name: Get build artifact filename
+        run: |
+          FILENAME=$(find build/libs -maxdepth 1 -type f -name "Slimefun-*.jar" ! -name "*-sources.jar" -printf "%f\n")
+          [ -n "$FILENAME" ]
+          [ "$(printf "%s\n" "$FILENAME" | wc -l)" -eq 1 ]
+          echo "SLIMEFUN_ARTIFACT_NAME=$FILENAME" >> "$GITHUB_ENV"
+      - uses: actions/upload-artifact@v7
         name: Upload Beta artifact
         with:
           name: Slimefun Beta Build
-          path: target/Slimefun-*.jar
+          path: build/libs/${{ env.SLIMEFUN_ARTIFACT_NAME }}
       - name: Automatic Releases
         uses: marvinpinto/action-automatic-releases@v1.2.1
         if: github.ref_name == 'master'
@@ -43,4 +50,4 @@ jobs:
           prerelease: true
           title: "Slimefun 自动构建版本"
           files: |
-            target/Slimefun-*.jar
+            build/libs/${{ env.SLIMEFUN_ARTIFACT_NAME }}

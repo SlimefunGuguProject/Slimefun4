@@ -5,12 +5,12 @@ import io.github.thebusybiscuit.slimefun4.api.events.MultiBlockCraftEvent;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
+import io.github.thebusybiscuit.slimefun4.api.items.virtual.VirtualItemHandler.ConsumeContext;
 import io.github.thebusybiscuit.slimefun4.api.recipes.RecipeType;
 import io.github.thebusybiscuit.slimefun4.core.services.sounds.SoundEffect;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.implementation.items.backpacks.SlimefunBackpack;
 import io.github.thebusybiscuit.slimefun4.utils.SlimefunUtils;
-import io.papermc.lib.PaperLib;
 import java.util.List;
 import javax.annotation.ParametersAreNonnullByDefault;
 import org.bukkit.Bukkit;
@@ -47,7 +47,7 @@ public class EnhancedCraftingTable extends AbstractCraftingTable {
     @Override
     public void onInteract(Player p, Block b) {
         Block possibleDispenser = b.getRelative(BlockFace.DOWN);
-        BlockState state = PaperLib.getBlockState(possibleDispenser, false).getState();
+        BlockState state = possibleDispenser.getState(false);
 
         if (state instanceof Dispenser dispenser) {
             Inventory inv = dispenser.getInventory();
@@ -87,7 +87,7 @@ public class EnhancedCraftingTable extends AbstractCraftingTable {
             if (sfItem instanceof SlimefunBackpack backpack) {
                 waitCallback = upgradeBackpack(p, inv, backpack, output, () -> {
                     SoundEffect.ENHANCED_CRAFTING_TABLE_CRAFT_SOUND.playAt(b);
-                    outputInv.addItem(output);
+                    handleCraftedItem(output, dispenser, inv);
                 });
             }
 
@@ -95,13 +95,19 @@ public class EnhancedCraftingTable extends AbstractCraftingTable {
                 ItemStack item = inv.getContents()[j];
 
                 if (item != null && item.getType() != Material.AIR) {
-                    ItemUtils.consumeItem(item, true);
+                    var consumed =
+                            Slimefun.getItemStackService().consume(item, 1, true, ConsumeContext.VIRTUAL_CRAFTING);
+                    if (consumed.handled()) {
+                        inv.setItem(j, consumed.item());
+                    } else {
+                        ItemUtils.consumeItem(item, true);
+                    }
                 }
             }
 
             if (!waitCallback) {
                 SoundEffect.ENHANCED_CRAFTING_TABLE_CRAFT_SOUND.playAt(b);
-                outputInv.addItem(output);
+                handleCraftedItem(output, dispenser, inv);
             }
         } else {
             Slimefun.getLocalization().sendMessage(p, "machines.full-inventory", true);

@@ -57,12 +57,13 @@ public class MigrateCommand extends SubCommand {
 
     private void sendMigrateStatus(@Nonnull String migrateType, @Nonnull CommandSender sender, MigrateStatus status) {
         switch (status) {
-            case SUCCESS -> Slimefun.getLocalization()
-                    .sendMessage(
-                            sender,
-                            "commands.migrate.success",
-                            true,
-                            msg -> msg.replace("%migrate_type%", migrateType));
+            case SUCCESS ->
+                Slimefun.getLocalization()
+                        .sendMessage(
+                                sender,
+                                "commands.migrate.success",
+                                true,
+                                msg -> msg.replace("%migrate_type%", migrateType));
             case FAILED -> Slimefun.getLocalization().sendMessage(sender, "commands.migrate.failed", true);
             case MIGRATING -> Slimefun.getLocalization().sendMessage(sender, "commands.migrate.in-progress", true);
             case MIGRATED -> Slimefun.getLocalization().sendMessage(sender, "commands.migrate.already-migrated", true);

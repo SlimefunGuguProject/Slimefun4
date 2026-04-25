@@ -1,14 +1,14 @@
 package io.github.thebusybiscuit.slimefun4.implementation.items.blocks;
 
 import com.xzavier0722.mc.plugin.slimefun4.storage.util.StorageCacheUtils;
-import io.github.bakedlibs.dough.inventory.InvUtils;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
+import io.github.thebusybiscuit.slimefun4.api.items.virtual.VirtualItemHandler.InventoryContext;
 import io.github.thebusybiscuit.slimefun4.api.recipes.RecipeType;
 import io.github.thebusybiscuit.slimefun4.core.multiblocks.MultiBlockMachine;
+import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.implementation.handlers.VanillaInventoryDropHandler;
-import io.papermc.lib.PaperLib;
 import java.util.Optional;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -56,14 +56,13 @@ public class OutputChest extends SlimefunItem {
                 // Fixes #3012 - Check if the OutputChest is not disabled here.
                 if (slimefunItem instanceof OutputChest && !slimefunItem.isDisabledIn(b.getWorld())) {
                     // Found the output chest! Now, let's check if we can fit the product in it.
-                    BlockState state =
-                            PaperLib.getBlockState(potentialOutput, false).getState();
+                    BlockState state = potentialOutput.getState(false);
 
                     if (state instanceof Chest chest) {
                         Inventory inv = chest.getInventory();
 
                         // Check if the Item fits into that inventory.
-                        if (InvUtils.fits(inv, item)) {
+                        if (Slimefun.getItemStackService().fits(inv, item, InventoryContext.OUTPUT_CHEST)) {
                             return Optional.of(inv);
                         }
                     }

@@ -1,5 +1,4 @@
-# This workflow will build a Java project with Maven
-# For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-maven
+# This workflow will build a Java project with Gradle
 
 name: Slimefun Dev CI
 
@@ -15,23 +14,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Make gradlew executable
+        run: chmod +x gradlew
       - uses: actions/setup-java@v5
         with:
           distribution: 'zulu'
           java-version: ${{ vars.JAVA_CI_VERSION || 21 }}
           java-package: jdk
           architecture: x64
-          cache: maven
+          cache: gradle
       - name: Publish snapshots
         run: |
           echo "::add-mask::$MAVEN_ACCOUNT"
           echo "::add-mask::$MAVEN_PASSWORD"
-          mvn -s .mvn/settings.xml -B deploy -Dversioning.disable --errors
+          ./gradlew publish -Pversioning.disable --no-daemon
         env:
           MAVEN_ACCOUNT: '${{ vars.MAVEN_ACCOUNT }}'
           MAVEN_PASSWORD: '${{ secrets.MAVEN_PASSWORD }}'
       - name: Build Slimefun
-        run: mvn -B clean package --errors
+        run: ./gradlew clean build --no-daemon
       - name: Mask Output
         run: |
           echo "::add-mask::$CF_API_TOKEN"
@@ -39,11 +40,12 @@ jobs:
           CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
       - name: Get build artifact filename
         run: |
-          cd target && FILENAME=$(find . -maxdepth 1 -mindepth 1 -name "Slimefun-*" | cut -d'/' -f 2)
+          FILENAME=$(find build/libs -maxdepth 1 -type f -name "Slimefun-*.jar" ! -name "*-sources.jar" -printf "%f\n")
+          [ -n "$FILENAME" ]
+          [ "$(printf "%s\n" "$FILENAME" | wc -l)" -eq 1 ]
           echo "SLIMEFUN_ARTIFACT_NAME=$FILENAME" >> "$GITHUB_ENV"
-          cd ..
       - name: Upload Build to R2
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
-          command: "r2 object put slimefun-dev/${{ env.SLIMEFUN_ARTIFACT_NAME }} --file=./target/${{ env.SLIMEFUN_ARTIFACT_NAME }} --content-type=application/java-archive"
+          command: "r2 object put slimefun-dev/${{ env.SLIMEFUN_ARTIFACT_NAME }} --file=./build/libs/${{ env.SLIMEFUN_ARTIFACT_NAME }} --content-type=application/java-archive"

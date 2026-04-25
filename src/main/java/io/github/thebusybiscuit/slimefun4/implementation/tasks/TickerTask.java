@@ -369,9 +369,11 @@ public class TickerTask implements Runnable {
     @Nonnull
     public Map<ChunkPosition, Set<Location>> getLocations() {
         return tickingLocations.entrySet().stream()
-                .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().stream()
-                        .map(TickLocation::getLocation)
-                        .collect(Collectors.toUnmodifiableSet())));
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        e -> e.getValue().stream()
+                                .map(TickLocation::getLocation)
+                                .collect(Collectors.toUnmodifiableSet())));
     }
 
     /**

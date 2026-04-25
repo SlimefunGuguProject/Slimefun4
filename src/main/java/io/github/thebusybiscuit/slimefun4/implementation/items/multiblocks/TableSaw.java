@@ -6,6 +6,8 @@ import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemSetting;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
+import io.github.thebusybiscuit.slimefun4.api.items.virtual.VirtualItemHandler.ConsumeContext;
+import io.github.thebusybiscuit.slimefun4.api.items.virtual.VirtualItemHandler.InventoryContext;
 import io.github.thebusybiscuit.slimefun4.core.multiblocks.MultiBlockMachine;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.implementation.items.blocks.OutputChest;
@@ -135,7 +137,13 @@ public class TableSaw extends MultiBlockMachine {
         }
 
         if (p.getGameMode() != GameMode.CREATIVE) {
-            ItemUtils.consumeItem(item, true);
+            var consumed = Slimefun.getItemStackService().consume(item, 1, true, ConsumeContext.VIRTUAL_CRAFTING);
+            if (consumed.handled()) {
+                p.getInventory()
+                        .setItemInMainHand(consumed.item() == null ? new ItemStack(Material.AIR) : consumed.item());
+            } else {
+                ItemUtils.consumeItem(item, true);
+            }
         }
 
         outputItems(b, event.getOutput());
@@ -162,7 +170,11 @@ public class TableSaw extends MultiBlockMachine {
         Optional<Inventory> outputChest = OutputChest.findOutputChestFor(b, output);
 
         if (outputChest.isPresent()) {
-            outputChest.get().addItem(output);
+            ItemStack rest =
+                    Slimefun.getItemStackService().addItem(outputChest.get(), output, InventoryContext.OUTPUT_CHEST);
+            if (rest != null) {
+                b.getWorld().dropItemNaturally(b.getLocation(), rest);
+            }
         } else {
             b.getWorld().dropItemNaturally(b.getLocation(), output);
         }

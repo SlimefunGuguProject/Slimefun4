@@ -14,7 +14,6 @@ import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.implementation.items.SimpleSlimefunItem;
 import io.github.thebusybiscuit.slimefun4.utils.ChatUtils;
 import io.github.thebusybiscuit.slimefun4.utils.ChestMenuUtils;
-import io.papermc.lib.PaperLib;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -236,32 +235,30 @@ public class ElevatorPlate extends SimpleSlimefunItem<BlockUseHandler> {
 
     @ParametersAreNonnullByDefault
     private void teleport(Player player, ElevatorFloor floor) {
-        Slimefun.runSync(
-                () -> {
-                    users.add(player.getUniqueId());
+        Slimefun.runSync(() -> {
+            users.add(player.getUniqueId());
 
-                    float yaw = player.getEyeLocation().getYaw() + 180;
+            float yaw = player.getEyeLocation().getYaw() + 180;
 
-                    if (yaw > 180) {
-                        yaw = -180 + (yaw - 180);
-                    }
+            if (yaw > 180) {
+                yaw = -180 + (yaw - 180);
+            }
 
-                    Location loc = floor.getLocation();
-                    Location destination = new Location(
-                            player.getWorld(),
-                            loc.getX() + 0.5,
-                            loc.getY() + 0.4,
-                            loc.getZ() + 0.5,
-                            yaw,
-                            player.getEyeLocation().getPitch());
+            Location loc = floor.getLocation();
+            Location destination = new Location(
+                    player.getWorld(),
+                    loc.getX() + 0.5,
+                    loc.getY() + 0.4,
+                    loc.getZ() + 0.5,
+                    yaw,
+                    player.getEyeLocation().getPitch());
 
-                    PaperLib.teleportAsync(player, destination).thenAccept(teleported -> {
-                        if (teleported.booleanValue()) {
-                            player.sendTitle(ChatColor.WHITE + ChatColors.color(floor.getName()), null, 20, 60, 20);
-                        }
-                    });
-                },
-                player);
+            player.teleportAsync(destination).thenAccept(teleported -> {
+                if (teleported.booleanValue()) {
+                    player.sendTitle(ChatColor.WHITE + ChatColors.color(floor.getName()), null, 20, 60, 20);
+                }
+            });
+        },  player);
     }
 
     @ParametersAreNonnullByDefault

@@ -12,6 +12,8 @@ import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemState;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
+import io.github.thebusybiscuit.slimefun4.api.items.virtual.VirtualItemHandler.MatchContext;
+import io.github.thebusybiscuit.slimefun4.api.items.virtual.VirtualItemHandler.RemainderContext;
 import io.github.thebusybiscuit.slimefun4.api.recipes.RecipeType;
 import io.github.thebusybiscuit.slimefun4.core.attributes.EnergyNetComponent;
 import io.github.thebusybiscuit.slimefun4.core.handlers.BlockBreakHandler;
@@ -26,8 +28,6 @@ import io.github.thebusybiscuit.slimefun4.utils.SlimefunUtils;
 import io.github.thebusybiscuit.slimefun4.utils.compatibility.VersionedParticle;
 import io.github.thebusybiscuit.slimefun4.utils.itemstack.ItemStackWrapper;
 import io.github.thebusybiscuit.slimefun4.utils.tags.SlimefunTag;
-import io.papermc.lib.PaperLib;
-import io.papermc.lib.features.blockstatesnapshot.BlockStateSnapshotResult;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -242,7 +242,7 @@ public abstract class AbstractAutoCrafter extends SlimefunItem implements Energy
                 interactor = CrafterInteractorManager.getInteractor(targetBlock);
             } else {
                 // No custom interactor, check if the vanilla inventory
-                BlockState state = PaperLib.getBlockState(targetBlock, false).getState();
+                BlockState state = targetBlock.getState(false);
                 if (state instanceof InventoryHolder) {
                     interactor = new ChestInventoryParser(((InventoryHolder) state).getInventory());
                 }
@@ -273,7 +273,7 @@ public abstract class AbstractAutoCrafter extends SlimefunItem implements Energy
      */
     @ParametersAreNonnullByDefault
     protected boolean matches(ItemStack item, Predicate<ItemStack> predicate) {
-        return predicate.test(item);
+        return Slimefun.getItemStackService().matchesPredicate(item, predicate, MatchContext.AUTO_CRAFTER_PREDICATE);
     }
 
     /**
@@ -364,8 +364,7 @@ public abstract class AbstractAutoCrafter extends SlimefunItem implements Energy
     protected void setSelectedRecipe(@Nonnull Block b, @Nullable AbstractRecipe recipe) {
         Validate.notNull(b, "The Block cannot be null!");
 
-        BlockStateSnapshotResult result = PaperLib.getBlockState(b, false);
-        BlockState state = result.getState();
+        BlockState state = b.getState(false);
 
         if (state instanceof Skull skull) {
             if (recipe == null) {
@@ -379,9 +378,9 @@ public abstract class AbstractAutoCrafter extends SlimefunItem implements Energy
                 PersistentDataAPI.setString(skull, recipeStorageKey, recipe.toString());
             }
 
-            // Fixes #2899 - Update the BlockState if necessary
-            if (result.isSnapshot()) {
-                state.update(true, false);
+            // Fixes #2899 - Persist the updated block state.
+            if (skull.isSnapshot()) {
+                skull.update(true, false);
             }
         }
     }
@@ -458,7 +457,7 @@ public abstract class AbstractAutoCrafter extends SlimefunItem implements Energy
     private void setRecipeEnabled(Player p, Block b, boolean enabled) {
         p.closeInventory();
         SoundEffect.AUTO_CRAFTER_GUI_CLICK_SOUND.playFor(p);
-        BlockState state = PaperLib.getBlockState(b, false).getState();
+        BlockState state = b.getState(false);
 
         // Make sure the block is still a Skull
         if (state instanceof Skull skull) {
@@ -561,6 +560,11 @@ public abstract class AbstractAutoCrafter extends SlimefunItem implements Energy
      * @return The leftover item or null if the item is fully consumed
      */
     @Nullable private ItemStack getLeftoverItem(@Nonnull ItemStack item) {
+        var virtualLeftover = Slimefun.getItemStackService().getRemainder(item, RemainderContext.AUTO_CRAFTER);
+        if (virtualLeftover.handled()) {
+            return virtualLeftover.item();
+        }
+
         Material type = item.getType();
 
         return switch (type) {

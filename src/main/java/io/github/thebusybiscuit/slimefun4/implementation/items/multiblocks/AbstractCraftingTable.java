@@ -4,8 +4,10 @@ import io.github.bakedlibs.dough.items.ItemUtils;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
+import io.github.thebusybiscuit.slimefun4.api.items.virtual.VirtualItemHandler.ConsumeContext;
 import io.github.thebusybiscuit.slimefun4.api.player.PlayerBackpack;
 import io.github.thebusybiscuit.slimefun4.core.multiblocks.MultiBlockMachine;
+import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.implementation.items.backpacks.SlimefunBackpack;
 import io.github.thebusybiscuit.slimefun4.utils.SlimefunUtils;
 import io.github.thebusybiscuit.slimefun4.utils.ThreadUtils;
@@ -48,7 +50,13 @@ abstract class AbstractCraftingTable extends MultiBlockMachine {
              */
             if (stack != null) {
                 stack = stack.clone();
-                ItemUtils.consumeItem(stack, true);
+
+                var consumed = Slimefun.getItemStackService().consume(stack, 1, true, ConsumeContext.VIRTUAL_CRAFTING);
+                if (consumed.handled()) {
+                    stack = consumed.item();
+                } else {
+                    ItemUtils.consumeItem(stack, true);
+                }
             }
 
             fakeInv.setItem(j, stack);

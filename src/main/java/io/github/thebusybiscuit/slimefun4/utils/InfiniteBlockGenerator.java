@@ -2,7 +2,6 @@ package io.github.thebusybiscuit.slimefun4.utils;
 
 import io.github.thebusybiscuit.slimefun4.api.MinecraftVersion;
 import io.github.thebusybiscuit.slimefun4.implementation.items.androids.MinerAndroid;
-import io.papermc.lib.PaperLib;
 import java.util.function.Predicate;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -143,7 +142,7 @@ public enum InfiniteBlockGenerator implements Predicate<Block> {
     @Nonnull
     public BlockFormEvent callEvent(@Nonnull Block block) {
         Validate.notNull(block, "The Block cannot be null!");
-        BlockState state = PaperLib.getBlockState(block, false).getState();
+        BlockState state = block.getState(false);
         BlockFormEvent event = new BlockFormEvent(block, state);
         Bukkit.getPluginManager().callEvent(event);
         return event;

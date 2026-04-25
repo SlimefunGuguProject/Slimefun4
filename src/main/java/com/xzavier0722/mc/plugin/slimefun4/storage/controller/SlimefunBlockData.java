@@ -48,26 +48,6 @@ public class SlimefunBlockData extends ASlimefunDataContainer {
         return super.getSfId();
     }
 
-    @ParametersAreNonnullByDefault
-    public void setData(String key, String val) {
-        checkData();
-
-        if (isPendingRemove()) {
-            // someone is modifying a removed blockData or a virtual blockData, DO NOT SAVE
-            return;
-        }
-
-        setCacheInternal(key, val, true);
-        Slimefun.getDatabaseManager().getBlockDataController().scheduleDelayedBlockDataUpdate(this, key);
-    }
-
-    @ParametersAreNonnullByDefault
-    public void removeData(String key) {
-        if (removeCacheInternal(key) != null || !isDataLoaded()) {
-            Slimefun.getDatabaseManager().getBlockDataController().scheduleDelayedBlockDataUpdate(this, key);
-        }
-    }
-
     @ParametersAreNullableByDefault
     void setBlockMenu(BlockMenu blockMenu) {
         menu = blockMenu;
@@ -92,5 +72,11 @@ public class SlimefunBlockData extends ASlimefunDataContainer {
         }
 
         return re;
+    }
+
+    @Override
+    @ParametersAreNonnullByDefault
+    public void scheduleUpdateData(String key) {
+        Slimefun.getDatabaseManager().getBlockDataController().scheduleDelayedBlockDataUpdate(this, key);
     }
 }

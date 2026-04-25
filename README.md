@@ -97,9 +97,9 @@ Maven:
 </repository>
 ```
 
-Gradle: 在 `build.gradle` 中添加以下内容:
+Gradle: 在 `build.gradle.kts` 中添加以下内容:
 
-```groovy
+```kotlin
 repositories {
     maven {
         url "https://maven.norain.city/releases"
@@ -108,7 +108,7 @@ repositories {
 ```
 
 对于开发版：
-```groovy
+```kotlin
 repositories {
     maven {
         url "https://maven.norain.city/snapshots"
@@ -130,9 +130,9 @@ Maven:
 
 Gradle:
 
-```groovy
+```kotlin
 dependencies {
-    compileOnly 'com.github.SlimefunGuguProject:Slimefun4:DEV-SNAPSHOT'
+    compileOnly("com.github.SlimefunGuguProject:Slimefun4:DEV-SNAPSHOT")
 }
 ```
 
@@ -143,8 +143,8 @@ dependencies {
 然后运行 `git clone https://github.com/SlimefunGuguProject/Slimefun4.git` 克隆仓库到本地。
 
 最后进行编译：
-- 如果你是 Windows 系统: `.\mvnw.cmd package`
-- 如果你是类 Unix 系统: `.\mvnw package`
+- 如果你是 Windows 系统: `./gradlew.bat build`
+- 如果你是类 Unix 系统: `./gradlew build`
 
 ## :framed_picture: 截图
 

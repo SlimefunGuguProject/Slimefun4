@@ -157,7 +157,7 @@ public class BlockDataService implements Keyed {
     public Optional<String> getBlockData(@Nonnull Block b, @Nonnull NamespacedKey key) {
         Validate.notNull(b, "The block cannot be null!");
 
-        BlockState state = PaperLib.getBlockState(b, false).getState();
+        BlockState state = b.getState(false);
         PersistentDataContainer container = getPersistentDataContainer(state);
 
         if (container != null) {

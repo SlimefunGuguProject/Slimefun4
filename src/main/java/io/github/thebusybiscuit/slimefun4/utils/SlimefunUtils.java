@@ -11,6 +11,8 @@ import io.github.thebusybiscuit.slimefun4.api.exceptions.PrematureCodeException;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemSpawnReason;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
+import io.github.thebusybiscuit.slimefun4.api.items.virtual.VirtualItemHandler.ComparisonResult;
+import io.github.thebusybiscuit.slimefun4.api.items.virtual.VirtualItemHandler.MatchContext;
 import io.github.thebusybiscuit.slimefun4.core.attributes.DistinctiveItem;
 import io.github.thebusybiscuit.slimefun4.core.attributes.Radioactive;
 import io.github.thebusybiscuit.slimefun4.core.attributes.Soulbound;
@@ -298,6 +300,31 @@ public final class SlimefunUtils {
             boolean checkAmount,
             boolean checkDistinctiveItem,
             boolean checkCustomModelData) {
+        ComparisonResult comparison = Slimefun.getItemStackService().matches(item, sfitem, MatchContext.GENERIC);
+        if (comparison == ComparisonResult.MATCH) {
+            return true;
+        }
+
+        if (comparison == ComparisonResult.NO_MATCH) {
+            return false;
+        }
+
+        return isItemSimilarWithoutVirtualItems(
+                item, sfitem, checkLore, checkAmount, checkDistinctiveItem, checkCustomModelData);
+    }
+
+    public static boolean isItemSimilarWithoutVirtualItems(
+            @Nullable ItemStack item, @Nullable ItemStack sfitem, boolean checkLore, boolean checkAmount) {
+        return isItemSimilarWithoutVirtualItems(item, sfitem, checkLore, checkAmount, true, true);
+    }
+
+    public static boolean isItemSimilarWithoutVirtualItems(
+            @Nullable ItemStack item,
+            @Nullable ItemStack sfitem,
+            boolean checkLore,
+            boolean checkAmount,
+            boolean checkDistinctiveItem,
+            boolean checkCustomModelData) {
         if (item == null) {
             return sfitem == null;
         } else if (sfitem == null
@@ -493,7 +520,7 @@ public final class SlimefunUtils {
                 return potionMeta.hasBasePotionType()
                         && sfPotionMeta.hasBasePotionType()
                         && potionMeta.getBasePotionType().equals(sfPotionMeta.getBasePotionType());
-            } else if (SlimefunExtended.getMinecraftVersion().isAtLeast(1, 20, 2)) {
+            } else if (SlimefunExtended.isAtLeast(1, 20, 2)) {
                 return potionMeta.getBasePotionType().equals(sfPotionMeta.getBasePotionType());
             } else {
                 return potionMeta.getBasePotionData().equals(sfPotionMeta.getBasePotionData());
