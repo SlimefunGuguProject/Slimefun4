@@ -11,6 +11,8 @@ website: https://github.com/TheBusyBiscuit/Slimefun4
 main: io.github.thebusybiscuit.slimefun4.implementation.Slimefun
 api-version: '1.16'
 
+folia-supported: true
+
 # (Soft) dependencies of Slimefun, we hook into these plugins.
 softdepend:
   - PlaceholderAPI
