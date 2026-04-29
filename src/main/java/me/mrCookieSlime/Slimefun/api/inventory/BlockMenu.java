@@ -69,6 +69,13 @@ public class BlockMenu extends DirtyChestMenu {
         super(preset);
         this.location = l;
         this.inventory = inv;
+        for (int i = 0; i < inv.getSize(); i++) {
+            var item = inv.getItem(i);
+            if (item == null) {
+                continue;
+            }
+            addItem(i, item);
+        }
     }
 
     public void save(Location l) {
