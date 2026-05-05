@@ -1,6 +1,5 @@
 package io.github.thebusybiscuit.slimefun4.implementation.items.medical;
 
-import city.norain.slimefun4.compatibillty.CompatibilityUtil;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemHandler;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
@@ -12,6 +11,7 @@ import java.util.HashSet;
 import java.util.Set;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
+import net.guizhanss.guizhanlib.minecraft.utils.compatibility.AttributeX;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
@@ -71,7 +71,7 @@ public abstract class MedicalSupply<T extends ItemHandler> extends SimpleSlimefu
      */
     public void heal(@Nonnull LivingEntity n) {
         double health = n.getHealth() + healAmount;
-        double maxHealth = n.getAttribute(CompatibilityUtil.getMaxHealth()).getValue();
+        double maxHealth = n.getAttribute(AttributeX.MAX_HEALTH).getValue();
         n.setHealth(Math.min(health, maxHealth));
     }
 }

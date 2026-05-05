@@ -1,6 +1,5 @@
 package io.github.thebusybiscuit.slimefun4.implementation.items.weapons;
 
-import city.norain.slimefun4.compatibillty.CompatibilityUtil;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemSetting;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
@@ -12,6 +11,7 @@ import io.github.thebusybiscuit.slimefun4.implementation.items.SimpleSlimefunIte
 import java.util.concurrent.ThreadLocalRandom;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
+import net.guizhanss.guizhanlib.minecraft.utils.compatibility.AttributeX;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -42,8 +42,7 @@ public class VampireBlade extends SimpleSlimefunItem<WeaponUseHandler> {
             if (ThreadLocalRandom.current().nextInt(100) < getChance()) {
                 SoundEffect.VAMPIRE_BLADE_HEALING_SOUND.playFor(p);
                 double health = p.getHealth() + HEALING_AMOUNT;
-                double maxHealth =
-                        p.getAttribute(CompatibilityUtil.getMaxHealth()).getValue();
+                double maxHealth = p.getAttribute(AttributeX.MAX_HEALTH).getValue();
                 p.setHealth(Math.min(health, maxHealth));
             }
         };
