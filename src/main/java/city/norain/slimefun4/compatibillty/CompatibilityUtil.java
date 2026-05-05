@@ -4,10 +4,7 @@ import city.norain.slimefun4.SlimefunExtended;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import lombok.experimental.UtilityClass;
 import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
 import org.bukkit.OfflinePlayer;
-import org.bukkit.Registry;
-import org.bukkit.attribute.Attribute;
 import org.bukkit.block.data.Ageable;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.type.WallSign;
@@ -69,20 +66,6 @@ public class CompatibilityUtil {
             return player.isConnected();
         } else {
             return player.isOnline();
-        }
-    }
-
-    /**
-     * 获取最大生命值属性。
-     * 在 1.21.3 之前，使用 GENERIC_MAX_HEALTH。
-     *
-     * @return 最大生命值属性
-     */
-    public static Attribute getMaxHealth() {
-        if (SlimefunExtended.isAtLeast(1, 21, 3)) {
-            return Registry.ATTRIBUTE.get(NamespacedKey.fromString("max_health"));
-        } else {
-            return Attribute.valueOf("GENERIC_MAX_HEALTH");
         }
     }
 }
