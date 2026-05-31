@@ -122,7 +122,7 @@ public class TickerTask implements Runnable {
             return;
         }
 
-        if (tickFreeze) {
+        if (tickFreeze && !waiting.isEmpty()) {
             return;
         }
 
