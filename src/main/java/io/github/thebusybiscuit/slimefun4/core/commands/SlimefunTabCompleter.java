@@ -12,6 +12,7 @@ import java.util.Locale;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -42,9 +43,11 @@ class SlimefunTabCompleter implements TabCompleter {
                 return createReturnList(list, args[1]);
             } else if (args[0].equalsIgnoreCase("cleardata")) {
                 List<String> list = new ArrayList<>(
-                        Bukkit.getWorlds().stream().map(WorldInfo::getName).toList());
+                    Bukkit.getWorlds().stream().map(WorldInfo::getName).toList());
                 list.add("*");
                 return createReturnList(list, args[1]);
+            } else if (args[0].equalsIgnoreCase("tick")) {
+                return createReturnList(List.of("at", "freeze", "query", "rate", "show", "unfreeze"), args[1]);
             }
             return null;
         } else if (args.length == 3) {
