@@ -71,13 +71,22 @@ public class TickCommand extends SubCommand {
                 } else if (args[1].equalsIgnoreCase("unfreeze")) {
                     Slimefun.getTickerTask().setTickFreeze(false);
                     Slimefun.getLocalization()
-                            .sendMessage(sender, "messages.tick-mode", true, msg -> msg.replace("%mode%", "开启"));
+                            .sendMessage(sender, "messages.tick-mode", true, msg -> msg.replace("%mode%", "关闭"));
                     return;
                 } else if (args[1].equalsIgnoreCase("query")) {
-                    Slimefun.getLocalization().sendMessage(sender, "messages.tick-query", true, msg -> msg.replace(
-                                    "%mode%", Slimefun.getTickerTask().isTickFreeze() ? "开启" : "关闭")
-                            .replace(
-                                    "%tick-rate%", "" + Slimefun.getTickerTask().getTickRate()));
+                    Slimefun.getLocalization()
+                            .sendMessage(
+                                    sender,
+                                    "messages.tick-query",
+                                    true,
+                                    msg -> msg.replace(
+                                                    "%mode%",
+                                                    Slimefun.getTickerTask().isTickFreeze() ? "开启" : "关闭")
+                                            .replace(
+                                                    "%tick-rate%",
+                                                    ""
+                                                            + Slimefun.getTickerTask()
+                                                                    .getTickRate()));
                 } else {
                     SlimefunItem item = SlimefunItem.getById(args[1].toUpperCase());
                     if (item != null) {
@@ -142,6 +151,6 @@ public class TickCommand extends SubCommand {
     @Nonnull
     @Override
     public String getDescription() {
-        return "commands.breakpoint.description";
+        return "commands.tick.description";
     }
 }
