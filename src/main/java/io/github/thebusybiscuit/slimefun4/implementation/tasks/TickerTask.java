@@ -132,7 +132,8 @@ public class TickerTask implements Runnable {
         }
         count = 0;
 
-        for (int i = 0; i < waiting.size(); i++) {
+        int length = waiting.size();
+        for (int i = 0; i < length; i++) {
             tickBlock();
         }
 

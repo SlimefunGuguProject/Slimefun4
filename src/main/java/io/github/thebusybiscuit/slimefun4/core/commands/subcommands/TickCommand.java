@@ -87,6 +87,7 @@ public class TickCommand extends SubCommand {
                                                     ""
                                                             + Slimefun.getTickerTask()
                                                                     .getTickRate()));
+                    return;
                 } else {
                     SlimefunItem item = SlimefunItem.getById(args[1].toUpperCase());
                     if (item != null) {
@@ -115,34 +116,37 @@ public class TickCommand extends SubCommand {
                 return;
             }
 
-            int offset = 0;
-            if (args.length == 5) {
-                offset = 1;
-            }
-            String worldname = args.length == 5
+            if (args.length >= 4) {
+                int offset = 0;
+                if (args.length == 5) {
+                    offset = 1;
+                }
+                String worldname = args.length == 5
                     ? args[1]
                     : (sender instanceof Player p ? p.getWorld().getName() : "world");
-            try {
-                int x = Integer.parseInt(args[1 + offset]);
-                int y = Integer.parseInt(args[2 + offset]);
-                int z = Integer.parseInt(args[3 + offset]);
-                Slimefun.getTickerTask().setTickFreezePredicate(entry -> {
-                    var l = entry.getLocation();
-                    return l.getWorld().getName().equals(worldname)
+                try {
+                    int x = Integer.parseInt(args[1 + offset]);
+                    int y = Integer.parseInt(args[2 + offset]);
+                    int z = Integer.parseInt(args[3 + offset]);
+                    Slimefun.getTickerTask().setTickFreezePredicate(entry -> {
+                        var l = entry.getLocation();
+                        return l.getWorld().getName().equals(worldname)
                             && l.getBlockX() == x
                             && l.getBlockY() == y
                             && l.getBlockZ() == z;
-                });
-            } catch (NumberFormatException e) {
-                Slimefun.getLocalization().sendMessage(sender, "messages.not-a-number", true);
-            }
+                    });
+                } catch (NumberFormatException e) {
+                    Slimefun.getLocalization().sendMessage(sender, "messages.not-a-number", true);
+                }
 
-            Slimefun.getLocalization()
+                Slimefun.getLocalization()
                     .sendMessage(
-                            sender,
-                            "messages.usage",
-                            true,
-                            msg -> msg.replace("%usage%", "/sf tick (<x> <y> <z> | <Slimefun Item>)"));
+                        sender,
+                        "messages.usage",
+                        true,
+                        msg -> msg.replace("%usage%", "/sf tick (<x> <y> <z> | <Slimefun Item>)")
+                    );
+            }
         } else {
             Slimefun.getLocalization().sendMessage(sender, "messages.no-permission", true);
         }
