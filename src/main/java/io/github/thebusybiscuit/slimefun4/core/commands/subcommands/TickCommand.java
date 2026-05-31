@@ -122,8 +122,8 @@ public class TickCommand extends SubCommand {
                     offset = 1;
                 }
                 String worldname = args.length == 5
-                    ? args[1]
-                    : (sender instanceof Player p ? p.getWorld().getName() : "world");
+                        ? args[1]
+                        : (sender instanceof Player p ? p.getWorld().getName() : "world");
                 try {
                     int x = Integer.parseInt(args[1 + offset]);
                     int y = Integer.parseInt(args[2 + offset]);
@@ -131,21 +131,20 @@ public class TickCommand extends SubCommand {
                     Slimefun.getTickerTask().setTickFreezePredicate(entry -> {
                         var l = entry.getLocation();
                         return l.getWorld().getName().equals(worldname)
-                            && l.getBlockX() == x
-                            && l.getBlockY() == y
-                            && l.getBlockZ() == z;
+                                && l.getBlockX() == x
+                                && l.getBlockY() == y
+                                && l.getBlockZ() == z;
                     });
                 } catch (NumberFormatException e) {
                     Slimefun.getLocalization().sendMessage(sender, "messages.not-a-number", true);
                 }
 
                 Slimefun.getLocalization()
-                    .sendMessage(
-                        sender,
-                        "messages.usage",
-                        true,
-                        msg -> msg.replace("%usage%", "/sf tick (<x> <y> <z> | <Slimefun Item>)")
-                    );
+                        .sendMessage(
+                                sender,
+                                "messages.usage",
+                                true,
+                                msg -> msg.replace("%usage%", "/sf tick (<x> <y> <z> | <Slimefun Item>)"));
             }
         } else {
             Slimefun.getLocalization().sendMessage(sender, "messages.no-permission", true);
