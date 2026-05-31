@@ -14,8 +14,6 @@ import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
 
 /**
- * This is our class for the /sf breakpoint subcommand.
- *
  * @author balugaq
  */
 public class TickCommand extends SubCommand {
