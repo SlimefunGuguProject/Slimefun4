@@ -34,6 +34,7 @@ public class ChestMenu extends SlimefunInventoryHolder {
     @Getter
     private String title;
 
+    @Getter
     private List<ItemStack> items;
     /**
      * Size of chestmenu
@@ -41,6 +42,7 @@ public class ChestMenu extends SlimefunInventoryHolder {
      */
     private int size = -1;
 
+    @Getter
     private Map<Integer, MenuClickHandler> handlers;
     private MenuOpeningHandler open;
     private MenuCloseHandler close;
