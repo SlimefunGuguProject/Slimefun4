@@ -69,6 +69,8 @@ commands:
     in-progress: "&a迁移正在进行中..."
   blockdata:
     description: '操作粘液方块数据'
+  tick:
+    description: '操作粘液刻断点'
 placeholderapi:
   profile-loading: '加载中...'
 guide:
@@ -164,6 +166,8 @@ actionbar:
   radiation: '&6辐射暴露等级：&c%level%&7/&e100'
 
 messages:
+  tick-rate: "Tick rate: %tick-rate%"
+  tick-query: "Tick Freeze: %mode%, Tick rate: %tick-rate%"
   android-no-permission: "&c你的机器人在某个你没有权限的领地/地皮中无法工作, 机器人已自动暂停运行."
   not-researched: '&4你的知识还不足以理解这个物品. &c你需要先解锁 &f"%item%"&f'
   not-enough-xp: '&4你没有足够的经验来解锁这个研究'
@@ -277,6 +281,9 @@ messages:
   above-limit-level: '&c你要附/祛魔物品的附魔等级超过了 %level% 级!'
   pickaxe-of-the-seeker:
     no-ores: '&c附近找不到任何矿石!'
+  tick-mode: "&eTick Freeze: %mode%"
+  not-found: "&c无效的参数"
+  not-a-number: "&c请输入一个数字"
 machines:
   pattern-not-found: '&e抱歉, 这不是正确的合成配方, 请检查发射器里放置物品的顺序.'
   unknown-material: '&e抱歉, 我无法识别在发射器里的物品. 请按照合成配方放置物品.'

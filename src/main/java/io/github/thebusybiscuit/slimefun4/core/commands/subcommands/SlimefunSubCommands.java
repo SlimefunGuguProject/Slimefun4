@@ -47,6 +47,7 @@ public final class SlimefunSubCommands {
         commands.add(new BanItemCommand(plugin, cmd));
         commands.add(new UnbanItemCommand(plugin, cmd));
         commands.add(new ClearDataCommand(plugin, cmd));
+        commands.add(new TickCommand(plugin, cmd));
         return commands;
     }
 }

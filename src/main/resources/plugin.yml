@@ -110,3 +110,6 @@ permissions:
   slimefun.debugging:
     description: Allows you to use the debugging tool from Slimefun
     default: op
+  slimefun.command.tick:
+    description: Allows you to do /sf tick
+    default: op
