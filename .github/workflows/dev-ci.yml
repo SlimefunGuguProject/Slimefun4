@@ -45,7 +45,7 @@ jobs:
           [ "$(printf "%s\n" "$FILENAME" | wc -l)" -eq 1 ]
           echo "SLIMEFUN_ARTIFACT_NAME=$FILENAME" >> "$GITHUB_ENV"
       - name: Upload Build to R2
-        uses: cloudflare/wrangler-action@v3
+        uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           command: "r2 object put slimefun-dev/${{ env.SLIMEFUN_ARTIFACT_NAME }} --file=./build/libs/${{ env.SLIMEFUN_ARTIFACT_NAME }} --content-type=application/java-archive"

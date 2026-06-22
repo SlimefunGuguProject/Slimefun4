@@ -58,17 +58,26 @@ public class VanillaInventoryDropHandler<T extends BlockState & InventoryHolder>
 
         if (blockStateClass.isInstance(state)) {
             T inventoryHolder = blockStateClass.cast(state);
+            dropVanillaBlockInventory(inventoryHolder, drops);
+        }
+    }
 
-            for (ItemStack stack : getInventory(inventoryHolder)) {
-                if (stack != null && !stack.getType().isAir()) {
-                    drops.add(stack);
+    public static void dropVanillaBlockInventory(BlockState blockStateReference, List<ItemStack> drops) {
+        if (blockStateReference instanceof InventoryHolder blockInventoryHolder) {
+            Inventory inventory = getInventory(blockInventoryHolder);
+            int size = inventory.getSize();
+            for (int i = 0; i < size; i++) {
+                ItemStack item = inventory.getItem(i);
+                if (item != null && !item.getType().isAir()) {
+                    inventory.setItem(i, null);
+                    drops.add(item);
                 }
             }
         }
     }
 
     @Nonnull
-    protected Inventory getInventory(@Nonnull T inventoryHolder) {
+    protected static Inventory getInventory(@Nonnull InventoryHolder inventoryHolder) {
         if (inventoryHolder instanceof Chest chest) {
             return chest.getBlockInventory();
         } else {

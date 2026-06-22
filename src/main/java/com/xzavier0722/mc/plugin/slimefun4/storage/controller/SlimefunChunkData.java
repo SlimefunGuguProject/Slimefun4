@@ -22,19 +22,19 @@ public class SlimefunChunkData extends ADataContainer {
     private static final SlimefunBlockData INVALID_BLOCK_DATA = new SlimefunBlockData(
             new Location(Bukkit.getWorlds().get(0), Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE),
             "INVALID_BLOCK_DATA_SF_KEY");
-    private final Chunk chunk;
+    private final ChunkReference chunk;
     private final Map<String, SlimefunBlockData> sfBlocks;
 
     @ParametersAreNonnullByDefault
     SlimefunChunkData(Chunk chunk) {
         super(LocationUtils.getChunkKey(chunk));
-        this.chunk = chunk;
+        this.chunk = new ChunkReference(chunk);
         sfBlocks = new ConcurrentHashMap<>();
     }
 
     @Nonnull
     public Chunk getChunk() {
-        return chunk;
+        return chunk.getChunk();
     }
 
     @Nonnull
