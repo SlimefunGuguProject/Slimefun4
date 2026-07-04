@@ -67,6 +67,7 @@ public final class PostSetup {
         sender.sendMessage(ChatColor.GREEN
                 + "######################### - Slimefun v"
                 + Slimefun.getVersion()
+                + " (Folia 混合移植)"
                 + " - #########################");
         sender.sendMessage("");
         sender.sendMessage(ChatColor.GREEN
@@ -86,8 +87,14 @@ public final class PostSetup {
         sender.sendMessage("");
 
         sender.sendMessage("");
-        sender.sendMessage(ChatColor.GREEN + " - 源码:      https://github.com/SlimefunGuguProject/Slimefun4");
-        sender.sendMessage(ChatColor.GREEN + " - Bug 反馈:  https://github.com/SlimefunGuguProject/Slimefun4/issues");
+        sender.sendMessage(ChatColor.GREEN + " - 源码:      https://github.com/qzgeek/Slimefun4-Folia-Hybrid");
+        sender.sendMessage(ChatColor.GREEN + " - Bug 反馈:  https://github.com/qzgeek/Slimefun4-Folia-Hybrid/issues");
+
+        if (Slimefun.isFolia()) {
+            sender.sendMessage("");
+            sender.sendMessage(ChatColor.YELLOW + " [Folia] 已启用 Folia 区域线程调度;");
+            sender.sendMessage(ChatColor.YELLOW + " [Folia] 跨区域货网/能网仍在实验阶段, 如遇问题请反馈。");
+        }
 
         sender.sendMessage("");
 

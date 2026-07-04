@@ -3,15 +3,14 @@ package io.github.thebusybiscuit.slimefun4.implementation;
 import city.norain.slimefun4.ServerVersion;
 import city.norain.slimefun4.SlimefunExtended;
 import city.norain.slimefun4.timings.SQLProfiler;
-import com.tcoded.folialib.FoliaLib;
-import com.tcoded.folialib.enums.EntityTaskResult;
-import com.tcoded.folialib.impl.PlatformScheduler;
-import com.tcoded.folialib.wrapper.task.WrappedTask;
 import com.xzavier0722.mc.plugin.slimefun4.chat.PlayerChatCatcher;
 import com.xzavier0722.mc.plugin.slimefun4.storage.migrator.BlockStorageMigrator;
 import com.xzavier0722.mc.plugin.slimefun4.storage.migrator.PlayerProfileMigrator;
 import com.xzavier0722.mc.plugin.slimefuncomplib.ICompatibleSlimefun;
 import io.github.bakedlibs.dough.config.Config;
+import io.github.bakedlibs.dough.folialib.FoliaLib;
+import io.github.bakedlibs.dough.folialib.impl.PlatformScheduler;
+import io.github.bakedlibs.dough.folialib.wrapper.task.WrappedTask;
 import io.github.bakedlibs.dough.protection.ProtectionManager;
 import io.github.thebusybiscuit.slimefun4.api.MinecraftVersion;
 import io.github.thebusybiscuit.slimefun4.api.SlimefunAddon;
@@ -122,7 +121,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
+import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -133,6 +132,7 @@ import me.mrCookieSlime.CSCoreLibPlugin.general.Inventory.MenuListener;
 import net.guizhanss.slimefun4.updater.AutoUpdateTask;
 import org.apache.commons.lang.Validate;
 import org.bukkit.Bukkit;
+import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.Server;
 import org.bukkit.World;
@@ -146,6 +146,7 @@ import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.plugin.java.JavaPluginLoader;
 import org.bukkit.scheduler.BukkitTask;
+import org.bukkit.util.BoundingBox;
 
 /**
  * This is the main class of Slimefun.
@@ -178,11 +179,6 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
      */
     private boolean isNewlyInstalled = false;
 
-    /**
-     * Folia support library
-     */
-    private final FoliaLib foliaLib = new FoliaLib(this);
-
     // Various things we need
     private final SlimefunConfigManager cfgManager = new SlimefunConfigManager(this);
     private final SlimefunDatabaseManager databaseManager = new SlimefunDatabaseManager(this);
@@ -195,7 +191,7 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
     private final CustomItemDataService itemDataService = new CustomItemDataService(this, "slimefun_item");
     private final BlockDataService blockDataService = new BlockDataService(this, "slimefun_block");
     private final CustomTextureService textureService = new CustomTextureService(new Config(this, "item-models.yml"));
-    private final GitHubService gitHubService = new GitHubService("SlimefunGuguProject/Slimefun4");
+    private final GitHubService gitHubService = new GitHubService("Craft233MC/Slimefun4");
     private final UpdaterService updaterService =
             new UpdaterService(this, getDescription().getVersion(), getFile());
     private final MetricsService metricsService = new MetricsService(this);
@@ -229,6 +225,8 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
     private final BackpackListener backpackListener = new BackpackListener();
     private final SlimefunBowListener bowListener = new SlimefunBowListener();
 
+    private static FoliaLib foliaLib;
+
     /**
      * Our default constructor for {@link Slimefun}.
      */
@@ -261,6 +259,7 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
      */
     @Override
     public void onEnable() {
+        foliaLib = new FoliaLib(this);
         setInstance(this);
 
         if (isUnitTest()) {
@@ -421,7 +420,7 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
                                         + ")");
                     }
                 }),
-                1);
+                1L);
 
         // Setting up our commands
         try {
@@ -445,7 +444,7 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
         // Starting our tasks
         autoSavingService.start(this, config.getInt("options.auto-save-delay-in-minutes"));
         hologramsService.start();
-        ticker.start();
+        ticker.start(this);
 
         logger.log(Level.INFO, "正在加载第三方插件支持...");
         integrations.start();
@@ -454,7 +453,7 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
 
         if (cfgManager.isAutoUpdate()) {
             // 汉化版自动更新
-            getPlatformScheduler().runNextTick((task) -> new AutoUpdateTask(this, getFile()).run());
+            getFoliaLib().getScheduler().runAsync(wrappedTask -> new AutoUpdateTask(this, getFile()));
         }
 
         // Hooray!
@@ -468,7 +467,7 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
 
     @Override
     public String getBugTrackerURL() {
-        return "https://github.com/SlimefunGuguProject/Slimefun4/issues";
+        return "https://github.com/Craft233MC/Slimefun4/issues";
     }
 
     @Override
@@ -491,10 +490,11 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
         getSQLProfiler().shutdown();
 
         // Cancel all tasks from this plugin immediately
-        foliaLib.getScheduler().cancelAllTasks();
+        getFoliaLib().getScheduler().cancelAllTasks();
 
         // Finishes all started movements/removals of block data
-        ticker.shutdown();
+        ticker.setPaused(true);
+        ticker.halt();
         /**try {
          * ticker.halt();
          * ticker.run();
@@ -1166,7 +1166,41 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
             return null;
         }
 
-        return getPlatformScheduler().runLater(runnable, Math.max(1, delay));
+        return Slimefun.getFoliaLib().getScheduler().runLater(runnable, delay);
+    }
+
+    public static @Nullable WrappedTask runSyncAtEntity(@Nonnull Runnable runnable, long delay, Entity e) {
+        Validate.notNull(runnable, "Cannot run null");
+        Validate.isTrue(delay >= 0, "The delay cannot be negative");
+
+        // Run the task instantly within a Unit Test
+        if (getMinecraftVersion() == MinecraftVersion.UNIT_TEST) {
+            runnable.run();
+            return null;
+        }
+
+        if (instance == null || !instance.isEnabled()) {
+            return null;
+        }
+
+        return Slimefun.getFoliaLib().getScheduler().runAtEntityLater(e, runnable, delay);
+    }
+
+    public static @Nullable WrappedTask runSyncAtLocation(@Nonnull Runnable runnable, long delay, Location loc) {
+        Validate.notNull(runnable, "Cannot run null");
+        Validate.isTrue(delay >= 0, "The delay cannot be negative");
+
+        // Run the task instantly within a Unit Test
+        if (getMinecraftVersion() == MinecraftVersion.UNIT_TEST) {
+            runnable.run();
+            return null;
+        }
+
+        if (instance == null || !instance.isEnabled()) {
+            return null;
+        }
+
+        return Slimefun.getFoliaLib().getScheduler().runAtLocationLater(loc, runnable, delay);
     }
 
     /**
@@ -1181,7 +1215,7 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
      *
      * @return The resulting {@link BukkitTask} or null if Slimefun was disabled
      */
-    public static @Nullable CompletableFuture<Void> runSync(@Nonnull Runnable runnable) {
+    public static @Nullable WrappedTask runSync(@Nonnull Runnable runnable) {
         Validate.notNull(runnable, "Cannot run null");
 
         // Run the task instantly within a Unit Test
@@ -1194,20 +1228,10 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
             return null;
         }
 
-        return instance.getPlatformScheduler().runNextTick((task) -> runnable.run());
+        return Slimefun.getFoliaLib().getScheduler().runLater(runnable, 1);
     }
 
-    /**
-     * This method schedules a synchronous task for Slimefun.
-     * <strong>For Slimefun only, not for addons.</strong>
-     *
-     * This method should only be invoked by Slimefun itself.
-     * Addons must schedule their own tasks using their own {@link Plugin} instance.
-     *
-     * @param runnable The {@link Runnable} to run
-     * @return The resulting {@link BukkitTask} or null if Slimefun was disabled
-     */
-    public static @Nullable CompletableFuture<EntityTaskResult> runSync(@Nonnull Runnable runnable, Entity entity) {
+    public static @Nullable WrappedTask runSyncAtEntity(@Nonnull Runnable runnable, Entity e) {
         Validate.notNull(runnable, "Cannot run null");
 
         // Run the task instantly within a Unit Test
@@ -1220,20 +1244,10 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
             return null;
         }
 
-        return instance.getPlatformScheduler().runAtEntity(entity, (task) -> runnable.run());
+        return Slimefun.getFoliaLib().getScheduler().runAtEntityLater(e, runnable, 1);
     }
 
-    /**
-     * This method schedules a synchronous task for Slimefun.
-     * <strong>For Slimefun only, not for addons.</strong>
-     *
-     * This method should only be invoked by Slimefun itself.
-     * Addons must schedule their own tasks using their own {@link Plugin} instance.
-     *
-     * @param runnable The {@link Runnable} to run
-     * @return The resulting {@link BukkitTask} or null if Slimefun was disabled
-     */
-    public static @Nullable CompletableFuture<Void> runSync(@Nonnull Runnable runnable, Location l) {
+    public static @Nullable WrappedTask runSyncAtLocation(@Nonnull Runnable runnable, Location loc) {
         Validate.notNull(runnable, "Cannot run null");
 
         // Run the task instantly within a Unit Test
@@ -1246,36 +1260,12 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
             return null;
         }
 
-        return instance.getPlatformScheduler().runAtLocation(l, (task) -> runnable.run());
-    }
-
-    public static @Nullable CompletableFuture<Void> runSync(@Nonnull Runnable runnable, long delay, Location l) {
-        Validate.notNull(runnable, "Cannot run null");
-
-        // Run the task instantly within a Unit Test
-        if (getMinecraftVersion() == MinecraftVersion.UNIT_TEST) {
-            runnable.run();
-            return null;
-        }
-
-        if (instance == null || !instance.isEnabled()) {
-            return null;
-        }
-
-        return getPlatformScheduler().runAtLocationLater(l, (task) -> runnable.run(), delay);
+        return Slimefun.getFoliaLib().getScheduler().runAtLocationLater(loc, runnable, 1);
     }
 
     @Nonnull
     public File getFile() {
         return super.getFile();
-    }
-
-    public static boolean isFolia() {
-        return instance.foliaLib.isFolia();
-    }
-
-    public static PlatformScheduler getPlatformScheduler() {
-        return instance.foliaLib.getScheduler();
     }
 
     public static @Nonnull PlayerChatCatcher getChatCatcher() {
@@ -1291,5 +1281,97 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
      */
     public static @Nonnull ThreadService getThreadService() {
         return instance().threadService;
+    }
+
+    /**
+     * 返回 FoliaLib 实例, 用于获取平台调度器。
+     *
+     * @return {@link FoliaLib} 实例
+     */
+    public static FoliaLib getFoliaLib() {
+        return foliaLib;
+    }
+
+    /**
+     * 获取平台调度器的便捷方法。
+     * 内部调用 {@code foliaLib.getScheduler()}, 自动适配 Paper/Folia。
+     *
+     * @return {@link PlatformScheduler} 实例
+     */
+    public static PlatformScheduler getPlatformScheduler() {
+        return foliaLib.getScheduler();
+    }
+
+    /**
+     * 检测当前是否运行在 Folia (或其分支) 上。
+     * 用于条件分支: Folia 上需要区域线程调度, Paper 上使用传统主线程。
+     *
+     * @return true 如果在 Folia 上运行
+     */
+    public static boolean isFolia() {
+        return foliaLib.isFolia();
+    }
+
+    public static Collection<Entity> getNearbyEntities(
+            final Location l, double x, double y, double z, final Predicate<Entity> filter) {
+        final World world = l.getWorld();
+        BoundingBox boundingBox = BoundingBox.of(l, l).expand(x, y, z);
+        if (Slimefun.getFoliaLib().isFolia()) {
+            final int minChunkX = boundingBox.getMin().getBlockX() >> 4;
+            final int maxChunkX = boundingBox.getMax().getBlockX() >> 4;
+            final int minChunkZ = boundingBox.getMin().getBlockZ() >> 4;
+            final int maxChunkZ = boundingBox.getMax().getBlockZ() >> 4;
+            final List<Entity> nearbyEntities = new ArrayList<>();
+            for (int chunkX = minChunkX; chunkX <= maxChunkX; ++chunkX) {
+                for (int chunkZ = minChunkZ; chunkZ <= maxChunkZ; ++chunkZ) {
+                    if (!world.isChunkLoaded(chunkX, chunkZ)) {
+                        continue;
+                    }
+                    final Chunk chunk = world.getChunkAt(chunkX, chunkZ);
+                    if (!chunk.isEntitiesLoaded()) {
+                        continue;
+                    }
+                    for (final Entity entity : chunk.getEntities()) {
+                        if ((filter == null || filter.test(entity)) && boundingBox.overlaps(entity.getBoundingBox())) {
+                            nearbyEntities.add(entity);
+                        }
+                    }
+                }
+            }
+            return nearbyEntities;
+        } else {
+            return world.getNearbyEntities(boundingBox, filter);
+        }
+    }
+
+    public static Collection<Entity> getNearbyEntities(
+            final Entity e, final BoundingBox boundingBox, final Predicate<Entity> filter) {
+        final World world = e.getWorld();
+        if (Slimefun.getFoliaLib().isFolia()) {
+            final int minChunkX = boundingBox.getMin().getBlockX() >> 4;
+            final int maxChunkX = boundingBox.getMax().getBlockX() >> 4;
+            final int minChunkZ = boundingBox.getMin().getBlockZ() >> 4;
+            final int maxChunkZ = boundingBox.getMax().getBlockZ() >> 4;
+            final List<Entity> nearbyEntities = new ArrayList<>();
+            for (int chunkX = minChunkX; chunkX <= maxChunkX; ++chunkX) {
+                for (int chunkZ = minChunkZ; chunkZ <= maxChunkZ; ++chunkZ) {
+                    if (!world.isChunkLoaded(chunkX, chunkZ)) {
+                        continue;
+                    }
+                    final Chunk chunk = world.getChunkAt(chunkX, chunkZ);
+                    if (!chunk.isEntitiesLoaded()) {
+                        continue;
+                    }
+                    for (final Entity entity : chunk.getEntities()) {
+                        if ((filter == null || filter.test(entity)) && boundingBox.overlaps(entity.getBoundingBox())) {
+                            nearbyEntities.add(entity);
+                        }
+                    }
+                }
+            }
+            return nearbyEntities;
+        } else {
+            return world.getNearbyEntities(boundingBox, filter);
+        }
     }
 }
