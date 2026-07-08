@@ -38,6 +38,7 @@ repositories {
     maven("https://nexus.neetgames.com/repository/maven-public")
     maven("https://repo.walshy.dev/public")
     maven("https://repo.codemc.io/repository/maven-public/")
+    maven("https://repo.tcoded.com/releases")
 }
 
 dependencies {
@@ -58,6 +59,8 @@ dependencies {
     }
     implementation(libs.hikaricp)
     implementation(libs.postgresql)
+
+    implementation(libs.folialib)
 
     compileOnly(libs.worldedit.core) { exclude(group = "*", module = "*") }
     compileOnly(libs.worldedit.bukkit) { exclude(group = "*", module = "*") }
@@ -139,6 +142,7 @@ tasks.named<ShadowJar>("shadowJar") {
     relocate("kong.unirest", "io.github.thebusybiscuit.slimefun4.libraries.unirest")
     relocate("org.apache.commons.lang", "io.github.thebusybiscuit.slimefun4.libraries.commons.lang")
     relocate("net.guizhanss.guizhanlib", "io.github.thebusybiscuit.slimefun4.libraries.guizhanlib")
+    relocate("com.tcoded.folialib", "io.github.thebusybiscuit.slimefun4.libraries.folialib")
     /**exclude {
         it.path == "META-INF" || it.path.startsWith("META-INF/")
     }*/

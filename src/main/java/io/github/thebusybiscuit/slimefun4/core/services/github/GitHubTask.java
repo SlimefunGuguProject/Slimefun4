@@ -79,7 +79,7 @@ class GitHubTask implements Runnable {
                 && Slimefun.instance() != null
                 && Slimefun.instance().isEnabled()) {
             // Slow down API requests and wait a minute after more than x requests were made
-            Bukkit.getScheduler().runTaskLaterAsynchronously(Slimefun.instance(), this::grabTextures, 2 * 60 * 20L);
+            Slimefun.getPlatformScheduler().runLaterAsync(this::grabTextures, 2 * 60 * 20L);
         }
 
         for (GitHubConnector connector : gitHubService.getConnectors()) {
@@ -119,6 +119,7 @@ class GitHubTask implements Runnable {
                                 Level.WARNING,
                                 "Attempted to refresh skin cache, got this response: {0}: {1}",
                                 new Object[] {x.getClass().getSimpleName(), x.getMessage()});
+                Slimefun.logger().log(Level.WARNING, "Error during refreshing skin cache", x);
                 Slimefun.logger()
                         .log(
                                 Level.WARNING,
@@ -129,8 +130,7 @@ class GitHubTask implements Runnable {
 
                 // Retry after 5 minutes if it was just rate-limiting
                 if (msg != null && msg.contains("429")) {
-                    Bukkit.getScheduler()
-                            .runTaskLaterAsynchronously(Slimefun.instance(), this::grabTextures, 5 * 60 * 20L);
+                    Slimefun.getPlatformScheduler().runLaterAsync(this::grabTextures, 5 * 60 * 20L);
                 }
 
                 return -1;

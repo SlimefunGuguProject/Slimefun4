@@ -4,6 +4,7 @@ import city.norain.slimefun4.api.menu.UniversalMenu;
 import city.norain.slimefun4.api.menu.UniversalMenuPreset;
 import city.norain.slimefun4.utils.InventoryUtil;
 import city.norain.slimefun4.utils.StringUtil;
+import com.tcoded.folialib.wrapper.task.WrappedTask;
 import com.xzavier0722.mc.plugin.slimefun4.storage.adapter.IDataSourceAdapter;
 import com.xzavier0722.mc.plugin.slimefun4.storage.callback.IAsyncReadCallback;
 import com.xzavier0722.mc.plugin.slimefun4.storage.common.DataScope;
@@ -44,8 +45,6 @@ import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.plugin.Plugin;
-import org.bukkit.scheduler.BukkitTask;
 
 /**
  * 方块数据控制器
@@ -87,7 +86,7 @@ public class BlockDataController extends ADataController {
     private boolean enableDelayedSaving = false;
 
     private int delayedSecond = 0;
-    private BukkitTask looperTask;
+    private WrappedTask looperTask;
     /**
      * 区块数据加载模式
      * {@link ChunkDataLoadMode}
@@ -129,16 +128,15 @@ public class BlockDataController extends ADataController {
             case LOAD_ON_STARTUP -> loadLoadedWorlds();
         }
 
-        Bukkit.getScheduler().runTaskLater(Slimefun.instance(), this::loadUniversalRecord, 1);
+        Slimefun.getPlatformScheduler().runLater(this::loadUniversalRecord, 1);
     }
 
     /**
      * 加载所有服务器已加载的世界中的数据
      */
     private void loadLoadedWorlds() {
-        Bukkit.getScheduler()
-                .runTaskLater(
-                        Slimefun.instance(),
+        Slimefun.getPlatformScheduler()
+                .runLater(
                         () -> {
                             for (var world : Bukkit.getWorlds()) {
                                 loadWorld(world);
@@ -151,9 +149,8 @@ public class BlockDataController extends ADataController {
      * 加载所有服务器已加载的世界区块中的数据
      */
     private void loadLoadedChunks() {
-        Bukkit.getScheduler()
-                .runTaskLater(
-                        Slimefun.instance(),
+        Slimefun.getPlatformScheduler()
+                .runLater(
                         () -> {
                             for (var world : Bukkit.getWorlds()) {
                                 for (var chunk : world.getLoadedChunks()) {
@@ -171,16 +168,15 @@ public class BlockDataController extends ADataController {
      * @param delayedSecond   首次执行延时
      * @param forceSavePeriod 强制保存周期
      */
-    public void initDelayedSaving(Plugin p, int delayedSecond, int forceSavePeriod) {
+    public void initDelayedSaving(Slimefun p, int delayedSecond, int forceSavePeriod) {
         checkDestroy();
         if (delayedSecond < 1 || forceSavePeriod < 1) {
             throw new IllegalArgumentException("save period second must be greater than 0!");
         }
         enableDelayedSaving = true;
         this.delayedSecond = delayedSecond;
-        looperTask = Bukkit.getScheduler()
-                .runTaskTimerAsynchronously(
-                        p,
+        looperTask = Slimefun.getPlatformScheduler()
+                .runTimerAsync(
                         new DelayedSavingLooperTask(
                                 forceSavePeriod, () -> new HashMap<>(delayedWriteTasks), delayedWriteTasks::remove),
                         20,
@@ -1228,70 +1224,6 @@ public class BlockDataController extends ADataController {
         return new HashSet<>(loadedChunk.values());
     }
 
-    public void unloadChunkCache(Chunk chunk) {
-        var cKey = LocationUtils.getChunkKey(chunk);
-        var cache = loadedChunk.get(cKey);
-        if (cache != null) {
-            unloadChunkCache(cache, cKey);
-            loadedChunk.remove(cKey, cache);
-        }
-    }
-
-    public void unloadWorldCache(World world) {
-        getAllLoadedChunkData(world).forEach(chunkData -> {
-            unloadChunkCache(chunkData, chunkData.getKey());
-            loadedChunk.remove(chunkData.getKey(), chunkData);
-        });
-    }
-
-    private void unloadChunkCache(SlimefunChunkData chunkData, String chunkKey) {
-        var blockData = chunkData.getAllBlockData();
-        blockData.forEach(this::prepareBlockCacheUnload);
-        blockData.forEach(block -> {
-            saveBlockInventoryBeforeUnload(block);
-            finishBlockCacheUnload(block);
-        });
-        executeDelayedDataUpdates(new ChunkKey(DataScope.NONE, chunkKey));
-        chunkData.removeAllCacheInternal();
-    }
-
-    private void prepareAllCacheUnload() {
-        loadedChunk.values().forEach(chunkData -> chunkData.getAllBlockData().forEach(this::prepareBlockCacheUnload));
-        loadedUniversalData.values().forEach(this::prepareUniversalCacheUnload);
-    }
-
-    private void prepareBlockCacheUnload(SlimefunBlockData blockData) {
-        blockData.setPendingRemove(true);
-
-        var l = blockData.getLocation();
-        if (blockData.isDataLoaded() && Slimefun.getRegistry().getTickerBlocks().contains(blockData.getSfId())) {
-            Slimefun.getTickerTask().disableTicker(l);
-        }
-    }
-
-    private void saveBlockInventoryBeforeUnload(SlimefunBlockData blockData) {
-        if (!blockData.isDataLoaded()) {
-            return;
-        }
-
-        var menu = blockData.getBlockMenu();
-        if (menu != null && menu.isDirty()) {
-            saveBlockInventory(blockData);
-        }
-    }
-
-    private void finishBlockCacheUnload(SlimefunBlockData blockData) {
-        var l = blockData.getLocation();
-        executeDelayedDataUpdates(new LocationKey(DataScope.NONE, l));
-        Slimefun.getNetworkManager().updateAllNetworks(l);
-        invSnapshots.remove(blockData.getKey());
-    }
-
-    private void prepareUniversalCacheUnload(SlimefunUniversalData universalData) {
-        universalData.setPendingRemove(true);
-        Slimefun.getTickerTask().disableTicker(universalData.getUUID());
-    }
-
     public void removeAllDataInChunk(Chunk chunk) {
         var cKey = LocationUtils.getChunkKey(chunk);
         var cache = loadedChunk.remove(cKey);
@@ -1464,16 +1396,11 @@ public class BlockDataController extends ADataController {
     public void shutdown() {
         saveAllBlockInventories();
         saveAllUniversalInventories();
-        prepareAllCacheUnload();
         if (enableDelayedSaving) {
             looperTask.cancel();
             executeAllDelayedTasks();
         }
         super.shutdown();
-        loadedChunk.clear();
-        loadedUniversalData.clear();
-        invSnapshots.clear();
-        delayedWriteTasks.clear();
     }
 
     void scheduleDelayedBlockDataUpdate(SlimefunBlockData blockData, String key) {
@@ -1514,21 +1441,6 @@ public class BlockDataController extends ADataController {
         }
     }
 
-    private void executeDelayedDataUpdates(ScopeKey scopeKey) {
-        Set<DelayedTask> tasks = new HashSet<>();
-        synchronized (delayedWriteTasks) {
-            delayedWriteTasks.entrySet().removeIf(entry -> {
-                if (scopeKey.equals(entry.getKey().getParent())) {
-                    tasks.add(entry.getValue());
-                    return true;
-                }
-
-                return false;
-            });
-        }
-        tasks.forEach(DelayedTask::runUnsafely);
-    }
-
     private void scheduleBlockDataUpdate(ScopeKey scopeKey, RecordKey reqKey, String lKey, String key, String val) {
         if (val == null) {
             scheduleDeleteTask(scopeKey, reqKey, false);
@@ -1556,7 +1468,7 @@ public class BlockDataController extends ADataController {
     }
 
     void scheduleDelayedChunkDataUpdate(SlimefunChunkData chunkData, String key) {
-        var scopeKey = new ChunkKey(DataScope.NONE, chunkData.getKey());
+        var scopeKey = new ChunkKey(DataScope.NONE, chunkData.getChunk());
         var reqKey = new RecordKey(DataScope.CHUNK_DATA);
         reqKey.addCondition(FieldKey.CHUNK, chunkData.getKey());
         reqKey.addCondition(FieldKey.DATA_KEY, key);
@@ -1598,12 +1510,9 @@ public class BlockDataController extends ADataController {
     }
 
     private void executeAllDelayedTasks() {
-        Set<DelayedTask> tasks;
         synchronized (delayedWriteTasks) {
-            tasks = new HashSet<>(delayedWriteTasks.values());
-            delayedWriteTasks.clear();
+            delayedWriteTasks.values().forEach(DelayedTask::runUnsafely);
         }
-        tasks.forEach(DelayedTask::runUnsafely);
     }
 
     public SlimefunChunkData getChunkDataFromCache(Location chunk) {
@@ -1682,7 +1591,8 @@ public class BlockDataController extends ADataController {
                                     .updateUniversalDataUUID(l.getBlock(), String.valueOf(universalData.getUUID()));
                         }
                     },
-                    10L);
+                    10L,
+                    l);
 
             kvData.forEach(recordSet -> universalData.setData(
                     recordSet.get(FieldKey.DATA_KEY), DataUtils.blockDataDebase64(recordSet.get(FieldKey.DATA_VALUE))));

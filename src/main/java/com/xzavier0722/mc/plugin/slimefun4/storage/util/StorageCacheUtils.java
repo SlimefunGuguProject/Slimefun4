@@ -42,18 +42,23 @@ public class StorageCacheUtils {
 
     @ParametersAreNonnullByDefault
     public static boolean hasUniversalBlock(Location l) {
-        var uniDataByNBT = TaskUtil.runSyncMethod(() -> Slimefun.getBlockDataService()
-                .getUniversalDataUUID(l.getBlock())
-                .isPresent());
-
-        if (uniDataByNBT) {
+        if (Slimefun.getDatabaseManager()
+                .getBlockDataController()
+                .getUniversalBlockDataFromCache(l)
+                .isPresent()) {
             return true;
         }
 
-        return Slimefun.getDatabaseManager()
-                .getBlockDataController()
-                .getUniversalBlockDataFromCache(l)
-                .isPresent();
+        var block = l.getBlock();
+        if (!Slimefun.getBlockDataService().isTileEntity(block.getType())) {
+            return false;
+        }
+
+        return TaskUtil.runSyncMethod(
+            () -> Slimefun.getBlockDataService()
+                .getUniversalDataUUID(l.getBlock())
+                .isPresent(),
+            l);
     }
 
     @ParametersAreNonnullByDefault

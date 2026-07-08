@@ -30,6 +30,7 @@ commons-lang = { module = "commons-lang:commons-lang", version = "2.6" }
 slimefun-comp-lib = { module = "com.github.Xzavier0722:SlimefunCompLib", version = "b7a2bd8" }
 guizhanlib-updater = { module = "net.guizhanss:guizhanlib-updater", version = "2.5.0" }
 guizhanlib-minecraft = { module = "net.guizhanss:guizhanlib-minecraft", version = "2.5.0" }
+folialib = { module = "com.tcoded:FoliaLib", version = "0.5.1" }
 
 [plugins]
 spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
