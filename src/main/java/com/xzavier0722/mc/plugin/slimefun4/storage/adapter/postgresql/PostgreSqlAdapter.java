@@ -408,15 +408,13 @@ public class PostgreSqlAdapter extends SqlCommonAdapter<PostgreSqlConfig> {
     }
 
     private void createTableMetadataTable() {
-        executeSql(MessageFormat.format(
-                """
+        executeSql(MessageFormat.format("""
                 CREATE TABLE IF NOT EXISTS {0}
                 (
                     {1} VARCHAR(100) UNIQUE NOT NULL,
                     {2} TEXT NOT NULL
                 );
-                """,
-                tableMetadataTable, FIELD_TABLE_METADATA_KEY, FIELD_TABLE_METADATA_VALUE));
+                """, tableMetadataTable, FIELD_TABLE_METADATA_KEY, FIELD_TABLE_METADATA_VALUE));
 
         if (Slimefun.isNewlyInstalled()) {
             executeSql(MessageFormat.format(

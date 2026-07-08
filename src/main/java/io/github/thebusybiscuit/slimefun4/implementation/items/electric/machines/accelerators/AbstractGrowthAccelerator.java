@@ -22,10 +22,24 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.inventory.ItemStack;
 
+/**
+ * Abstract base class for growth accelerators.
+ */
 public abstract class AbstractGrowthAccelerator extends SlimefunItem implements InventoryBlock, EnergyNetComponent {
 
+    /**
+     * The border slots for the menu layout.
+     */
     private static final int[] BORDER = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26};
 
+    /**
+     * Constructs a new AbstractGrowthAccelerator.
+     *
+     * @param itemGroup   The item group this item belongs to
+     * @param item        The item stack for this growth accelerator
+     * @param recipeType  The recipe type used to craft this item
+     * @param recipe      The recipe to craft this item
+     */
     @ParametersAreNonnullByDefault
     protected AbstractGrowthAccelerator(
             ItemGroup itemGroup, SlimefunItemStack item, RecipeType recipeType, ItemStack[] recipe) {

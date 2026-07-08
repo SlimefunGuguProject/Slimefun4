@@ -41,7 +41,7 @@ public class VersionedMiddleClickListener implements Listener {
                 && pickBlockEventClass.isInstance(event)) {
             try {
                 Block block = (Block) getBlockMethod.invoke(event);
-                SlimefunItem sfItem = StorageCacheUtils.getSfItem(block.getLocation());
+                SlimefunItem sfItem = StorageCacheUtils.getSlimefunItem(block.getLocation());
                 if (sfItem == null) {
                     return;
                 }

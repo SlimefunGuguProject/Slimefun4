@@ -1,11 +1,12 @@
 package io.github.thebusybiscuit.slimefun4.implementation.items.electric.machines.enchanting;
 
-import io.github.bakedlibs.dough.inventory.InvUtils;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemSetting;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
 import io.github.thebusybiscuit.slimefun4.api.items.settings.IntRangeSetting;
+import io.github.thebusybiscuit.slimefun4.api.items.virtual.VirtualItemHandler.InventoryContext;
 import io.github.thebusybiscuit.slimefun4.api.recipes.RecipeType;
+import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nonnull;
@@ -87,7 +88,12 @@ public class BookBinder extends AContainer {
                             new ItemStack[] {target, item},
                             new ItemStack[] {book});
 
-                    if (!InvUtils.fitAll(menu.toInventory(), recipe.getOutput(), getOutputSlots())) {
+                    if (!Slimefun.getItemStackService()
+                            .fitAll(
+                                    menu.toInventory(),
+                                    recipe.getOutput(),
+                                    InventoryContext.MACHINE_OUTPUT,
+                                    getOutputSlots())) {
                         return null;
                     }
 

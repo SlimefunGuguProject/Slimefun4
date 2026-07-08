@@ -64,9 +64,12 @@ public class PlayerResearchTask implements Consumer<PlayerProfile> {
                         () -> {
                             SoundEffect.PLAYER_RESEARCHING_SOUND.playFor(p);
                             Slimefun.getLocalization()
-                                    .sendMessage(p, "messages.research.progress", true, msg -> msg.replace(
-                                                    PLACEHOLDER, research.getName(p))
-                                            .replace("%progress%", "0%"));
+                                    .sendMessage(
+                                            p,
+                                            "messages.research.progress",
+                                            true,
+                                            msg -> msg.replace(PLACEHOLDER, research.getName(p))
+                                                    .replace("%progress%", "0%"));
                         },
                         5L);
             }

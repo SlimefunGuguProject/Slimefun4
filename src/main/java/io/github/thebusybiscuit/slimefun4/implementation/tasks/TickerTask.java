@@ -262,7 +262,7 @@ public class TickerTask implements Runnable {
             });
             Slimefun.logger().log(Level.SEVERE, "在过去的 4 个 Tick 中发生多次错误，该方块对应的机器已被停用。");
             Slimefun.logger().log(Level.SEVERE, "请在 /plugins/Slimefun/error-reports/ 文件夹中查看错误详情。");
-            Slimefun.logger().log(Level.SEVERE, "如果要反馈错误,请向他人发送上述错误报告文件,而不是发送这个窗口的截图");
+            Slimefun.logger().log(Level.SEVERE, "如果你要向他人求助，请向他人发送上述错误报告文件,而不是发送这个窗口的截图");
             Slimefun.logger().log(Level.SEVERE, " ");
             bugs.remove(position);
 
@@ -299,9 +299,11 @@ public class TickerTask implements Runnable {
     @Nonnull
     public Map<ChunkPosition, Set<Location>> getLocations() {
         return tickingLocations.entrySet().stream()
-                .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().stream()
-                        .map(TickLocation::getLocation)
-                        .collect(Collectors.toUnmodifiableSet())));
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        e -> e.getValue().stream()
+                                .map(TickLocation::getLocation)
+                                .collect(Collectors.toUnmodifiableSet())));
     }
 
     /**

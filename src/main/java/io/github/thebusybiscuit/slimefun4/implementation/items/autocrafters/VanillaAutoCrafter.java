@@ -12,7 +12,6 @@ import io.github.thebusybiscuit.slimefun4.core.services.sounds.SoundEffect;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.implementation.tasks.AsyncRecipeChoiceTask;
 import io.github.thebusybiscuit.slimefun4.utils.ChestMenuUtils;
-import io.papermc.lib.PaperLib;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
@@ -57,7 +56,7 @@ public class VanillaAutoCrafter extends AbstractAutoCrafter implements NotDiagon
 
     @Override
     public @Nullable AbstractRecipe getSelectedRecipe(@Nonnull Block b) {
-        BlockState state = PaperLib.getBlockState(b, false).getState();
+        BlockState state = b.getState(false);
 
         if (state instanceof Skull skull) {
             // Read the stored value from persistent data storage

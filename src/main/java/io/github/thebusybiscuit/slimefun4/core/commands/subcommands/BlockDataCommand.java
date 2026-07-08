@@ -50,7 +50,7 @@ class BlockDataCommand extends SubCommand {
         }
 
         Block target = player.getTargetBlockExact(8, FluidCollisionMode.NEVER);
-        var blockData = StorageCacheUtils.getBlock(target.getLocation());
+        var blockData = StorageCacheUtils.getDataContainer(target.getLocation());
 
         if (target == null || target.getType().isAir() || blockData == null) {
             ChatUtils.sendMessage(player, "&c你需要看向一个 Slimefun 方块才能执行该指令!");
@@ -62,8 +62,10 @@ class BlockDataCommand extends SubCommand {
         switch (args[1]) {
             case "get" -> {
                 String value = blockData.getData(key);
-                ChatUtils.sendMessage(player, "&a该方块 &b%key% &a的值为: &e%value%", msg -> msg.replace("%key%", key)
-                        .replace("%value%", value == null ? "null" : value));
+                ChatUtils.sendMessage(
+                        player,
+                        "&a该方块 &b%key% &a的值为: &e%value%",
+                        msg -> msg.replace("%key%", key).replace("%value%", value == null ? "null" : value));
             }
             case "set" -> {
                 if (args.length < 4) {
@@ -84,8 +86,10 @@ class BlockDataCommand extends SubCommand {
                 String value = args[3];
 
                 blockData.setData(key, value);
-                ChatUtils.sendMessage(player, "&a已设置该方块 &b%key% &a的值为: &e%value%", msg -> msg.replace("%key%", key)
-                        .replace("%value%", value));
+                ChatUtils.sendMessage(
+                        player,
+                        "&a已设置该方块 &b%key% &a的值为: &e%value%",
+                        msg -> msg.replace("%key%", key).replace("%value%", value));
             }
             case "remove" -> {
                 if (key.equalsIgnoreCase("id")) {

@@ -34,8 +34,19 @@ import org.bukkit.inventory.meta.ItemMeta;
 public abstract class AbstractEnergyProvider extends SlimefunItem
         implements InventoryBlock, RecipeDisplayItem, EnergyNetProvider {
 
+    /**
+     * The set of fuel types for this energy provider.
+     */
     protected final Set<MachineFuel> fuelTypes = new HashSet<>();
 
+    /**
+     * Constructs a new AbstractEnergyProvider.
+     *
+     * @param itemGroup   The item group this item belongs to
+     * @param item        The item stack for this energy provider
+     * @param recipeType  The recipe type used to craft this item
+     * @param recipe      The recipe to craft this item
+     */
     @ParametersAreNonnullByDefault
     protected AbstractEnergyProvider(
             ItemGroup itemGroup, SlimefunItemStack item, RecipeType recipeType, ItemStack[] recipe) {
@@ -84,11 +95,21 @@ public abstract class AbstractEnergyProvider extends SlimefunItem
         return EnergyNetComponentType.GENERATOR;
     }
 
+    /**
+     * Registers a fuel type for this energy provider.
+     *
+     * @param fuel The {@link MachineFuel} to register
+     */
     public void registerFuel(@Nonnull MachineFuel fuel) {
         Validate.notNull(fuel, "Machine Fuel cannot be null!");
         fuelTypes.add(fuel);
     }
 
+    /**
+     * Gets the set of fuel types for this energy provider.
+     *
+     * @return The set of {@link MachineFuel} types
+     */
     @Nonnull
     public Set<MachineFuel> getFuelTypes() {
         return fuelTypes;

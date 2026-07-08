@@ -8,7 +8,6 @@ import io.github.thebusybiscuit.slimefun4.core.services.sounds.SoundEffect;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.implementation.SlimefunItems;
 import io.github.thebusybiscuit.slimefun4.utils.SlimefunUtils;
-import io.papermc.lib.PaperLib;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import javax.annotation.Nonnull;
@@ -93,7 +92,7 @@ public class OreWasher extends MultiBlockMachine {
     @Override
     public void onInteract(Player p, Block b) {
         Block dispBlock = b.getRelative(BlockFace.UP);
-        BlockState state = PaperLib.getBlockState(dispBlock, false).getState();
+        BlockState state = dispBlock.getState(false);
 
         if (state instanceof Dispenser disp) {
             Inventory inv = disp.getInventory();

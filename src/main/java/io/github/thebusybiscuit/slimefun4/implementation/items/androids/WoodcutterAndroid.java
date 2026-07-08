@@ -55,8 +55,8 @@ public class WoodcutterAndroid extends ProgrammableAndroid {
                 Block log = list.get(list.size() - 1);
                 log.getWorld().playEffect(log.getLocation(), Effect.STEP_SOUND, log.getType());
 
-                OfflinePlayer owner = Bukkit.getOfflinePlayer(
-                        UUID.fromString(StorageCacheUtils.getUniversalBlock(menu.getUuid(), b.getLocation(), "owner")));
+                OfflinePlayer owner = Bukkit.getOfflinePlayer(UUID.fromString(
+                        StorageCacheUtils.getUniversalBlockData(menu.getUuid(), b.getLocation(), "owner")));
                 if (Slimefun.getProtectionManager().hasPermission(owner, log.getLocation(), Interaction.BREAK_BLOCK)) {
                     breakLog(log, b, menu, face);
                 }
@@ -146,7 +146,7 @@ public class WoodcutterAndroid extends ProgrammableAndroid {
             }
         }
 
-        if (SlimefunExtended.getMinecraftVersion().isAtLeast(1, 21, 2)) {
+        if (SlimefunExtended.isAtLeast(1, 21, 2)) {
             switch (logType) {
                 case PALE_OAK_LOG, PALE_OAK_WOOD, STRIPPED_PALE_OAK_LOG, STRIPPED_PALE_OAK_WOOD -> {
                     saplingType = Material.PALE_OAK_SAPLING;

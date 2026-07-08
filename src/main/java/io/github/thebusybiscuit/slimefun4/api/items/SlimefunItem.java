@@ -502,6 +502,10 @@ public class SlimefunItem implements Placeable {
         }
     }
 
+    /**
+     * Enables this SlimefunItem.
+     * This method is called when the item is enabled after being disabled.
+     */
     public void enable() {
         if (state != ItemState.DISABLED) {
             return;

@@ -95,9 +95,13 @@ class ResearchCommand extends SubCommand {
     private void researchAll(CommandSender sender, PlayerProfile profile, Player p) {
         for (Research res : Slimefun.getRegistry().getResearches()) {
             if (!profile.hasUnlocked(res)) {
-                Slimefun.getLocalization().sendMessage(sender, "messages.give-research", true, msg -> msg.replace(
-                                PLACEHOLDER_PLAYER, p.getName())
-                        .replace(PLACEHOLDER_RESEARCH, res.getName(p)));
+                Slimefun.getLocalization()
+                        .sendMessage(
+                                sender,
+                                "messages.give-research",
+                                true,
+                                msg -> msg.replace(PLACEHOLDER_PLAYER, p.getName())
+                                        .replace(PLACEHOLDER_RESEARCH, res.getName(p)));
             }
 
             res.unlock(p, true);

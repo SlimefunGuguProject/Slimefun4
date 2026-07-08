@@ -32,7 +32,7 @@ public class HopperListener implements Listener {
 
         if (loc != null
                 && e.getSource().getType() == InventoryType.HOPPER
-                && StorageCacheUtils.getSfItem(loc) instanceof NotHopperable) {
+                && StorageCacheUtils.getSlimefunItem(loc) instanceof NotHopperable) {
             e.setCancelled(true);
         }
     }

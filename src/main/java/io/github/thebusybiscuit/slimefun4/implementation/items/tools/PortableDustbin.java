@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.implementation.items.tools;
 
+import city.norain.slimefun4.utils.InventoryUtil;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
 import io.github.thebusybiscuit.slimefun4.api.recipes.RecipeType;
@@ -36,7 +37,8 @@ public class PortableDustbin extends SimpleSlimefunItem<ItemUseHandler> implemen
             e.cancel();
 
             Player p = e.getPlayer();
-            p.openInventory(Bukkit.createInventory(null, 9 * 3, ChatColor.DARK_RED + "Delete Items"));
+            var dustbin = Bukkit.createInventory(null, 9 * 3, ChatColor.DARK_RED + "便携垃圾桶");
+            InventoryUtil.openInventory(p, dustbin);
             SoundEffect.PORTABLE_DUSTBIN_OPEN_SOUND.playFor(p);
         };
     }

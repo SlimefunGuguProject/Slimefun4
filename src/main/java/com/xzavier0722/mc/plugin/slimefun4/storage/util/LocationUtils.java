@@ -66,7 +66,7 @@ public class LocationUtils {
 
     public static Chunk toChunk(World w, String cKey) {
         var loc = cKey.split(";")[1].split(":");
-        if (SlimefunExtended.getMinecraftVersion().isAtLeast(1, 19, 4)) {
+        if (SlimefunExtended.isAtLeast(1, 19, 4)) {
             return w.getChunkAt(Integer.parseInt(loc[0]), Integer.parseInt(loc[1]), false);
         } else {
             return w.getChunkAt(Integer.parseInt(loc[0]), Integer.parseInt(loc[1]));

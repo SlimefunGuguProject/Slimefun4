@@ -5,12 +5,16 @@ on:
     branches: [ master, dev ]
     paths:
       - 'src/**'
-      - 'pom.xml'
+      - 'build.gradle.kts'
+      - 'settings.gradle.kts'
+      - 'gradle/libs.versions.toml'
   pull_request:
     types: [ opened, synchronize, reopened ]
     paths:
       - 'src/**'
-      - 'pom.xml'
+      - 'build.gradle.kts'
+      - 'settings.gradle.kts'
+      - 'gradle/libs.versions.toml'
   workflow_dispatch:
 
 env:
@@ -25,20 +29,23 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+
       - name: Set up JDK
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: 'zulu'
           java-version: ${{ vars.JAVA_CI_VERSION || 21 }}
           java-package: jdk
           architecture: x64
-          cache: maven
+          cache: gradle
 
       - name: Spotless check
         id: spotless-check
         run: |
           set +e
-          mvn -B spotless:check --errors
+          ./gradlew spotlessCheck --no-daemon
           STATUS=$?
           echo "status=$STATUS" >> $GITHUB_OUTPUT
           set -e
@@ -47,12 +54,12 @@ jobs:
 
       - name: Spotless apply (if needed)
         id: spotless-apply
-        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.spotless-check.outputs.status != '0' }}
-        run: mvn -B spotless:apply --errors
+        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref_name == 'dev' && steps.spotless-check.outputs.status != '0' }}
+        run: ./gradlew spotlessApply --no-daemon
 
       - name: Push changes
         uses: EndBug/add-and-commit@v9.1.4
-        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.spotless-check.outputs.status != '0' && success()}}
+        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref_name == 'dev' && steps.spotless-check.outputs.status != '0' && success()}}
         with:
           github_token: ${{ secrets.BOT_ACCESS_TOKEN }}
           add: '.'

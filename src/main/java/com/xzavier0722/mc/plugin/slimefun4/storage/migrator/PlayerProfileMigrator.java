@@ -6,7 +6,6 @@ import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.HashSet;
 import java.util.UUID;
 import java.util.logging.Level;
 import javax.annotation.Nonnull;
@@ -137,16 +136,16 @@ public class PlayerProfileMigrator implements IMigrator {
 
             var bp = controller.createBackpack(p, "", bpID, size);
 
-            var changedSlot = new HashSet<Integer>();
+            //            var changedSlot = new HashSet<Integer>();
 
             for (String key : configFile.getKeys("backpacks." + bpID + ".contents")) {
                 var bpKey = Integer.parseInt(key);
                 var item = configFile.getItem("backpacks." + bpID + ".contents." + bpKey);
                 bp.getInventory().setItem(bpKey, item);
-                changedSlot.add(bpKey);
+                //                changedSlot.add(bpKey);
             }
 
-            controller.saveBackpackInventory(bp, changedSlot);
+            controller.saveBackpackInventory(bp);
         }
         profile.setBackpackCount(max);
     }

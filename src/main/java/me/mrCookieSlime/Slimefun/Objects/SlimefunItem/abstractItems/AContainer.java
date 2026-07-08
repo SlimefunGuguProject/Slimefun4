@@ -2,23 +2,24 @@ package me.mrCookieSlime.Slimefun.Objects.SlimefunItem.abstractItems;
 
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunBlockData;
 import com.xzavier0722.mc.plugin.slimefun4.storage.util.StorageCacheUtils;
-import io.github.bakedlibs.dough.inventory.InvUtils;
 import io.github.bakedlibs.dough.items.CustomItemStack;
 import io.github.thebusybiscuit.slimefun4.api.SlimefunAddon;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemState;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
+import io.github.thebusybiscuit.slimefun4.api.items.virtual.VirtualItemHandler.InventoryContext;
+import io.github.thebusybiscuit.slimefun4.api.items.virtual.VirtualItemHandler.MatchContext;
 import io.github.thebusybiscuit.slimefun4.api.recipes.RecipeType;
 import io.github.thebusybiscuit.slimefun4.core.attributes.EnergyNetComponent;
 import io.github.thebusybiscuit.slimefun4.core.attributes.MachineProcessHolder;
 import io.github.thebusybiscuit.slimefun4.core.handlers.BlockBreakHandler;
 import io.github.thebusybiscuit.slimefun4.core.machines.MachineProcessor;
 import io.github.thebusybiscuit.slimefun4.core.networks.energy.EnergyNetComponentType;
+import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.implementation.handlers.SimpleBlockBreakHandler;
 import io.github.thebusybiscuit.slimefun4.implementation.operations.CraftingOperation;
 import io.github.thebusybiscuit.slimefun4.utils.ChestMenuUtils;
-import io.github.thebusybiscuit.slimefun4.utils.SlimefunUtils;
 import io.github.thebusybiscuit.slimefun4.utils.itemstack.ItemStackWrapper;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -45,11 +46,26 @@ import org.bukkit.inventory.ItemStack;
 public abstract class AContainer extends SlimefunItem
         implements InventoryBlock, EnergyNetComponent, MachineProcessHolder<CraftingOperation> {
 
+    /**
+     * The border slots for the menu layout.
+     */
     private static final int[] BORDER = {0, 1, 2, 3, 4, 5, 6, 7, 8, 13, 31, 36, 37, 38, 39, 40, 41, 42, 43, 44};
+
+    /**
+     * The input border slots for the menu layout.
+     */
     private static final int[] BORDER_IN = {9, 10, 11, 12, 18, 21, 27, 28, 29, 30};
+
+    /**
+     * The output border slots for the menu layout.
+     */
     private static final int[] BORDER_OUT = {14, 15, 16, 17, 23, 26, 32, 33, 34, 35};
 
+    /**
+     * The list of registered machine recipes.
+     */
     protected final List<MachineRecipe> recipes = new ArrayList<>();
+
     private final MachineProcessor<CraftingOperation> processor = new MachineProcessor<>(this);
 
     private int energyConsumedPerTick = -1;
@@ -425,7 +441,8 @@ public abstract class AContainer extends SlimefunItem
         for (MachineRecipe recipe : recipes) {
             for (ItemStack input : recipe.getInput()) {
                 for (int slot : getInputSlots()) {
-                    if (SlimefunUtils.isItemSimilar(inventory.get(slot), input, true)) {
+                    if (Slimefun.getItemStackService()
+                            .isSimilar(inventory.get(slot), input, MatchContext.RECIPE_INPUT, true, true)) {
                         found.put(slot, input.getAmount());
                         break;
                     }
@@ -433,7 +450,12 @@ public abstract class AContainer extends SlimefunItem
             }
 
             if (found.size() == recipe.getInput().length) {
-                if (!InvUtils.fitAll(inv.toInventory(), recipe.getOutput(), getOutputSlots())) {
+                if (!Slimefun.getItemStackService()
+                        .fitAll(
+                                inv.toInventory(),
+                                recipe.getOutput(),
+                                InventoryContext.MACHINE_OUTPUT,
+                                getOutputSlots())) {
                     return null;
                 }
 

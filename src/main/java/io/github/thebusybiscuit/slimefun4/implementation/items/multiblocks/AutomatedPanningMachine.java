@@ -5,6 +5,8 @@ import io.github.bakedlibs.dough.scheduling.TaskQueue;
 import io.github.thebusybiscuit.slimefun4.api.events.MultiBlockCraftEvent;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
+import io.github.thebusybiscuit.slimefun4.api.items.virtual.VirtualItemHandler.ConsumeContext;
+import io.github.thebusybiscuit.slimefun4.api.items.virtual.VirtualItemHandler.InventoryContext;
 import io.github.thebusybiscuit.slimefun4.core.multiblocks.MultiBlockMachine;
 import io.github.thebusybiscuit.slimefun4.core.services.sounds.SoundEffect;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
@@ -96,19 +98,29 @@ public class AutomatedPanningMachine extends MultiBlockMachine {
 
         ItemStack finalOutput = event.getOutput();
         if (p.getGameMode() != GameMode.CREATIVE) {
-            ItemUtils.consumeItem(input, false);
+            var consumed = Slimefun.getItemStackService().consume(input, 1, false, ConsumeContext.VIRTUAL_CRAFTING);
+            if (consumed.handled()) {
+                p.getInventory()
+                        .setItemInMainHand(consumed.item() == null ? new ItemStack(Material.AIR) : consumed.item());
+            } else {
+                ItemUtils.consumeItem(input, false);
+            }
         }
 
         TaskQueue queue = new TaskQueue();
 
-        queue.thenRepeatEvery(20, 5, () -> b.getWorld()
-                .playEffect(b.getRelative(BlockFace.DOWN).getLocation(), Effect.STEP_SOUND, material));
+        queue.thenRepeatEvery(
+                20,
+                5,
+                () -> b.getWorld()
+                        .playEffect(b.getRelative(BlockFace.DOWN).getLocation(), Effect.STEP_SOUND, material));
         queue.thenRun(20, () -> {
             if (finalOutput.getType() != Material.AIR) {
                 Optional<Inventory> outputChest = OutputChest.findOutputChestFor(b.getRelative(BlockFace.DOWN), output);
 
                 if (outputChest.isPresent()) {
-                    outputChest.get().addItem(finalOutput.clone());
+                    Slimefun.getItemStackService()
+                            .addItem(outputChest.get(), finalOutput.clone(), InventoryContext.OUTPUT_CHEST);
                 } else {
                     b.getWorld().dropItemNaturally(b.getLocation(), finalOutput.clone());
                 }

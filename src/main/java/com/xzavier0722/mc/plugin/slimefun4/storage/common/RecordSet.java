@@ -27,7 +27,7 @@ public class RecordSet {
     @ParametersAreNonnullByDefault
     public void put(FieldKey key, ItemStack itemStack) {
         checkReadonly();
-        data.put(key, DataUtils.itemStack2String(itemStack));
+        data.put(key, DataUtils.serializeItemStack(itemStack));
     }
 
     public void put(FieldKey key, boolean val) {
@@ -56,7 +56,7 @@ public class RecordSet {
 
     @ParametersAreNonnullByDefault
     public ItemStack getItemStack(FieldKey key) {
-        return DataUtils.string2ItemStack(data.get(key));
+        return DataUtils.deserializeItemStack(data.get(key));
     }
 
     @ParametersAreNonnullByDefault

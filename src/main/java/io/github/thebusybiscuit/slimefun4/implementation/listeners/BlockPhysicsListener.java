@@ -1,16 +1,10 @@
 package io.github.thebusybiscuit.slimefun4.implementation.listeners;
 
-import com.xzavier0722.mc.plugin.slimefun4.storage.callback.IAsyncReadCallback;
-import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunBlockData;
 import com.xzavier0722.mc.plugin.slimefun4.storage.util.StorageCacheUtils;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.core.attributes.WitherProof;
-import io.github.thebusybiscuit.slimefun4.core.handlers.BlockBreakHandler;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.utils.tags.SlimefunTag;
-import io.papermc.lib.PaperLib;
-import io.papermc.lib.features.blockstatesnapshot.BlockStateSnapshotResult;
-import java.util.ArrayList;
 import java.util.Objects;
 import javax.annotation.Nonnull;
 import org.bukkit.Location;
@@ -49,7 +43,7 @@ public class BlockPhysicsListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onBlockFall(EntityChangeBlockEvent e) {
-        var blockData = StorageCacheUtils.getBlock(e.getBlock().getLocation());
+        var blockData = StorageCacheUtils.getDataContainer(e.getBlock().getLocation());
         if (blockData == null) {
             return;
         }
@@ -67,55 +61,32 @@ public class BlockPhysicsListener implements Listener {
                 }
             }
 
-            case WITHER, WITHER_SKULL -> {
+            case WITHER -> {
+                // fix issue 1126
+                // the wither break is handled in the WitherListener, then the data is removed there, so it will
+                // conflict with this listener
                 var block = e.getBlock();
                 var item = SlimefunItem.getById(blockData.getSfId());
-
                 var controller = Slimefun.getDatabaseManager().getBlockDataController();
-                if (item != null
-                        && !(item instanceof WitherProof)
-                        && !item.callItemHandler(BlockBreakHandler.class, handler -> {
-                            if (blockData.isDataLoaded()) {
-                                callHandler(handler, block);
-                            } else {
-                                blockData.setPendingRemove(true);
-                                controller.loadBlockDataAsync(blockData, new IAsyncReadCallback<>() {
-                                    @Override
-                                    public boolean runOnMainThread() {
-                                        return true;
-                                    }
-
-                                    @Override
-                                    public void onResult(SlimefunBlockData result) {
-                                        callHandler(handler, block);
-                                        blockData.setPendingRemove(false);
-                                    }
-                                });
-                            }
-                        })) {
+                if (item != null) {
+                    if (item instanceof WitherProof witherProof) {
+                        witherProof.onAttackEvent(e);
+                        if (!e.isCancelled()) {
+                            return;
+                        }
+                    }
                     controller.removeBlock(block.getLocation());
                     block.setType(Material.AIR);
+                    for (var drop : item.getDrops()) {
+                        if (drop != null && !drop.getType().isAir()) {
+                            block.getWorld().dropItemNaturally(block.getLocation(), drop);
+                        }
+                    }
                 }
             }
-
-                // Don't move my machine :|
+            // fix: issue 1126 there is not such EntityChangeBlockEvent about WitherSkull
+            // Don't move my machine :|
             case ENDERMAN -> e.setCancelled(true);
-        }
-    }
-
-    private void callHandler(BlockBreakHandler handler, Block b) {
-        if (handler.isExplosionAllowed(b)) {
-            b.setType(Material.AIR);
-
-            var drops = new ArrayList<ItemStack>();
-            handler.onExplode(b, drops);
-            Slimefun.getDatabaseManager().getBlockDataController().removeBlock(b.getLocation());
-
-            for (var drop : drops) {
-                if (drop != null && !drop.getType().isAir()) {
-                    b.getWorld().dropItemNaturally(b.getLocation(), drop);
-                }
-            }
         }
     }
 
@@ -167,11 +138,11 @@ public class BlockPhysicsListener implements Listener {
             return;
         }
 
-        BlockStateSnapshotResult state = PaperLib.getBlockState(block, false);
+        var state = block.getState(false);
 
         // Check the skull if it had lost its data, but name still remained.
-        if (state.getState() instanceof Skull) {
-            Skull skull = (Skull) state.getState();
+        if (state instanceof Skull) {
+            Skull skull = (Skull) state;
 
             if (skull.hasOwner() && Objects.equals(skull.getOwningPlayer().getName(), "CS-CoreLib")) {
                 e.setCancelled(true);

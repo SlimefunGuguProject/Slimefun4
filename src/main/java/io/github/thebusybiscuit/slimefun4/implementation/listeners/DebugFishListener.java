@@ -110,9 +110,7 @@ public class DebugFishListener implements Listener {
         }
 
         if (StorageCacheUtils.hasSlimefunBlock(b.getLocation())) {
-            var data = StorageCacheUtils.hasBlock(b.getLocation())
-                    ? StorageCacheUtils.getBlock(b.getLocation())
-                    : StorageCacheUtils.getUniversalBlock(b);
+            var data = StorageCacheUtils.getDataContainer(b.getLocation());
 
             try {
                 if (data == null) {

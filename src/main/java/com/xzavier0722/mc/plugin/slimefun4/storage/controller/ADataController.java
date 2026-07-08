@@ -20,6 +20,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.OverridingMethodsMustInvokeSuper;
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * {@link ADataController} 是 Slimefun 数据库控制器的抽象类，
@@ -27,6 +29,7 @@ import javax.annotation.OverridingMethodsMustInvokeSuper;
  * <br/>
  * 该类提供了对数据库的增删查改操作以及异步读写的支持。
  */
+@Slf4j
 public abstract class ADataController {
     private final DataType dataType;
     private final Map<ScopeKey, QueuedWriteTask> scheduledWriteTasks;
@@ -41,17 +44,29 @@ public abstract class ADataController {
      * 数据库写入调度器
      */
     protected ExecutorService writeExecutor;
+
+    protected ExecutorService serialWriteExecutor;
+
     /**
      * 数据库回调调度器
      */
+    @Getter
     protected ExecutorService callbackExecutor;
     /**
      * 标记当前控制器是否已被关闭
      */
     private volatile boolean destroyed = false;
 
+    /**
+     * The logger for this data controller.
+     */
     protected final Logger logger;
 
+    /**
+     * Constructs a new ADataController.
+     *
+     * @param dataType The data type this controller manages
+     */
     protected ADataController(DataType dataType) {
         this.dataType = dataType;
         scheduledWriteTasks = new ConcurrentHashMap<>();
@@ -61,6 +76,10 @@ public abstract class ADataController {
 
     /**
      * 初始化 {@link ADataController}
+     *
+     * @param dataAdapter   The data source adapter
+     * @param maxReadThread Maximum number of read threads
+     * @param maxWriteThread Maximum number of write threads
      */
     @OverridingMethodsMustInvokeSuper
     public void init(IDataSourceAdapter<?> dataAdapter, int maxReadThread, int maxWriteThread) {
@@ -68,31 +87,42 @@ public abstract class ADataController {
         dataAdapter.initStorage(dataType);
         dataAdapter.patch();
         readExecutor = new SlimefunPoolExecutor(
-                "SF-DB-Read-Executor",
+                "SF-" + dataType.name() + "-Read-Executor",
                 maxReadThread,
                 maxReadThread,
                 10,
                 TimeUnit.SECONDS,
                 new LinkedBlockingQueue<>(),
-                new DatabaseThreadFactory("SF-DB-Read-Thread #"));
+                new DatabaseThreadFactory("SF-" + dataType.name() + "-Read-Thread #"));
 
         writeExecutor = new SlimefunPoolExecutor(
-                "SF-DB-Write-Executor",
-                maxWriteThread,
-                maxWriteThread,
+                "SF-" + dataType.name() + "-Write-Executor",
+                Math.max(maxWriteThread - 1, 1),
+                Math.max(maxWriteThread - 1, 1),
                 10,
                 TimeUnit.SECONDS,
                 new LinkedBlockingQueue<>(),
-                new DatabaseThreadFactory("SF-DB-Write-Thread #"));
+                new DatabaseThreadFactory("SF-" + dataType.name() + "-Write-Thread #"));
+
+        if (maxWriteThread > 1) {
+            serialWriteExecutor = new SlimefunPoolExecutor(
+                    "SF-" + dataType.name() + "-SerialWrite-Executor",
+                    1,
+                    1,
+                    10,
+                    TimeUnit.SECONDS,
+                    new LinkedBlockingQueue<>(),
+                    new DatabaseThreadFactory("SF-" + dataType.name() + "-SerialWrite-Thread #"));
+        }
 
         callbackExecutor = new SlimefunPoolExecutor(
-                "SF-DB-Callback-Executor",
+                "SF-" + dataType.name() + "-Callback-Executor",
                 1,
-                Runtime.getRuntime().availableProcessors() / 2,
+                Math.max(1, Runtime.getRuntime().availableProcessors() / 2),
                 10,
                 TimeUnit.SECONDS,
                 new LinkedBlockingQueue<>(),
-                new DatabaseThreadFactory("SF-DB-CB-Thread #"));
+                new DatabaseThreadFactory("SF-" + dataType.name() + "-Callback-Thread #"));
     }
 
     /**
@@ -155,6 +185,9 @@ public abstract class ADataController {
 
     protected void scheduleWriteTask(ScopeKey scopeKey, RecordKey key, Runnable task, boolean forceScopeKey) {
         lock.lock(scopeKey);
+
+        // log.info("schedule write scope [{}], key [{}]", scopeKey, key);
+
         try {
             var scopeToUse = forceScopeKey ? scopeKey : key;
             var queuedTask = scheduledWriteTasks.get(scopeKey);
@@ -174,12 +207,22 @@ public abstract class ADataController {
 
                 @Override
                 protected void onError(Throwable e) {
-                    Slimefun.logger().log(Level.SEVERE, "Exception thrown while executing write task: ", e);
+                    Slimefun.logger()
+                            .log(
+                                    Level.SEVERE,
+                                    "[" + Thread.currentThread().getName()
+                                            + "] Exception thrown while executing write task: ",
+                                    e);
                 }
             };
             queuedTask.queue(key, task);
             scheduledWriteTasks.put(scopeToUse, queuedTask);
-            writeExecutor.submit(queuedTask);
+
+            if (serialWriteExecutor != null && key.getScope().isSerial()) {
+                serialWriteExecutor.submit(queuedTask);
+            } else {
+                writeExecutor.submit(queuedTask);
+            }
         } finally {
             lock.unlock(scopeKey);
         }
