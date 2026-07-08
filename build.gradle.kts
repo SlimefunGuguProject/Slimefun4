@@ -15,7 +15,7 @@ plugins {
 }
 
 group = "com.github.slimefun"
-version = resolveVersion()
+version = "2026.1"
 
 java {
     toolchain.languageVersion.set(JavaLanguageVersion.of(21))
