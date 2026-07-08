@@ -15,8 +15,13 @@ public class InventoryUtil {
             return;
         }
 
-        if (Bukkit.isPrimaryThread()) {
+        if (!Slimefun.isFolia() && Bukkit.isPrimaryThread()) {
             p.openInventory(inventory);
+            return;
+        }
+
+        if (Slimefun.isFolia()) {
+            Slimefun.getPlatformScheduler().runAtLocation(p.getLocation(), () -> p.openInventory(inventory));
         } else {
             Slimefun.runSync(() -> p.openInventory(inventory));
         }
