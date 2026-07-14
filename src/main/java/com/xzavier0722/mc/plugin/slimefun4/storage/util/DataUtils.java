@@ -5,68 +5,66 @@ import com.xzavier0722.mc.plugin.slimefun4.storage.controller.StorageType;
 import io.github.thebusybiscuit.slimefun4.core.debug.Debug;
 import io.github.thebusybiscuit.slimefun4.core.debug.TestCase;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.logging.Level;
 import javax.annotation.Nullable;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.util.io.BukkitObjectInputStream;
-import org.bukkit.util.io.BukkitObjectOutputStream;
 
 public class DataUtils {
     /**
-     * 使用 {@link BukkitObjectOutputStream} 序列化 {@link ItemStack}
-     * 为 Base64 字符串，用于数据库存储.
+     * 将 {@link ItemStack} 序列化为兼容旧 API 的 Base64 字符串。
      *
      * @param itemStack 要序列化的 {@link ItemStack}
-     * @return 序列化后的 Base64 字符串
+     * @return Base64 编码的物品数据
+     * @deprecated 请使用 {@link #serializeItemStackBytes(ItemStack)}，避免 Base64 带来的额外空间占用
      */
+    @Deprecated
     public static String serializeItemStack(ItemStack itemStack) {
+        var itemData = serializeItemStackBytes(itemStack);
+        return itemData.length == 0 ? "" : Base64.getEncoder().encodeToString(itemData);
+    }
+
+    public static byte[] serializeItemStackBytes(ItemStack itemStack) {
         Debug.log(TestCase.BACKPACK, "Serializing itemstack: " + itemStack);
 
         if (itemStack == null) {
-            return "";
+            return new byte[0];
         }
 
-        try (var stream = new ByteArrayOutputStream();
-                var bs = new BukkitObjectOutputStream(stream)) {
-            bs.writeObject(itemStack);
-            var itemStr = Base64.getEncoder().encodeToString(stream.toByteArray());
+        try {
+            var itemData = ItemStackDataCodec.serialize(itemStack);
 
             if (!Slimefun.getConfigManager().isBypassItemLengthCheck()
                     && Slimefun.getDatabaseManager().getBlockDataStorageType() == StorageType.MYSQL
-                    && itemStr.length() > 65535) {
+                    && itemData.length > 16_777_215) {
 
                 throw new IllegalArgumentException("检测到过大物品, 请联系物品对应插件开发者解决: " + StringUtil.itemStackToString(itemStack)
-                        + ", size = " + itemStr.length());
+                        + ", size = " + itemData.length);
             }
 
-            return itemStr;
+            return itemData;
         } catch (Throwable e) {
             Slimefun.logger().log(Level.SEVERE, "序列化物品时出现错误, 将存储空值", e);
-            return "";
+            return new byte[0];
         }
     }
 
     /**
-     * 使用 {@link BukkitObjectInputStream} 反序列化 Base64 字符串
-     * 为 {@link ItemStack} 对象.
+     * 反序列化数据库中的 {@link ItemStack}。支持当前原生二进制格式和旧版 Bukkit 对象流格式。
      *
-     * @param base64Str 要反序列化的 Base64 字符串
+     * @param itemData 要反序列化的二进制数据
      * @return 反序列化后的 {@link ItemStack} 对象
      */
-    @Nullable public static ItemStack deserializeItemStack(String base64Str) {
-        if (base64Str == null || base64Str.isEmpty() || base64Str.isBlank()) {
+    @Nullable public static ItemStack deserializeItemStack(byte[] itemData) {
+        if (itemData == null || itemData.length == 0) {
             return null;
         }
 
-        Debug.log(TestCase.BACKPACK, "Deserializing itemstack: " + base64Str);
+        Debug.log(TestCase.BACKPACK, "Deserializing itemstack: " + itemData.length + " bytes");
 
-        try (var stream = new ByteArrayInputStream(Base64.getMimeDecoder().decode(base64Str));
-                var bs = new BukkitObjectInputStream(stream)) {
-            var result = (ItemStack) bs.readObject();
+        try {
+            var result = ItemStackDataCodec.deserialize(itemData);
 
             Debug.log(TestCase.BACKPACK, "Deserialized itemstack: " + result);
 
@@ -78,6 +76,30 @@ public class DataUtils {
         } catch (Exception ex) {
             throw new RuntimeException("反序列化物品时出现错误, 对应物品无法显示", ex);
         }
+    }
+
+    /**
+     * 从兼容旧 API 的 Base64 字符串反序列化物品。
+     *
+     * @param base64Str Base64 编码的物品数据
+     * @return 反序列化后的物品
+     * @deprecated 请使用 {@link #deserializeItemStack(byte[])}
+     */
+    @Deprecated
+    @Nullable public static ItemStack deserializeItemStack(String base64Str) {
+        if (base64Str == null || base64Str.isBlank()) {
+            return null;
+        }
+
+        var encodedData = base64Str.getBytes(StandardCharsets.US_ASCII);
+        var decodedData = Base64.getMimeDecoder().decode(base64Str);
+        return deserializeItemStack(ItemStackDataCodec.isCurrent(decodedData) ? decodedData : encodedData);
+    }
+
+    public static boolean isLegacyItemStack(byte[] serializedItemStack) {
+        return serializedItemStack != null
+                && serializedItemStack.length > 0
+                && ItemStackDataCodec.isLegacy(serializedItemStack);
     }
 
     public static String blockDataBase64(String text) {

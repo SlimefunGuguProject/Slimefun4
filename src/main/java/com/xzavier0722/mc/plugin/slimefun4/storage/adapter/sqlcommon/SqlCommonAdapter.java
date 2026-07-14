@@ -14,6 +14,7 @@ import com.xzavier0722.mc.plugin.slimefun4.storage.common.RecordSet;
 import com.xzavier0722.mc.plugin.slimefun4.storage.patch.DatabasePatch;
 import com.xzavier0722.mc.plugin.slimefun4.storage.patch.DatabasePatchV1;
 import com.xzavier0722.mc.plugin.slimefun4.storage.patch.DatabasePatchV2;
+import com.xzavier0722.mc.plugin.slimefun4.storage.patch.DatabasePatchV3;
 import com.zaxxer.hikari.HikariDataSource;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import java.sql.SQLException;
@@ -138,6 +139,7 @@ public abstract class SqlCommonAdapter<T extends ISqlCommonConfig> implements ID
         switch (dbVer) {
             case 0 -> patch = new DatabasePatchV1();
             case 1 -> patch = new DatabasePatchV2();
+            case 2 -> patch = new DatabasePatchV3();
         }
 
         if (patch == null) {
@@ -147,8 +149,8 @@ public abstract class SqlCommonAdapter<T extends ISqlCommonConfig> implements ID
         try (var conn = ds.getConnection()) {
             Slimefun.logger().log(Level.INFO, "正在更新数据库版本至 " + patch.getVersion() + ", 可能需要一段时间...");
             var stmt = conn.createStatement();
-            patch.updateVersion(stmt, config);
             patch.patch(stmt, config);
+            patch.updateVersion(stmt, config);
             Slimefun.logger().log(Level.INFO, "更新完成. ");
 
             if (getDatabaseVersion() != IDataSourceAdapter.DATABASE_VERSION) {
