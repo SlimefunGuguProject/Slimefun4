@@ -24,7 +24,7 @@ Write focused JUnit Jupiter tests for behavior changes and regressions. Name tes
 
 ## Commit & Pull Request Guidelines
 
-Base contributions on `dev`. Commits must follow Conventional Commits, for example `feat(item): add new machine` or `fix(storage): preserve legacy data`. Accepted types include `feat`, `fix`, `docs`, `style`, `refactor`, `ci`, `chore`, `perf`, `build`, `test`, `revert`, and `trans`. Reference resolved issues with `Fixes #123`. PRs should complete the template’s summary and related-issues sections, remain narrowly scoped, and pass Spotless, build, unit, and end-to-end CI checks.
+Base contributions on `master`. Commits must follow Conventional Commits, for example `feat(item): add new machine` or `fix(storage): preserve legacy data`. Accepted types include `feat`, `fix`, `docs`, `style`, `refactor`, `ci`, `chore`, `perf`, `build`, `test`, `revert`, and `trans`. Reference resolved issues with `Fixes #123`. PRs should complete the template’s summary and related-issues sections, remain narrowly scoped, and pass Spotless, build, unit, and end-to-end CI checks.
 
 ## Security & Configuration
 
