@@ -72,7 +72,7 @@ public final class LegacyItemMetaDeserializer implements ConfigurationSerializab
             return;
         }
 
-        var profile = Bukkit.createPlayerProfile(legacyProfile.uniqueId(), legacyProfile.name());
+        var profile = Bukkit.createProfile(legacyProfile.uniqueId(), legacyProfile.name());
         for (var property : legacyProfile.properties()) {
             if (property.name().equals("textures")) {
                 restoreTextures(profile, property.value());

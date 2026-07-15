@@ -40,9 +40,6 @@ public class DatabasePatchV3 extends DatabasePatch {
         migrateTable(stmt, config, SqlUtils.mapTable(DataScope.BACKPACK_INVENTORY, prefix), FIELD_BACKPACK_ID);
         migrateTable(stmt, config, SqlUtils.mapTable(DataScope.BLOCK_INVENTORY, prefix), FIELD_LOCATION);
         migrateTable(stmt, config, SqlUtils.mapTable(DataScope.UNIVERSAL_INVENTORY, prefix), FIELD_UNIVERSAL_UUID);
-        if (config instanceof SqliteConfig) {
-            stmt.execute("VACUUM");
-        }
     }
 
     private void migrateTable(Statement stmt, ISqlCommonConfig config, String table, String ownerField)

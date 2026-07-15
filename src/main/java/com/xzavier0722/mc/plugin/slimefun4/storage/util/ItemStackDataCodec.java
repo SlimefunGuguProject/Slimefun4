@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Base64;
+import org.bukkit.Bukkit;
 import org.bukkit.configuration.serialization.ConfigurationSerialization;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.io.BukkitObjectInputStream;
@@ -23,11 +24,27 @@ public final class ItemStackDataCodec {
 
     public static ItemStack deserialize(byte[] itemData) throws Exception {
         if (isCurrent(itemData)) {
-            return ItemStack.deserializeBytes(Arrays.copyOfRange(itemData, FORMAT_V2.length, itemData.length));
+            return deserializeCurrent(Arrays.copyOfRange(itemData, FORMAT_V2.length, itemData.length));
         }
 
         var serializedObject = Base64.getMimeDecoder().decode(new String(itemData, StandardCharsets.US_ASCII));
         return deserializeLegacyWithCompatibility(serializedObject);
+    }
+
+    private static ItemStack deserializeCurrent(byte[] serializedItem) {
+        try {
+            return ItemStack.deserializeBytes(serializedItem);
+        } catch (RuntimeException primaryFailure) {
+            // Keep an explicit fallback through Paper's compatibility entry point. Paper's
+            // implementation currently delegates ItemStack#deserializeBytes to this method,
+            // but older/newer Paper implementations may provide different migration paths.
+            try {
+                return Bukkit.getUnsafe().deserializeItem(serializedItem);
+            } catch (RuntimeException fallbackFailure) {
+                primaryFailure.addSuppressed(fallbackFailure);
+                throw primaryFailure;
+            }
+        }
     }
 
     public static boolean isLegacy(byte[] itemData) {
