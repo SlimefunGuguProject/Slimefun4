@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.logging.Level;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -245,17 +246,24 @@ public class BackpackListener implements Listener {
         }
 
         /*
-         * If the current Player is already viewing a backpack (for whatever reason),
-         * terminate that view.
+         * Reject the request if the Player is already viewing a backpack or has
+         * a pending backpack load. Repeated open requests (e.g. sent in quick
+         * succession by modded clients) must never close the current view nor
+         * trigger parallel loads, as that can open a duplicate backpack instance
+         * with a stale snapshot and allow item duplication.
          */
-        if (backpacks.containsKey(p.getUniqueId())) {
-            p.closeInventory();
+        if (backpacks.containsKey(p.getUniqueId()) || !openingPlayers.add(p.getUniqueId())) {
+            return;
         }
-        openingPlayers.add(p.getUniqueId());
         PlayerBackpack.getAsync(item)
-                .thenAcceptAsync(
-                        bp -> {
+                .whenCompleteAsync(
+                        (bp, ex) -> {
                             openingPlayers.remove(p.getUniqueId());
+                            if (ex != null) {
+                                Slimefun.logger()
+                                        .log(Level.SEVERE, "An Exception occurred while opening a backpack", ex);
+                                return;
+                            }
                             // Check if the backpack item contains invalid backpack data
                             if (bp == null || bp.isInvalid()) {
                                 return;
