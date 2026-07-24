@@ -1,4 +1,4 @@
-# Slimefun Gugu — English Albion Fork
+# Slimefun Legacy — AlbionMC Fork (English)
 
 This repository is an English-player-facing downstream build of
 [`SlimefunGuguProject/Slimefun4`](https://github.com/SlimefunGuguProject/Slimefun4).
