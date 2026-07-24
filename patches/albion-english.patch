@@ -1,5 +1,5 @@
 diff --git a/build.gradle.kts b/build.gradle.kts
-index 793e531..5bc0b3b 100644
+index 793e531..f93107b 100644
 --- a/build.gradle.kts
 +++ b/build.gradle.kts
 @@ -18,7 +18,9 @@ group = "com.github.slimefun"
@@ -13,13 +13,11 @@ index 793e531..5bc0b3b 100644
      withSourcesJar()
  }
  
-@@ -50,6 +52,9 @@ dependencies {
+@@ -50,6 +52,7 @@ dependencies {
  
      compileOnly(libs.log4j.core)
      testImplementation(libs.junit.jupiter)
-+    testImplementation(libs.mockbukkit) {
-+        exclude(group = "org.jetbrains", module = "annotations")
-+    }
++    testImplementation(libs.mockbukkit)
      testRuntimeOnly(libs.junit.platform.launcher)
  
      implementation(libs.dough.api)

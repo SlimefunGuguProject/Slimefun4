@@ -52,9 +52,7 @@ dependencies {
 
     compileOnly(libs.log4j.core)
     testImplementation(libs.junit.jupiter)
-    testImplementation(libs.mockbukkit) {
-        exclude(group = "org.jetbrains", module = "annotations")
-    }
+    testImplementation(libs.mockbukkit)
     testRuntimeOnly(libs.junit.platform.launcher)
 
     implementation(libs.dough.api)
