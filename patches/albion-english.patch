@@ -1,5 +1,5 @@
 diff --git a/build.gradle.kts b/build.gradle.kts
-index 793e531..f93107b 100644
+index 793e531..9cc4e5a 100644
 --- a/build.gradle.kts
 +++ b/build.gradle.kts
 @@ -18,7 +18,9 @@ group = "com.github.slimefun"
@@ -13,11 +13,13 @@ index 793e531..f93107b 100644
      withSourcesJar()
  }
  
-@@ -50,6 +52,7 @@ dependencies {
+@@ -50,6 +52,9 @@ dependencies {
  
      compileOnly(libs.log4j.core)
      testImplementation(libs.junit.jupiter)
 +    testImplementation(libs.mockbukkit)
++    // Paper API signatures reference these annotations during test compilation.
++    testImplementation("org.jetbrains:annotations:26.1.0")
      testRuntimeOnly(libs.junit.platform.launcher)
  
      implementation(libs.dough.api)
@@ -684,7 +686,7 @@ index 7a49c9f..21d1d61 100644
                  blockData.getAllData().forEach((k, v) -> stream.println("    " + k + ": " + v));
              }
              stream.println();
-diff --git b/src/main/java/io/github/thebusybiscuit/slimefun4/api/events/RadiationDamageEvent.java b/src/main/java/io/github/thebusybiscuit/slimefun4/api/events/RadiationDamageEvent.java
+diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/api/events/RadiationDamageEvent.java b/src/main/java/io/github/thebusybiscuit/slimefun4/api/events/RadiationDamageEvent.java
 new file mode 100644
 index 0000000..d4b24f8
 --- /dev/null
@@ -7969,7 +7971,7 @@ index ab9f474..6bea563 100644
    maxConnection: 10
  #########################################################################
 \ No newline at end of file
-diff --git b/src/test/java/io/github/thebusybiscuit/slimefun4/api/player/TestBackpackIdentityHardening.java b/src/test/java/io/github/thebusybiscuit/slimefun4/api/player/TestBackpackIdentityHardening.java
+diff --git a/src/test/java/io/github/thebusybiscuit/slimefun4/api/player/TestBackpackIdentityHardening.java b/src/test/java/io/github/thebusybiscuit/slimefun4/api/player/TestBackpackIdentityHardening.java
 new file mode 100644
 index 0000000..0b7fbe8
 --- /dev/null
@@ -8026,7 +8028,7 @@ index 0000000..0b7fbe8
 +        Assertions.assertFalse(PlayerBackpack.getBackpackID(meta).isPresent());
 +    }
 +}
-diff --git b/src/test/java/io/github/thebusybiscuit/slimefun4/core/services/profiler/TestProfilerQueueRecovery.java b/src/test/java/io/github/thebusybiscuit/slimefun4/core/services/profiler/TestProfilerQueueRecovery.java
+diff --git a/src/test/java/io/github/thebusybiscuit/slimefun4/core/services/profiler/TestProfilerQueueRecovery.java b/src/test/java/io/github/thebusybiscuit/slimefun4/core/services/profiler/TestProfilerQueueRecovery.java
 new file mode 100644
 index 0000000..4f75290
 --- /dev/null
@@ -8059,7 +8061,7 @@ index 0000000..4f75290
 +        }
 +    }
 +}
-diff --git b/src/test/java/io/github/thebusybiscuit/slimefun4/implementation/tasks/TestViewedInventoryGuard.java b/src/test/java/io/github/thebusybiscuit/slimefun4/implementation/tasks/TestViewedInventoryGuard.java
+diff --git a/src/test/java/io/github/thebusybiscuit/slimefun4/implementation/tasks/TestViewedInventoryGuard.java b/src/test/java/io/github/thebusybiscuit/slimefun4/implementation/tasks/TestViewedInventoryGuard.java
 new file mode 100644
 index 0000000..7028bb3
 --- /dev/null
@@ -8109,7 +8111,7 @@ index 0000000..7028bb3
 +        Assertions.assertFalse(tickerTask.isInventoryViewed(viewed));
 +    }
 +}
-diff --git b/src/test/java/io/github/thebusybiscuit/slimefun4/utils/TestDistinctiveItemComparison.java b/src/test/java/io/github/thebusybiscuit/slimefun4/utils/TestDistinctiveItemComparison.java
+diff --git a/src/test/java/io/github/thebusybiscuit/slimefun4/utils/TestDistinctiveItemComparison.java b/src/test/java/io/github/thebusybiscuit/slimefun4/utils/TestDistinctiveItemComparison.java
 new file mode 100644
 index 0000000..aac792a
 --- /dev/null
@@ -8169,7 +8171,7 @@ index 0000000..aac792a
 +        return item;
 +    }
 +}
-diff --git b/src/test/java/me/mrCookieSlime/CSCoreLibPlugin/general/Inventory/TestMenuListenerSecurityGuards.java b/src/test/java/me/mrCookieSlime/CSCoreLibPlugin/general/Inventory/TestMenuListenerSecurityGuards.java
+diff --git a/src/test/java/me/mrCookieSlime/CSCoreLibPlugin/general/Inventory/TestMenuListenerSecurityGuards.java b/src/test/java/me/mrCookieSlime/CSCoreLibPlugin/general/Inventory/TestMenuListenerSecurityGuards.java
 new file mode 100644
 index 0000000..b9b3ce6
 --- /dev/null

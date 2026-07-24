@@ -53,6 +53,8 @@ dependencies {
     compileOnly(libs.log4j.core)
     testImplementation(libs.junit.jupiter)
     testImplementation(libs.mockbukkit)
+    // Paper API signatures reference these annotations during test compilation.
+    testImplementation("org.jetbrains:annotations:26.1.0")
     testRuntimeOnly(libs.junit.platform.launcher)
 
     implementation(libs.dough.api)
