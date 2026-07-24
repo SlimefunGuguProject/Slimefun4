@@ -16,14 +16,27 @@ fi
 WORK_DIR="$(mktemp -d)"
 trap 'rm -rf "$WORK_DIR"' EXIT
 mkdir -p "$WORK_DIR/a" "$WORK_DIR/b"
-cp -a "$UPSTREAM_DIR/src" "$WORK_DIR/a/src"
-cp -a "$ROOT_DIR/src" "$WORK_DIR/b/src"
+
+# Keep source, tests, and the small set of Albion build customizations in the
+# maintained patch. The upstream sync replaces build.gradle.kts and gradle/, so
+# these files must be reapplied alongside the English/runtime source changes.
+for path in src build.gradle.kts gradle/libs.versions.toml; do
+  if [[ -e "$UPSTREAM_DIR/$path" ]]; then
+    mkdir -p "$WORK_DIR/a/$(dirname "$path")"
+    cp -a "$UPSTREAM_DIR/$path" "$WORK_DIR/a/$path"
+  fi
+
+  if [[ -e "$ROOT_DIR/$path" ]]; then
+    mkdir -p "$WORK_DIR/b/$(dirname "$path")"
+    cp -a "$ROOT_DIR/$path" "$WORK_DIR/b/$path"
+  fi
+done
 
 mkdir -p "$(dirname "$OUTPUT")"
 cd "$WORK_DIR"
 # git diff returns 1 when differences are found, which is expected here.
 set +e
-git diff --no-index --binary --src-prefix= --dst-prefix= a/src b/src > "$OUTPUT"
+git diff --no-index --binary --src-prefix= --dst-prefix= a b > "$OUTPUT"
 STATUS=$?
 set -e
 

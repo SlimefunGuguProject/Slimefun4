@@ -86,10 +86,14 @@ public class SlimefunBackpack extends SimpleSlimefunItem<ItemUseHandler> impleme
 
     @Override
     public boolean canStack(@Nonnull ItemMeta itemMetaOne, @Nonnull ItemMeta itemMetaTwo) {
-        var uuid1 = PlayerBackpack.getBackpackUUID(itemMetaOne);
-        var uuid2 = PlayerBackpack.getBackpackUUID(itemMetaTwo);
-        if (uuid1.isPresent() || uuid2.isPresent()) {
-            return uuid1.equals(uuid2);
+        /*
+         * Bound backpacks are unique containers and must never merge into a
+         * stack, even if two duplicated item representations happen to carry
+         * the same identity. Only fresh, unbound backpack items may stack.
+         */
+        if (PlayerBackpack.hasBackpackIdentity(itemMetaOne)
+                || PlayerBackpack.hasBackpackIdentity(itemMetaTwo)) {
+            return false;
         }
 
         boolean hasLoreItem = itemMetaTwo.hasLore();

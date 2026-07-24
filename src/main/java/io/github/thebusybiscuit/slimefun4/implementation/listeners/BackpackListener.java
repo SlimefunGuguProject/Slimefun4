@@ -268,6 +268,11 @@ public class BackpackListener implements Listener {
                             if (bp == null || bp.isInvalid()) {
                                 return;
                             }
+
+                            // Upgrade legacy visible backpack IDs to the current PDC
+                            // identity while we are safely back on the main thread.
+                            PlayerBackpack.migrateLegacyItem(item, bp);
+
                             // Check if someone else is currently viewing this backpack
                             if (backpacks.containsValue(bp.getUniqueId())
                                     || !bp.getInventory().getViewers().isEmpty()) {

@@ -7,6 +7,7 @@ import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import java.util.logging.Level;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
@@ -89,6 +90,24 @@ public class BlockMenu extends DirtyChestMenu {
      */
     public void reload() {
         this.preset.clone(this);
+    }
+
+    @Override
+    public void open(Player... players) {
+        if (locked() || players.length == 0) {
+            return;
+        }
+
+        // Mark before Bukkit exposes the inventory to the player so an async
+        // ticker cannot slip into the small window during menu opening.
+        Slimefun.getTickerTask().setInventoryViewed(location, true);
+        try {
+            super.open(players);
+        } finally {
+            if (!hasViewer()) {
+                Slimefun.getTickerTask().setInventoryViewed(location, false);
+            }
+        }
     }
 
     public Block getBlock() {

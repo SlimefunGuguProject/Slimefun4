@@ -341,8 +341,14 @@ public final class SlimefunUtils {
                  * Some items can't rely on just IDs matching and will implement Distinctive Item
                  * in which case we want to use the method provided to compare
                  */
-                if (stackOne instanceof DistinctiveItem && stackTwo instanceof DistinctiveItem distinctiveItem) {
-                    return distinctiveItem.canStack(stackOne.getItemMeta(), stackTwo.getItemMeta());
+                Optional<DistinctiveItem> optionalDistinctive = getDistinctiveItem(stackOne.getItemId());
+                if (optionalDistinctive.isPresent()) {
+                    /*
+                     * Compare the actual stacks passed to this method. Comparing
+                     * shared Slimefun item templates makes two distinct instances
+                     * (such as different backpacks) appear identical.
+                     */
+                    return compareDistinctiveStacks(optionalDistinctive.get(), sfitem, item);
                 }
                 return true;
             }
@@ -421,6 +427,11 @@ public final class SlimefunUtils {
             return Optional.of(distinctiveItem);
         }
         return Optional.empty();
+    }
+
+    static boolean compareDistinctiveStacks(
+            @Nonnull DistinctiveItem distinctiveItem, @Nonnull ItemStack first, @Nonnull ItemStack second) {
+        return distinctiveItem.canStack(first.getItemMeta(), second.getItemMeta());
     }
 
     private static boolean equalsItemMeta(

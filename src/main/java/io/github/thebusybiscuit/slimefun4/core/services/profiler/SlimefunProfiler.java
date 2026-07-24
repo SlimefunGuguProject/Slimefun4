@@ -145,6 +145,20 @@ public class SlimefunProfiler {
     }
 
     /**
+     * Cancels one profiler entry that was scheduled or opened but could not be
+     * completed, for example when a ticker's {@code update()} method throws.
+     * Keeping this count accurate prevents profiler reports from waiting until
+     * timeout for a sample that will never arrive.
+     */
+    public void cancelScheduledEntry() {
+        queued.updateAndGet(value -> Math.max(0, value - 1));
+    }
+
+    int getQueuedEntries() {
+        return queued.get();
+    }
+
+    /**
      * This method closes a previously started entry.
      * Make sure to call {@link #newEntry()} to get the timestamp in advance.
      *

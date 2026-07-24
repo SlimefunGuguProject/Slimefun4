@@ -1,3 +1,48 @@
+diff --git a/build.gradle.kts b/build.gradle.kts
+index 793e531..5bc0b3b 100644
+--- a/build.gradle.kts
++++ b/build.gradle.kts
+@@ -18,7 +18,9 @@ group = "com.github.slimefun"
+ version = resolveVersion()
+ 
+ java {
+-    toolchain.languageVersion.set(JavaLanguageVersion.of(21))
++    // Build on Java 25 for Paper/MockBukkit 26.x compatibility while still
++    // emitting Java 21 bytecode for existing addon/server deployments.
++    toolchain.languageVersion.set(JavaLanguageVersion.of(25))
+     withSourcesJar()
+ }
+ 
+@@ -50,6 +52,9 @@ dependencies {
+ 
+     compileOnly(libs.log4j.core)
+     testImplementation(libs.junit.jupiter)
++    testImplementation(libs.mockbukkit) {
++        exclude(group = "org.jetbrains", module = "annotations")
++    }
+     testRuntimeOnly(libs.junit.platform.launcher)
+ 
+     implementation(libs.dough.api)
+diff --git a/gradle/libs.versions.toml b/gradle/libs.versions.toml
+index b5dd35c..fb824e8 100644
+--- a/gradle/libs.versions.toml
++++ b/gradle/libs.versions.toml
+@@ -5,6 +5,7 @@ gitProperties = "2.5.7"
+ junit = "5.12.2"
+ junitPlatform = "1.12.2"
+ lombok = "1.18.44"
++mockbukkit = "4.110.0"
+ 
+ [libraries]
+ paper-api = { module = "io.papermc.paper:paper-api", version = "1.21.11-R0.1-SNAPSHOT" }
+@@ -13,6 +14,7 @@ lombok = { module = "org.projectlombok:lombok", version.ref = "lombok" }
+ log4j-core = { module = "org.apache.logging.log4j:log4j-core", version = "2.24.1" }
+ junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit" }
+ junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher", version.ref = "junitPlatform" }
++mockbukkit = { module = "org.mockbukkit.mockbukkit:mockbukkit-v1.21", version.ref = "mockbukkit" }
+ dough-api = { module = "io.github.baked-libs:dough-api", version = "1.3.1-SNAPSHOT" }
+ unirest-java = { module = "com.konghq:unirest-java", version = "3.14.5" }
+ hikaricp = { module = "com.zaxxer:HikariCP", version = "5.1.0" }
 diff --git a/src/main/java/city/norain/slimefun4/EnvironmentChecker.java b/src/main/java/city/norain/slimefun4/EnvironmentChecker.java
 index 07ce7af..b487877 100644
 --- a/src/main/java/city/norain/slimefun4/EnvironmentChecker.java
@@ -885,19 +930,322 @@ index 62bac55..a7eebd4 100644
          }
          if (addon.getWikiURL() != null) {
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/api/player/PlayerBackpack.java b/src/main/java/io/github/thebusybiscuit/slimefun4/api/player/PlayerBackpack.java
-index 43e6844..f496099 100644
+index 43e6844..de05f89 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/api/player/PlayerBackpack.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/api/player/PlayerBackpack.java
-@@ -41,7 +41,7 @@ import org.bukkit.persistence.PersistentDataType;
+@@ -9,6 +9,8 @@ import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
+ import io.github.thebusybiscuit.slimefun4.implementation.items.backpacks.SlimefunBackpack;
+ import io.github.thebusybiscuit.slimefun4.implementation.listeners.BackpackListener;
+ import io.github.thebusybiscuit.slimefun4.utils.ThreadUtils;
++import java.util.ArrayList;
++import java.util.List;
+ import java.util.Optional;
+ import java.util.OptionalInt;
+ import java.util.UUID;
+@@ -41,10 +43,11 @@ import org.bukkit.persistence.PersistentDataType;
   * @see BackpackListener
   */
  public class PlayerBackpack extends SlimefunInventoryHolder {
 -    public static final String LORE_OWNER = "&7所有者: ";
 +    public static final String LORE_OWNER = "&7Owner: ";
      private static final String COLORED_LORE_OWNER = ChatColors.color(LORE_OWNER);
-     private static final NamespacedKey KEY_BACKPACK_UUID = new NamespacedKey(Slimefun.instance(), "B_UUID");
-     private static final NamespacedKey KEY_OWNER_UUID = new NamespacedKey(Slimefun.instance(), "OWNER_UUID");
-@@ -366,7 +366,7 @@ public class PlayerBackpack extends SlimefunInventoryHolder {
+-    private static final NamespacedKey KEY_BACKPACK_UUID = new NamespacedKey(Slimefun.instance(), "B_UUID");
+-    private static final NamespacedKey KEY_OWNER_UUID = new NamespacedKey(Slimefun.instance(), "OWNER_UUID");
++    private static final String COLORED_LORE_ID = ChatColors.color("&7ID: ");
++    private static NamespacedKey backpackUuidKey;
++    private static NamespacedKey ownerUuidKey;
+     private final OfflinePlayer owner;
+     private final UUID uuid;
+     private final int id;
+@@ -58,7 +61,7 @@ public class PlayerBackpack extends SlimefunInventoryHolder {
+     private InvSnapshot snapshot;
+ 
+     public static void getAsync(ItemStack item, Consumer<PlayerBackpack> callback, boolean runCbOnMainThread) {
+-        if (item == null || !item.hasItemMeta() || !item.getItemMeta().hasLore()) {
++        if (item == null || !item.hasItemMeta()) {
+             return;
+         }
+         Executor executor = runCbOnMainThread
+@@ -72,6 +75,9 @@ public class PlayerBackpack extends SlimefunInventoryHolder {
+                     .thenAcceptAsync(
+                             (result) -> {
+                                 if (result != null) {
++                                    if (runCbOnMainThread) {
++                                        migrateLegacyItem(item, result);
++                                    }
+                                     callback.accept(result);
+                                 }
+                             },
+@@ -80,32 +86,18 @@ public class PlayerBackpack extends SlimefunInventoryHolder {
+         }
+ 
+         // Old backpack item
+-        OptionalInt id = OptionalInt.empty();
+-        String uuid = "";
+-        for (String line : item.getItemMeta().getLore()) {
+-            if (line.startsWith(ChatColors.color("&7ID: ")) && line.indexOf('#') != -1) {
+-                String[] splitLine = CommonPatterns.HASH.split(line);
+-
+-                if (CommonPatterns.NUMERIC.matcher(splitLine[1]).matches()) {
+-                    uuid = splitLine[0].replace(ChatColors.color("&7ID: "), "");
+-                    id = OptionalInt.of(Integer.parseInt(splitLine[1]));
+-                }
+-            }
+-        }
+-
+-        if (id.isPresent()) {
+-            int number = id.getAsInt();
++        Optional<LegacyBackpackReference> legacyReference = getLegacyBackpackReference(item.getItemMeta());
++        if (legacyReference.isPresent()) {
++            LegacyBackpackReference reference = legacyReference.get();
+             Slimefun.getDatabaseManager()
+                     .getProfileDataController()
+-                    .getBackpackAsync(Bukkit.getOfflinePlayer(UUID.fromString(uuid)), number)
++                    .getBackpackAsync(Bukkit.getOfflinePlayer(reference.owner()), reference.id())
+                     .thenAcceptAsync(
+                             (result) -> {
+                                 if (result != null) {
+-                                    var meta = item.getItemMeta();
+-                                    meta.getPersistentDataContainer()
+-                                            .set(KEY_BACKPACK_UUID, PersistentDataType.STRING, result.uuid.toString());
+-                                    item.setItemMeta(meta);
+-                                    // TODO: upgrade lore
++                                    if (runCbOnMainThread) {
++                                        migrateLegacyItem(item, result);
++                                    }
+                                     callback.accept(result);
+                                 }
+                             },
+@@ -114,7 +106,7 @@ public class PlayerBackpack extends SlimefunInventoryHolder {
+     }
+ 
+     public static CompletableFuture<PlayerBackpack> getAsync(ItemStack item) {
+-        if (item == null || !item.hasItemMeta() || !item.getItemMeta().hasLore()) {
++        if (item == null || !item.hasItemMeta()) {
+             return CompletableFuture.completedFuture(null);
+         }
+ 
+@@ -124,25 +116,12 @@ public class PlayerBackpack extends SlimefunInventoryHolder {
+         }
+ 
+         // Old backpack item
+-        OptionalInt id = OptionalInt.empty();
+-        String uuid = "";
+-
+-        for (String line : item.getItemMeta().getLore()) {
+-            if (line.startsWith(ChatColors.color("&7ID: ")) && line.indexOf('#') != -1) {
+-                String[] splitLine = CommonPatterns.HASH.split(line);
+-
+-                if (CommonPatterns.NUMERIC.matcher(splitLine[1]).matches()) {
+-                    uuid = splitLine[0].replace(ChatColors.color("&7ID: "), "");
+-                    id = OptionalInt.of(Integer.parseInt(splitLine[1]));
+-                }
+-            }
+-        }
+-
+-        if (id.isPresent()) {
+-            int number = id.getAsInt();
++        Optional<LegacyBackpackReference> legacyReference = getLegacyBackpackReference(item.getItemMeta());
++        if (legacyReference.isPresent()) {
++            LegacyBackpackReference reference = legacyReference.get();
+             return Slimefun.getDatabaseManager()
+                     .getProfileDataController()
+-                    .getBackpackAsync(Bukkit.getOfflinePlayer(UUID.fromString(uuid)), number);
++                    .getBackpackAsync(Bukkit.getOfflinePlayer(reference.owner()), reference.id());
+         }
+         return CompletableFuture.completedFuture(null);
+     }
+@@ -151,33 +130,36 @@ public class PlayerBackpack extends SlimefunInventoryHolder {
+         if (meta == null) {
+             return Optional.empty();
+         }
+-        return Optional.ofNullable(meta.getPersistentDataContainer().get(KEY_BACKPACK_UUID, PersistentDataType.STRING));
++        return Optional.ofNullable(
++                meta.getPersistentDataContainer().get(getBackpackUuidKey(), PersistentDataType.STRING));
+     }
+ 
+     public static Optional<String> getOwnerUUID(ItemMeta meta) {
+         if (meta == null) {
+             return Optional.empty();
+         }
+-        return Optional.ofNullable(meta.getPersistentDataContainer().get(KEY_OWNER_UUID, PersistentDataType.STRING));
++        return Optional.ofNullable(meta.getPersistentDataContainer().get(getOwnerUuidKey(), PersistentDataType.STRING));
+     }
+ 
+     public static OptionalInt getBackpackID(ItemMeta meta) {
+-        if (meta == null) {
++        if (meta == null || !meta.hasLore()) {
+             return OptionalInt.empty();
+         }
+ 
+-        for (String line : meta.getLore()) {
+-            if (line.startsWith(ChatColors.color("&7ID: ")) && line.contains("#")) {
+-                try {
+-                    return OptionalInt.of(Integer.parseInt(
+-                            CommonPatterns.HASH.split(line.replace(ChatColors.color("&7ID: "), ""))[1]));
+-                } catch (NumberFormatException e) {
+-                    e.printStackTrace();
+-                }
+-            }
++        return getLegacyBackpackReference(meta).map(reference -> OptionalInt.of(reference.id()))
++                .orElseGet(OptionalInt::empty);
++    }
++
++    /**
++     * Returns whether this item metadata belongs to an already-bound backpack.
++     * Both the current PDC identity and the legacy visible ID lore are recognized.
++     */
++    public static boolean hasBackpackIdentity(@Nullable ItemMeta meta) {
++        if (getLegacyBackpackReference(meta).isPresent()) {
++            return true;
+         }
+ 
+-        return OptionalInt.empty();
++        return meta != null && Slimefun.instance() != null && getBackpackUUID(meta).isPresent();
+     }
+ 
+     public static void setItemPdc(ItemStack item, String bpUuid, String ownerUuid) {
+@@ -189,10 +171,35 @@ public class PlayerBackpack extends SlimefunInventoryHolder {
+     public static void bindItem(ItemStack item, PlayerBackpack bp) {
+         var meta = item.getItemMeta();
+         setPdc(meta, bp.uuid.toString(), bp.owner.getUniqueId().toString());
++        removeLegacyIdLore(meta);
+         setItem(meta, bp);
+         item.setItemMeta(meta);
+     }
+ 
++    /**
++     * Migrates a resolved legacy backpack item to the current persistent identity
++     * format and removes the old visible ID lore only after the PDC values can be
++     * read back successfully.
++     */
++    public static void migrateLegacyItem(ItemStack item, PlayerBackpack bp) {
++        if (item == null || bp == null || !item.hasItemMeta()) {
++            return;
++        }
++
++        ItemMeta meta = item.getItemMeta();
++        setPdc(meta, bp.uuid.toString(), bp.owner.getUniqueId().toString());
++
++        var pdc = meta.getPersistentDataContainer();
++        String storedBackpackUuid = pdc.get(getBackpackUuidKey(), PersistentDataType.STRING);
++        String storedOwnerUuid = pdc.get(getOwnerUuidKey(), PersistentDataType.STRING);
++        if (bp.uuid.toString().equals(storedBackpackUuid)
++                && bp.owner.getUniqueId().toString().equals(storedOwnerUuid)) {
++            removeLegacyIdLore(meta);
++        }
++
++        item.setItemMeta(meta);
++    }
++
+     public static void setItemDisplayInfo(ItemStack item, PlayerBackpack bp) {
+         var meta = item.getItemMeta();
+         setItem(meta, bp);
+@@ -204,24 +211,52 @@ public class PlayerBackpack extends SlimefunInventoryHolder {
+             return true;
+         }
+         var ownerUuid = PlayerBackpack.getOwnerUUID(meta);
+-        return ownerUuid.isEmpty() || Bukkit.getPlayer(UUID.fromString(ownerUuid.get())) != null;
++        if (ownerUuid.isEmpty()) {
++            return true;
++        }
++
++        try {
++            return Bukkit.getPlayer(UUID.fromString(ownerUuid.get())) != null;
++        } catch (IllegalArgumentException ignored) {
++            return false;
++        }
+     }
+ 
+     private static void setPdc(ItemMeta meta, String bpUuid, String ownerUuid) {
+         var pdc = meta.getPersistentDataContainer();
+-        pdc.set(PlayerBackpack.KEY_BACKPACK_UUID, PersistentDataType.STRING, bpUuid);
+-        pdc.set(PlayerBackpack.KEY_OWNER_UUID, PersistentDataType.STRING, ownerUuid);
++        pdc.set(getBackpackUuidKey(), PersistentDataType.STRING, bpUuid);
++        pdc.set(getOwnerUuidKey(), PersistentDataType.STRING, ownerUuid);
++    }
++
++    private static NamespacedKey getBackpackUuidKey() {
++        if (backpackUuidKey == null) {
++            backpackUuidKey = new NamespacedKey(Slimefun.instance(), "B_UUID");
++        }
++        return backpackUuidKey;
++    }
++
++    private static NamespacedKey getOwnerUuidKey() {
++        if (ownerUuidKey == null) {
++            ownerUuidKey = new NamespacedKey(Slimefun.instance(), "OWNER_UUID");
++        }
++        return ownerUuidKey;
+     }
+ 
+     private static void setItem(ItemMeta meta, PlayerBackpack bp) {
+-        var lore = meta.getLore();
++        List<String> lore = meta.hasLore() ? new ArrayList<>(meta.getLore()) : new ArrayList<>();
++        boolean ownerLineFound = false;
+         for (var i = 0; i < lore.size(); i++) {
+             var line = lore.get(i);
+-            if (COLORED_LORE_OWNER.equals(line)) {
++            if (line != null && line.startsWith(COLORED_LORE_OWNER)) {
+                 lore.set(i, COLORED_LORE_OWNER + bp.getOwner().getName());
++                ownerLineFound = true;
+                 break;
+             }
+         }
++
++        if (!ownerLineFound) {
++            lore.add(COLORED_LORE_OWNER + bp.getOwner().getName());
++        }
+         meta.setLore(lore);
+ 
+         if (bp.name.isEmpty() || bp.name.isBlank()) {
+@@ -230,6 +265,45 @@ public class PlayerBackpack extends SlimefunInventoryHolder {
+         meta.setDisplayName(ChatColors.color(bp.name));
+     }
+ 
++    private static Optional<LegacyBackpackReference> getLegacyBackpackReference(@Nullable ItemMeta meta) {
++        if (meta == null || !meta.hasLore()) {
++            return Optional.empty();
++        }
++
++        for (String line : meta.getLore()) {
++            if (line == null || !line.startsWith(COLORED_LORE_ID) || line.indexOf('#') == -1) {
++                continue;
++            }
++
++            String identity = line.substring(COLORED_LORE_ID.length());
++            String[] splitLine = CommonPatterns.HASH.split(identity, 2);
++            if (splitLine.length != 2 || !CommonPatterns.NUMERIC.matcher(splitLine[1]).matches()) {
++                continue;
++            }
++
++            try {
++                return Optional.of(new LegacyBackpackReference(
++                        UUID.fromString(splitLine[0]), Integer.parseInt(splitLine[1])));
++            } catch (IllegalArgumentException ignored) {
++                // Malformed legacy identity - keep searching in case another valid line exists.
++            }
++        }
++
++        return Optional.empty();
++    }
++
++    private static void removeLegacyIdLore(ItemMeta meta) {
++        if (meta == null || !meta.hasLore()) {
++            return;
++        }
++
++        List<String> lore = new ArrayList<>(meta.getLore());
++        lore.removeIf(line -> line != null && line.startsWith(COLORED_LORE_ID));
++        meta.setLore(lore.isEmpty() ? null : lore);
++    }
++
++    private record LegacyBackpackReference(UUID owner, int id) {}
++
+     @ParametersAreNonnullByDefault
+     public PlayerBackpack(
+             OfflinePlayer owner, UUID uuid, String name, int id, int size, @Nullable ItemStack[] contents) {
+@@ -366,7 +440,7 @@ public class PlayerBackpack extends SlimefunInventoryHolder {
       */
      private Inventory newInv() {
          return Bukkit.createInventory(
@@ -1684,10 +2032,31 @@ index ac1444b..11854d0 100644
              StringBuilder builder = new StringBuilder();
  
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/core/services/profiler/SlimefunProfiler.java b/src/main/java/io/github/thebusybiscuit/slimefun4/core/services/profiler/SlimefunProfiler.java
-index cdeeb8c..27edcbf 100644
+index cdeeb8c..81f8e1b 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/core/services/profiler/SlimefunProfiler.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/core/services/profiler/SlimefunProfiler.java
-@@ -460,7 +460,7 @@ public class SlimefunProfiler {
+@@ -144,6 +144,20 @@ public class SlimefunProfiler {
+         }
+     }
+ 
++    /**
++     * Cancels one profiler entry that was scheduled or opened but could not be
++     * completed, for example when a ticker's {@code update()} method throws.
++     * Keeping this count accurate prevents profiler reports from waiting until
++     * timeout for a sample that will never arrive.
++     */
++    public void cancelScheduledEntry() {
++        queued.updateAndGet(value -> Math.max(0, value - 1));
++    }
++
++    int getQueuedEntries() {
++        return queued.get();
++    }
++
+     /**
+      * This method closes a previously started entry.
+      * Make sure to call {@link #newEntry()} to get the timestamp in advance.
+@@ -460,7 +474,7 @@ public class SlimefunProfiler {
  
      public String getThreadPoolStatus() {
          StringBuilder sb = new StringBuilder();
@@ -5505,6 +5874,29 @@ index 0fefd8e..18e8bcf 100644
                  return 0;
              }
  
+diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/backpacks/SlimefunBackpack.java b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/backpacks/SlimefunBackpack.java
+index 14acaf9..eb96a36 100644
+--- a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/backpacks/SlimefunBackpack.java
++++ b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/backpacks/SlimefunBackpack.java
+@@ -86,10 +86,14 @@ public class SlimefunBackpack extends SimpleSlimefunItem<ItemUseHandler> impleme
+ 
+     @Override
+     public boolean canStack(@Nonnull ItemMeta itemMetaOne, @Nonnull ItemMeta itemMetaTwo) {
+-        var uuid1 = PlayerBackpack.getBackpackUUID(itemMetaOne);
+-        var uuid2 = PlayerBackpack.getBackpackUUID(itemMetaTwo);
+-        if (uuid1.isPresent() || uuid2.isPresent()) {
+-            return uuid1.equals(uuid2);
++        /*
++         * Bound backpacks are unique containers and must never merge into a
++         * stack, even if two duplicated item representations happen to carry
++         * the same identity. Only fresh, unbound backpack items may stack.
++         */
++        if (PlayerBackpack.hasBackpackIdentity(itemMetaOne)
++                || PlayerBackpack.hasBackpackIdentity(itemMetaTwo)) {
++            return false;
+         }
+ 
+         boolean hasLoreItem = itemMetaTwo.hasLore();
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/blocks/AbstractMonsterSpawner.java b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/blocks/AbstractMonsterSpawner.java
 index 162da26..e7209db 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/blocks/AbstractMonsterSpawner.java
@@ -6407,6 +6799,22 @@ index 81ffd06..0ee779d 100644
              InventoryUtil.openInventory(p, dustbin);
              SoundEffect.PORTABLE_DUSTBIN_OPEN_SOUND.playFor(p);
          };
+diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/listeners/BackpackListener.java b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/listeners/BackpackListener.java
+index abc311d..b483c8e 100644
+--- a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/listeners/BackpackListener.java
++++ b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/listeners/BackpackListener.java
+@@ -268,6 +268,11 @@ public class BackpackListener implements Listener {
+                             if (bp == null || bp.isInvalid()) {
+                                 return;
+                             }
++
++                            // Upgrade legacy visible backpack IDs to the current PDC
++                            // identity while we are safely back on the main thread.
++                            PlayerBackpack.migrateLegacyItem(item, bp);
++
+                             // Check if someone else is currently viewing this backpack
+                             if (backpacks.containsValue(bp.getUniqueId())
+                                     || !bp.getInventory().getViewers().isEmpty()) {
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/listeners/DebugFishListener.java b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/listeners/DebugFishListener.java
 index 2ff7567..93ffb98 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/listeners/DebugFishListener.java
@@ -6567,10 +6975,126 @@ index f112f02..49cf2fa 100644
                              null,
                              null,
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/tasks/TickerTask.java b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/tasks/TickerTask.java
-index 3638beb..f3cbef3 100644
+index 3638beb..694765b 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/tasks/TickerTask.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/tasks/TickerTask.java
-@@ -260,9 +260,9 @@ public class TickerTask implements Runnable {
+@@ -52,6 +52,13 @@ public class TickerTask implements Runnable {
+      */
+     private final Map<BlockPosition, Integer> bugs = new ConcurrentHashMap<>();
+ 
++    /**
++     * Locations whose {@link me.mrCookieSlime.Slimefun.api.inventory.BlockMenu}
++     * is currently being viewed. Async tickers for these locations are routed
++     * to the main thread so inventory mutations cannot race player clicks.
++     */
++    private final Set<BlockPosition> viewedInventories = ConcurrentHashMap.newKeySet();
++
+     private int tickRate;
+     private boolean halted = false;
+     private boolean running = false;
+@@ -123,6 +130,9 @@ public class TickerTask implements Runnable {
+                             () -> "An Exception was caught while ticking the Block Tickers Task for Slimefun v"
+                                     + Slimefun.getVersion());
+             reset();
++            if (Slimefun.getProfiler().isProfiling()) {
++                Slimefun.getProfiler().stop();
++            }
+         }
+     }
+ 
+@@ -158,10 +168,14 @@ public class TickerTask implements Runnable {
+                 return;
+             }
+ 
++            BlockTicker ticker = item.getBlockTicker();
++            boolean owedProfilerEntry = false;
++
+             try {
+-                if (item.getBlockTicker().isSynchronized()) {
++                if (ticker.isSynchronized() || isInventoryViewed(l)) {
+                     Slimefun.getProfiler().scheduleEntries(1);
+-                    item.getBlockTicker().update();
++                    owedProfilerEntry = Slimefun.getProfiler().isProfiling();
++                    ticker.update();
+ 
+                     /**
+                      * We are inserting a new timestamp because synchronized actions
+@@ -169,18 +183,25 @@ public class TickerTask implements Runnable {
+                      */
+                     Slimefun.runSync(() -> {
+                         if (blockData.isPendingRemove()) {
++                            Slimefun.getProfiler().cancelScheduledEntry();
+                             return;
+                         }
+                         tickBlock(l, item, blockData, System.nanoTime());
+                     });
++                    owedProfilerEntry = false;
+                 } else {
+                     long timestamp = Slimefun.getProfiler().newEntry();
+-                    item.getBlockTicker().update();
++                    owedProfilerEntry = timestamp != 0;
++                    ticker.update();
+                     tickBlock(l, item, blockData, timestamp);
++                    owedProfilerEntry = false;
+                 }
+ 
+-                tickers.add(item.getBlockTicker());
+-            } catch (Exception x) {
++                tickers.add(ticker);
++            } catch (Exception | LinkageError x) {
++                if (owedProfilerEntry) {
++                    Slimefun.getProfiler().cancelScheduledEntry();
++                }
+                 reportErrors(l, item, x);
+             }
+         }
+@@ -196,10 +217,14 @@ public class TickerTask implements Runnable {
+                 return;
+             }
+ 
++            BlockTicker ticker = item.getBlockTicker();
++            boolean owedProfilerEntry = false;
++
+             try {
+-                if (item.getBlockTicker().isSynchronized()) {
++                if (ticker.isSynchronized() || isInventoryViewed(l)) {
+                     Slimefun.getProfiler().scheduleEntries(1);
+-                    item.getBlockTicker().update();
++                    owedProfilerEntry = Slimefun.getProfiler().isProfiling();
++                    ticker.update();
+ 
+                     /**
+                      * We are inserting a new timestamp because synchronized actions
+@@ -207,18 +232,25 @@ public class TickerTask implements Runnable {
+                      */
+                     Slimefun.runSync(() -> {
+                         if (data.isPendingRemove()) {
++                            Slimefun.getProfiler().cancelScheduledEntry();
+                             return;
+                         }
+                         tickBlock(l, item, data, System.nanoTime());
+                     });
++                    owedProfilerEntry = false;
+                 } else {
+                     long timestamp = Slimefun.getProfiler().newEntry();
+-                    item.getBlockTicker().update();
++                    owedProfilerEntry = timestamp != 0;
++                    ticker.update();
+                     tickBlock(l, item, data, timestamp);
++                    owedProfilerEntry = false;
+                 }
+ 
+-                tickers.add(item.getBlockTicker());
+-            } catch (Exception x) {
++                tickers.add(ticker);
++            } catch (Exception | LinkageError x) {
++                if (owedProfilerEntry) {
++                    Slimefun.getProfiler().cancelScheduledEntry();
++                }
+                 reportErrors(l, item, x);
+             }
+         }
+@@ -260,9 +292,9 @@ public class TickerTask implements Runnable {
              Slimefun.logger().log(Level.SEVERE, "X: {0} Y: {1} Z: {2} ({3})", new Object[] {
                  l.getBlockX(), l.getBlockY(), l.getBlockZ(), item.getId()
              });
@@ -6583,6 +7107,48 @@ index 3638beb..f3cbef3 100644
              Slimefun.logger().log(Level.SEVERE, " ");
              bugs.remove(position);
  
+@@ -408,6 +440,8 @@ public class TickerTask implements Runnable {
+     public void disableTicker(@Nonnull Location l) {
+         Validate.notNull(l, "Location cannot be null!");
+ 
++        viewedInventories.remove(new BlockPosition(l));
++
+         synchronized (tickingLocations) {
+             ChunkPosition chunk = new ChunkPosition(l.getWorld(), l.getBlockX() >> 4, l.getBlockZ() >> 4);
+             Set<TickLocation> locations = tickingLocations.get(chunk);
+@@ -439,4 +473,32 @@ public class TickerTask implements Runnable {
+             tickingLocations.values().forEach(loc -> loc.removeIf(tk -> uuid.equals(tk.getUuid())));
+         }
+     }
++
++    /**
++     * Marks a machine inventory as viewed or unviewed.
++     *
++     * @param location
++     *            The machine location
++     * @param viewed
++     *            Whether at least one player is viewing it
++     */
++    public void setInventoryViewed(@Nonnull Location location, boolean viewed) {
++        Validate.notNull(location, "Location cannot be null!");
++
++        BlockPosition position = new BlockPosition(location);
++        if (viewed) {
++            viewedInventories.add(position);
++        } else {
++            viewedInventories.remove(position);
++        }
++    }
++
++    /**
++     * Returns whether the machine inventory at this location is currently open.
++     * This is a cheap concurrent-set lookup and does not load block data.
++     */
++    public boolean isInventoryViewed(@Nonnull Location location) {
++        Validate.notNull(location, "Location cannot be null!");
++        return !viewedInventories.isEmpty() && viewedInventories.contains(new BlockPosition(location));
++    }
+ }
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/tasks/armor/RadiationTask.java b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/tasks/armor/RadiationTask.java
 index 2975ee7..a0d33ed 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/tasks/armor/RadiationTask.java
@@ -6679,7 +7245,7 @@ index d803083..6b595b4 100644
 +    public static final Pattern USES_LEFT_LORE = Pattern.compile(ChatColors.color("&7Uses left: &e[0-9]+"));
  }
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/utils/SlimefunUtils.java b/src/main/java/io/github/thebusybiscuit/slimefun4/utils/SlimefunUtils.java
-index 3fce8e9..654b3c2 100644
+index 3fce8e9..0346bd1 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/utils/SlimefunUtils.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/utils/SlimefunUtils.java
 @@ -60,7 +60,7 @@ import org.bukkit.persistence.PersistentDataType;
@@ -6691,6 +7257,35 @@ index 3fce8e9..654b3c2 100644
  
      private SlimefunUtils() {}
  
+@@ -341,8 +341,14 @@ public final class SlimefunUtils {
+                  * Some items can't rely on just IDs matching and will implement Distinctive Item
+                  * in which case we want to use the method provided to compare
+                  */
+-                if (stackOne instanceof DistinctiveItem && stackTwo instanceof DistinctiveItem distinctiveItem) {
+-                    return distinctiveItem.canStack(stackOne.getItemMeta(), stackTwo.getItemMeta());
++                Optional<DistinctiveItem> optionalDistinctive = getDistinctiveItem(stackOne.getItemId());
++                if (optionalDistinctive.isPresent()) {
++                    /*
++                     * Compare the actual stacks passed to this method. Comparing
++                     * shared Slimefun item templates makes two distinct instances
++                     * (such as different backpacks) appear identical.
++                     */
++                    return compareDistinctiveStacks(optionalDistinctive.get(), sfitem, item);
+                 }
+                 return true;
+             }
+@@ -423,6 +429,11 @@ public final class SlimefunUtils {
+         return Optional.empty();
+     }
+ 
++    static boolean compareDistinctiveStacks(
++            @Nonnull DistinctiveItem distinctiveItem, @Nonnull ItemStack first, @Nonnull ItemStack second) {
++        return distinctiveItem.canStack(first.getItemMeta(), second.getItemMeta());
++    }
++
+     private static boolean equalsItemMeta(
+             @Nonnull ItemMeta itemMeta, @Nonnull ItemMetaSnapshot itemMetaSnapshot, boolean checkLore) {
+         return equalsItemMeta(itemMeta, itemMetaSnapshot, checkLore, false);
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/utils/compatibility/VersionedBiome.java b/src/main/java/io/github/thebusybiscuit/slimefun4/utils/compatibility/VersionedBiome.java
 index 4a83224..ef40904 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/utils/compatibility/VersionedBiome.java
@@ -6789,6 +7384,149 @@ index 43a2308..80dc6f2 100644
  
          meta.setLore(lore);
  
+diff --git a/src/main/java/me/mrCookieSlime/CSCoreLibPlugin/general/Inventory/MenuListener.java b/src/main/java/me/mrCookieSlime/CSCoreLibPlugin/general/Inventory/MenuListener.java
+index 49730dd..37fa855 100644
+--- a/src/main/java/me/mrCookieSlime/CSCoreLibPlugin/general/Inventory/MenuListener.java
++++ b/src/main/java/me/mrCookieSlime/CSCoreLibPlugin/general/Inventory/MenuListener.java
+@@ -9,9 +9,14 @@ import org.bukkit.Material;
+ import org.bukkit.entity.Player;
+ import org.bukkit.event.EventHandler;
+ import org.bukkit.event.Listener;
++import org.bukkit.event.inventory.InventoryAction;
+ import org.bukkit.event.inventory.InventoryClickEvent;
+ import org.bukkit.event.inventory.InventoryCloseEvent;
++import org.bukkit.event.inventory.InventoryDragEvent;
++import org.bukkit.inventory.Inventory;
++import org.bukkit.inventory.ItemStack;
+ import org.bukkit.plugin.Plugin;
++import me.mrCookieSlime.Slimefun.api.inventory.BlockMenu;
+ 
+ /**
+  * An old {@link Listener} for CS-CoreLib
+@@ -34,6 +39,17 @@ public class MenuListener implements Listener {
+         if (holder instanceof ChestMenu menu) {
+             menu.removeViewer(e.getPlayer().getUniqueId());
+             menu.getMenuCloseHandler().onClose((Player) e.getPlayer());
++
++            if (menu instanceof BlockMenu blockMenu) {
++                /*
++                 * InventoryCloseEvent fires while Bukkit is still finalizing the view.
++                 * Re-check next tick and only return the machine to async ticking when
++                 * no viewer remains. This prevents an async machine tick from racing
++                 * the last inventory click during close.
++                 */
++                Slimefun.runSync(() -> Slimefun.getTickerTask()
++                        .setInventoryViewed(blockMenu.getLocation(), blockMenu.hasViewer()));
++            }
+         }
+     }
+ 
+@@ -44,6 +60,17 @@ public class MenuListener implements Listener {
+ 
+         if (holder instanceof ChestMenu menu) {
+             try {
++                /*
++                 * COLLECT_TO_CURSOR scans the whole inventory view and bypasses
++                 * individual slot handlers. Without this guard a player can collect
++                 * regenerated display/output items from protected slots.
++                 */
++                if (e.getAction() == InventoryAction.COLLECT_TO_CURSOR
++                        && collectWouldTouchProtectedSlot(e.getCursor(), e.getInventory(), menu)) {
++                    e.setCancelled(true);
++                    return;
++                }
++
+                 if (e.getRawSlot() < e.getInventory().getSize()) {
+                     MenuClickHandler handler = menu.getMenuClickHandler(e.getSlot());
+ 
+@@ -68,6 +95,50 @@ public class MenuListener implements Listener {
+         }
+     }
+ 
++    /**
++     * Inventory drags bypass normal per-slot click handlers. Cancel drags that
++     * touch handler-backed menu slots while still allowing normal input slots
++     * and the player's inventory.
++     */
++    @EventHandler
++    public void onDrag(InventoryDragEvent e) {
++        var holder = e.getInventory().getHolder(false);
++
++        if (holder instanceof ChestMenu menu
++                && dragTouchesProtectedSlot(e.getRawSlots(), e.getInventory().getSize(), menu)) {
++            e.setCancelled(true);
++        }
++    }
++
++    static boolean collectWouldTouchProtectedSlot(ItemStack cursor, Inventory top, ChestMenu menu) {
++        if (cursor == null || cursor.getType().isAir()) {
++            return false;
++        }
++
++        for (int slot = 0; slot < top.getSize(); slot++) {
++            if (menu.getMenuClickHandler(slot) == null) {
++                continue;
++            }
++
++            ItemStack item = top.getItem(slot);
++            if (item != null && !item.getType().isAir() && cursor.isSimilar(item)) {
++                return true;
++            }
++        }
++
++        return false;
++    }
++
++    static boolean dragTouchesProtectedSlot(Iterable<Integer> rawSlots, int topSize, ChestMenu menu) {
++        for (int rawSlot : rawSlots) {
++            if (rawSlot < topSize && menu.getMenuClickHandler(rawSlot) != null) {
++                return true;
++            }
++        }
++
++        return false;
++    }
++
+     private void handleEvent(@Nonnull InventoryClickEvent e, @Nonnull MenuClickHandler handler) {
+         if (handler instanceof AdvancedMenuClickHandler advancedHandler) {
+             e.setCancelled(!advancedHandler.onClick(
+diff --git a/src/main/java/me/mrCookieSlime/Slimefun/api/inventory/BlockMenu.java b/src/main/java/me/mrCookieSlime/Slimefun/api/inventory/BlockMenu.java
+index c86d499..679d63b 100644
+--- a/src/main/java/me/mrCookieSlime/Slimefun/api/inventory/BlockMenu.java
++++ b/src/main/java/me/mrCookieSlime/Slimefun/api/inventory/BlockMenu.java
+@@ -7,6 +7,7 @@ import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
+ import java.util.logging.Level;
+ import org.bukkit.Location;
+ import org.bukkit.block.Block;
++import org.bukkit.entity.Player;
+ import org.bukkit.inventory.Inventory;
+ import org.bukkit.inventory.ItemStack;
+ 
+@@ -91,6 +92,24 @@ public class BlockMenu extends DirtyChestMenu {
+         this.preset.clone(this);
+     }
+ 
++    @Override
++    public void open(Player... players) {
++        if (locked() || players.length == 0) {
++            return;
++        }
++
++        // Mark before Bukkit exposes the inventory to the player so an async
++        // ticker cannot slip into the small window during menu opening.
++        Slimefun.getTickerTask().setInventoryViewed(location, true);
++        try {
++            super.open(players);
++        } finally {
++            if (!hasViewer()) {
++                Slimefun.getTickerTask().setInventoryViewed(location, false);
++            }
++        }
++    }
++
+     public Block getBlock() {
+         return location.getBlock();
+     }
 diff --git a/src/main/java/net/guizhanss/slimefun4/utils/WikiUtils.java b/src/main/java/net/guizhanss/slimefun4/utils/WikiUtils.java
 index f9ba693..dd069d8 100644
 --- a/src/main/java/net/guizhanss/slimefun4/utils/WikiUtils.java
@@ -7233,3 +7971,264 @@ index ab9f474..6bea563 100644
    maxConnection: 10
  #########################################################################
 \ No newline at end of file
+diff --git b/src/test/java/io/github/thebusybiscuit/slimefun4/api/player/TestBackpackIdentityHardening.java b/src/test/java/io/github/thebusybiscuit/slimefun4/api/player/TestBackpackIdentityHardening.java
+new file mode 100644
+index 0000000..0b7fbe8
+--- /dev/null
++++ b/src/test/java/io/github/thebusybiscuit/slimefun4/api/player/TestBackpackIdentityHardening.java
+@@ -0,0 +1,51 @@
++package io.github.thebusybiscuit.slimefun4.api.player;
++
++import io.github.bakedlibs.dough.common.ChatColors;
++import java.util.List;
++import org.bukkit.Material;
++import org.bukkit.inventory.ItemStack;
++import org.bukkit.inventory.meta.ItemMeta;
++import org.junit.jupiter.api.AfterAll;
++import org.junit.jupiter.api.Assertions;
++import org.junit.jupiter.api.BeforeAll;
++import org.junit.jupiter.api.DisplayName;
++import org.junit.jupiter.api.Test;
++import org.mockbukkit.mockbukkit.MockBukkit;
++
++class TestBackpackIdentityHardening {
++
++    @BeforeAll
++    static void loadServer() {
++        MockBukkit.mock();
++    }
++
++    @AfterAll
++    static void unloadServer() {
++        MockBukkit.unmock();
++    }
++
++    @Test
++    @DisplayName("Legacy backpack identities are recognized without fragile lore assumptions")
++    void testLegacyIdentityParsing() {
++        ItemStack item = new ItemStack(Material.CHEST);
++        ItemMeta meta = item.getItemMeta();
++        meta.setLore(List.of(ChatColors.color("&7ID: 123e4567-e89b-12d3-a456-426614174000#12")));
++
++        Assertions.assertTrue(PlayerBackpack.hasBackpackIdentity(meta));
++        Assertions.assertEquals(12, PlayerBackpack.getBackpackID(meta).orElseThrow());
++
++        meta.setLore(null);
++        Assertions.assertFalse(PlayerBackpack.getBackpackID(meta).isPresent());
++    }
++
++    @Test
++    @DisplayName("Malformed legacy backpack lore is ignored instead of throwing")
++    void testMalformedLegacyIdentity() {
++        ItemStack item = new ItemStack(Material.CHEST);
++        ItemMeta meta = item.getItemMeta();
++        meta.setLore(List.of(ChatColors.color("&7ID: not-a-uuid#broken")));
++
++        Assertions.assertFalse(PlayerBackpack.hasBackpackIdentity(meta));
++        Assertions.assertFalse(PlayerBackpack.getBackpackID(meta).isPresent());
++    }
++}
+diff --git b/src/test/java/io/github/thebusybiscuit/slimefun4/core/services/profiler/TestProfilerQueueRecovery.java b/src/test/java/io/github/thebusybiscuit/slimefun4/core/services/profiler/TestProfilerQueueRecovery.java
+new file mode 100644
+index 0000000..4f75290
+--- /dev/null
++++ b/src/test/java/io/github/thebusybiscuit/slimefun4/core/services/profiler/TestProfilerQueueRecovery.java
+@@ -0,0 +1,27 @@
++package io.github.thebusybiscuit.slimefun4.core.services.profiler;
++
++import org.junit.jupiter.api.Assertions;
++import org.junit.jupiter.api.DisplayName;
++import org.junit.jupiter.api.Test;
++
++class TestProfilerQueueRecovery {
++
++    @Test
++    @DisplayName("Cancelled ticker samples cannot leave the profiler queue stuck")
++    void testCancelScheduledEntry() {
++        SlimefunProfiler profiler = new SlimefunProfiler();
++        try {
++            profiler.start();
++            profiler.scheduleEntries(1);
++            Assertions.assertEquals(1, profiler.getQueuedEntries());
++
++            profiler.cancelScheduledEntry();
++            Assertions.assertEquals(0, profiler.getQueuedEntries());
++
++            profiler.cancelScheduledEntry();
++            Assertions.assertEquals(0, profiler.getQueuedEntries(), "The queue must never become negative");
++        } finally {
++            profiler.kill();
++        }
++    }
++}
+diff --git b/src/test/java/io/github/thebusybiscuit/slimefun4/implementation/tasks/TestViewedInventoryGuard.java b/src/test/java/io/github/thebusybiscuit/slimefun4/implementation/tasks/TestViewedInventoryGuard.java
+new file mode 100644
+index 0000000..7028bb3
+--- /dev/null
++++ b/src/test/java/io/github/thebusybiscuit/slimefun4/implementation/tasks/TestViewedInventoryGuard.java
+@@ -0,0 +1,44 @@
++package io.github.thebusybiscuit.slimefun4.implementation.tasks;
++
++import org.bukkit.Location;
++import org.bukkit.World;
++import org.junit.jupiter.api.AfterAll;
++import org.junit.jupiter.api.Assertions;
++import org.junit.jupiter.api.BeforeAll;
++import org.junit.jupiter.api.DisplayName;
++import org.junit.jupiter.api.Test;
++import org.mockbukkit.mockbukkit.MockBukkit;
++import org.mockbukkit.mockbukkit.ServerMock;
++
++class TestViewedInventoryGuard {
++
++    private static ServerMock server;
++
++    @BeforeAll
++    static void loadServer() {
++        server = MockBukkit.mock();
++    }
++
++    @AfterAll
++    static void unloadServer() {
++        MockBukkit.unmock();
++    }
++
++    @Test
++    @DisplayName("Viewed-machine tracking is isolated by block location")
++    void testViewedLocationTracking() {
++        World world = server.addSimpleWorld("viewed-machine-test");
++        Location viewed = new Location(world, 10, 64, 10);
++        Location neighbour = viewed.clone().add(1, 0, 0);
++        TickerTask tickerTask = new TickerTask();
++
++        Assertions.assertFalse(tickerTask.isInventoryViewed(viewed));
++
++        tickerTask.setInventoryViewed(viewed, true);
++        Assertions.assertTrue(tickerTask.isInventoryViewed(viewed));
++        Assertions.assertFalse(tickerTask.isInventoryViewed(neighbour));
++
++        tickerTask.setInventoryViewed(viewed, false);
++        Assertions.assertFalse(tickerTask.isInventoryViewed(viewed));
++    }
++}
+diff --git b/src/test/java/io/github/thebusybiscuit/slimefun4/utils/TestDistinctiveItemComparison.java b/src/test/java/io/github/thebusybiscuit/slimefun4/utils/TestDistinctiveItemComparison.java
+new file mode 100644
+index 0000000..aac792a
+--- /dev/null
++++ b/src/test/java/io/github/thebusybiscuit/slimefun4/utils/TestDistinctiveItemComparison.java
+@@ -0,0 +1,54 @@
++package io.github.thebusybiscuit.slimefun4.utils;
++
++import io.github.thebusybiscuit.slimefun4.core.attributes.DistinctiveItem;
++import org.bukkit.Material;
++import org.bukkit.inventory.ItemStack;
++import org.bukkit.inventory.meta.ItemMeta;
++import org.junit.jupiter.api.AfterAll;
++import org.junit.jupiter.api.Assertions;
++import org.junit.jupiter.api.BeforeAll;
++import org.junit.jupiter.api.DisplayName;
++import org.junit.jupiter.api.Test;
++import org.mockbukkit.mockbukkit.MockBukkit;
++
++class TestDistinctiveItemComparison {
++
++    @BeforeAll
++    static void loadServer() {
++        MockBukkit.mock();
++    }
++
++    @AfterAll
++    static void unloadServer() {
++        MockBukkit.unmock();
++    }
++
++    @Test
++    @DisplayName("Distinctive comparisons receive the metadata from the actual two stacks")
++    void testActualStackMetadataIsCompared() {
++        ItemStack first = namedChest("First identity");
++        ItemStack second = namedChest("Second identity");
++        DistinctiveItem compareNames = new DistinctiveItem() {
++            @Override
++            public String getId() {
++                return "TEST_DISTINCTIVE";
++            }
++
++            @Override
++            public boolean canStack(ItemMeta firstMeta, ItemMeta secondMeta) {
++                return firstMeta.getDisplayName().equals(secondMeta.getDisplayName());
++            }
++        };
++
++        Assertions.assertFalse(SlimefunUtils.compareDistinctiveStacks(compareNames, first, second));
++        Assertions.assertTrue(SlimefunUtils.compareDistinctiveStacks(compareNames, first, first.clone()));
++    }
++
++    private static ItemStack namedChest(String name) {
++        ItemStack item = new ItemStack(Material.CHEST);
++        ItemMeta meta = item.getItemMeta();
++        meta.setDisplayName(name);
++        item.setItemMeta(meta);
++        return item;
++    }
++}
+diff --git b/src/test/java/me/mrCookieSlime/CSCoreLibPlugin/general/Inventory/TestMenuListenerSecurityGuards.java b/src/test/java/me/mrCookieSlime/CSCoreLibPlugin/general/Inventory/TestMenuListenerSecurityGuards.java
+new file mode 100644
+index 0000000..b9b3ce6
+--- /dev/null
++++ b/src/test/java/me/mrCookieSlime/CSCoreLibPlugin/general/Inventory/TestMenuListenerSecurityGuards.java
+@@ -0,0 +1,55 @@
++package me.mrCookieSlime.CSCoreLibPlugin.general.Inventory;
++
++import java.util.List;
++import org.bukkit.Material;
++import org.bukkit.inventory.ItemStack;
++import org.junit.jupiter.api.AfterAll;
++import org.junit.jupiter.api.Assertions;
++import org.junit.jupiter.api.BeforeAll;
++import org.junit.jupiter.api.DisplayName;
++import org.junit.jupiter.api.Test;
++import org.mockbukkit.mockbukkit.MockBukkit;
++
++class TestMenuListenerSecurityGuards {
++
++    @BeforeAll
++    static void loadServer() {
++        MockBukkit.mock();
++    }
++
++    @AfterAll
++    static void unloadServer() {
++        MockBukkit.unmock();
++    }
++
++    private static ChestMenu createMenu() {
++        ChestMenu menu = new ChestMenu("Security Test", 9);
++        menu.addItem(0, new ItemStack(Material.GRAY_STAINED_GLASS_PANE), (player, slot, item, action) -> false);
++        menu.addItem(1, new ItemStack(Material.IRON_INGOT));
++        menu.getContents();
++        return menu;
++    }
++
++    @Test
++    @DisplayName("Double-click collection is blocked when it would touch a protected slot")
++    void testCollectGuard() {
++        ChestMenu menu = createMenu();
++
++        Assertions.assertTrue(MenuListener.collectWouldTouchProtectedSlot(
++                new ItemStack(Material.GRAY_STAINED_GLASS_PANE), menu.toInventory(), menu));
++        Assertions.assertFalse(MenuListener.collectWouldTouchProtectedSlot(
++                new ItemStack(Material.IRON_INGOT), menu.toInventory(), menu));
++        Assertions.assertFalse(MenuListener.collectWouldTouchProtectedSlot(
++                new ItemStack(Material.DIAMOND), menu.toInventory(), menu));
++    }
++
++    @Test
++    @DisplayName("Inventory drags are blocked only when they touch protected top-inventory slots")
++    void testDragGuard() {
++        ChestMenu menu = createMenu();
++        int topSize = menu.toInventory().getSize();
++
++        Assertions.assertTrue(MenuListener.dragTouchesProtectedSlot(List.of(0, topSize + 1), topSize, menu));
++        Assertions.assertFalse(MenuListener.dragTouchesProtectedSlot(List.of(1, topSize + 1), topSize, menu));
++    }
++}

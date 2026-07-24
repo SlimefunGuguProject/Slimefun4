@@ -18,7 +18,9 @@ group = "com.github.slimefun"
 version = resolveVersion()
 
 java {
-    toolchain.languageVersion.set(JavaLanguageVersion.of(21))
+    // Build on Java 25 for Paper/MockBukkit 26.x compatibility while still
+    // emitting Java 21 bytecode for existing addon/server deployments.
+    toolchain.languageVersion.set(JavaLanguageVersion.of(25))
     withSourcesJar()
 }
 
@@ -50,6 +52,9 @@ dependencies {
 
     compileOnly(libs.log4j.core)
     testImplementation(libs.junit.jupiter)
+    testImplementation(libs.mockbukkit) {
+        exclude(group = "org.jetbrains", module = "annotations")
+    }
     testRuntimeOnly(libs.junit.platform.launcher)
 
     implementation(libs.dough.api)

@@ -9,6 +9,8 @@ import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.implementation.items.backpacks.SlimefunBackpack;
 import io.github.thebusybiscuit.slimefun4.implementation.listeners.BackpackListener;
 import io.github.thebusybiscuit.slimefun4.utils.ThreadUtils;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.UUID;
@@ -43,8 +45,9 @@ import org.bukkit.persistence.PersistentDataType;
 public class PlayerBackpack extends SlimefunInventoryHolder {
     public static final String LORE_OWNER = "&7Owner: ";
     private static final String COLORED_LORE_OWNER = ChatColors.color(LORE_OWNER);
-    private static final NamespacedKey KEY_BACKPACK_UUID = new NamespacedKey(Slimefun.instance(), "B_UUID");
-    private static final NamespacedKey KEY_OWNER_UUID = new NamespacedKey(Slimefun.instance(), "OWNER_UUID");
+    private static final String COLORED_LORE_ID = ChatColors.color("&7ID: ");
+    private static NamespacedKey backpackUuidKey;
+    private static NamespacedKey ownerUuidKey;
     private final OfflinePlayer owner;
     private final UUID uuid;
     private final int id;
@@ -58,7 +61,7 @@ public class PlayerBackpack extends SlimefunInventoryHolder {
     private InvSnapshot snapshot;
 
     public static void getAsync(ItemStack item, Consumer<PlayerBackpack> callback, boolean runCbOnMainThread) {
-        if (item == null || !item.hasItemMeta() || !item.getItemMeta().hasLore()) {
+        if (item == null || !item.hasItemMeta()) {
             return;
         }
         Executor executor = runCbOnMainThread
@@ -72,6 +75,9 @@ public class PlayerBackpack extends SlimefunInventoryHolder {
                     .thenAcceptAsync(
                             (result) -> {
                                 if (result != null) {
+                                    if (runCbOnMainThread) {
+                                        migrateLegacyItem(item, result);
+                                    }
                                     callback.accept(result);
                                 }
                             },
@@ -80,32 +86,18 @@ public class PlayerBackpack extends SlimefunInventoryHolder {
         }
 
         // Old backpack item
-        OptionalInt id = OptionalInt.empty();
-        String uuid = "";
-        for (String line : item.getItemMeta().getLore()) {
-            if (line.startsWith(ChatColors.color("&7ID: ")) && line.indexOf('#') != -1) {
-                String[] splitLine = CommonPatterns.HASH.split(line);
-
-                if (CommonPatterns.NUMERIC.matcher(splitLine[1]).matches()) {
-                    uuid = splitLine[0].replace(ChatColors.color("&7ID: "), "");
-                    id = OptionalInt.of(Integer.parseInt(splitLine[1]));
-                }
-            }
-        }
-
-        if (id.isPresent()) {
-            int number = id.getAsInt();
+        Optional<LegacyBackpackReference> legacyReference = getLegacyBackpackReference(item.getItemMeta());
+        if (legacyReference.isPresent()) {
+            LegacyBackpackReference reference = legacyReference.get();
             Slimefun.getDatabaseManager()
                     .getProfileDataController()
-                    .getBackpackAsync(Bukkit.getOfflinePlayer(UUID.fromString(uuid)), number)
+                    .getBackpackAsync(Bukkit.getOfflinePlayer(reference.owner()), reference.id())
                     .thenAcceptAsync(
                             (result) -> {
                                 if (result != null) {
-                                    var meta = item.getItemMeta();
-                                    meta.getPersistentDataContainer()
-                                            .set(KEY_BACKPACK_UUID, PersistentDataType.STRING, result.uuid.toString());
-                                    item.setItemMeta(meta);
-                                    // TODO: upgrade lore
+                                    if (runCbOnMainThread) {
+                                        migrateLegacyItem(item, result);
+                                    }
                                     callback.accept(result);
                                 }
                             },
@@ -114,7 +106,7 @@ public class PlayerBackpack extends SlimefunInventoryHolder {
     }
 
     public static CompletableFuture<PlayerBackpack> getAsync(ItemStack item) {
-        if (item == null || !item.hasItemMeta() || !item.getItemMeta().hasLore()) {
+        if (item == null || !item.hasItemMeta()) {
             return CompletableFuture.completedFuture(null);
         }
 
@@ -124,25 +116,12 @@ public class PlayerBackpack extends SlimefunInventoryHolder {
         }
 
         // Old backpack item
-        OptionalInt id = OptionalInt.empty();
-        String uuid = "";
-
-        for (String line : item.getItemMeta().getLore()) {
-            if (line.startsWith(ChatColors.color("&7ID: ")) && line.indexOf('#') != -1) {
-                String[] splitLine = CommonPatterns.HASH.split(line);
-
-                if (CommonPatterns.NUMERIC.matcher(splitLine[1]).matches()) {
-                    uuid = splitLine[0].replace(ChatColors.color("&7ID: "), "");
-                    id = OptionalInt.of(Integer.parseInt(splitLine[1]));
-                }
-            }
-        }
-
-        if (id.isPresent()) {
-            int number = id.getAsInt();
+        Optional<LegacyBackpackReference> legacyReference = getLegacyBackpackReference(item.getItemMeta());
+        if (legacyReference.isPresent()) {
+            LegacyBackpackReference reference = legacyReference.get();
             return Slimefun.getDatabaseManager()
                     .getProfileDataController()
-                    .getBackpackAsync(Bukkit.getOfflinePlayer(UUID.fromString(uuid)), number);
+                    .getBackpackAsync(Bukkit.getOfflinePlayer(reference.owner()), reference.id());
         }
         return CompletableFuture.completedFuture(null);
     }
@@ -151,33 +130,36 @@ public class PlayerBackpack extends SlimefunInventoryHolder {
         if (meta == null) {
             return Optional.empty();
         }
-        return Optional.ofNullable(meta.getPersistentDataContainer().get(KEY_BACKPACK_UUID, PersistentDataType.STRING));
+        return Optional.ofNullable(
+                meta.getPersistentDataContainer().get(getBackpackUuidKey(), PersistentDataType.STRING));
     }
 
     public static Optional<String> getOwnerUUID(ItemMeta meta) {
         if (meta == null) {
             return Optional.empty();
         }
-        return Optional.ofNullable(meta.getPersistentDataContainer().get(KEY_OWNER_UUID, PersistentDataType.STRING));
+        return Optional.ofNullable(meta.getPersistentDataContainer().get(getOwnerUuidKey(), PersistentDataType.STRING));
     }
 
     public static OptionalInt getBackpackID(ItemMeta meta) {
-        if (meta == null) {
+        if (meta == null || !meta.hasLore()) {
             return OptionalInt.empty();
         }
 
-        for (String line : meta.getLore()) {
-            if (line.startsWith(ChatColors.color("&7ID: ")) && line.contains("#")) {
-                try {
-                    return OptionalInt.of(Integer.parseInt(
-                            CommonPatterns.HASH.split(line.replace(ChatColors.color("&7ID: "), ""))[1]));
-                } catch (NumberFormatException e) {
-                    e.printStackTrace();
-                }
-            }
+        return getLegacyBackpackReference(meta).map(reference -> OptionalInt.of(reference.id()))
+                .orElseGet(OptionalInt::empty);
+    }
+
+    /**
+     * Returns whether this item metadata belongs to an already-bound backpack.
+     * Both the current PDC identity and the legacy visible ID lore are recognized.
+     */
+    public static boolean hasBackpackIdentity(@Nullable ItemMeta meta) {
+        if (getLegacyBackpackReference(meta).isPresent()) {
+            return true;
         }
 
-        return OptionalInt.empty();
+        return meta != null && Slimefun.instance() != null && getBackpackUUID(meta).isPresent();
     }
 
     public static void setItemPdc(ItemStack item, String bpUuid, String ownerUuid) {
@@ -189,7 +171,32 @@ public class PlayerBackpack extends SlimefunInventoryHolder {
     public static void bindItem(ItemStack item, PlayerBackpack bp) {
         var meta = item.getItemMeta();
         setPdc(meta, bp.uuid.toString(), bp.owner.getUniqueId().toString());
+        removeLegacyIdLore(meta);
         setItem(meta, bp);
+        item.setItemMeta(meta);
+    }
+
+    /**
+     * Migrates a resolved legacy backpack item to the current persistent identity
+     * format and removes the old visible ID lore only after the PDC values can be
+     * read back successfully.
+     */
+    public static void migrateLegacyItem(ItemStack item, PlayerBackpack bp) {
+        if (item == null || bp == null || !item.hasItemMeta()) {
+            return;
+        }
+
+        ItemMeta meta = item.getItemMeta();
+        setPdc(meta, bp.uuid.toString(), bp.owner.getUniqueId().toString());
+
+        var pdc = meta.getPersistentDataContainer();
+        String storedBackpackUuid = pdc.get(getBackpackUuidKey(), PersistentDataType.STRING);
+        String storedOwnerUuid = pdc.get(getOwnerUuidKey(), PersistentDataType.STRING);
+        if (bp.uuid.toString().equals(storedBackpackUuid)
+                && bp.owner.getUniqueId().toString().equals(storedOwnerUuid)) {
+            removeLegacyIdLore(meta);
+        }
+
         item.setItemMeta(meta);
     }
 
@@ -204,23 +211,51 @@ public class PlayerBackpack extends SlimefunInventoryHolder {
             return true;
         }
         var ownerUuid = PlayerBackpack.getOwnerUUID(meta);
-        return ownerUuid.isEmpty() || Bukkit.getPlayer(UUID.fromString(ownerUuid.get())) != null;
+        if (ownerUuid.isEmpty()) {
+            return true;
+        }
+
+        try {
+            return Bukkit.getPlayer(UUID.fromString(ownerUuid.get())) != null;
+        } catch (IllegalArgumentException ignored) {
+            return false;
+        }
     }
 
     private static void setPdc(ItemMeta meta, String bpUuid, String ownerUuid) {
         var pdc = meta.getPersistentDataContainer();
-        pdc.set(PlayerBackpack.KEY_BACKPACK_UUID, PersistentDataType.STRING, bpUuid);
-        pdc.set(PlayerBackpack.KEY_OWNER_UUID, PersistentDataType.STRING, ownerUuid);
+        pdc.set(getBackpackUuidKey(), PersistentDataType.STRING, bpUuid);
+        pdc.set(getOwnerUuidKey(), PersistentDataType.STRING, ownerUuid);
+    }
+
+    private static NamespacedKey getBackpackUuidKey() {
+        if (backpackUuidKey == null) {
+            backpackUuidKey = new NamespacedKey(Slimefun.instance(), "B_UUID");
+        }
+        return backpackUuidKey;
+    }
+
+    private static NamespacedKey getOwnerUuidKey() {
+        if (ownerUuidKey == null) {
+            ownerUuidKey = new NamespacedKey(Slimefun.instance(), "OWNER_UUID");
+        }
+        return ownerUuidKey;
     }
 
     private static void setItem(ItemMeta meta, PlayerBackpack bp) {
-        var lore = meta.getLore();
+        List<String> lore = meta.hasLore() ? new ArrayList<>(meta.getLore()) : new ArrayList<>();
+        boolean ownerLineFound = false;
         for (var i = 0; i < lore.size(); i++) {
             var line = lore.get(i);
-            if (COLORED_LORE_OWNER.equals(line)) {
+            if (line != null && line.startsWith(COLORED_LORE_OWNER)) {
                 lore.set(i, COLORED_LORE_OWNER + bp.getOwner().getName());
+                ownerLineFound = true;
                 break;
             }
+        }
+
+        if (!ownerLineFound) {
+            lore.add(COLORED_LORE_OWNER + bp.getOwner().getName());
         }
         meta.setLore(lore);
 
@@ -229,6 +264,45 @@ public class PlayerBackpack extends SlimefunInventoryHolder {
         }
         meta.setDisplayName(ChatColors.color(bp.name));
     }
+
+    private static Optional<LegacyBackpackReference> getLegacyBackpackReference(@Nullable ItemMeta meta) {
+        if (meta == null || !meta.hasLore()) {
+            return Optional.empty();
+        }
+
+        for (String line : meta.getLore()) {
+            if (line == null || !line.startsWith(COLORED_LORE_ID) || line.indexOf('#') == -1) {
+                continue;
+            }
+
+            String identity = line.substring(COLORED_LORE_ID.length());
+            String[] splitLine = CommonPatterns.HASH.split(identity, 2);
+            if (splitLine.length != 2 || !CommonPatterns.NUMERIC.matcher(splitLine[1]).matches()) {
+                continue;
+            }
+
+            try {
+                return Optional.of(new LegacyBackpackReference(
+                        UUID.fromString(splitLine[0]), Integer.parseInt(splitLine[1])));
+            } catch (IllegalArgumentException ignored) {
+                // Malformed legacy identity - keep searching in case another valid line exists.
+            }
+        }
+
+        return Optional.empty();
+    }
+
+    private static void removeLegacyIdLore(ItemMeta meta) {
+        if (meta == null || !meta.hasLore()) {
+            return;
+        }
+
+        List<String> lore = new ArrayList<>(meta.getLore());
+        lore.removeIf(line -> line != null && line.startsWith(COLORED_LORE_ID));
+        meta.setLore(lore.isEmpty() ? null : lore);
+    }
+
+    private record LegacyBackpackReference(UUID owner, int id) {}
 
     @ParametersAreNonnullByDefault
     public PlayerBackpack(

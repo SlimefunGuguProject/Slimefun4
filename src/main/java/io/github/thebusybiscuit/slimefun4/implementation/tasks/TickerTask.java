@@ -52,6 +52,13 @@ public class TickerTask implements Runnable {
      */
     private final Map<BlockPosition, Integer> bugs = new ConcurrentHashMap<>();
 
+    /**
+     * Locations whose {@link me.mrCookieSlime.Slimefun.api.inventory.BlockMenu}
+     * is currently being viewed. Async tickers for these locations are routed
+     * to the main thread so inventory mutations cannot race player clicks.
+     */
+    private final Set<BlockPosition> viewedInventories = ConcurrentHashMap.newKeySet();
+
     private int tickRate;
     private boolean halted = false;
     private boolean running = false;
@@ -123,6 +130,9 @@ public class TickerTask implements Runnable {
                             () -> "An Exception was caught while ticking the Block Tickers Task for Slimefun v"
                                     + Slimefun.getVersion());
             reset();
+            if (Slimefun.getProfiler().isProfiling()) {
+                Slimefun.getProfiler().stop();
+            }
         }
     }
 
@@ -158,10 +168,14 @@ public class TickerTask implements Runnable {
                 return;
             }
 
+            BlockTicker ticker = item.getBlockTicker();
+            boolean owedProfilerEntry = false;
+
             try {
-                if (item.getBlockTicker().isSynchronized()) {
+                if (ticker.isSynchronized() || isInventoryViewed(l)) {
                     Slimefun.getProfiler().scheduleEntries(1);
-                    item.getBlockTicker().update();
+                    owedProfilerEntry = Slimefun.getProfiler().isProfiling();
+                    ticker.update();
 
                     /**
                      * We are inserting a new timestamp because synchronized actions
@@ -169,18 +183,25 @@ public class TickerTask implements Runnable {
                      */
                     Slimefun.runSync(() -> {
                         if (blockData.isPendingRemove()) {
+                            Slimefun.getProfiler().cancelScheduledEntry();
                             return;
                         }
                         tickBlock(l, item, blockData, System.nanoTime());
                     });
+                    owedProfilerEntry = false;
                 } else {
                     long timestamp = Slimefun.getProfiler().newEntry();
-                    item.getBlockTicker().update();
+                    owedProfilerEntry = timestamp != 0;
+                    ticker.update();
                     tickBlock(l, item, blockData, timestamp);
+                    owedProfilerEntry = false;
                 }
 
-                tickers.add(item.getBlockTicker());
-            } catch (Exception x) {
+                tickers.add(ticker);
+            } catch (Exception | LinkageError x) {
+                if (owedProfilerEntry) {
+                    Slimefun.getProfiler().cancelScheduledEntry();
+                }
                 reportErrors(l, item, x);
             }
         }
@@ -196,10 +217,14 @@ public class TickerTask implements Runnable {
                 return;
             }
 
+            BlockTicker ticker = item.getBlockTicker();
+            boolean owedProfilerEntry = false;
+
             try {
-                if (item.getBlockTicker().isSynchronized()) {
+                if (ticker.isSynchronized() || isInventoryViewed(l)) {
                     Slimefun.getProfiler().scheduleEntries(1);
-                    item.getBlockTicker().update();
+                    owedProfilerEntry = Slimefun.getProfiler().isProfiling();
+                    ticker.update();
 
                     /**
                      * We are inserting a new timestamp because synchronized actions
@@ -207,18 +232,25 @@ public class TickerTask implements Runnable {
                      */
                     Slimefun.runSync(() -> {
                         if (data.isPendingRemove()) {
+                            Slimefun.getProfiler().cancelScheduledEntry();
                             return;
                         }
                         tickBlock(l, item, data, System.nanoTime());
                     });
+                    owedProfilerEntry = false;
                 } else {
                     long timestamp = Slimefun.getProfiler().newEntry();
-                    item.getBlockTicker().update();
+                    owedProfilerEntry = timestamp != 0;
+                    ticker.update();
                     tickBlock(l, item, data, timestamp);
+                    owedProfilerEntry = false;
                 }
 
-                tickers.add(item.getBlockTicker());
-            } catch (Exception x) {
+                tickers.add(ticker);
+            } catch (Exception | LinkageError x) {
+                if (owedProfilerEntry) {
+                    Slimefun.getProfiler().cancelScheduledEntry();
+                }
                 reportErrors(l, item, x);
             }
         }
@@ -408,6 +440,8 @@ public class TickerTask implements Runnable {
     public void disableTicker(@Nonnull Location l) {
         Validate.notNull(l, "Location cannot be null!");
 
+        viewedInventories.remove(new BlockPosition(l));
+
         synchronized (tickingLocations) {
             ChunkPosition chunk = new ChunkPosition(l.getWorld(), l.getBlockX() >> 4, l.getBlockZ() >> 4);
             Set<TickLocation> locations = tickingLocations.get(chunk);
@@ -438,5 +472,33 @@ public class TickerTask implements Runnable {
         synchronized (tickingLocations) {
             tickingLocations.values().forEach(loc -> loc.removeIf(tk -> uuid.equals(tk.getUuid())));
         }
+    }
+
+    /**
+     * Marks a machine inventory as viewed or unviewed.
+     *
+     * @param location
+     *            The machine location
+     * @param viewed
+     *            Whether at least one player is viewing it
+     */
+    public void setInventoryViewed(@Nonnull Location location, boolean viewed) {
+        Validate.notNull(location, "Location cannot be null!");
+
+        BlockPosition position = new BlockPosition(location);
+        if (viewed) {
+            viewedInventories.add(position);
+        } else {
+            viewedInventories.remove(position);
+        }
+    }
+
+    /**
+     * Returns whether the machine inventory at this location is currently open.
+     * This is a cheap concurrent-set lookup and does not load block data.
+     */
+    public boolean isInventoryViewed(@Nonnull Location location) {
+        Validate.notNull(location, "Location cannot be null!");
+        return !viewedInventories.isEmpty() && viewedInventories.contains(new BlockPosition(location));
     }
 }
