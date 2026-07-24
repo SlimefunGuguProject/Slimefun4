@@ -53,7 +53,11 @@ dependencies {
     compileOnly(libs.log4j.core)
     testImplementation(libs.junit.jupiter)
     testImplementation(libs.mockbukkit)
-    // Paper API signatures reference these annotations during test compilation.
+    // Main compileOnly dependencies are not inherited by the test source set.
+    // Add Paper explicitly so Bukkit/Paper types used by MockBukkit tests compile and run.
+    testImplementation(libs.paper.api)
+    // Main Slimefun signatures use JSR-305 while Paper signatures use JetBrains annotations.
+    testImplementation(libs.jsr305)
     testImplementation("org.jetbrains:annotations:26.1.0")
     testRuntimeOnly(libs.junit.platform.launcher)
 
