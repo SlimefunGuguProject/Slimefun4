@@ -1,15 +1,12 @@
 # Slimefun Legacy — AlbionMC Fork (English)
 
-This repository is an English-player-facing downstream build of
-[`SlimefunGuguProject/Slimefun4`](https://github.com/SlimefunGuguProject/Slimefun4).
-It keeps the newer Gugu implementation as the upstream codebase while forcing the
-server and all players to use the English Slimefun text bundled with this fork.
+This repository is an English-player-facing downstream build
 
 **Slimefun Translate is not required.**
 
 ## What this fork changes
 
-- Uses the latest imported Gugu source as the technical base.
+- Uses the latest imported Slimefun United & Slimefun 5 source as the technical base.
 - Replaces hard-coded Chinese item names, lore, guide controls, messages, and logs
   with English equivalents.
 - Defaults to `language: en` and `enable-translations: false`.
