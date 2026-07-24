@@ -19,7 +19,7 @@ jobs:
       - uses: actions/setup-java@v5
         with:
           distribution: 'zulu'
-          java-version: ${{ vars.JAVA_CI_VERSION || 21 }}
+          java-version: ${{ vars.JAVA_CI_VERSION || 25 }}
           java-package: jdk
           architecture: x64
           cache: gradle
