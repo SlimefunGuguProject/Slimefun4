@@ -29,6 +29,14 @@ tasks.compileJava {
     options.release.set(21)
 }
 
+tasks.compileTestJava {
+    // Keep test compilation on the same bytecode/API level as production.
+    // This also avoids the Java 25 compiler edge case seen while completing
+    // Paper classes whose signatures contain external nullability annotations.
+    options.encoding = "UTF-8"
+    options.release.set(21)
+}
+
 repositories {
     mavenCentral()
     maven("https://hub.spigotmc.org/nexus/content/repositories/snapshots")
@@ -58,7 +66,9 @@ dependencies {
     testImplementation(libs.paper.api)
     // Main Slimefun signatures use JSR-305 while Paper signatures use JetBrains annotations.
     testImplementation(libs.jsr305)
-    testImplementation("org.jetbrains:annotations:26.1.0")
+    // Force the plain JVM JAR. JetBrains 26.1.x publishes Gradle metadata with
+    // multiple platform variants, which can leave NotNull.class off javac's classpath.
+    testImplementation("org.jetbrains:annotations:26.0.2@jar")
     testRuntimeOnly(libs.junit.platform.launcher)
 
     implementation(libs.dough.api)
