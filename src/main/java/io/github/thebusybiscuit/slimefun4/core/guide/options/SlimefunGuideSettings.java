@@ -148,17 +148,17 @@ public final class SlimefunGuideSettings {
                         "&7Forks: &e" + github.getForks(),
                         "&7Stars: &e" + github.getStars(),
                         "",
-                        "&7&oThis English build tracks the Gugu fork,",
-                        "&7&owith player-facing text kept in English.",
-                        "&7&oUpstream source and development history",
-                        "&7&oare available on GitHub.",
+                        "&7&oThis English legacy build is maintained",
+                        "&7&ofor AlbionMC with player-facing text in English.",
+                        "&7&oSource, releases, and development history",
+                        "&7&oare available in the AlbionMC GitHub fork.",
                         "",
                         "&7\u21E8 &eClick to go to GitHub"));
         // @formatter:on
 
         menu.addMenuClickHandler(6, (pl, slot, item, action) -> {
             pl.closeInventory();
-            ChatUtils.sendURL(pl, "https://github.com/SlimefunGuguProject/Slimefun4");
+            ChatUtils.sendURL(pl, "https://github.com/wickidcow/Slimefun-Legacy");
             return false;
         });
 
@@ -218,12 +218,12 @@ public final class SlimefunGuideSettings {
                             "&7Open Issues: &a" + github.getOpenIssues(),
                             "&7Pending Pull Requests: &a" + github.getPendingPullRequests(),
                             "",
-                            "&7\u21E8 &eClick to go to the Slimefun4 Bug Tracker"));
+                            "&7\u21E8 &eClick to go to the Slimefun Legacy Bug Tracker"));
             // @formatter:on
 
             menu.addMenuClickHandler(49, (pl, slot, item, action) -> {
                 pl.closeInventory();
-                ChatUtils.sendURL(pl, "https://github.com/SlimefunGuguProject/Slimefun4/issues");
+                ChatUtils.sendURL(pl, "https://github.com/wickidcow/Slimefun-Legacy/issues");
                 return false;
             });
         } else {

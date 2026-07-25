@@ -4,8 +4,8 @@ version: ${version}
 
 # Project metadata
 author: The Slimefun 4 Community
-description: An English-player-facing build based on the latest SlimefunGuguProject fork
-website: https://github.com/SlimefunGuguProject/Slimefun4
+description: Slimefun Legacy - AlbionMC English security and stability fork
+website: https://github.com/wickidcow/Slimefun-Legacy
 
 # Technical settings
 main: io.github.thebusybiscuit.slimefun4.implementation.Slimefun

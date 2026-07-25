@@ -194,5 +194,5 @@ publishing {
 
 fun Project.resolveVersion(): String {
     findProperty("projectVersion")?.toString()?.takeIf { it.isNotBlank() }?.let { return it }
-    return "DEV-SNAPSHOT"
+    return "Legacy-SNAPSHOT"
 }

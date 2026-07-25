@@ -65,9 +65,7 @@ public final class PostSetup {
 
         sender.sendMessage("");
         sender.sendMessage(ChatColor.GREEN
-                + "######################### - Slimefun v"
-                + Slimefun.getVersion()
-                + " - #########################");
+                + "######################### - Slimefun Legacy - Snapshot - #########################");
         sender.sendMessage("");
         sender.sendMessage(ChatColor.GREEN
                 + "Successfully loaded "
@@ -86,8 +84,8 @@ public final class PostSetup {
         sender.sendMessage("");
 
         sender.sendMessage("");
-        sender.sendMessage(ChatColor.GREEN + " - Source:       https://github.com/SlimefunGuguProject/Slimefun4");
-        sender.sendMessage(ChatColor.GREEN + " - Bug Reports:  https://github.com/SlimefunGuguProject/Slimefun4/issues");
+        sender.sendMessage(ChatColor.GREEN + " - Source:       https://github.com/wickidcow/Slimefun-Legacy");
+        sender.sendMessage(ChatColor.GREEN + " - Bug Reports:  https://github.com/wickidcow/Slimefun-Legacy/issues");
 
         sender.sendMessage("");
 
