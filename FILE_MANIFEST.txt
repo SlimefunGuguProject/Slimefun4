@@ -1,6 +1,11 @@
-5f76cb35828554ae9d6442a1df3a2323d79a887201b90e8a6687f12cf8ef6056  ./README_FIRST.md
-153807a62cafcd451263ae624e61df834864464f7d57e04bc5c4ebfe3b63d21a  ./src/main/java/io/github/thebusybiscuit/slimefun4/core/commands/subcommands/DoctorCommand.java
-4965e6b658bb5054161eab3d65b9d3d4a538d55326008bfb90911636cf002b45  ./src/main/java/io/github/thebusybiscuit/slimefun4/core/services/stability/ItemDoctorService.java
-e087c5d0526322c892fdddae7f583a1daaf41f763f7fefbc841561cb3f55423c  ./src/main/java/io/github/thebusybiscuit/slimefun4/core/services/stability/ItemDoctorText.java
-a2cf5d8c245d9372bcabbad00182d19a3660e8e867b54f261fdfa16fd3707e21  ./src/main/java/io/github/thebusybiscuit/slimefun4/core/services/stability/ItemPresentationDoctor.java
-f4eb16944acc37acf254689e700cdce1aa75e957ea4436ce1ff25e6c0de7c2e1  ./src/test/java/io/github/thebusybiscuit/slimefun4/core/services/stability/TestItemDoctorText.java
+# Slimefun Legacy Stability Release 1 Hotfix 1 changed-file manifest
+# SHA-256  repository-relative path
+ba35a5bb30ae4b3d1962e730e5a981fbc36131843bd6985703923e5a572481be  ./.github/workflows/stability-release.yml
+658c33509f7c01df0b373cef4ebebe73842d64cfc0067c3477c4edc2cdc215fd  ./BUILD_VALIDATION.md
+d8a4ca2f588249feafab0b45db401aba07dfec9e78307c573bff42046fa33081  ./CHANGELOG.md
+206c7a5c8102e0a647abcf3e56c6b5c88368beb3941fc889fe89abe262d33ece  ./HOTFIX_VALIDATION.md
+657857332b3453a0b118c03eeed51af5df0a3e031de6ae409ac1cd798fe187eb  ./README_FIRST.md
+fcc1aeec1feeef0b3d7fb9b24e6caf6fc58fcb4f0050072a95099f34164b6a00  ./STABILITY_RELEASE.md
+898c540ecb67686e707f076eb6b01d7cf8a5b6919fa8ae6bc15ffa31c1ca9dd2  ./scripts/verify_chunk_load_threading.py
+9b916749e239fd358578f484d28c4423f81f9ec714dfa7ba495724113e76fb56  ./src/main/java/com/xzavier0722/mc/plugin/slimefun4/storage/controller/BlockDataController.java
+c1d7efcb31c26bd0cda2d7357718a2d92a6f1fcd3e733ad6f4ed15d5d120a058  ./src/main/java/io/github/thebusybiscuit/slimefun4/core/services/stability/ItemDoctorService.java

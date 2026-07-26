@@ -5,6 +5,7 @@ import com.xzavier0722.mc.plugin.slimefun4.storage.controller.ProfileDataControl
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunBlockData;
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunChunkData;
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunUniversalData;
+import com.xzavier0722.mc.plugin.slimefun4.storage.event.SlimefunChunkDataLoadEvent;
 import io.github.thebusybiscuit.slimefun4.api.player.PlayerBackpack;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import java.util.ArrayDeque;
@@ -42,6 +43,9 @@ import org.bukkit.scheduler.BukkitTask;
 
 /** Automatic and operator-triggered repair service for localized item metadata. */
 public final class ItemDoctorService implements Listener {
+
+    private static final int CHUNK_MENU_LOAD_ATTEMPTS = 20;
+    private static final long CHUNK_MENU_RETRY_DELAY_TICKS = 2L;
 
     private final Slimefun plugin;
     private final ItemPresentationDoctor doctor = new ItemPresentationDoctor();
@@ -191,25 +195,49 @@ public final class ItemDoctorService implements Listener {
         }
 
         Chunk chunk = event.getChunk();
-        Slimefun.runSync(() -> repairChunk(chunk, automaticReport));
-        BlockDataController controller = Slimefun.getDatabaseManager().getBlockDataController();
-        controller.getChunkDataAsync(chunk).whenComplete((chunkData, error) -> {
-            if (shuttingDown) {
-                return;
-            }
-            if (error != null) {
-                automaticReport.failure();
-                plugin.getLogger()
-                        .log(
-                                Level.WARNING,
-                                "Item doctor could not inspect Slimefun storage in a chunk.",
-                                error);
-                return;
-            }
-            if (chunkData != null) {
-                Slimefun.runSync(() -> repairSlimefunChunkMenus(controller, chunkData, automaticReport));
+        Slimefun.runSync(() -> {
+            if (!shuttingDown && chunk.isLoaded()) {
+                repairChunk(chunk, automaticReport);
             }
         });
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onSlimefunChunkDataLoad(SlimefunChunkDataLoadEvent event) {
+        if (shuttingDown
+                || !isEnabled()
+                || !Slimefun.getCfg().getBoolean("stability.item-doctor.repair-chunks-on-load")) {
+            return;
+        }
+
+        scheduleSlimefunMenuRepair(event.getChunkData(), CHUNK_MENU_LOAD_ATTEMPTS);
+    }
+
+    private void scheduleSlimefunMenuRepair(SlimefunChunkData chunkData, int attemptsRemaining) {
+        Slimefun.runSync(
+                () -> {
+                    if (shuttingDown || !chunkData.getChunk().isLoaded()) {
+                        return;
+                    }
+
+                    if (!areBlockInventoriesLoaded(chunkData) && attemptsRemaining > 0) {
+                        scheduleSlimefunMenuRepair(chunkData, attemptsRemaining - 1);
+                        return;
+                    }
+
+                    BlockDataController controller = Slimefun.getDatabaseManager().getBlockDataController();
+                    repairSlimefunChunkMenus(controller, chunkData, automaticReport);
+                },
+                CHUNK_MENU_RETRY_DELAY_TICKS);
+    }
+
+    private boolean areBlockInventoriesLoaded(SlimefunChunkData chunkData) {
+        for (SlimefunBlockData blockData : chunkData.getAllBlockData()) {
+            if (!blockData.isDataLoaded()) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)

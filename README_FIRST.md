@@ -1,42 +1,51 @@
-# Slimefun Legacy Item Doctor — GitHub Drop-In
+# Slimefun Legacy Stability Release 1 — Hotfix 1
 
-This archive is arranged from the repository root. Extract it into the root of your
-`Slimefun-Legacy` GitHub checkout and allow the `src/` folders to merge.
+This source tree contains the complete Stability Release 1 plus the Paper 26.2
+chunk-load thread-safety hotfix.
 
-## Included files
+## Fixed runtime error
 
-- `src/main/java/io/github/thebusybiscuit/slimefun4/core/commands/subcommands/DoctorCommand.java`
-- `src/main/java/io/github/thebusybiscuit/slimefun4/core/services/stability/ItemDoctorService.java`
-- `src/main/java/io/github/thebusybiscuit/slimefun4/core/services/stability/ItemDoctorText.java`
-- `src/main/java/io/github/thebusybiscuit/slimefun4/core/services/stability/ItemPresentationDoctor.java`
-- `src/test/java/io/github/thebusybiscuit/slimefun4/core/services/stability/TestItemDoctorText.java`
+The hotfix resolves:
 
-## Important status
-
-These are the five loose source files produced during the previous Item Doctor work.
-They are organized correctly for GitHub, but they are **not a complete build-ready
-stability release by themselves**.
-
-The current files still reference integration pieces that are not included here,
-including `ItemDoctorReport`, service initialization/getters, command registration,
-permission/config entries, and supporting API changes such as limited-use and spawner
-presentation refresh methods.
-
-Do not deploy a JAR built from only this archive to the production server. This package
-is intended to preserve and organize the existing work so the remaining integration can
-be completed in the main repository.
-
-## Extraction
-
-From the repository root:
-
-```bash
-unzip Slimefun-Legacy-Doctor-GitHub-Drop-In.zip
+```text
+SlimefunChunkDataLoadEvent may only be triggered synchronously
 ```
 
-Then review with:
+The Item Doctor no longer calls the asynchronous chunk loader from
+`ChunkLoadEvent`. It repairs Slimefun machine menus after the storage controller
+fires its synchronous load event. The shared `getChunkDataAsync` implementation
+also marshals unloaded chunk initialization through the primary server thread,
+preventing the same exception in GEO systems and addons.
+
+## GitHub use
+
+This archive is rooted at the repository root. Upload or extract the files into
+your Slimefun Legacy repository, commit them, and run the included GitHub Actions
+workflow **Build Stability Release**. Its default version is:
+
+```text
+Legacy-Stability-1-Hotfix-1
+```
+
+## Local build
 
 ```bash
-git status --short
-git diff --stat
+chmod +x gradlew
+./gradlew spotlessApply --no-daemon
+./gradlew spotlessCheck clean build \
+  -PprojectVersion=Legacy-Stability-1-Hotfix-1 --no-daemon
 ```
+
+Expected JAR:
+
+```text
+build/libs/Slimefun-Legacy-Stability-1-Hotfix-1.jar
+```
+
+No locally compiled JAR is included because this assembly environment could not
+resolve `services.gradle.org`. Source parsing, English verification, YAML
+validation, thread-safety verification, and the standalone stability harnesses
+passed. Review `HOTFIX_VALIDATION.md` for the exact checks.
+
+Back up the server, worlds, and Slimefun databases before replacing the plugin.
+Do not use `/reload`; perform a full clean restart.

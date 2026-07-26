@@ -1,4 +1,5 @@
 # Table of contents
+- [Legacy Stability Release 1 Hotfix 1 (26 Jul 2026)](#legacy-stability-release-1-hotfix-1-26-jul-2026)
 - [Legacy Stability Release 1 (26 Jul 2026)](#legacy-stability-release-1-26-jul-2026)
 - [Release Candidate 38 (TBD)](#release-candidate-38-tbd)
 - [Release Candidate 37 (25 Feb 2024)](#release-candidate-37-25-feb-2024)
@@ -38,6 +39,15 @@
 - [Release Candidate 3 (21 Nov 2019)](#release-candidate-3-21-nov-2019)
 - [Release Candidate 2 (29 Sep 2019)](#release-candidate-2-29-sep-2019)
 - [Release Candidate 1 (26 Sep 2019)](#release-candidate-1-26-sep-2019)
+
+
+## Legacy Stability Release 1 Hotfix 1 (26 Jul 2026)
+
+#### Fixes
+* Keep `SlimefunChunkDataLoadEvent` on the primary server thread on Paper 26.2.
+* Stop the Item Doctor from calling the async chunk loader during `ChunkLoadEvent`.
+* Repair Slimefun machine inventories after block storage finishes loading, with bounded retries.
+* Protect GEO and addon callers of `getChunkDataAsync` from the same synchronous-event exception.
 
 
 ## Legacy Stability Release 1 (26 Jul 2026)

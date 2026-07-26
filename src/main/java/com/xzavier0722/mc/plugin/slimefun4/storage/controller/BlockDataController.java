@@ -1158,16 +1158,39 @@ public class BlockDataController extends ADataController {
 
     public CompletableFuture<SlimefunChunkData> getChunkDataAsync(Chunk chunk) {
         checkDestroy();
-        SlimefunChunkData cdata = getChunkDataCache(chunk, true);
-        if (cdata.isDataLoaded()) {
-            return CompletableFuture.completedFuture(cdata);
+        SlimefunChunkData chunkData = getChunkDataCache(chunk, true);
+        if (chunkData.isDataLoaded()) {
+            return CompletableFuture.completedFuture(chunkData);
         }
-        return CompletableFuture.runAsync(() -> loadChunk(chunk, false), readExecutor)
-                .thenApply((v) -> getChunkDataCache(chunk, false));
+
+        // loadChunk fires SlimefunChunkDataLoadEvent and touches Bukkit chunk state. Paper requires
+        // that work to remain on the primary server thread, even when callers use the async API.
+        CompletableFuture<SlimefunChunkData> future = new CompletableFuture<>();
+        BukkitTask task = Slimefun.runSync(() -> {
+            try {
+                future.complete(getChunkData(chunk));
+            } catch (Throwable error) {
+                future.completeExceptionally(error);
+            }
+        });
+
+        // Unit tests execute runSync immediately and return null. A null task with an incomplete
+        // future means the plugin was disabled before the load could be scheduled.
+        if (task == null && !future.isDone()) {
+            future.completeExceptionally(
+                    new IllegalStateException("Cannot load Slimefun chunk data because the plugin is disabled."));
+        }
+        return future;
     }
 
     public void getChunkDataAsync(Chunk chunk, IAsyncReadCallback<SlimefunChunkData> callback) {
-        scheduleReadTask(() -> invokeCallback(callback, getChunkData(chunk)));
+        getChunkDataAsync(chunk).whenComplete((result, error) -> {
+            if (error != null) {
+                logger.log(Level.SEVERE, "Exception thrown while loading Slimefun chunk data.", error);
+            } else {
+                invokeCallback(callback, result);
+            }
+        });
     }
 
     public void saveAllBlockInventories() {

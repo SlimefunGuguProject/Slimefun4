@@ -1,8 +1,12 @@
 # Slimefun Legacy — Stability Release 1
 
-Build version: `Legacy-Stability-1`
+Build version: `Legacy-Stability-1-Hotfix-1`
 
 This release is the first Albion Slimefun Legacy stability release. It combines compatibility safeguards, storage recovery tooling, machine fault isolation, backpack race protection, and Cargo performance work without introducing the separate Part 2 API modernization changes.
+
+## Hotfix 1: Paper 26.2 chunk-load thread safety
+
+This package includes the runtime fix for `SlimefunChunkDataLoadEvent may only be triggered synchronously`. The Item Doctor now waits for `SlimefunChunkDataLoadEvent` instead of requesting an asynchronous chunk load from `ChunkLoadEvent`. The shared `getChunkDataAsync` API also schedules unloaded chunk initialization on the primary server thread, preventing GEO systems and addons from triggering the same Paper exception. Slimefun machine menus are repaired after their database data is ready, using bounded two-tick retries without blocking a server tick.
 
 ## Main additions
 
@@ -99,11 +103,11 @@ Local command:
 ```bash
 chmod +x gradlew
 ./gradlew spotlessApply --no-daemon
-./gradlew spotlessCheck clean build -PprojectVersion=Legacy-Stability-1 --no-daemon
+./gradlew spotlessCheck clean build -PprojectVersion=Legacy-Stability-1-Hotfix-1 --no-daemon
 ```
 
 Expected primary artifact:
 
 ```text
-build/libs/Slimefun-Legacy-Stability-1.jar
+build/libs/Slimefun-Legacy-Stability-1-Hotfix-1.jar
 ```

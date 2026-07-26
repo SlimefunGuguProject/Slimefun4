@@ -5,6 +5,7 @@
 The release is accepted only when all of the following pass:
 
 - English runtime-text verification
+- Paper-safe chunk-load threading verification
 - Spotless formatting verification
 - Java compilation targeting Java 21
 - JUnit 5 tests
@@ -22,6 +23,7 @@ The manual `.github/workflows/stability-release.yml` workflow performs these gat
 - Ran the backpack maintenance-cache concurrency/ownership regression harness.
 - Validated `config.yml`, `plugin.yml`, and storage YAML syntax.
 - Ran `scripts/verify_english.py` against the assembled source.
+- Ran `scripts/verify_chunk_load_threading.py` to prevent async synchronous-event regressions.
 - Checked changed files for trailing whitespace and malformed patch output.
 - Reverse-applied, regenerated, reapplied, and byte-compared the maintained Albion patch.
 
