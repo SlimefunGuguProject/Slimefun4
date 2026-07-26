@@ -1,0 +1,65 @@
+name: Slimefun Compatibility
+
+on:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: '41 6 * * 1'
+
+permissions:
+  contents: read
+
+jobs:
+  build-slimefun:
+    name: Build Slimefun Legacy
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: gradle
+      - name: Build exact compatibility JAR
+        run: |
+          chmod +x gradlew
+          ./gradlew clean build --no-daemon
+      - uses: actions/upload-artifact@v7
+        with:
+          name: slimefun-compatibility-jar
+          path: |
+            build/libs/Slimefun-*.jar
+            !build/libs/*-sources.jar
+          if-no-files-found: error
+
+  addons:
+    name: Addon – ${{ matrix.repository }}
+    needs: build-slimefun
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        repository:
+          - wickidcow/FastMachines
+          - wickidcow/Networks
+          - wickidcow/SlimeTinker2
+          - wickidcow/BetterChests
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: gradle
+      - uses: actions/download-artifact@v8
+        with:
+          name: slimefun-compatibility-jar
+          path: build/compat
+      - name: Clone addon
+        run: git clone --depth 1 "https://github.com/${{ matrix.repository }}.git" "$RUNNER_TEMP/addon"
+      - name: Compile addon against exact JAR
+        run: |
+          JAR="$(find build/compat -name 'Slimefun-*.jar' ! -name '*-sources.jar' -print -quit)"
+          python3 scripts/build_addon_against_local_slimefun.py "$RUNNER_TEMP/addon" "$JAR"

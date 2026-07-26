@@ -1,0 +1,50 @@
+name: Public API Compatibility
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  api-compatibility:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: gradle
+      - name: Build candidate
+        run: |
+          chmod +x gradlew
+          ./gradlew clean build --no-daemon
+      - name: Download latest released baseline
+        id: baseline
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p build/api-baseline
+          if gh release download --repo "$GITHUB_REPOSITORY" --pattern 'Slimefun-*.jar' --dir build/api-baseline; then
+            echo 'available=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'No prior GitHub release JAR exists; API comparison is skipped.'
+            echo 'available=false' >> "$GITHUB_OUTPUT"
+          fi
+      - name: Check removed public signatures
+        if: steps.baseline.outputs.available == 'true'
+        run: |
+          BASELINE="$(find build/api-baseline -name 'Slimefun-*.jar' ! -name '*-sources.jar' -print -quit)"
+          CANDIDATE="$(find build/libs -name 'Slimefun-*.jar' ! -name '*-sources.jar' -print -quit)"
+          python3 scripts/check_api_compatibility.py "$BASELINE" "$CANDIDATE"
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: api-compatibility-report
+          path: build/reports/api-compatibility.txt
+          if-no-files-found: ignore
