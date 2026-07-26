@@ -23,6 +23,7 @@ jobs:
       - name: Build candidate
         run: |
           chmod +x gradlew
+          ./gradlew spotlessApply --no-daemon
           ./gradlew clean build --no-daemon
       - name: Download latest released baseline
         id: baseline

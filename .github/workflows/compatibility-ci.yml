@@ -24,6 +24,7 @@ jobs:
       - name: Build exact compatibility JAR
         run: |
           chmod +x gradlew
+          ./gradlew spotlessApply --no-daemon
           ./gradlew clean build --no-daemon
       - uses: actions/upload-artifact@v7
         with:
