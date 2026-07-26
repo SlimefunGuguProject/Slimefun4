@@ -6,7 +6,7 @@ on:
       version:
         description: Release version used in the JAR name
         required: true
-        default: Legacy-Stability-1
+        default: Legacy-Stability-1-Hotfix-1
         type: string
       create_release:
         description: Create a GitHub release after all checks pass
@@ -36,6 +36,9 @@ jobs:
 
       - name: Verify English-only runtime text
         run: python3 scripts/verify_english.py .
+
+      - name: Verify chunk-load thread safety
+        run: python3 scripts/verify_chunk_load_threading.py .
 
       - name: Format and build release
         run: |
