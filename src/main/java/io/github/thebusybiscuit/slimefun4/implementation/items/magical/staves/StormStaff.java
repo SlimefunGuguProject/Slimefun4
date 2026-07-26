@@ -16,6 +16,7 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.World;
+import org.bukkit.block.Block;
 import org.bukkit.entity.LightningStrike;
 import org.bukkit.entity.Player;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
@@ -54,9 +55,13 @@ public class StormStaff extends LimitedUseItem {
             ItemStack item = e.getItem();
 
             if (p.getFoodLevel() >= 4 || p.getGameMode() == GameMode.CREATIVE) {
-                // Get a target block with max. 30 blocks of distance
-                Location loc = p.getTargetBlock(null, 30).getLocation();
+                // Get a target block with max. 30 blocks of distance.
+                Block target = p.getTargetBlockExact(30);
+                if (target == null) {
+                    return;
+                }
 
+                Location loc = target.getLocation();
                 if (loc.getWorld() != null && loc.getChunk().isLoaded()) {
                     if (loc.getWorld().getPVP()
                             && Slimefun.getProtectionManager().hasPermission(p, loc, Interaction.ATTACK_PLAYER)) {

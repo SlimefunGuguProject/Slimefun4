@@ -1,14 +1,14 @@
 package io.github.thebusybiscuit.slimefun4.implementation.tasks;
 
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.ASlimefunDataContainer;
-import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunBlockData;
-import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunUniversalData;
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.attributes.UniversalBlock;
 import com.xzavier0722.mc.plugin.slimefun4.storage.util.StorageCacheUtils;
 import io.github.bakedlibs.dough.blocks.BlockPosition;
 import io.github.bakedlibs.dough.blocks.ChunkPosition;
 import io.github.thebusybiscuit.slimefun4.api.ErrorReport;
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunInternal;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
+import io.github.thebusybiscuit.slimefun4.core.services.scheduling.TaskHandle;
 import io.github.thebusybiscuit.slimefun4.core.services.stability.MachineCircuitBreaker;
 import io.github.thebusybiscuit.slimefun4.core.ticker.TickLocation;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
@@ -28,7 +28,6 @@ import me.mrCookieSlime.Slimefun.Objects.handlers.BlockTicker;
 import org.apache.commons.lang.Validate;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
-import org.bukkit.scheduler.BukkitScheduler;
 
 /**
  * The {@link TickerTask} is responsible for ticking every {@link BlockTicker},
@@ -39,6 +38,7 @@ import org.bukkit.scheduler.BukkitScheduler;
  * @see BlockTicker
  *
  */
+@SlimefunInternal
 public class TickerTask implements Runnable {
 
     /**
@@ -65,6 +65,7 @@ public class TickerTask implements Runnable {
     private static final int CIRCUIT_FAILURE_THRESHOLD = 4;
 
     private int tickRate;
+    private TaskHandle scheduledTask;
     private boolean halted = false;
     private boolean running = false;
 
@@ -80,8 +81,11 @@ public class TickerTask implements Runnable {
     public void start(@Nonnull Slimefun plugin) {
         this.tickRate = Slimefun.getCfg().getInt("URID.custom-ticker-delay");
 
-        BukkitScheduler scheduler = plugin.getServer().getScheduler();
-        scheduler.runTaskTimerAsynchronously(plugin, this, 100L, tickRate);
+        if (scheduledTask != null) {
+            scheduledTask.cancel();
+        }
+
+        scheduledTask = Slimefun.getSchedulerService().runAsyncAtFixedRate(this, 100L, tickRate);
     }
 
     /**
@@ -194,7 +198,7 @@ public class TickerTask implements Runnable {
                     }
                     ticker.update();
 
-                    Slimefun.runSync(() -> {
+                    Slimefun.getSchedulerService().runAt(l, () -> {
                         try {
                             if (!blockData.isDataLoaded() || blockData.isPendingRemove()) {
                                 circuitBreaker.clear(position);
@@ -268,7 +272,7 @@ public class TickerTask implements Runnable {
                     }
                     ticker.update();
 
-                    Slimefun.runSync(() -> {
+                    Slimefun.getSchedulerService().runAt(l, () -> {
                         try {
                             if (!data.isDataLoaded() || data.isPendingRemove()) {
                                 circuitBreaker.clear(position);
@@ -311,19 +315,7 @@ public class TickerTask implements Runnable {
     @ParametersAreNonnullByDefault
     private boolean tickBlock(Location l, SlimefunItem item, ASlimefunDataContainer data, long timestamp) {
         try {
-            if (item.getBlockTicker().isUniversal()) {
-                if (data instanceof SlimefunUniversalData universalData) {
-                    item.getBlockTicker().tick(l.getBlock(), item, universalData);
-                } else {
-                    throw new IllegalStateException("BlockTicker is universal but item is non-universal!");
-                }
-            } else {
-                if (data instanceof SlimefunBlockData blockData) {
-                    item.getBlockTicker().tick(l.getBlock(), item, blockData);
-                } else {
-                    throw new IllegalStateException("BlockTicker is non-universal but item is universal!");
-                }
-            }
+            item.getBlockTicker().tick(l.getBlock(), item, data);
             return true;
         } catch (Exception | LinkageError x) {
             reportErrors(l, item, x);
@@ -409,6 +401,11 @@ public class TickerTask implements Runnable {
 
     public void halt() {
         halted = true;
+
+        if (scheduledTask != null) {
+            scheduledTask.cancel();
+            scheduledTask = null;
+        }
     }
 
     /**

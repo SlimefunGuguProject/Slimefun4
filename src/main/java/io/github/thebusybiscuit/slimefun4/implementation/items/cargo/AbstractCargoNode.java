@@ -7,6 +7,7 @@ import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
 import io.github.thebusybiscuit.slimefun4.api.recipes.RecipeType;
 import io.github.thebusybiscuit.slimefun4.core.handlers.BlockPlaceHandler;
+import io.github.thebusybiscuit.slimefun4.core.services.protection.ProtectionCompatibility;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.implementation.items.SimpleSlimefunItem;
 import io.github.thebusybiscuit.slimefun4.utils.ChatUtils;
@@ -62,9 +63,11 @@ abstract class AbstractCargoNode extends SimpleSlimefunItem<BlockPlaceHandler> i
 
             @Override
             public boolean canOpen(Block b, Player p) {
-                return p.hasPermission("slimefun.cargo.bypass")
-                        || Slimefun.getProtectionManager()
-                                .hasPermission(p, b.getLocation(), Interaction.INTERACT_BLOCK);
+                return ProtectionCompatibility.isAllowed(
+                        p.hasPermission("slimefun.cargo.bypass"),
+                        true,
+                        () -> Slimefun.getProtectionManager()
+                                .hasPermission(p, b.getLocation(), Interaction.INTERACT_BLOCK));
             }
 
             @Override

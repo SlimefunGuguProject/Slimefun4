@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.api.items;
 
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import io.github.thebusybiscuit.slimefun4.api.exceptions.IncompatibleItemHandlerException;
 import io.github.thebusybiscuit.slimefun4.core.handlers.BlockUseHandler;
 import io.github.thebusybiscuit.slimefun4.core.handlers.BowShootHandler;
@@ -24,6 +25,7 @@ import javax.annotation.Nonnull;
  * @see BowShootHandler
  */
 @FunctionalInterface
+@SlimefunAPI
 public interface ItemHandler {
 
     /**

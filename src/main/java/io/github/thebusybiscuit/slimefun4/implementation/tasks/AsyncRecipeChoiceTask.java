@@ -16,9 +16,10 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.Recipe;
 import org.bukkit.inventory.RecipeChoice.MaterialChoice;
+import org.bukkit.scheduler.BukkitTask;
 
 /**
- * A {@link AsyncRecipeChoiceTask} is an asynchronously repeating task that cycles
+ * A {@link AsyncRecipeChoiceTask} is a repeating task that cycles
  * through the different variants of {@link Material} that a {@link MaterialChoice} or {@link Tag} can represent.
  *
  * It is used in the {@link SurvivalSlimefunGuide} for any {@link ItemStack} from Minecraft
@@ -35,7 +36,7 @@ public class AsyncRecipeChoiceTask implements Runnable {
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
     private Inventory inventory;
-    private int id;
+    private BukkitTask task;
 
     /**
      * This will start this task for the given {@link Inventory}.
@@ -47,9 +48,13 @@ public class AsyncRecipeChoiceTask implements Runnable {
         Validate.notNull(inv, "Inventory must not be null");
 
         inventory = inv;
-        id = Bukkit.getScheduler()
-                .runTaskTimerAsynchronously(Slimefun.instance(), this, 0, UPDATE_INTERVAL)
-                .getTaskId();
+
+        if (task != null) {
+            task.cancel();
+        }
+
+        // Inventory contents and viewers are Bukkit state and must be accessed on a server-owned thread.
+        task = Bukkit.getScheduler().runTaskTimer(Slimefun.instance(), this, 0, UPDATE_INTERVAL);
     }
 
     public void add(int slot, @Nonnull MaterialChoice choice) {
@@ -109,7 +114,10 @@ public class AsyncRecipeChoiceTask implements Runnable {
     public void run() {
         // Terminate the task when noone is viewing the Inventory
         if (inventory.getViewers().isEmpty()) {
-            Bukkit.getScheduler().cancelTask(id);
+            if (task != null) {
+                task.cancel();
+                task = null;
+            }
             return;
         }
 

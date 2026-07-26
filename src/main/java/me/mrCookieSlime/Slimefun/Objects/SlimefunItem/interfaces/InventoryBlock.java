@@ -1,7 +1,9 @@
 package me.mrCookieSlime.Slimefun.Objects.SlimefunItem.interfaces;
 
 import io.github.bakedlibs.dough.protection.Interaction;
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunInternal;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
+import io.github.thebusybiscuit.slimefun4.core.services.protection.ProtectionCompatibility;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import java.lang.reflect.Array;
 import java.util.function.Consumer;
@@ -15,6 +17,8 @@ import org.bukkit.inventory.Inventory;
  * @deprecated This interface is not designed to be used by addons. The entire inventory system will be replaced
  * eventually.
  */
+@Deprecated
+@SlimefunInternal
 public interface InventoryBlock {
 
     /**
@@ -56,13 +60,11 @@ public interface InventoryBlock {
 
             @Override
             public boolean canOpen(Block b, Player p) {
-                if (p.hasPermission("slimefun.inventory.bypass")) {
-                    return true;
-                } else {
-                    return item.canUse(p, false)
-                            && Slimefun.getProtectionManager()
-                                    .hasPermission(p, b.getLocation(), Interaction.INTERACT_BLOCK);
-                }
+                return ProtectionCompatibility.isAllowed(
+                        p.hasPermission("slimefun.inventory.bypass"),
+                        item.canUse(p, false),
+                        () -> Slimefun.getProtectionManager()
+                                .hasPermission(p, b.getLocation(), Interaction.INTERACT_BLOCK));
             }
         };
     }

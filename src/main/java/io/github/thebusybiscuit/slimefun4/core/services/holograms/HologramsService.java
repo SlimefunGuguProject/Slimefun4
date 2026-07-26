@@ -4,16 +4,14 @@ import io.github.bakedlibs.dough.blocks.BlockPosition;
 import io.github.thebusybiscuit.slimefun4.core.attributes.HologramOwner;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 import org.apache.commons.lang.Validate;
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Server;
@@ -63,7 +61,7 @@ public class HologramsService {
     /**
      * Our cache to save {@link Entity} lookups
      */
-    private final Map<BlockPosition, Hologram> cache = new HashMap<>();
+    private final Map<BlockPosition, Hologram> cache = new ConcurrentHashMap<>();
 
     /**
      * This constructs a new {@link HologramsService}.
@@ -83,7 +81,7 @@ public class HologramsService {
      * purge-task.
      */
     public void start() {
-        plugin.getServer().getScheduler().scheduleSyncRepeatingTask(plugin, this::purge, PURGE_RATE, PURGE_RATE);
+        Slimefun.getSchedulerService().runAtFixedRate(this::purge, PURGE_RATE, PURGE_RATE);
     }
 
     /**
@@ -100,15 +98,7 @@ public class HologramsService {
      * This purges any expired {@link Hologram}.
      */
     private void purge() {
-        Iterator<Hologram> iterator = cache.values().iterator();
-
-        while (iterator.hasNext()) {
-            Hologram hologram = iterator.next();
-
-            if (hologram.hasExpired()) {
-                iterator.remove();
-            }
-        }
+        cache.entrySet().removeIf(entry -> entry.getValue().hasExpired());
     }
 
     /**
@@ -261,10 +251,10 @@ public class HologramsService {
             }
         };
 
-        if (Bukkit.isPrimaryThread()) {
+        if (Slimefun.getSchedulerService().isOwnedByCurrentRegion(loc)) {
             runnable.run();
         } else {
-            Slimefun.runSync(runnable);
+            Slimefun.getSchedulerService().runAt(loc, runnable);
         }
     }
 
@@ -282,7 +272,7 @@ public class HologramsService {
     public boolean removeHologram(@Nonnull Location loc) {
         Validate.notNull(loc, "Location cannot be null");
 
-        if (Bukkit.isPrimaryThread()) {
+        if (Slimefun.getSchedulerService().isOwnedByCurrentRegion(loc)) {
             try {
                 Hologram hologram = getHologram(loc, false);
 

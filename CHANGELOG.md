@@ -1,4 +1,5 @@
 # Table of contents
+- [Legacy Second Maintenance Release — Part 2 Foundation (26 Jul 2026)](#legacy-second-maintenance-release--part-2-foundation-26-jul-2026)
 - [Legacy Stability Release 1 Hotfix 1 (26 Jul 2026)](#legacy-stability-release-1-hotfix-1-26-jul-2026)
 - [Legacy Stability Release 1 (26 Jul 2026)](#legacy-stability-release-1-26-jul-2026)
 - [Release Candidate 38 (TBD)](#release-candidate-38-tbd)
@@ -39,6 +40,25 @@
 - [Release Candidate 3 (21 Nov 2019)](#release-candidate-3-21-nov-2019)
 - [Release Candidate 2 (29 Sep 2019)](#release-candidate-2-29-sep-2019)
 - [Release Candidate 1 (26 Sep 2019)](#release-candidate-1-26-sep-2019)
+
+
+## Legacy Second Maintenance Release — Part 2 Foundation (26 Jul 2026)
+
+#### Fixes
+* Replace the hardcoded `connectstate:` connector message with localized `Connected: ✔` / `Connected: ✘` output.
+* Correct long-capacity energy writes to use long capacity and charge accessors.
+* Keep recipe-choice inventory updates off asynchronous scheduler threads.
+
+#### Additions
+* Add tracked Paper/Folia scheduler, task-handle, location, and entity scheduling abstractions.
+* Add storage-neutral `BlockTicker` and resolved-container long-energy overloads without removing legacy signatures.
+* Add `@SlimefunAPI` and `@SlimefunInternal` annotations and an initial API-boundary pass.
+* Add fail-closed protection compatibility policy and server-independent tests.
+* Begin Paper deprecation cleanup with `AsyncChatEvent`, entity-scheduled callbacks, modern target-block lookup, and nonblocking callable helpers.
+
+#### Compatibility
+* Retain legacy ticker, storage, and `Slimefun.runSync(...)` bridges while migration continues.
+* Treat this as a Part 2 foundation; remaining direct scheduler users and full addon compatibility gates are still required before final release.
 
 
 ## Legacy Stability Release 1 Hotfix 1 (26 Jul 2026)
@@ -82,14 +102,14 @@
 * Allow blocks to be dropped while in creative mode (#3934)
 * Storage rewrite - Phase 1 (#4065)
 * Temporarily disable senstive blocks check (#4077)
-* Update MockBukkit to 1.20.4 along with existing tests (#4086) 
+* Update MockBukkit to 1.20.4 along with existing tests (#4086)
 * Move PlayerProfile saving off the main thread (#4119)
 
 #### Fixes
 * Fix contributor head being pullable (#4072)
 * Fix backpack IDs not incrementing (#4081)
 * Fix inventory being used when Slimefun block is broken (#4088)
-* Fix items not being able to be placed on ancient altar (#4094) 
+* Fix items not being able to be placed on ancient altar (#4094)
 * Update dough to fix item stacking issue (#4100)
 * Fix slimefun block turning into a vanilla block if there are viewers (#4101)
 * Fixes #4123 - Coal Generator will no longer be locked after researching (#4124)
@@ -1515,4 +1535,4 @@ https://thebusybiscuit.github.io/builds/TheBusyBiscuit/Slimefun4/stable/#2
 ## Release Candidate 1 (26 Sep 2019)
 https://thebusybiscuit.github.io/builds/TheBusyBiscuit/Slimefun4/stable/#1
 
-* First "stable" release since over a year. Stable builds will NOT receive support for bug reports since they are technically outdated. 
+* First "stable" release since over a year. Stable builds will NOT receive support for bug reports since they are technically outdated.

@@ -324,8 +324,8 @@ machines:
 
   CARGO_NODES:
     must-be-placed: '&4Must be placed onto a chest or machine!'
-    connected: '&2Connected!'
-    not-connected: '&4Not connected!'
+    connected: '&7Connected: &2✔'
+    not-connected: '&7Connected: &4✘'
 
   INDUSTRIAL_MINER:
     no-fuel: '&cYour Industrial Miner ran out of fuel! Put your fuel into the chest above.'

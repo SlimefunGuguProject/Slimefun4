@@ -1,8 +1,10 @@
 package me.mrCookieSlime.Slimefun.Objects.handlers;
 
+import com.xzavier0722.mc.plugin.slimefun4.storage.controller.ASlimefunDataContainer;
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.BlockDataConfigWrapper;
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunBlockData;
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunUniversalData;
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import io.github.thebusybiscuit.slimefun4.api.exceptions.IncompatibleItemHandlerException;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemHandler;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
@@ -12,6 +14,7 @@ import lombok.Getter;
 import me.mrCookieSlime.CSCoreLibPlugin.Configuration.Config;
 import org.bukkit.block.Block;
 
+@SlimefunAPI
 public abstract class BlockTicker implements ItemHandler {
 
     @Getter
@@ -28,7 +31,7 @@ public abstract class BlockTicker implements ItemHandler {
     }
 
     /**
-     * 刷新当前 ticker 执行状态
+     * Refreshes the current ticker execution state.
      */
     public void update() {
         if (unique) {
@@ -72,6 +75,33 @@ public abstract class BlockTicker implements ItemHandler {
      */
     public void tick(Block b, SlimefunItem item, SlimefunBlockData data) {
         tick(b, item, new BlockDataConfigWrapper(data));
+    }
+
+    /**
+     * Modern storage-neutral overload for block tickers.
+     *
+     * <p>This method preserves the existing block and universal overload dispatch so addons can migrate without
+     * losing binary compatibility.
+     *
+     * @param b
+     *            The block that was ticked
+     * @param item
+     *            The corresponding Slimefun item
+     * @param data
+     *            The storage container for this block
+     */
+    public void tick(Block b, SlimefunItem item, ASlimefunDataContainer data) {
+        if (universal) {
+            if (data instanceof SlimefunUniversalData universalData) {
+                tick(b, item, universalData);
+            } else {
+                throw new IllegalStateException("BlockTicker is universal but item storage is non-universal");
+            }
+        } else if (data instanceof SlimefunBlockData blockData) {
+            tick(b, item, blockData);
+        } else {
+            throw new IllegalStateException("BlockTicker is non-universal but item storage is universal");
+        }
     }
 
     /**

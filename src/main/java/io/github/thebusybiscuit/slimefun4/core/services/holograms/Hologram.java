@@ -29,7 +29,7 @@ class Hologram {
     /**
      * The timestamp of when the {@link ArmorStand} was last accessed.
      */
-    private long lastAccess;
+    private volatile long lastAccess;
 
     /**
      * The label of this {@link Hologram}.

@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.api;
 
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import java.util.logging.Logger;
 import javax.annotation.Nonnull;
@@ -23,6 +24,7 @@ import org.bukkit.plugin.java.JavaPlugin;
  * @author ybw0014
  *
  */
+@SlimefunAPI
 public interface SlimefunAddon {
 
     /**

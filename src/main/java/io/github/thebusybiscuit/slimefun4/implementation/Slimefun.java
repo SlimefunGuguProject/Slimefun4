@@ -37,9 +37,10 @@ import io.github.thebusybiscuit.slimefun4.core.services.ThreadService;
 import io.github.thebusybiscuit.slimefun4.core.services.UpdaterService;
 import io.github.thebusybiscuit.slimefun4.core.services.github.GitHubService;
 import io.github.thebusybiscuit.slimefun4.core.services.holograms.HologramsService;
-import io.github.thebusybiscuit.slimefun4.core.services.stability.ItemDoctorService;
 import io.github.thebusybiscuit.slimefun4.core.services.profiler.SlimefunProfiler;
+import io.github.thebusybiscuit.slimefun4.core.services.scheduling.SlimefunScheduler;
 import io.github.thebusybiscuit.slimefun4.core.services.sounds.SoundService;
+import io.github.thebusybiscuit.slimefun4.core.services.stability.ItemDoctorService;
 import io.github.thebusybiscuit.slimefun4.implementation.items.altar.AncientAltar;
 import io.github.thebusybiscuit.slimefun4.implementation.items.altar.AncientPedestal;
 import io.github.thebusybiscuit.slimefun4.implementation.items.backpacks.Cooler;
@@ -100,6 +101,7 @@ import io.github.thebusybiscuit.slimefun4.implementation.listeners.entity.MobDro
 import io.github.thebusybiscuit.slimefun4.implementation.listeners.entity.PiglinListener;
 import io.github.thebusybiscuit.slimefun4.implementation.listeners.entity.WitherListener;
 import io.github.thebusybiscuit.slimefun4.implementation.resources.GEOResourcesSetup;
+import io.github.thebusybiscuit.slimefun4.implementation.scheduling.PaperScheduler;
 import io.github.thebusybiscuit.slimefun4.implementation.setup.PostSetup;
 import io.github.thebusybiscuit.slimefun4.implementation.setup.ResearchSetup;
 import io.github.thebusybiscuit.slimefun4.implementation.setup.SlimefunItemSetup;
@@ -196,6 +198,7 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
     private final HologramsService hologramsService = new HologramsService(this);
     private final SoundService soundService = new SoundService(this);
     private final ThreadService threadService = new ThreadService(this);
+    private final SlimefunScheduler schedulerService = new PaperScheduler(this);
     private final AnalyticsService analyticsService = new AnalyticsService(this);
     private final ItemStackService itemStackService = new ItemStackService();
     private final ItemDoctorService itemDoctorService = new ItemDoctorService(this);
@@ -238,6 +241,7 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
      * @param file
      *            A {@link File} for this {@link Plugin}
      */
+    @SuppressWarnings({"deprecation", "removal"})
     @ParametersAreNonnullByDefault
     public Slimefun(JavaPluginLoader loader, PluginDescriptionFile description, File dataFolder, File file) {
         super(loader, description, dataFolder, file);
@@ -445,7 +449,7 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
 
         if (cfgManager.isAutoUpdate()) {
             // Community fork auto-update
-            Bukkit.getScheduler().scheduleSyncDelayedTask(this, new AutoUpdateTask(this, getFile()));
+            Bukkit.getScheduler().runTask(this, new AutoUpdateTask(this, getFile()));
         }
 
         // Hooray!
@@ -482,7 +486,10 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
         SlimefunExtended.shutdown();
         getSQLProfiler().shutdown();
 
-        // Cancel all tasks from this plugin immediately
+        // Cancel tasks created through the modern scheduler abstraction first.
+        schedulerService.cancelAll();
+
+        // Cancel any remaining legacy Bukkit tasks owned by this plugin.
         Bukkit.getScheduler().cancelTasks(this);
 
         // Finishes all started movements/removals of block data
@@ -868,6 +875,16 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
     public static @Nonnull TickerTask getTickerTask() {
         validateInstance();
         return instance.ticker;
+    }
+
+    /**
+     * Returns Slimefun's scheduler abstraction.
+     *
+     * @return The scheduler service used by Slimefun core
+     */
+    public static @Nonnull SlimefunScheduler getSchedulerService() {
+        validateInstance();
+        return instance.schedulerService;
     }
 
     public static @Nonnull ItemDoctorService getItemDoctorService() {

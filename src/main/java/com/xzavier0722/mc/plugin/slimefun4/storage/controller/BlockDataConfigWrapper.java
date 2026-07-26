@@ -1,5 +1,6 @@
 package com.xzavier0722.mc.plugin.slimefun4.storage.controller;
 
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunInternal;
 import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
@@ -11,6 +12,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.jetbrains.annotations.ApiStatus;
 
 @ApiStatus.Internal
+@SlimefunInternal
 @Deprecated
 public class BlockDataConfigWrapper extends Config {
     private final ASlimefunDataContainer blockData;
