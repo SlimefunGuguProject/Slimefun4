@@ -17,6 +17,8 @@ import io.github.bakedlibs.dough.config.Config;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.Locale;
 import java.util.logging.Level;
 import javax.annotation.Nullable;
@@ -31,6 +33,9 @@ public class SlimefunDatabaseManager {
     private StorageType blockDataStorageType;
     private IDataSourceAdapter<?> profileAdapter;
     private IDataSourceAdapter<?> blockStorageAdapter;
+    private final File cleanShutdownMarker;
+    private final File storageInitializedMarker;
+    private boolean previousShutdownClean = true;
 
     public SlimefunDatabaseManager(Slimefun plugin) {
         this.plugin = plugin;
@@ -45,9 +50,12 @@ public class SlimefunDatabaseManager {
 
         profileConfig = new Config(plugin, PROFILE_CONFIG_FILE_NAME);
         blockStorageConfig = new Config(plugin, BLOCK_STORAGE_FILE_NAME);
+        cleanShutdownMarker = new File("data-storage/Slimefun", ".clean-shutdown");
+        storageInitializedMarker = new File("data-storage/Slimefun", ".storage-initialized");
     }
 
     public void init() {
+        markStartupInProgress();
         initDefaultVal();
 
         try {
@@ -170,23 +178,89 @@ public class SlimefunDatabaseManager {
     }
 
     public void shutdown() {
-        if (getProfileDataController() != null) {
-            getProfileDataController().shutdown();
+        boolean clean = true;
+
+        try {
+            if (getProfileDataController() != null) {
+                getProfileDataController().shutdown();
+            }
+            if (getBlockDataController() != null) {
+                getBlockDataController().shutdown();
+            }
+            clean = (getProfileDataController() == null || getProfileDataController().wasLastShutdownClean())
+                    && (getBlockDataController() == null || getBlockDataController().wasLastShutdownClean());
+        } catch (RuntimeException ex) {
+            clean = false;
+            plugin.getLogger().log(Level.SEVERE, "Failed to drain Slimefun database controllers", ex);
         }
 
-        if (getBlockDataController() != null) {
-            getBlockDataController().shutdown();
+        try {
+            if (blockStorageAdapter != null) {
+                blockStorageAdapter.shutdown();
+            }
+            if (profileAdapter != null) {
+                profileAdapter.shutdown();
+            }
+        } catch (RuntimeException ex) {
+            clean = false;
+            plugin.getLogger().log(Level.SEVERE, "Failed to close Slimefun database adapters", ex);
+        } finally {
+            ControllerHolder.clearControllers();
         }
 
-        if (blockStorageAdapter != null) {
-            blockStorageAdapter.shutdown();
+        if (clean) {
+            writeCleanShutdownMarker();
+        } else {
+            plugin.getLogger().warning("Slimefun did not complete a clean database shutdown. A storage warning will be shown on the next startup.");
+        }
+    }
+
+    private void markStartupInProgress() {
+        File storageDirectory = cleanShutdownMarker.getParentFile();
+        if (!storageDirectory.exists() && !storageDirectory.mkdirs()) {
+            plugin.getLogger().warning("Could not create the Slimefun data-storage directory for shutdown tracking.");
+            return;
         }
 
-        if (profileAdapter != null) {
-            profileAdapter.shutdown();
+        previousShutdownClean = cleanShutdownMarker.exists() || !storageInitializedMarker.exists();
+        if (!previousShutdownClean) {
+            plugin.getLogger().warning("The previous Slimefun session did not leave a clean-shutdown marker. Back up data-storage/Slimefun and run /sf stability status.");
         }
 
-        ControllerHolder.clearControllers();
+        try {
+            Files.writeString(storageInitializedMarker.toPath(), "initialized\n", StandardCharsets.UTF_8);
+            Files.deleteIfExists(cleanShutdownMarker.toPath());
+        } catch (IOException ex) {
+            plugin.getLogger().log(Level.WARNING, "Could not clear the Slimefun clean-shutdown marker", ex);
+        }
+    }
+
+    private void writeCleanShutdownMarker() {
+        try {
+            Files.writeString(
+                    cleanShutdownMarker.toPath(),
+                    "Slimefun Legacy clean shutdown\n",
+                    StandardCharsets.UTF_8);
+        } catch (IOException ex) {
+            plugin.getLogger().log(Level.WARNING, "Could not write the Slimefun clean-shutdown marker", ex);
+        }
+    }
+
+    public boolean wasPreviousShutdownClean() {
+        return previousShutdownClean;
+    }
+
+    public int getPendingWriteTaskCount() {
+        int pending = 0;
+        ProfileDataController profile = getProfileDataController();
+        BlockDataController blocks = getBlockDataController();
+        if (profile != null) {
+            pending += profile.getPendingWriteTaskCount();
+        }
+        if (blocks != null) {
+            pending += blocks.getPendingWriteTaskCount();
+        }
+        return pending;
     }
 
     public boolean isBlockDataBase64Enabled() {

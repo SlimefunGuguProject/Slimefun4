@@ -56,6 +56,8 @@ public abstract class ADataController {
      * 标记当前控制器是否已被关闭
      */
     private volatile boolean destroyed = false;
+    private volatile boolean shuttingDown = false;
+    private volatile boolean lastShutdownClean = true;
 
     /**
      * The logger for this data controller.
@@ -130,43 +132,70 @@ public abstract class ADataController {
      */
     @OverridingMethodsMustInvokeSuper
     public void shutdown() {
-        if (destroyed) {
+        if (destroyed || shuttingDown) {
             return;
         }
-        destroyed = true;
+        shuttingDown = true;
         readExecutor.shutdownNow();
         callbackExecutor.shutdownNow();
 
         try {
-            float totalTask = scheduledWriteTasks.size();
-            var pendingTask = scheduledWriteTasks.size();
-            var timer = new TaskTimer();
+            int totalTask = scheduledWriteTasks.size();
+            int pendingTask = totalTask;
+            var stalledTimer = new TaskTimer();
+            long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(120);
 
-            while (pendingTask > 0) {
-                var doneTaskPercent = String.format("%.1f", (totalTask - pendingTask) / totalTask * 100);
-                logger.log(Level.INFO, "Saving data, please wait... Remaining tasks: {0} ({1}%)", new Object[] {pendingTask, doneTaskPercent});
+            while (pendingTask > 0 && System.nanoTime() < deadline) {
+                double completedPercent = totalTask == 0 ? 100.0 : (totalTask - pendingTask) * 100.0 / totalTask;
+                logger.log(Level.INFO, "Saving data, please wait... Remaining tasks: {0} ({1}%)", new Object[] {
+                    pendingTask, String.format("%.1f", completedPercent)
+                });
                 TimeUnit.SECONDS.sleep(1);
-                var currentTask = scheduledWriteTasks.size();
+                int currentTask = scheduledWriteTasks.size();
 
-                if (pendingTask == currentTask) {
-                    if (timer.peek() / 1000 > 10) {
-                        Slimefun.logger().log(Level.WARNING, "Detected a long-running save task. Please provide the following thread stack dump to the developers for investigation:");
-                        Slimefun.logger()
-                                .log(Level.WARNING, Slimefun.getProfiler().snapshotThreads());
-                    }
-                } else {
-                    timer.reset();
+                if (pendingTask == currentTask && stalledTimer.peek() / 1000 > 10) {
+                    Slimefun.logger().warning("Detected a long-running save task. Thread dump follows:");
+                    Slimefun.logger().log(Level.WARNING, Slimefun.getProfiler().snapshotThreads());
+                    stalledTimer.reset();
+                } else if (pendingTask != currentTask) {
+                    stalledTimer.reset();
                 }
 
-                pendingTask = scheduledWriteTasks.size();
+                pendingTask = currentTask;
             }
 
-            logger.info("Data save completed.");
+            lastShutdownClean = scheduledWriteTasks.isEmpty();
+            if (lastShutdownClean) {
+                logger.info("Data save completed.");
+            } else {
+                logger.log(Level.SEVERE, "Timed out with {0} pending database write task(s).", scheduledWriteTasks.size());
+            }
         } catch (InterruptedException e) {
-            logger.log(Level.WARNING, "Exception thrown while saving data: ", e);
+            lastShutdownClean = false;
+            Thread.currentThread().interrupt();
+            logger.log(Level.WARNING, "Interrupted while saving data", e);
         }
-        writeExecutor.shutdownNow();
-        dataAdapter = null;
+        writeExecutor.shutdown();
+        if (serialWriteExecutor != null) {
+            serialWriteExecutor.shutdown();
+        }
+        try {
+            if (!writeExecutor.awaitTermination(30, TimeUnit.SECONDS)) {
+                lastShutdownClean = false;
+                writeExecutor.shutdownNow();
+            }
+            if (serialWriteExecutor != null && !serialWriteExecutor.awaitTermination(30, TimeUnit.SECONDS)) {
+                lastShutdownClean = false;
+                serialWriteExecutor.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            lastShutdownClean = false;
+            Thread.currentThread().interrupt();
+            logger.log(Level.WARNING, "Interrupted while waiting for database writers to stop", e);
+        } finally {
+            dataAdapter = null;
+            destroyed = true;
+        }
     }
 
     protected void scheduleDeleteTask(ScopeKey scopeKey, RecordKey key, boolean forceScopeKey) {
@@ -184,11 +213,13 @@ public abstract class ADataController {
     }
 
     protected void scheduleWriteTask(ScopeKey scopeKey, RecordKey key, Runnable task, boolean forceScopeKey) {
+        checkDestroy();
         lock.lock(scopeKey);
 
         // log.info("schedule write scope [{}], key [{}]", scopeKey, key);
 
         try {
+            checkDestroy();
             var scopeToUse = forceScopeKey ? scopeKey : key;
             var queuedTask = scheduledWriteTasks.get(scopeKey);
             if (queuedTask == null && scopeKey != scopeToUse) {
@@ -207,6 +238,7 @@ public abstract class ADataController {
 
                 @Override
                 protected void onError(Throwable e) {
+                    scheduledWriteTasks.remove(scopeToUse, this);
                     Slimefun.logger()
                             .log(
                                     Level.SEVERE,
@@ -229,8 +261,8 @@ public abstract class ADataController {
     }
 
     protected void checkDestroy() {
-        if (destroyed) {
-            throw new IllegalStateException("Controller cannot be accessed after destroyed.");
+        if (destroyed || shuttingDown) {
+            throw new IllegalStateException("Controller cannot be accessed while shutting down or after destruction.");
         }
     }
 
@@ -284,6 +316,23 @@ public abstract class ADataController {
         if (task != null) {
             task.abort();
         }
+    }
+
+
+    public int getPendingWriteTaskCount() {
+        return scheduledWriteTasks.size();
+    }
+
+    public boolean isShuttingDown() {
+        return shuttingDown;
+    }
+
+    public boolean isDestroyed() {
+        return destroyed;
+    }
+
+    public boolean wasLastShutdownClean() {
+        return lastShutdownClean;
     }
 
     public final DataType getDataType() {

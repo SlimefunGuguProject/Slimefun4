@@ -1,0 +1,1 @@
+# One exact javap signature per line. Keep empty unless a reviewed breaking change is intentional.

@@ -1,5 +1,5 @@
 diff --git a/build.gradle.kts b/build.gradle.kts
-index 793e5311285c1a53fd9c4344a578b90fd4f6e339..632d7145bb4dd181f365c52fd47b5cdf1146e151 100644
+index 793e531..f0e6bd0 100644
 --- a/build.gradle.kts
 +++ b/build.gradle.kts
 @@ -18,7 +18,9 @@ group = "com.github.slimefun"
@@ -28,23 +28,17 @@ index 793e5311285c1a53fd9c4344a578b90fd4f6e339..632d7145bb4dd181f365c52fd47b5cdf
  repositories {
      mavenCentral()
      maven("https://hub.spigotmc.org/nexus/content/repositories/snapshots")
-@@ -50,6 +60,15 @@ dependencies {
+@@ -50,6 +60,9 @@ dependencies {
  
      compileOnly(libs.log4j.core)
      testImplementation(libs.junit.jupiter)
-+    testImplementation(libs.mockbukkit)
-+    // Main compileOnly dependencies are not inherited by the test source set.
-+    // Add Paper explicitly so Bukkit/Paper types used by MockBukkit tests compile and run.
-+    testImplementation(libs.paper.api)
-+    // Main Slimefun signatures use JSR-305 while Paper signatures use JetBrains annotations.
++    // Stability tests intentionally target server-independent helpers so they do not
++    // bootstrap Paper registries or depend on a running Minecraft server.
 +    testImplementation(libs.jsr305)
-+    // Force the plain JVM JAR. JetBrains 26.1.x publishes Gradle metadata with
-+    // multiple platform variants, which can leave NotNull.class off javac's classpath.
-+    testImplementation("org.jetbrains:annotations:26.0.2@jar")
      testRuntimeOnly(libs.junit.platform.launcher)
  
      implementation(libs.dough.api)
-@@ -175,5 +194,5 @@ publishing {
+@@ -175,5 +188,5 @@ publishing {
  
  fun Project.resolveVersion(): String {
      findProperty("projectVersion")?.toString()?.takeIf { it.isNotBlank() }?.let { return it }
@@ -52,7 +46,7 @@ index 793e5311285c1a53fd9c4344a578b90fd4f6e339..632d7145bb4dd181f365c52fd47b5cdf
 +    return "Legacy-SNAPSHOT"
  }
 diff --git a/gradle/libs.versions.toml b/gradle/libs.versions.toml
-index b5dd35c0a9bd99bcf0c58d8576df134073140da9..fb824e85a60f02399f328e7ac1f3de4c6f144841 100644
+index b5dd35c..fb824e8 100644
 --- a/gradle/libs.versions.toml
 +++ b/gradle/libs.versions.toml
 @@ -5,6 +5,7 @@ gitProperties = "2.5.7"
@@ -71,11 +65,8 @@ index b5dd35c0a9bd99bcf0c58d8576df134073140da9..fb824e85a60f02399f328e7ac1f3de4c
  dough-api = { module = "io.github.baked-libs:dough-api", version = "1.3.1-SNAPSHOT" }
  unirest-java = { module = "com.konghq:unirest-java", version = "3.14.5" }
  hikaricp = { module = "com.zaxxer:HikariCP", version = "5.1.0" }
-diff --git a/gradlew b/gradlew
-old mode 100644
-new mode 100755
 diff --git a/src/main/java/city/norain/slimefun4/EnvironmentChecker.java b/src/main/java/city/norain/slimefun4/EnvironmentChecker.java
-index 07ce7af3d01d1184b71c8fd9cc89350ca2f7e44a..b487877802ff49abbe616deea6dad73787511c05 100644
+index 07ce7af..b487877 100644
 --- a/src/main/java/city/norain/slimefun4/EnvironmentChecker.java
 +++ b/src/main/java/city/norain/slimefun4/EnvironmentChecker.java
 @@ -23,12 +23,12 @@ class EnvironmentChecker {
@@ -109,7 +100,7 @@ index 07ce7af3d01d1184b71c8fd9cc89350ca2f7e44a..b487877802ff49abbe616deea6dad737
                          },
                          300); // 15s
 diff --git a/src/main/java/city/norain/slimefun4/SlimefunExtended.java b/src/main/java/city/norain/slimefun4/SlimefunExtended.java
-index bc6cabb32b895f3fd2de4feb54c0147b8ce1e412..203d2365cb6167127181d055cf0e55eccb4db977 100644
+index bc6cabb..203d236 100644
 --- a/src/main/java/city/norain/slimefun4/SlimefunExtended.java
 +++ b/src/main/java/city/norain/slimefun4/SlimefunExtended.java
 @@ -67,7 +67,7 @@ public final class SlimefunExtended {
@@ -164,7 +155,7 @@ index bc6cabb32b895f3fd2de4feb54c0147b8ce1e412..203d2365cb6167127181d055cf0e55ec
              sf.getLogger().log(Level.WARNING, "");
              sf.getLogger().log(Level.WARNING, "#######################################################");
 diff --git a/src/main/java/city/norain/slimefun4/VaultIntegration.java b/src/main/java/city/norain/slimefun4/VaultIntegration.java
-index fe5e4e6a34acd4b9dc479cb22e90564cce5fcd89..9a6c4eff5d4721a6fba52d414eb3884006459c9c 100644
+index fe5e4e6..9a6c4ef 100644
 --- a/src/main/java/city/norain/slimefun4/VaultIntegration.java
 +++ b/src/main/java/city/norain/slimefun4/VaultIntegration.java
 @@ -20,12 +20,12 @@ public class VaultIntegration {
@@ -184,7 +175,7 @@ index fe5e4e6a34acd4b9dc479cb22e90564cce5fcd89..9a6c4eff5d4721a6fba52d414eb38840
      }
  
 diff --git a/src/main/java/city/norain/slimefun4/compatibillty/VersionedEvent.java b/src/main/java/city/norain/slimefun4/compatibillty/VersionedEvent.java
-index 3e5657129ee5d8ebb8202973cf790feae60885fe..9a9109a79100f865cc5d03dcafacd21a7eb663fb 100644
+index 3e56571..9a9109a 100644
 --- a/src/main/java/city/norain/slimefun4/compatibillty/VersionedEvent.java
 +++ b/src/main/java/city/norain/slimefun4/compatibillty/VersionedEvent.java
 @@ -37,7 +37,7 @@ public class VersionedEvent {
@@ -197,7 +188,7 @@ index 3e5657129ee5d8ebb8202973cf790feae60885fe..9a9109a79100f865cc5d03dcafacd21a
          }
      }
 diff --git a/src/main/java/city/norain/slimefun4/listener/SlimefunMigrateListener.java b/src/main/java/city/norain/slimefun4/listener/SlimefunMigrateListener.java
-index 3756299cc5cb2d19befb0d043d83ce09fb7596e4..b0fff6dd34259fc04114af0bad55e46578ec1928 100644
+index 3756299..b0fff6d 100644
 --- a/src/main/java/city/norain/slimefun4/listener/SlimefunMigrateListener.java
 +++ b/src/main/java/city/norain/slimefun4/listener/SlimefunMigrateListener.java
 @@ -17,7 +17,7 @@ public class SlimefunMigrateListener implements Listener {
@@ -210,7 +201,7 @@ index 3756299cc5cb2d19befb0d043d83ce09fb7596e4..b0fff6dd34259fc04114af0bad55e465
      }
  
 diff --git a/src/main/java/city/norain/slimefun4/timings/SQLProfiler.java b/src/main/java/city/norain/slimefun4/timings/SQLProfiler.java
-index d739525a9b0f27d61fad27246a58fddac160585c..716d86dc08628cf552c996834a9aedd3efd3b43c 100644
+index d739525..716d86d 100644
 --- a/src/main/java/city/norain/slimefun4/timings/SQLProfiler.java
 +++ b/src/main/java/city/norain/slimefun4/timings/SQLProfiler.java
 @@ -70,7 +70,7 @@ public class SQLProfiler {
@@ -253,7 +244,7 @@ index d739525a9b0f27d61fad27246a58fddac160585c..716d86dc08628cf552c996834a9aedd3
          } catch (IOException e) {
              Slimefun.logger().log(Level.WARNING, "Unable to create sql timing report!", e);
 diff --git a/src/main/java/city/norain/slimefun4/timings/SlowSqlCheckTask.java b/src/main/java/city/norain/slimefun4/timings/SlowSqlCheckTask.java
-index 378c58472fa9bcebda992e5d9304692db18a1599..428bdbbfd95b38f4d3ca5e388069b7606770b558 100644
+index 378c584..428bdbb 100644
 --- a/src/main/java/city/norain/slimefun4/timings/SlowSqlCheckTask.java
 +++ b/src/main/java/city/norain/slimefun4/timings/SlowSqlCheckTask.java
 @@ -22,7 +22,7 @@ public class SlowSqlCheckTask implements Runnable {
@@ -266,7 +257,7 @@ index 378c58472fa9bcebda992e5d9304692db18a1599..428bdbbfd95b38f4d3ca5e388069b760
              }
          }
 diff --git a/src/main/java/city/norain/slimefun4/utils/EnvUtil.java b/src/main/java/city/norain/slimefun4/utils/EnvUtil.java
-index 90b46fe41a38048470ee6c42cc4f93de79ad8e54..5fc67026e46301cd079069fce4cd6d4d4d324fac 100644
+index 90b46fe..5fc6702 100644
 --- a/src/main/java/city/norain/slimefun4/utils/EnvUtil.java
 +++ b/src/main/java/city/norain/slimefun4/utils/EnvUtil.java
 @@ -13,7 +13,7 @@ public class EnvUtil {
@@ -288,7 +279,7 @@ index 90b46fe41a38048470ee6c42cc4f93de79ad8e54..5fc67026e46301cd079069fce4cd6d4d
      }
  
 diff --git a/src/main/java/com/xzavier0722/mc/plugin/slimefun4/autocrafter/CrafterSmartPort.java b/src/main/java/com/xzavier0722/mc/plugin/slimefun4/autocrafter/CrafterSmartPort.java
-index 16131a76e743d5a6764e70fbe04aa96965fb093c..8d605516bedc5f76f8184b765dff38013be692ec 100644
+index 16131a7..8d60551 100644
 --- a/src/main/java/com/xzavier0722/mc/plugin/slimefun4/autocrafter/CrafterSmartPort.java
 +++ b/src/main/java/com/xzavier0722/mc/plugin/slimefun4/autocrafter/CrafterSmartPort.java
 @@ -38,7 +38,7 @@ public class CrafterSmartPort extends SlimefunItem {
@@ -310,7 +301,7 @@ index 16131a76e743d5a6764e70fbe04aa96965fb093c..8d605516bedc5f76f8184b765dff3801
          return countItem;
      }
 diff --git a/src/main/java/com/xzavier0722/mc/plugin/slimefun4/storage/adapter/sqlcommon/SqlCommonAdapter.java b/src/main/java/com/xzavier0722/mc/plugin/slimefun4/storage/adapter/sqlcommon/SqlCommonAdapter.java
-index c432a2dbf8e2aa205d0e82e9b4b56b4ebc2d9c13..aeae76cd9e089d6f4e1bde8636ea73e16b31dec3 100644
+index c432a2d..aeae76c 100644
 --- a/src/main/java/com/xzavier0722/mc/plugin/slimefun4/storage/adapter/sqlcommon/SqlCommonAdapter.java
 +++ b/src/main/java/com/xzavier0722/mc/plugin/slimefun4/storage/adapter/sqlcommon/SqlCommonAdapter.java
 @@ -133,7 +133,7 @@ public abstract class SqlCommonAdapter<T extends ISqlCommonConfig> implements ID
@@ -344,36 +335,172 @@ index c432a2dbf8e2aa205d0e82e9b4b56b4ebc2d9c13..aeae76cd9e089d6f4e1bde8636ea73e1
      }
  }
 diff --git a/src/main/java/com/xzavier0722/mc/plugin/slimefun4/storage/controller/ADataController.java b/src/main/java/com/xzavier0722/mc/plugin/slimefun4/storage/controller/ADataController.java
-index 27ebb3adf0058ade24bfec6afba13b3c5e33eee0..1f14b4d230f99e01cf6f41068a41d0d89df7c56a 100644
+index 27ebb3a..f34d5e6 100644
 --- a/src/main/java/com/xzavier0722/mc/plugin/slimefun4/storage/controller/ADataController.java
 +++ b/src/main/java/com/xzavier0722/mc/plugin/slimefun4/storage/controller/ADataController.java
-@@ -144,13 +144,13 @@ public abstract class ADataController {
+@@ -56,6 +56,8 @@ public abstract class ADataController {
+      * 标记当前控制器是否已被关闭
+      */
+     private volatile boolean destroyed = false;
++    private volatile boolean shuttingDown = false;
++    private volatile boolean lastShutdownClean = true;
  
-             while (pendingTask > 0) {
-                 var doneTaskPercent = String.format("%.1f", (totalTask - pendingTask) / totalTask * 100);
+     /**
+      * The logger for this data controller.
+@@ -130,43 +132,70 @@ public abstract class ADataController {
+      */
+     @OverridingMethodsMustInvokeSuper
+     public void shutdown() {
+-        if (destroyed) {
++        if (destroyed || shuttingDown) {
+             return;
+         }
+-        destroyed = true;
++        shuttingDown = true;
+         readExecutor.shutdownNow();
+         callbackExecutor.shutdownNow();
+ 
+         try {
+-            float totalTask = scheduledWriteTasks.size();
+-            var pendingTask = scheduledWriteTasks.size();
+-            var timer = new TaskTimer();
+-
+-            while (pendingTask > 0) {
+-                var doneTaskPercent = String.format("%.1f", (totalTask - pendingTask) / totalTask * 100);
 -                logger.log(Level.INFO, "数据保存中，请稍候... 剩余 {0} 个任务 ({1}%)", new Object[] {pendingTask, doneTaskPercent});
-+                logger.log(Level.INFO, "Saving data, please wait... Remaining tasks: {0} ({1}%)", new Object[] {pendingTask, doneTaskPercent});
++            int totalTask = scheduledWriteTasks.size();
++            int pendingTask = totalTask;
++            var stalledTimer = new TaskTimer();
++            long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(120);
++
++            while (pendingTask > 0 && System.nanoTime() < deadline) {
++                double completedPercent = totalTask == 0 ? 100.0 : (totalTask - pendingTask) * 100.0 / totalTask;
++                logger.log(Level.INFO, "Saving data, please wait... Remaining tasks: {0} ({1}%)", new Object[] {
++                    pendingTask, String.format("%.1f", completedPercent)
++                });
                  TimeUnit.SECONDS.sleep(1);
-                 var currentTask = scheduledWriteTasks.size();
- 
-                 if (pendingTask == currentTask) {
-                     if (timer.peek() / 1000 > 10) {
+-                var currentTask = scheduledWriteTasks.size();
+-
+-                if (pendingTask == currentTask) {
+-                    if (timer.peek() / 1000 > 10) {
 -                        Slimefun.logger().log(Level.WARNING, "检测到耗时保存任务, 请将下面的线程堆栈 完整 发送给开发者以便定位问题: ");
-+                        Slimefun.logger().log(Level.WARNING, "Detected a long-running save task. Please provide the following thread stack dump to the developers for investigation:");
-                         Slimefun.logger()
-                                 .log(Level.WARNING, Slimefun.getProfiler().snapshotThreads());
-                     }
-@@ -161,7 +161,7 @@ public abstract class ADataController {
-                 pendingTask = scheduledWriteTasks.size();
+-                        Slimefun.logger()
+-                                .log(Level.WARNING, Slimefun.getProfiler().snapshotThreads());
+-                    }
+-                } else {
+-                    timer.reset();
++                int currentTask = scheduledWriteTasks.size();
++
++                if (pendingTask == currentTask && stalledTimer.peek() / 1000 > 10) {
++                    Slimefun.logger().warning("Detected a long-running save task. Thread dump follows:");
++                    Slimefun.logger().log(Level.WARNING, Slimefun.getProfiler().snapshotThreads());
++                    stalledTimer.reset();
++                } else if (pendingTask != currentTask) {
++                    stalledTimer.reset();
+                 }
+ 
+-                pendingTask = scheduledWriteTasks.size();
++                pendingTask = currentTask;
              }
  
 -            logger.info("数据保存完成.");
-+            logger.info("Data save completed.");
++            lastShutdownClean = scheduledWriteTasks.isEmpty();
++            if (lastShutdownClean) {
++                logger.info("Data save completed.");
++            } else {
++                logger.log(Level.SEVERE, "Timed out with {0} pending database write task(s).", scheduledWriteTasks.size());
++            }
++        } catch (InterruptedException e) {
++            lastShutdownClean = false;
++            Thread.currentThread().interrupt();
++            logger.log(Level.WARNING, "Interrupted while saving data", e);
++        }
++        writeExecutor.shutdown();
++        if (serialWriteExecutor != null) {
++            serialWriteExecutor.shutdown();
++        }
++        try {
++            if (!writeExecutor.awaitTermination(30, TimeUnit.SECONDS)) {
++                lastShutdownClean = false;
++                writeExecutor.shutdownNow();
++            }
++            if (serialWriteExecutor != null && !serialWriteExecutor.awaitTermination(30, TimeUnit.SECONDS)) {
++                lastShutdownClean = false;
++                serialWriteExecutor.shutdownNow();
++            }
          } catch (InterruptedException e) {
-             logger.log(Level.WARNING, "Exception thrown while saving data: ", e);
+-            logger.log(Level.WARNING, "Exception thrown while saving data: ", e);
++            lastShutdownClean = false;
++            Thread.currentThread().interrupt();
++            logger.log(Level.WARNING, "Interrupted while waiting for database writers to stop", e);
++        } finally {
++            dataAdapter = null;
++            destroyed = true;
          }
+-        writeExecutor.shutdownNow();
+-        dataAdapter = null;
+     }
+ 
+     protected void scheduleDeleteTask(ScopeKey scopeKey, RecordKey key, boolean forceScopeKey) {
+@@ -184,11 +213,13 @@ public abstract class ADataController {
+     }
+ 
+     protected void scheduleWriteTask(ScopeKey scopeKey, RecordKey key, Runnable task, boolean forceScopeKey) {
++        checkDestroy();
+         lock.lock(scopeKey);
+ 
+         // log.info("schedule write scope [{}], key [{}]", scopeKey, key);
+ 
+         try {
++            checkDestroy();
+             var scopeToUse = forceScopeKey ? scopeKey : key;
+             var queuedTask = scheduledWriteTasks.get(scopeKey);
+             if (queuedTask == null && scopeKey != scopeToUse) {
+@@ -207,6 +238,7 @@ public abstract class ADataController {
+ 
+                 @Override
+                 protected void onError(Throwable e) {
++                    scheduledWriteTasks.remove(scopeToUse, this);
+                     Slimefun.logger()
+                             .log(
+                                     Level.SEVERE,
+@@ -229,8 +261,8 @@ public abstract class ADataController {
+     }
+ 
+     protected void checkDestroy() {
+-        if (destroyed) {
+-            throw new IllegalStateException("Controller cannot be accessed after destroyed.");
++        if (destroyed || shuttingDown) {
++            throw new IllegalStateException("Controller cannot be accessed while shutting down or after destruction.");
+         }
+     }
+ 
+@@ -286,6 +318,23 @@ public abstract class ADataController {
+         }
+     }
+ 
++
++    public int getPendingWriteTaskCount() {
++        return scheduledWriteTasks.size();
++    }
++
++    public boolean isShuttingDown() {
++        return shuttingDown;
++    }
++
++    public boolean isDestroyed() {
++        return destroyed;
++    }
++
++    public boolean wasLastShutdownClean() {
++        return lastShutdownClean;
++    }
++
+     public final DataType getDataType() {
+         return dataType;
+     }
 diff --git a/src/main/java/com/xzavier0722/mc/plugin/slimefun4/storage/controller/BlockDataController.java b/src/main/java/com/xzavier0722/mc/plugin/slimefun4/storage/controller/BlockDataController.java
-index 3981e92cb70d08314530a7f93bdeb26df01113ce..9a30376fff7929e9079873d3869a847bd3ecbf42 100644
+index 3981e92..9a30376 100644
 --- a/src/main/java/com/xzavier0722/mc/plugin/slimefun4/storage/controller/BlockDataController.java
 +++ b/src/main/java/com/xzavier0722/mc/plugin/slimefun4/storage/controller/BlockDataController.java
 @@ -860,7 +860,7 @@ public class BlockDataController extends ADataController {
@@ -431,7 +558,7 @@ index 3981e92cb70d08314530a7f93bdeb26df01113ce..9a30376fff7929e9079873d3869a847b
      }
  }
 diff --git a/src/main/java/com/xzavier0722/mc/plugin/slimefun4/storage/controller/ProfileDataController.java b/src/main/java/com/xzavier0722/mc/plugin/slimefun4/storage/controller/ProfileDataController.java
-index b3128976e3cdf303235159f1a9c1f68c5a36bca3..4a84d585273a03d3e310eabba521d84877b804b6 100644
+index b312897..4a84d58 100644
 --- a/src/main/java/com/xzavier0722/mc/plugin/slimefun4/storage/controller/ProfileDataController.java
 +++ b/src/main/java/com/xzavier0722/mc/plugin/slimefun4/storage/controller/ProfileDataController.java
 @@ -220,7 +220,7 @@ public class ProfileDataController extends ADataController {
@@ -444,7 +571,7 @@ index b3128976e3cdf303235159f1a9c1f68c5a36bca3..4a84d585273a03d3e310eabba521d848
          }
  
 diff --git a/src/main/java/com/xzavier0722/mc/plugin/slimefun4/storage/controller/SlimefunUniversalData.java b/src/main/java/com/xzavier0722/mc/plugin/slimefun4/storage/controller/SlimefunUniversalData.java
-index a1d75d9b02a2f738212e64a7fe3bd9d0dadfed77..99d375d12ffa4b9cdf436d8627339a7550c9564b 100644
+index a1d75d9..99d375d 100644
 --- a/src/main/java/com/xzavier0722/mc/plugin/slimefun4/storage/controller/SlimefunUniversalData.java
 +++ b/src/main/java/com/xzavier0722/mc/plugin/slimefun4/storage/controller/SlimefunUniversalData.java
 @@ -38,7 +38,7 @@ public class SlimefunUniversalData extends ASlimefunDataContainer {
@@ -457,7 +584,7 @@ index a1d75d9b02a2f738212e64a7fe3bd9d0dadfed77..99d375d12ffa4b9cdf436d8627339a75
  
          super.setData(key, val);
 diff --git a/src/main/java/com/xzavier0722/mc/plugin/slimefun4/storage/migrator/BlockStorageMigrator.java b/src/main/java/com/xzavier0722/mc/plugin/slimefun4/storage/migrator/BlockStorageMigrator.java
-index aa3f5fc280fb2a60486f0a70a3a56238e6b82f63..0d888d00b4060a9d4591496c3b70952e7c1909aa 100644
+index aa3f5fc..0d888d0 100644
 --- a/src/main/java/com/xzavier0722/mc/plugin/slimefun4/storage/migrator/BlockStorageMigrator.java
 +++ b/src/main/java/com/xzavier0722/mc/plugin/slimefun4/storage/migrator/BlockStorageMigrator.java
 @@ -64,11 +64,11 @@ public class BlockStorageMigrator implements IMigrator {
@@ -530,7 +657,7 @@ index aa3f5fc280fb2a60486f0a70a3a56238e6b82f63..0d888d00b4060a9d4591496c3b70952e
          }
      }
 diff --git a/src/main/java/com/xzavier0722/mc/plugin/slimefun4/storage/migrator/MigratorUtil.java b/src/main/java/com/xzavier0722/mc/plugin/slimefun4/storage/migrator/MigratorUtil.java
-index ac1e5a242a88858b268519060c919ff953b3b304..89c81c8e6752f98c763c5a185b7ce87c4507c43f 100644
+index ac1e5a2..89c81c8 100644
 --- a/src/main/java/com/xzavier0722/mc/plugin/slimefun4/storage/migrator/MigratorUtil.java
 +++ b/src/main/java/com/xzavier0722/mc/plugin/slimefun4/storage/migrator/MigratorUtil.java
 @@ -18,7 +18,7 @@ class MigratorUtil {
@@ -569,7 +696,7 @@ index ac1e5a242a88858b268519060c919ff953b3b304..89c81c8e6752f98c763c5a185b7ce87c
      }
  
 diff --git a/src/main/java/com/xzavier0722/mc/plugin/slimefun4/storage/migrator/PlayerProfileMigrator.java b/src/main/java/com/xzavier0722/mc/plugin/slimefun4/storage/migrator/PlayerProfileMigrator.java
-index 58ada9518951aa7b6708c353fc523018deb1f530..6fecdb9341518eb9ca2bc254569497d8a3f65d4f 100644
+index 58ada95..6fecdb9 100644
 --- a/src/main/java/com/xzavier0722/mc/plugin/slimefun4/storage/migrator/PlayerProfileMigrator.java
 +++ b/src/main/java/com/xzavier0722/mc/plugin/slimefun4/storage/migrator/PlayerProfileMigrator.java
 @@ -68,7 +68,7 @@ public class PlayerProfileMigrator implements IMigrator {
@@ -609,7 +736,7 @@ index 58ada9518951aa7b6708c353fc523018deb1f530..6fecdb9341518eb9ca2bc254569497d8
          }
  
 diff --git a/src/main/java/com/xzavier0722/mc/plugin/slimefun4/storage/util/DataUtils.java b/src/main/java/com/xzavier0722/mc/plugin/slimefun4/storage/util/DataUtils.java
-index 746a69793d766077fe330f2ba4dd6156ee8cf46b..b70d14640050557b7797a2d1b227b22a31445d3f 100644
+index 746a697..b70d146 100644
 --- a/src/main/java/com/xzavier0722/mc/plugin/slimefun4/storage/util/DataUtils.java
 +++ b/src/main/java/com/xzavier0722/mc/plugin/slimefun4/storage/util/DataUtils.java
 @@ -39,13 +39,13 @@ public class DataUtils {
@@ -644,7 +771,7 @@ index 746a69793d766077fe330f2ba4dd6156ee8cf46b..b70d14640050557b7797a2d1b227b22a
      }
  
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/api/ErrorReport.java b/src/main/java/io/github/thebusybiscuit/slimefun4/api/ErrorReport.java
-index 7a49c9fae2d80345e944b4363feaffbc6a0db45b..21d1d61594ddc5292d1954ef127507a11258846a 100644
+index 7a49c9f..21d1d61 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/api/ErrorReport.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/api/ErrorReport.java
 @@ -81,29 +81,29 @@ public class ErrorReport<T extends Throwable> {
@@ -717,9 +844,9 @@ index 7a49c9fae2d80345e944b4363feaffbc6a0db45b..21d1d61594ddc5292d1954ef127507a1
                  blockData.getAllData().forEach((k, v) -> stream.println("    " + k + ": " + v));
              }
              stream.println();
-diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/api/events/RadiationDamageEvent.java b/src/main/java/io/github/thebusybiscuit/slimefun4/api/events/RadiationDamageEvent.java
+diff --git b/src/main/java/io/github/thebusybiscuit/slimefun4/api/events/RadiationDamageEvent.java b/src/main/java/io/github/thebusybiscuit/slimefun4/api/events/RadiationDamageEvent.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..d4b24f86b6a2c8a5e81b9cc7d9a6314a99350060
+index 0000000..d4b24f8
 --- /dev/null
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/api/events/RadiationDamageEvent.java
 @@ -0,0 +1,69 @@
@@ -793,7 +920,7 @@ index 0000000000000000000000000000000000000000..d4b24f86b6a2c8a5e81b9cc7d9a6314a
 +    }
 +}
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/api/gps/GPSNetwork.java b/src/main/java/io/github/thebusybiscuit/slimefun4/api/gps/GPSNetwork.java
-index 4871d4b31d07eec5fce85d16b224e64f47549330..5ba5551cef7613f3ee6650c9f7776b4f50970247 100644
+index 4871d4b..5ba5551 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/api/gps/GPSNetwork.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/api/gps/GPSNetwork.java
 @@ -171,10 +171,10 @@ public class GPSNetwork {
@@ -853,7 +980,7 @@ index 4871d4b31d07eec5fce85d16b224e64f47549330..5ba5551cef7613f3ee6650c9f7776b4f
                                  "&8\u21E8 &7Y: &f" + l.getY(),
                                  "&8\u21E8 &7Z: &f" + l.getZ(),
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/api/gps/PageHelper.java b/src/main/java/io/github/thebusybiscuit/slimefun4/api/gps/PageHelper.java
-index 0b63367fdff7bb8a1493fd816dad092208e23750..142f6dd996a5f28f7923ec33c8609318454fe9b1 100644
+index 0b63367..142f6dd 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/api/gps/PageHelper.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/api/gps/PageHelper.java
 @@ -58,19 +58,19 @@ public class PageHelper {
@@ -881,7 +1008,7 @@ index 0b63367fdff7bb8a1493fd816dad092208e23750..142f6dd996a5f28f7923ec33c8609318
              }
          } else {
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/api/gps/TeleportationManager.java b/src/main/java/io/github/thebusybiscuit/slimefun4/api/gps/TeleportationManager.java
-index 01d39aeeb57d205a8edf1d090fd652bf4633790c..fa68ba912e00fbea8e95129a265eb0a95d771ca0 100644
+index 01d39ae..fa68ba9 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/api/gps/TeleportationManager.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/api/gps/TeleportationManager.java
 @@ -79,7 +79,7 @@ public final class TeleportationManager {
@@ -894,7 +1021,7 @@ index 01d39aeeb57d205a8edf1d090fd652bf4633790c..fa68ba912e00fbea8e95129a265eb0a9
                      teleporterUsers.remove(pl.getUniqueId());
                      pages.remove(pl.getUniqueId());
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/api/items/ItemSetting.java b/src/main/java/io/github/thebusybiscuit/slimefun4/api/items/ItemSetting.java
-index 9d3199da2490d257c4a1b500df0dcadc7aed6446..04a1b0655d8ca1ef1618df1a6908bfbeb9012c52 100644
+index 9d3199d..04a1b06 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/api/items/ItemSetting.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/api/items/ItemSetting.java
 @@ -151,7 +151,7 @@ public class ItemSetting<T> {
@@ -948,7 +1075,7 @@ index 9d3199da2490d257c4a1b500df0dcadc7aed6446..04a1b0655d8ca1ef1618df1a6908bfbe
                      + "\"");
              // @formatter:on
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/api/items/SlimefunItem.java b/src/main/java/io/github/thebusybiscuit/slimefun4/api/items/SlimefunItem.java
-index 62bac552a29e9b5f4cae160c8b47066faf0f124c..a7eebd4ec4bca077a90bc461783f5ae1c749fc40 100644
+index 62bac55..a7eebd4 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/api/items/SlimefunItem.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/api/items/SlimefunItem.java
 @@ -937,7 +937,7 @@ public class SlimefunItem implements Placeable {
@@ -961,7 +1088,7 @@ index 62bac552a29e9b5f4cae160c8b47066faf0f124c..a7eebd4ec4bca077a90bc461783f5ae1
          }
          if (addon.getWikiURL() != null) {
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/api/player/PlayerBackpack.java b/src/main/java/io/github/thebusybiscuit/slimefun4/api/player/PlayerBackpack.java
-index 43e68445b93948b11c4b5bccb0526c6eba511ff7..de05f8964cf6550d07dccee06132430394cd1f0a 100644
+index 43e6844..de05f89 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/api/player/PlayerBackpack.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/api/player/PlayerBackpack.java
 @@ -9,6 +9,8 @@ import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
@@ -1286,7 +1413,7 @@ index 43e68445b93948b11c4b5bccb0526c6eba511ff7..de05f8964cf6550d07dccee061324303
  
      private void updateInv() {
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/api/player/PlayerProfile.java b/src/main/java/io/github/thebusybiscuit/slimefun4/api/player/PlayerProfile.java
-index f4145ae0bb2fb052e70ef7043fd3d44cd9bdd399..3e906e11d7f343d09fcce1c90b1225a1fc468724 100644
+index f4145ae..3e906e1 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/api/player/PlayerProfile.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/api/player/PlayerProfile.java
 @@ -365,10 +365,10 @@ public class PlayerProfile {
@@ -1331,7 +1458,7 @@ index f4145ae0bb2fb052e70ef7043fd3d44cd9bdd399..3e906e11d7f343d09fcce1c90b1225a1
                  return false;
              }
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/core/attributes/EnergyNetComponent.java b/src/main/java/io/github/thebusybiscuit/slimefun4/core/attributes/EnergyNetComponent.java
-index 9984fe53c3173bdd035105121274691b3b2dd150..60757f2ba784242e87afd3382cdb2cf7aba2e603 100644
+index 9984fe5..60757f2 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/core/attributes/EnergyNetComponent.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/core/attributes/EnergyNetComponent.java
 @@ -101,7 +101,7 @@ public interface EnergyNetComponent extends ItemAttribute {
@@ -1344,7 +1471,7 @@ index 9984fe53c3173bdd035105121274691b3b2dd150..60757f2ba784242e87afd3382cdb2cf7
          Validate.notNull(l, "Location was null!");
  
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/core/attributes/MachineTier.java b/src/main/java/io/github/thebusybiscuit/slimefun4/core/attributes/MachineTier.java
-index 834e848bd28d45a09eeab09a80c187d01dc62cff..71bb4ed5d91103bc360420ccec01e047fd99a244 100644
+index 834e848..71bb4ed 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/core/attributes/MachineTier.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/core/attributes/MachineTier.java
 @@ -3,12 +3,12 @@ package io.github.thebusybiscuit.slimefun4.core.attributes;
@@ -1367,7 +1494,7 @@ index 834e848bd28d45a09eeab09a80c187d01dc62cff..71bb4ed5d91103bc360420ccec01e047
      private final String prefix;
  
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/core/attributes/MachineType.java b/src/main/java/io/github/thebusybiscuit/slimefun4/core/attributes/MachineType.java
-index 99e729e4d770726cc7e17390039cd1233d70b285..27fae7558378bda433efbfd594b88d6f6072113f 100644
+index 99e729e..27fae75 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/core/attributes/MachineType.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/core/attributes/MachineType.java
 @@ -3,9 +3,9 @@ package io.github.thebusybiscuit.slimefun4.core.attributes;
@@ -1384,7 +1511,7 @@ index 99e729e4d770726cc7e17390039cd1233d70b285..27fae7558378bda433efbfd594b88d6f
      private final String suffix;
  
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/core/attributes/Radioactivity.java b/src/main/java/io/github/thebusybiscuit/slimefun4/core/attributes/Radioactivity.java
-index 9ce090bb8cb1bf63c4c2404ba77f9cd7d15d13e7..9b516dca9144385628076dcb1210690cc7aaccea 100644
+index 9ce090b..9b516dc 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/core/attributes/Radioactivity.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/core/attributes/Radioactivity.java
 @@ -21,32 +21,32 @@ public enum Radioactivity {
@@ -1435,7 +1562,7 @@ index 9ce090bb8cb1bf63c4c2404ba77f9cd7d15d13e7..9b516dca9144385628076dcb1210690c
  
      /**
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/core/commands/subcommands/BackpackCommand.java b/src/main/java/io/github/thebusybiscuit/slimefun4/core/commands/subcommands/BackpackCommand.java
-index 25ee7949a4f85a3b9bb8480ee591e679fefc3065..047948724718fb94b46393e5e38ccdf5ed79bf06 100644
+index 25ee794..0479487 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/core/commands/subcommands/BackpackCommand.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/core/commands/subcommands/BackpackCommand.java
 @@ -52,7 +52,7 @@ class BackpackCommand extends SubCommand {
@@ -1470,7 +1597,7 @@ index 25ee7949a4f85a3b9bb8480ee591e679fefc3065..047948724718fb94b46393e5e38ccdf5
              visualBackpack.setItemMeta(im);
  
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/core/commands/subcommands/BlockDataCommand.java b/src/main/java/io/github/thebusybiscuit/slimefun4/core/commands/subcommands/BlockDataCommand.java
-index 5b32e5b520f90155e6f23f7ac83cef764d392f66..f0f1077133ca3c6b179348413eb3b9794a285236 100644
+index 5b32e5b..f0f1077 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/core/commands/subcommands/BlockDataCommand.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/core/commands/subcommands/BlockDataCommand.java
 @@ -53,7 +53,7 @@ class BlockDataCommand extends SubCommand {
@@ -1522,7 +1649,7 @@ index 5b32e5b520f90155e6f23f7ac83cef764d392f66..f0f1077133ca3c6b179348413eb3b979
              default -> {
                  Slimefun.getLocalization()
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/core/commands/subcommands/ItemIdCommand.java b/src/main/java/io/github/thebusybiscuit/slimefun4/core/commands/subcommands/ItemIdCommand.java
-index caf1696611e83d29af018726b727fabea389bb4a..3306671f67a2ccec9db5df0abada4857d78eee07 100644
+index caf1696..3306671 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/core/commands/subcommands/ItemIdCommand.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/core/commands/subcommands/ItemIdCommand.java
 @@ -29,19 +29,19 @@ class ItemIdCommand extends SubCommand {
@@ -1549,7 +1676,7 @@ index caf1696611e83d29af018726b727fabea389bb4a..3306671f67a2ccec9db5df0abada4857
              } else {
                  Slimefun.getLocalization().sendMessage(sender, "messages.no-permission", true);
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/core/commands/subcommands/MigrateCommand.java b/src/main/java/io/github/thebusybiscuit/slimefun4/core/commands/subcommands/MigrateCommand.java
-index 125866b89ccdb2cdcce2e5851aa0db4590c2afb1..ac9808088ea7e1ab37b7ffb90d1d33d2811e2163 100644
+index 125866b..ac98080 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/core/commands/subcommands/MigrateCommand.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/core/commands/subcommands/MigrateCommand.java
 @@ -32,20 +32,20 @@ public class MigrateCommand extends SubCommand {
@@ -1577,8 +1704,98 @@ index 125866b89ccdb2cdcce2e5851aa0db4590c2afb1..ac9808088ea7e1ab37b7ffb90d1d33d2
                      }
                  });
              } else {
+diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/core/commands/subcommands/SlimefunSubCommands.java b/src/main/java/io/github/thebusybiscuit/slimefun4/core/commands/subcommands/SlimefunSubCommands.java
+index 4a211ce..a541b90 100644
+--- a/src/main/java/io/github/thebusybiscuit/slimefun4/core/commands/subcommands/SlimefunSubCommands.java
++++ b/src/main/java/io/github/thebusybiscuit/slimefun4/core/commands/subcommands/SlimefunSubCommands.java
+@@ -47,6 +47,7 @@ public final class SlimefunSubCommands {
+         commands.add(new BanItemCommand(plugin, cmd));
+         commands.add(new UnbanItemCommand(plugin, cmd));
+         commands.add(new ClearDataCommand(plugin, cmd));
++        commands.add(new StabilityCommand(plugin, cmd));
+         return commands;
+     }
+ }
+diff --git b/src/main/java/io/github/thebusybiscuit/slimefun4/core/commands/subcommands/StabilityCommand.java b/src/main/java/io/github/thebusybiscuit/slimefun4/core/commands/subcommands/StabilityCommand.java
+new file mode 100644
+index 0000000..df11373
+--- /dev/null
++++ b/src/main/java/io/github/thebusybiscuit/slimefun4/core/commands/subcommands/StabilityCommand.java
+@@ -0,0 +1,72 @@
++package io.github.thebusybiscuit.slimefun4.core.commands.subcommands;
++
++import io.github.bakedlibs.dough.common.ChatColors;
++import io.github.thebusybiscuit.slimefun4.core.commands.SlimefunCommand;
++import io.github.thebusybiscuit.slimefun4.core.commands.SubCommand;
++import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
++import javax.annotation.Nonnull;
++import org.bukkit.FluidCollisionMode;
++import org.bukkit.block.Block;
++import org.bukkit.command.CommandSender;
++import org.bukkit.entity.Player;
++
++/** Administrative health and recovery commands for Slimefun Legacy. */
++final class StabilityCommand extends SubCommand {
++
++    StabilityCommand(@Nonnull Slimefun plugin, @Nonnull SlimefunCommand cmd) {
++        super(plugin, cmd, "stability", true);
++    }
++
++    @Override
++    public void onExecute(@Nonnull CommandSender sender, @Nonnull String[] args) {
++        if (!sender.hasPermission("slimefun.command.stability")) {
++            Slimefun.getLocalization().sendMessage(sender, "messages.no-permission", true);
++            return;
++        }
++
++        String action = args.length > 1 ? args[1].toLowerCase() : "status";
++        switch (action) {
++            case "status" -> sendStatus(sender);
++            case "retry" -> retryTarget(sender);
++            case "retryall" -> {
++                int count = Slimefun.getTickerTask().retryAllMachines();
++                send(sender, "&aCleared the circuit breaker for &e" + count + " &apaused machine(s).");
++            }
++            default -> send(sender, "&eUsage: /sf stability [status|retry|retryall]");
++        }
++    }
++
++    private void sendStatus(CommandSender sender) {
++        send(sender, "&6Slimefun Legacy Stability Status");
++        send(sender, "&7Previous clean shutdown: "
++                + (Slimefun.getDatabaseManager().wasPreviousShutdownClean() ? "&aYes" : "&cNo"));
++        send(sender, "&7Pending database writes: &e"
++                + Slimefun.getDatabaseManager().getPendingWriteTaskCount());
++        send(sender, "&7Paused machine circuits: &e"
++                + Slimefun.getTickerTask().getPausedMachineCount());
++        send(sender, "&7Ticker paused: &e" + Slimefun.getTickerTask().isPaused());
++    }
++
++    private void retryTarget(CommandSender sender) {
++        if (!(sender instanceof Player player)) {
++            send(sender, "&cOnly a player can retry a targeted machine. Use /sf stability retryall from console.");
++            return;
++        }
++
++        Block target = player.getTargetBlockExact(8, FluidCollisionMode.NEVER);
++        if (target == null || target.getType().isAir()) {
++            send(sender, "&cLook directly at a Slimefun machine within 8 blocks.");
++            return;
++        }
++
++        if (Slimefun.getTickerTask().retryMachine(target.getLocation())) {
++            send(sender, "&aThe targeted machine will be retried on its next ticker cycle.");
++        } else {
++            send(sender, "&eThe targeted machine was not paused by the circuit breaker.");
++        }
++    }
++
++    private void send(CommandSender sender, String message) {
++        sender.sendMessage(ChatColors.color(message));
++    }
++}
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/core/commands/subcommands/VersionsCommand.java b/src/main/java/io/github/thebusybiscuit/slimefun4/core/commands/subcommands/VersionsCommand.java
-index a1d28d9977f7315b6f5632e321c36da55a55c1d3..1efedd5f6451bb0d911f79ef7a066b08b6b203de 100644
+index a1d28d9..1efedd5 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/core/commands/subcommands/VersionsCommand.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/core/commands/subcommands/VersionsCommand.java
 @@ -42,7 +42,7 @@ class VersionsCommand extends SubCommand {
@@ -1725,10 +1942,42 @@ index a1d28d9977f7315b6f5632e321c36da55a55c1d3..1efedd5f6451bb0d911f79ef7a066b08
                  }
              }
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/core/config/SlimefunDatabaseManager.java b/src/main/java/io/github/thebusybiscuit/slimefun4/core/config/SlimefunDatabaseManager.java
-index 40bf818e2d9a86956380ce9dc3cc5c99b8c51626..7a0d50db2c08b11776d4f5965654a6e0c85d4afb 100644
+index 40bf818..b50bfc4 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/core/config/SlimefunDatabaseManager.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/core/config/SlimefunDatabaseManager.java
-@@ -58,7 +58,7 @@ public class SlimefunDatabaseManager {
+@@ -17,6 +17,8 @@ import io.github.bakedlibs.dough.config.Config;
+ import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
+ import java.io.File;
+ import java.io.IOException;
++import java.nio.charset.StandardCharsets;
++import java.nio.file.Files;
+ import java.util.Locale;
+ import java.util.logging.Level;
+ import javax.annotation.Nullable;
+@@ -31,6 +33,9 @@ public class SlimefunDatabaseManager {
+     private StorageType blockDataStorageType;
+     private IDataSourceAdapter<?> profileAdapter;
+     private IDataSourceAdapter<?> blockStorageAdapter;
++    private final File cleanShutdownMarker;
++    private final File storageInitializedMarker;
++    private boolean previousShutdownClean = true;
+ 
+     public SlimefunDatabaseManager(Slimefun plugin) {
+         this.plugin = plugin;
+@@ -45,9 +50,12 @@ public class SlimefunDatabaseManager {
+ 
+         profileConfig = new Config(plugin, PROFILE_CONFIG_FILE_NAME);
+         blockStorageConfig = new Config(plugin, BLOCK_STORAGE_FILE_NAME);
++        cleanShutdownMarker = new File("data-storage/Slimefun", ".clean-shutdown");
++        storageInitializedMarker = new File("data-storage/Slimefun", ".storage-initialized");
+     }
+ 
+     public void init() {
++        markStartupInProgress();
+         initDefaultVal();
+ 
+         try {
+@@ -58,7 +66,7 @@ public class SlimefunDatabaseManager {
              var connectionPoolSize = getConnectionPoolSize(blockDataStorageType, blockStorageConfig);
  
              if (readExecutorThread + writeExecutorThread > connectionPoolSize) {
@@ -1737,7 +1986,7 @@ index 40bf818e2d9a86956380ce9dc3cc5c99b8c51626..7a0d50db2c08b11776d4f5965654a6e0
              }
  
              initAdapter(blockDataStorageType, DataType.BLOCK_STORAGE, blockStorageConfig);
-@@ -68,14 +68,14 @@ public class SlimefunDatabaseManager {
+@@ -68,14 +76,14 @@ public class SlimefunDatabaseManager {
              blockDataController.init(blockStorageAdapter, readExecutorThread, writeExecutorThread);
  
              if (blockStorageConfig.getBoolean("delayedWriting.enable")) {
@@ -1754,7 +2003,7 @@ index 40bf818e2d9a86956380ce9dc3cc5c99b8c51626..7a0d50db2c08b11776d4f5965654a6e0
              return;
          }
  
-@@ -87,14 +87,14 @@ public class SlimefunDatabaseManager {
+@@ -87,14 +95,14 @@ public class SlimefunDatabaseManager {
              var connectionPoolSize = getConnectionPoolSize(profileStorageType, profileConfig);
  
              if (readExecutorThread + writeExecutorThread > connectionPoolSize) {
@@ -1771,8 +2020,107 @@ index 40bf818e2d9a86956380ce9dc3cc5c99b8c51626..7a0d50db2c08b11776d4f5965654a6e0
          }
      }
  
+@@ -170,23 +178,89 @@ public class SlimefunDatabaseManager {
+     }
+ 
+     public void shutdown() {
+-        if (getProfileDataController() != null) {
+-            getProfileDataController().shutdown();
++        boolean clean = true;
++
++        try {
++            if (getProfileDataController() != null) {
++                getProfileDataController().shutdown();
++            }
++            if (getBlockDataController() != null) {
++                getBlockDataController().shutdown();
++            }
++            clean = (getProfileDataController() == null || getProfileDataController().wasLastShutdownClean())
++                    && (getBlockDataController() == null || getBlockDataController().wasLastShutdownClean());
++        } catch (RuntimeException ex) {
++            clean = false;
++            plugin.getLogger().log(Level.SEVERE, "Failed to drain Slimefun database controllers", ex);
++        }
++
++        try {
++            if (blockStorageAdapter != null) {
++                blockStorageAdapter.shutdown();
++            }
++            if (profileAdapter != null) {
++                profileAdapter.shutdown();
++            }
++        } catch (RuntimeException ex) {
++            clean = false;
++            plugin.getLogger().log(Level.SEVERE, "Failed to close Slimefun database adapters", ex);
++        } finally {
++            ControllerHolder.clearControllers();
+         }
+ 
+-        if (getBlockDataController() != null) {
+-            getBlockDataController().shutdown();
++        if (clean) {
++            writeCleanShutdownMarker();
++        } else {
++            plugin.getLogger().warning("Slimefun did not complete a clean database shutdown. A storage warning will be shown on the next startup.");
+         }
++    }
+ 
+-        if (blockStorageAdapter != null) {
+-            blockStorageAdapter.shutdown();
++    private void markStartupInProgress() {
++        File storageDirectory = cleanShutdownMarker.getParentFile();
++        if (!storageDirectory.exists() && !storageDirectory.mkdirs()) {
++            plugin.getLogger().warning("Could not create the Slimefun data-storage directory for shutdown tracking.");
++            return;
+         }
+ 
+-        if (profileAdapter != null) {
+-            profileAdapter.shutdown();
++        previousShutdownClean = cleanShutdownMarker.exists() || !storageInitializedMarker.exists();
++        if (!previousShutdownClean) {
++            plugin.getLogger().warning("The previous Slimefun session did not leave a clean-shutdown marker. Back up data-storage/Slimefun and run /sf stability status.");
+         }
+ 
+-        ControllerHolder.clearControllers();
++        try {
++            Files.writeString(storageInitializedMarker.toPath(), "initialized\n", StandardCharsets.UTF_8);
++            Files.deleteIfExists(cleanShutdownMarker.toPath());
++        } catch (IOException ex) {
++            plugin.getLogger().log(Level.WARNING, "Could not clear the Slimefun clean-shutdown marker", ex);
++        }
++    }
++
++    private void writeCleanShutdownMarker() {
++        try {
++            Files.writeString(
++                    cleanShutdownMarker.toPath(),
++                    "Slimefun Legacy clean shutdown\n",
++                    StandardCharsets.UTF_8);
++        } catch (IOException ex) {
++            plugin.getLogger().log(Level.WARNING, "Could not write the Slimefun clean-shutdown marker", ex);
++        }
++    }
++
++    public boolean wasPreviousShutdownClean() {
++        return previousShutdownClean;
++    }
++
++    public int getPendingWriteTaskCount() {
++        int pending = 0;
++        ProfileDataController profile = getProfileDataController();
++        BlockDataController blocks = getBlockDataController();
++        if (profile != null) {
++            pending += profile.getPendingWriteTaskCount();
++        }
++        if (blocks != null) {
++            pending += blocks.getPendingWriteTaskCount();
++        }
++        return pending;
+     }
+ 
+     public boolean isBlockDataBase64Enabled() {
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/core/guide/SlimefunGuideMode.java b/src/main/java/io/github/thebusybiscuit/slimefun4/core/guide/SlimefunGuideMode.java
-index e4ef843624ccb75bcdd027d91edcec7a5b225691..eafad83d3c3035aa5df1ed97701d2e466206f7a4 100644
+index e4ef843..eafad83 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/core/guide/SlimefunGuideMode.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/core/guide/SlimefunGuideMode.java
 @@ -18,13 +18,13 @@ public enum SlimefunGuideMode {
@@ -1792,7 +2140,7 @@ index e4ef843624ccb75bcdd027d91edcec7a5b225691..eafad83d3c3035aa5df1ed97701d2e46
      private final String displayName;
  
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/core/guide/options/FireworksOption.java b/src/main/java/io/github/thebusybiscuit/slimefun4/core/guide/options/FireworksOption.java
-index 53fd042e49a16201b88f70ad16daf2e1f9bfe0ce..d8960526f16f57eab3f3a772419f8b533edb34f4 100644
+index 53fd042..d896052 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/core/guide/options/FireworksOption.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/core/guide/options/FireworksOption.java
 @@ -31,13 +31,13 @@ class FireworksOption implements SlimefunGuideOption<Boolean> {
@@ -1815,7 +2163,7 @@ index 53fd042e49a16201b88f70ad16daf2e1f9bfe0ce..d8960526f16f57eab3f3a772419f8b53
          } else {
              return Optional.empty();
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/core/guide/options/GuideModeOption.java b/src/main/java/io/github/thebusybiscuit/slimefun4/core/guide/options/GuideModeOption.java
-index 5ce62204d7e45fa315cccd683abcbc56d0938fb0..16ab805aa332d7aa55be1941e1c6ef757bc31bf6 100644
+index 5ce6220..16ab805 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/core/guide/options/GuideModeOption.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/core/guide/options/GuideModeOption.java
 @@ -52,14 +52,14 @@ class GuideModeOption implements SlimefunGuideOption<SlimefunGuideMode> {
@@ -1838,7 +2186,7 @@ index 5ce62204d7e45fa315cccd683abcbc56d0938fb0..16ab805aa332d7aa55be1941e1c6ef75
              item.setItemMeta(meta);
  
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/core/guide/options/SlimefunGuideSettings.java b/src/main/java/io/github/thebusybiscuit/slimefun4/core/guide/options/SlimefunGuideSettings.java
-index 6347a2cc2f3a26fd9d491df19179c0305b8712ba..68859f08918e98b742ffa7789cf975b271e1b4cb 100644
+index 6347a2c..68859f0 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/core/guide/options/SlimefunGuideSettings.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/core/guide/options/SlimefunGuideSettings.java
 @@ -126,9 +126,9 @@ public final class SlimefunGuideSettings {
@@ -1936,9 +2284,20 @@ index 6347a2cc2f3a26fd9d491df19179c0305b8712ba..68859f08918e98b742ffa7789cf975b2
              });
          } else {
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/core/networks/cargo/CargoNet.java b/src/main/java/io/github/thebusybiscuit/slimefun4/core/networks/cargo/CargoNet.java
-index 0c7363a96649185bda131012440321d110094924..a43e52299b2923396600f854d5d2052b83b7e3f2 100644
+index 0c7363a..4a0b859 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/core/networks/cargo/CargoNet.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/core/networks/cargo/CargoNet.java
+@@ -8,9 +8,9 @@ import io.github.thebusybiscuit.slimefun4.api.network.Network;
+ import io.github.thebusybiscuit.slimefun4.api.network.NetworkComponent;
+ import io.github.thebusybiscuit.slimefun4.core.attributes.HologramOwner;
+ import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
++import java.util.ArrayList;
+ import java.util.HashMap;
+ import java.util.HashSet;
+-import java.util.LinkedList;
+ import java.util.List;
+ import java.util.Map;
+ import java.util.Optional;
 @@ -123,16 +123,16 @@ public class CargoNet extends AbstractItemNetwork implements HologramOwner {
  
      public void tick(@Nonnull Block b, SlimefunBlockData blockData) {
@@ -1959,8 +2318,268 @@ index 0c7363a96649185bda131012440321d110094924..a43e52299b2923396600f854d5d2052b
  
              // Skip ticking if the threshold is not reached. The delay is not same as minecraft tick,
              // but it's based on 'custom-ticker-delay' config.
+@@ -144,9 +144,6 @@ public class CargoNet extends AbstractItemNetwork implements HologramOwner {
+             // Reset the internal threshold, so we can start skipping again
+             tickDelayThreshold = 0;
+ 
+-            Map<Location, Integer> inputs = mapInputNodes();
+-            Map<Integer, List<Location>> outputs = mapOutputNodes();
+-
+             if (StorageCacheUtils.getData(b.getLocation(), "visualizer") == null) {
+                 display();
+             }
+@@ -155,6 +152,12 @@ public class CargoNet extends AbstractItemNetwork implements HologramOwner {
+                 if (blockData.isPendingRemove()) {
+                     return;
+                 }
++
++                // Build a stable topology snapshot on the main thread. This avoids
++                // iterating mutable node sets and resolving block data concurrently
++                // with placement, breaking, or protection-plugin callbacks.
++                Map<Location, Integer> inputs = mapInputNodes();
++                Map<Integer, List<Location>> outputs = mapOutputNodes();
+                 var event = new CargoTickEvent(inputs, outputs);
+                 Bukkit.getPluginManager().callEvent(event);
+                 event.getHologramMsg().ifPresent(msg -> updateHologram(b, msg));
+@@ -162,7 +165,6 @@ public class CargoNet extends AbstractItemNetwork implements HologramOwner {
+                     return;
+                 }
+ 
+-                Slimefun.getProfiler().scheduleEntries(inputs.size() + 1);
+                 new CargoNetworkTask(this, inputs, outputs).run();
+             });
+         }
+@@ -183,38 +185,16 @@ public class CargoNet extends AbstractItemNetwork implements HologramOwner {
+     }
+ 
+     private @Nonnull Map<Integer, List<Location>> mapOutputNodes() {
+-        Map<Integer, List<Location>> output = new HashMap<>();
+-
+-        List<Location> list = new LinkedList<>();
+-        int lastFrequency = -1;
++        Map<Integer, List<Location>> outputs = new HashMap<>();
+ 
+         for (Location node : outputNodes) {
+             int frequency = getFrequency(node);
+-            if (frequency == -1) {
+-                continue;
+-            }
+-
+-            if (frequency != lastFrequency && lastFrequency != -1) {
+-                output.merge(lastFrequency, list, (prev, next) -> {
+-                    prev.addAll(next);
+-                    return prev;
+-                });
+-
+-                list = new LinkedList<>();
++            if (frequency >= 0 && frequency < 16) {
++                outputs.computeIfAbsent(frequency, ignored -> new ArrayList<>()).add(node);
+             }
+-
+-            list.add(node);
+-            lastFrequency = frequency;
+-        }
+-
+-        if (!list.isEmpty()) {
+-            output.merge(lastFrequency, list, (prev, next) -> {
+-                prev.addAll(next);
+-                return prev;
+-            });
+         }
+ 
+-        return output;
++        return outputs;
+     }
+ 
+     /**
+diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/core/networks/cargo/CargoNetworkTask.java b/src/main/java/io/github/thebusybiscuit/slimefun4/core/networks/cargo/CargoNetworkTask.java
+index 2cd86b8..0844e32 100644
+--- a/src/main/java/io/github/thebusybiscuit/slimefun4/core/networks/cargo/CargoNetworkTask.java
++++ b/src/main/java/io/github/thebusybiscuit/slimefun4/core/networks/cargo/CargoNetworkTask.java
+@@ -10,10 +10,6 @@ import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
+ import io.github.thebusybiscuit.slimefun4.implementation.SlimefunItems;
+ import io.github.thebusybiscuit.slimefun4.utils.SlimefunUtils;
+ import io.github.thebusybiscuit.slimefun4.utils.itemstack.ItemStackWrapper;
+-import java.util.ArrayDeque;
+-import java.util.ArrayList;
+-import java.util.Collection;
+-import java.util.Deque;
+ import java.util.HashMap;
+ import java.util.List;
+ import java.util.Map;
+@@ -46,6 +42,7 @@ class CargoNetworkTask implements Runnable {
+     private final NetworkManager manager;
+     private final CargoNet network;
+     private final Map<Location, Inventory> inventories = new HashMap<>();
++    private final Map<Location, Optional<Block>> attachedBlocks = new HashMap<>();
+ 
+     private final Map<Location, Integer> inputs;
+     private final Map<Integer, List<Location>> outputs;
+@@ -55,29 +52,35 @@ class CargoNetworkTask implements Runnable {
+         this.network = network;
+         this.manager = Slimefun.getNetworkManager();
+ 
+-        this.inputs = inputs;
+-        this.outputs = outputs;
++        this.inputs = Map.copyOf(inputs);
++        Map<Integer, List<Location>> outputSnapshot = new HashMap<>();
++        outputs.forEach((frequency, locations) -> outputSnapshot.put(frequency, List.copyOf(locations)));
++        this.outputs = Map.copyOf(outputSnapshot);
+     }
+ 
+     @Override
+     public void run() {
+-        long timestamp = System.nanoTime();
++        long networkTimestamp = Slimefun.getProfiler().newEntry();
+ 
+         try {
+-            /**
+-             * All operations happen here: Everything gets iterated from the Input Nodes.
+-             * (Apart from ChestTerminal Buses)
+-             */
+             SlimefunItem inputNode = SlimefunItems.CARGO_INPUT_NODE.getItem();
+             for (Map.Entry<Location, Integer> entry : inputs.entrySet()) {
+-                long nodeTimestamp = System.nanoTime();
+-                Location input = entry.getKey();
+-                Optional<Block> attachedBlock = network.getAttachedBlock(input);
+-
+-                attachedBlock.ifPresent(block -> routeItems(input, block, entry.getValue(), outputs));
+-
+-                // This will prevent this timings from showing up for the Cargo Manager
+-                timestamp += Slimefun.getProfiler().closeEntry(entry.getKey(), inputNode, nodeTimestamp);
++                long nodeTimestamp = Slimefun.getProfiler().newEntry();
++                try {
++                    Location input = entry.getKey();
++                    getAttachedBlock(input).ifPresent(block -> routeItems(input, block, entry.getValue(), outputs));
++                } catch (Exception | LinkageError ex) {
++                    Slimefun.logger().log(
++                            Level.SEVERE,
++                            ex,
++                            () -> "An Exception was caught while routing Cargo input node @ "
++                                    + new BlockPosition(entry.getKey()));
++                } finally {
++                    long childTime = Slimefun.getProfiler().closeEntry(entry.getKey(), inputNode, nodeTimestamp);
++                    if (networkTimestamp != 0) {
++                        networkTimestamp += childTime;
++                    }
++                }
+             }
+         } catch (Exception | LinkageError x) {
+             Slimefun.logger()
+@@ -86,10 +89,10 @@ class CargoNetworkTask implements Runnable {
+                             x,
+                             () -> "An Exception was caught while ticking a Cargo network @ "
+                                     + new BlockPosition(network.getRegulator()));
++        } finally {
++            Slimefun.getProfiler().closeEntry(
++                    network.getRegulator(), SlimefunItems.CARGO_MANAGER.getItem(), networkTimestamp);
+         }
+-
+-        // Submit a timings report
+-        Slimefun.getProfiler().closeEntry(network.getRegulator(), SlimefunItems.CARGO_MANAGER.getItem(), timestamp);
+     }
+ 
+     @ParametersAreNonnullByDefault
+@@ -152,70 +155,44 @@ class CargoNetworkTask implements Runnable {
+ 
+     @Nullable @ParametersAreNonnullByDefault
+     private ItemStack distributeItem(ItemStack stack, Location inputNode, List<Location> outputNodes) {
+-        ItemStack item = stack;
++        if (outputNodes.isEmpty()) {
++            return stack;
++        }
+ 
++        ItemStack item = stack;
+         var blockData = StorageCacheUtils.getBlock(inputNode);
+-        boolean roundrobin = Objects.equals(blockData.getData("round-robin"), "true");
+-        boolean smartFill = Objects.equals(blockData.getData("smart-fill"), "true");
+-
+-        int index = 0;
+-        Collection<Location> destinations;
+-        if (roundrobin) {
+-            // The current round-robin index of the (unsorted) outputNodes list,
+-            // or the index at which to start searching for valid output nodes
+-            index = network.roundRobin.getOrDefault(inputNode, 0);
+-            // Use an ArrayDeque to perform round-robin sorting
+-            // Since the impl for roundRobinSort just does Deque.addLast(Deque#removeFirst)
+-            // An ArrayDequeue is preferable as opposed to a LinkedList:
+-            // - The number of elements does not change.
+-            // - ArrayDequeue has better iterative performance
+-            Deque<Location> tempDestinations = new ArrayDeque<>(outputNodes);
+-            roundRobinSort(index, tempDestinations);
+-            destinations = tempDestinations;
+-        } else {
+-            // Using an ArrayList here since we won't need to sort the destinations
+-            // The ArrayList has the best performance for iteration bar a primitive array
+-            destinations = new ArrayList<>(outputNodes);
+-        }
++        boolean roundRobin = blockData != null && Objects.equals(blockData.getData("round-robin"), "true");
++        boolean smartFill = blockData != null && Objects.equals(blockData.getData("smart-fill"), "true");
+ 
+-        for (Location output : destinations) {
+-            Optional<Block> target = network.getAttachedBlock(output);
++        int size = outputNodes.size();
++        int startIndex = roundRobin ? Math.floorMod(network.roundRobin.getOrDefault(inputNode, 0), size) : 0;
+ 
+-            if (target.isPresent()) {
+-                ItemStackWrapper wrapper = ItemStackWrapper.wrap(item);
+-                item = CargoUtils.insert(
+-                        network, inventories, output.getBlock(), target.get(), smartFill, item, wrapper);
++        for (int offset = 0; offset < size; offset++) {
++            int outputIndex = roundRobin ? (startIndex + offset) % size : offset;
++            Location output = outputNodes.get(outputIndex);
++            Optional<Block> target = getAttachedBlock(output);
+ 
+-                if (item == null) {
+-                    if (roundrobin) {
+-                        // The output was valid, set the round robin index to the node after this one
+-                        network.roundRobin.put(inputNode, (index + 1) % outputNodes.size());
+-                    }
+-                    break;
++            if (target.isEmpty()) {
++                continue;
++            }
++
++            ItemStackWrapper wrapper = ItemStackWrapper.wrap(item);
++            item = CargoUtils.insert(
++                    network, inventories, output.getBlock(), target.get(), smartFill, item, wrapper);
++
++            if (item == null) {
++                if (roundRobin) {
++                    network.roundRobin.put(inputNode, (outputIndex + 1) % size);
+                 }
++                return null;
+             }
+-            index++;
+         }
+ 
+         return item;
+     }
+ 
+-    /**
+-     * This method sorts a given {@link Deque} of output node locations using a semi-accurate
+-     * round-robin method.
+-     *
+-     * @param index
+-     *            The round-robin index of the input node
+-     * @param outputNodes
+-     *            A {@link Deque} of {@link Location Locations} of the output nodes
+-     */
+-    private void roundRobinSort(int index, Deque<Location> outputNodes) {
+-        if (index < outputNodes.size()) {
+-            // Not ideal but actually not bad performance-wise over more elegant alternatives
+-            for (int i = 0; i < index; i++) {
+-                Location temp = outputNodes.removeFirst();
+-                outputNodes.add(temp);
+-            }
+-        }
++    private Optional<Block> getAttachedBlock(Location node) {
++        return attachedBlocks.computeIfAbsent(node, network::getAttachedBlock);
+     }
++
+ }
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/core/networks/energy/EnergyNet.java b/src/main/java/io/github/thebusybiscuit/slimefun4/core/networks/energy/EnergyNet.java
-index 3c48fa401eb8e48eff9b62f4913c23582b4850a1..8686760fbf7b973dd0c566245f9a6cf793b84983 100644
+index 3c48fa4..8686760 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/core/networks/energy/EnergyNet.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/core/networks/energy/EnergyNet.java
 @@ -142,7 +142,7 @@ public class EnergyNet extends Network implements HologramOwner {
@@ -1982,7 +2601,7 @@ index 3c48fa401eb8e48eff9b62f4913c23582b4850a1..8686760fbf7b973dd0c566245f9a6cf7
                  long generatorsSupply = tickAllGenerators(timestamp::getAndAdd);
                  long capacitorsSupply = tickAllCapacitors();
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/core/services/AutoSavingService.java b/src/main/java/io/github/thebusybiscuit/slimefun4/core/services/AutoSavingService.java
-index 560c6d55100bea030de535ad1f7cfe558f21e45f..1bdd2e25364d154ef0fd63af03bd5497b0f38108 100644
+index 560c6d5..1bdd2e2 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/core/services/AutoSavingService.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/core/services/AutoSavingService.java
 @@ -70,7 +70,7 @@ public class AutoSavingService {
@@ -1995,7 +2614,7 @@ index 560c6d55100bea030de535ad1f7cfe558f21e45f..1bdd2e25364d154ef0fd63af03bd5497
      }
  }
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/core/services/BackupService.java b/src/main/java/io/github/thebusybiscuit/slimefun4/core/services/BackupService.java
-index 42b34889aaa7006e194ca205bb7a2ac14a258415..874765f34119f45bb215195811f628afe5aa73ae 100644
+index 42b3488..874765f 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/core/services/BackupService.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/core/services/BackupService.java
 @@ -56,7 +56,7 @@ public class BackupService implements Runnable {
@@ -2020,7 +2639,7 @@ index 42b34889aaa7006e194ca205bb7a2ac14a258415..874765f34119f45bb215195811f628af
                  } catch (IOException x) {
                      Slimefun.logger()
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/core/services/LocalizationService.java b/src/main/java/io/github/thebusybiscuit/slimefun4/core/services/LocalizationService.java
-index 14733c9f941435070bf17333cee862e4924c3d77..0a9cbe7dc63084ebc0ad3b88a5458878c2917405 100644
+index 14733c9..0a9cbe7 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/core/services/LocalizationService.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/core/services/LocalizationService.java
 @@ -153,6 +153,12 @@ public class LocalizationService extends SlimefunLocalization {
@@ -2037,7 +2656,7 @@ index 14733c9f941435070bf17333cee862e4924c3d77..0a9cbe7dc63084ebc0ad3b88a5458878
          String language = container.get(languageKey, PersistentDataType.STRING);
  
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/core/services/profiler/PerformanceSummary.java b/src/main/java/io/github/thebusybiscuit/slimefun4/core/services/profiler/PerformanceSummary.java
-index ac1444b6d3dc50219fe872eaa9e1b22f8598744b..11854d035228f98b4b25f71f88e993f5a32405eb 100644
+index ac1444b..11854d0 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/core/services/profiler/PerformanceSummary.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/core/services/profiler/PerformanceSummary.java
 @@ -50,17 +50,17 @@ class PerformanceSummary {
@@ -2084,7 +2703,7 @@ index ac1444b6d3dc50219fe872eaa9e1b22f8598744b..11854d035228f98b4b25f71f88e993f5
              StringBuilder builder = new StringBuilder();
  
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/core/services/profiler/SlimefunProfiler.java b/src/main/java/io/github/thebusybiscuit/slimefun4/core/services/profiler/SlimefunProfiler.java
-index cdeeb8ce270fa2cb294503331c3ddc27a4788238..81f8e1bebd17ff037dd5fc5f41617acb21d37281 100644
+index cdeeb8c..81f8e1b 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/core/services/profiler/SlimefunProfiler.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/core/services/profiler/SlimefunProfiler.java
 @@ -144,6 +144,20 @@ public class SlimefunProfiler {
@@ -2117,8 +2736,127 @@ index cdeeb8ce270fa2cb294503331c3ddc27a4788238..81f8e1bebd17ff037dd5fc5f41617acb
  
          for (SlimefunPoolExecutor executor : threadPools) {
              sb.append(executor.getName())
+diff --git b/src/main/java/io/github/thebusybiscuit/slimefun4/core/services/stability/BackpackOpenRegistry.java b/src/main/java/io/github/thebusybiscuit/slimefun4/core/services/stability/BackpackOpenRegistry.java
+new file mode 100644
+index 0000000..5c77ccd
+--- /dev/null
++++ b/src/main/java/io/github/thebusybiscuit/slimefun4/core/services/stability/BackpackOpenRegistry.java
+@@ -0,0 +1,53 @@
++package io.github.thebusybiscuit.slimefun4.core.services.stability;
++
++import java.util.Map;
++import java.util.Set;
++import java.util.UUID;
++import java.util.concurrent.ConcurrentHashMap;
++import javax.annotation.Nonnull;
++
++/**
++ * Atomically reserves backpack open requests by player and backpack identity.
++ *
++ * <p>The two-level reservation prevents both repeated requests from one player and stale-snapshot races where two
++ * different players attempt to open the same backpack at once.
++ */
++public final class BackpackOpenRegistry {
++
++    private final Set<UUID> players = ConcurrentHashMap.newKeySet();
++    private final Set<String> backpackKeys = ConcurrentHashMap.newKeySet();
++    private final Map<UUID, String> reservations = new ConcurrentHashMap<>();
++
++    public boolean reserve(@Nonnull UUID playerId, @Nonnull String backpackKey) {
++        if (!players.add(playerId)) {
++            return false;
++        }
++
++        if (!backpackKeys.add(backpackKey)) {
++            players.remove(playerId);
++            return false;
++        }
++
++        reservations.put(playerId, backpackKey);
++        return true;
++    }
++
++    public void release(@Nonnull UUID playerId, @Nonnull String backpackKey) {
++        if (reservations.remove(playerId, backpackKey)) {
++            backpackKeys.remove(backpackKey);
++            players.remove(playerId);
++        }
++    }
++
++    public void release(@Nonnull UUID playerId) {
++        String backpackKey = reservations.remove(playerId);
++        if (backpackKey != null) {
++            backpackKeys.remove(backpackKey);
++        }
++        players.remove(playerId);
++    }
++
++    public boolean isOpening(@Nonnull UUID playerId) {
++        return players.contains(playerId);
++    }
++}
+diff --git b/src/main/java/io/github/thebusybiscuit/slimefun4/core/services/stability/MachineCircuitBreaker.java b/src/main/java/io/github/thebusybiscuit/slimefun4/core/services/stability/MachineCircuitBreaker.java
+new file mode 100644
+index 0000000..e64311b
+--- /dev/null
++++ b/src/main/java/io/github/thebusybiscuit/slimefun4/core/services/stability/MachineCircuitBreaker.java
+@@ -0,0 +1,54 @@
++package io.github.thebusybiscuit.slimefun4.core.services.stability;
++
++import java.util.Map;
++import java.util.concurrent.ConcurrentHashMap;
++import java.util.concurrent.atomic.AtomicBoolean;
++import javax.annotation.Nonnull;
++
++/** A small, thread-safe half-open circuit breaker for repeatedly failing machine locations. */
++public final class MachineCircuitBreaker<K> {
++
++    private final Map<K, CircuitState> circuits = new ConcurrentHashMap<>();
++
++    public boolean canAttempt(@Nonnull K key, long nowMillis) {
++        CircuitState state = circuits.get(key);
++        if (state == null) {
++            return true;
++        }
++        if (nowMillis < state.retryAfterMillis) {
++            return false;
++        }
++        return state.probeInProgress.compareAndSet(false, true);
++    }
++
++    public void open(@Nonnull K key, long retryAfterMillis) {
++        circuits.put(key, new CircuitState(retryAfterMillis));
++    }
++
++    public boolean isOpen(@Nonnull K key) {
++        return circuits.containsKey(key);
++    }
++
++    public boolean clear(@Nonnull K key) {
++        return circuits.remove(key) != null;
++    }
++
++    public int clearAll() {
++        int count = circuits.size();
++        circuits.clear();
++        return count;
++    }
++
++    public int size() {
++        return circuits.size();
++    }
++
++    private static final class CircuitState {
++        private final long retryAfterMillis;
++        private final AtomicBoolean probeInProgress = new AtomicBoolean(false);
++
++        private CircuitState(long retryAfterMillis) {
++            this.retryAfterMillis = retryAfterMillis;
++        }
++    }
++}
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/Slimefun.java b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/Slimefun.java
-index 26938af0cc3a9913a647f0ae44e136640c267c14..93b28c6ec7ef2b18aaa146d1b39c53febe50fc7f 100644
+index 26938af..056c154 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/Slimefun.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/Slimefun.java
 @@ -183,7 +183,7 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
@@ -2253,7 +2991,33 @@ index 26938af0cc3a9913a647f0ae44e136640c267c14..93b28c6ec7ef2b18aaa146d1b39c53fe
      }
  
      @Override
-@@ -598,7 +598,7 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
+@@ -499,6 +499,11 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
+         // Kill our Profiler Threads
+         profiler.kill();
+ 
++        // Close inventories before profile/database shutdown so close handlers can persist final contents.
++        for (Player p : Bukkit.getOnlinePlayers()) {
++            p.closeInventory();
++        }
++
+         // Save all Player Profiles that are still in memory
+         PlayerProfile.iterator().forEachRemaining(profile -> {
+             if (profile.isDirty()) {
+@@ -519,13 +524,6 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
+         // Terminate our Plugin instance
+         setInstance(null);
+ 
+-        /**
+-         * Close all inventories on the server to prevent item dupes
+-         * (Incase some idiot uses /reload)
+-         */
+-        for (Player p : Bukkit.getOnlinePlayers()) {
+-            p.closeInventory();
+-        }
+     }
+ 
+     /**
+@@ -598,7 +596,7 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
                  getLogger()
                          .log(
                                  Level.WARNING,
@@ -2262,7 +3026,7 @@ index 26938af0cc3a9913a647f0ae44e136640c267c14..93b28c6ec7ef2b18aaa146d1b39c53fe
                                  getServer().getMinecraftVersion());
                  return false;
              }
-@@ -626,7 +626,7 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
+@@ -626,7 +624,7 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
                      .log(
                              Level.SEVERE,
                              x,
@@ -2272,7 +3036,7 @@ index 26938af0cc3a9913a647f0ae44e136640c267c14..93b28c6ec7ef2b18aaa146d1b39c53fe
  
              // We assume "unsupported" if something went wrong.
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/SlimefunItems.java b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/SlimefunItems.java
-index a0d87e706fe59c18cb1cb39c7ddc95d0b6339b3f..5adb4db7b7c60f35a57c546ebe92a44cc089e0e8 100644
+index a0d87e7..5adb4db 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/SlimefunItems.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/SlimefunItems.java
 @@ -33,465 +33,80 @@ public final class SlimefunItems {
@@ -5547,7 +6311,7 @@ index a0d87e706fe59c18cb1cb39c7ddc95d0b6339b3f..5adb4db7b7c60f35a57c546ebe92a44c
      static {
          INFUSED_ELYTRA.addUnsafeEnchantment(Enchantment.MENDING, 1);
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/StartupWarnings.java b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/StartupWarnings.java
-index 5af8d0a79198f78c3e7dc9b6b95879a726d984ff..0f8abba8351910c78c400e698bd501d69e34b1d1 100644
+index 5af8d0a..0f8abba 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/StartupWarnings.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/StartupWarnings.java
 @@ -23,21 +23,21 @@ final class StartupWarnings {
@@ -5616,7 +6380,7 @@ index 5af8d0a79198f78c3e7dc9b6b95879a726d984ff..0f8abba8351910c78c400e698bd501d6
      }
  }
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/guide/CheatSheetSlimefunGuide.java b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/guide/CheatSheetSlimefunGuide.java
-index 446fdcae1e303318c15310f0d2f04491e6477bdc..63f2bb2b17617e645804e409e566cf307a043b2f 100644
+index 446fdca..63f2bb2 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/guide/CheatSheetSlimefunGuide.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/guide/CheatSheetSlimefunGuide.java
 @@ -30,7 +30,7 @@ public class CheatSheetSlimefunGuide extends SurvivalSlimefunGuide {
@@ -5629,7 +6393,7 @@ index 446fdcae1e303318c15310f0d2f04491e6477bdc..63f2bb2b17617e645804e409e566cf30
  
      /**
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/guide/SurvivalSlimefunGuide.java b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/guide/SurvivalSlimefunGuide.java
-index 595ff54f92aef28c7e7bf00d77d1548c9073b834..c39192fbfefa920e3f9ef54fcdc01fa609544ff4 100644
+index 595ff54..c39192f 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/guide/SurvivalSlimefunGuide.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/guide/SurvivalSlimefunGuide.java
 @@ -70,13 +70,13 @@ public class SurvivalSlimefunGuide implements SlimefunGuideImplementation {
@@ -5704,7 +6468,7 @@ index 595ff54f92aef28c7e7bf00d77d1548c9073b834..c39192fbfefa920e3f9ef54fcdc01fa6
  
      @ParametersAreNonnullByDefault
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/androids/AndroidFuelSource.java b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/androids/AndroidFuelSource.java
-index 5c3166c73389357528ae4ae4dd05cfc6287dabd3..1806068b8ee76a08532284921439930c6751a298 100644
+index 5c3166c..1806068 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/androids/AndroidFuelSource.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/androids/AndroidFuelSource.java
 @@ -16,17 +16,17 @@ public enum AndroidFuelSource {
@@ -5737,7 +6501,7 @@ index 5c3166c73389357528ae4ae4dd05cfc6287dabd3..1806068b8ee76a08532284921439930c
      }
  }
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/androids/ProgrammableAndroid.java b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/androids/ProgrammableAndroid.java
-index 49ec513d3fd04b014a72b237a99392cffcdbabff..e151ae1a0102a59850bf00830d516e2290d518f8 100644
+index 49ec513..e151ae1 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/androids/ProgrammableAndroid.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/androids/ProgrammableAndroid.java
 @@ -94,7 +94,7 @@ public class ProgrammableAndroid extends SlimefunItem
@@ -5901,7 +6665,7 @@ index 49ec513d3fd04b014a72b237a99392cffcdbabff..e151ae1a0102a59850bf00830d516e22
              item.setItemMeta(im);
              list.add(item);
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/androids/Script.java b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/androids/Script.java
-index 7ff990e48c566eb3481f030ba868c5c81c2762ab..08d7350847752b29aaf0012dbed54f08777f97cf 100644
+index 7ff990e..08d7350 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/androids/Script.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/androids/Script.java
 @@ -128,19 +128,19 @@ public final class Script {
@@ -5932,7 +6696,7 @@ index 7ff990e48c566eb3481f030ba868c5c81c2762ab..08d7350847752b29aaf0012dbed54f08
  
          return new CustomItemStack(android.getItem(), "&b" + getName(), lore.toArray(new String[0]));
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/autocrafters/AbstractAutoCrafter.java b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/autocrafters/AbstractAutoCrafter.java
-index 0fefd8e2ceafb8cbac0432eaf3f9b854afdd74dc..18e8bcf066fc383e9b30230193fb9ec177b2af99 100644
+index 0fefd8e..18e8bcf 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/autocrafters/AbstractAutoCrafter.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/autocrafters/AbstractAutoCrafter.java
 @@ -672,7 +672,7 @@ public abstract class AbstractAutoCrafter extends SlimefunItem implements Energy
@@ -5945,7 +6709,7 @@ index 0fefd8e2ceafb8cbac0432eaf3f9b854afdd74dc..18e8bcf066fc383e9b30230193fb9ec1
              }
  
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/backpacks/SlimefunBackpack.java b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/backpacks/SlimefunBackpack.java
-index 14acaf974e6ba8a329874a8393c57e678ce655df..eb96a363476840cf775a0a8988f0a49774111963 100644
+index 14acaf9..eb96a36 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/backpacks/SlimefunBackpack.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/backpacks/SlimefunBackpack.java
 @@ -86,10 +86,14 @@ public class SlimefunBackpack extends SimpleSlimefunItem<ItemUseHandler> impleme
@@ -5968,7 +6732,7 @@ index 14acaf974e6ba8a329874a8393c57e678ce655df..eb96a363476840cf775a0a8988f0a497
  
          boolean hasLoreItem = itemMetaTwo.hasLore();
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/blocks/AbstractMonsterSpawner.java b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/blocks/AbstractMonsterSpawner.java
-index 162da268d2a0e61999651fc9af254f68bd480327..e7209dbe09a6057fc3de48962a655860471304bc 100644
+index 162da26..e7209db 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/blocks/AbstractMonsterSpawner.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/blocks/AbstractMonsterSpawner.java
 @@ -57,10 +57,10 @@ public abstract class AbstractMonsterSpawner extends SlimefunItem implements Dis
@@ -5999,7 +6763,7 @@ index 162da268d2a0e61999651fc9af254f68bd480327..e7209dbe09a6057fc3de48962a655860
              }
          }
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/blocks/HologramProjector.java b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/blocks/HologramProjector.java
-index b875bd018709cad2955dbdc89f4b34f04e64a978..7f0e2e75e152e6f8f7d4807ddd4ac73f25a3cc8e 100644
+index b875bd0..7f0e2e7 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/blocks/HologramProjector.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/blocks/HologramProjector.java
 @@ -64,7 +64,7 @@ public class HologramProjector extends SlimefunItem implements HologramOwner {
@@ -6038,7 +6802,7 @@ index b875bd018709cad2955dbdc89f4b34f04e64a978..7f0e2e75e152e6f8f7d4807ddd4ac73f
              var blockData = StorageCacheUtils.getBlock(projector.getLocation());
              double offset = NumberUtils.reparseDouble(
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/cargo/AbstractCargoNode.java b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/cargo/AbstractCargoNode.java
-index 658463d30f6ad9b74477a7c59c7d34cc9b5e9cd2..70c2cae36f2673330dff46fb8c136b7acbc80b11 100644
+index 658463d..70c2cae 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/cargo/AbstractCargoNode.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/cargo/AbstractCargoNode.java
 @@ -96,7 +96,7 @@ abstract class AbstractCargoNode extends SimpleSlimefunItem<BlockPlaceHandler> i
@@ -6072,7 +6836,7 @@ index 658463d30f6ad9b74477a7c59c7d34cc9b5e9cd2..70c2cae36f2673330dff46fb8c136b7a
              int newChannel = channel + 1;
  
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/cargo/AbstractFilterNode.java b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/cargo/AbstractFilterNode.java
-index b0d7c155edd60b61c1eb57cb094f6cc09ffe0d2a..9b3ed1f390f354ec24f0e8c49e805c7e0f790cc0 100644
+index b0d7c15..9b3ed1f 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/cargo/AbstractFilterNode.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/cargo/AbstractFilterNode.java
 @@ -90,7 +90,7 @@ abstract class AbstractFilterNode extends AbstractCargoNode {
@@ -6120,7 +6884,7 @@ index b0d7c155edd60b61c1eb57cb094f6cc09ffe0d2a..9b3ed1f390f354ec24f0e8c49e805c7e
                  StorageCacheUtils.setData(b.getLocation(), FILTER_LORE, String.valueOf(true));
                  updateBlockMenu(menu, b);
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/cargo/CargoInputNode.java b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/cargo/CargoInputNode.java
-index 7acee0ae1624c45c4b62c80b48b9524512edbdec..19a72ebee0c514da6abb99c5f46350df3339c3d8 100644
+index 7acee0a..19a72eb 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/cargo/CargoInputNode.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/cargo/CargoInputNode.java
 @@ -59,10 +59,10 @@ public class CargoInputNode extends AbstractFilterNode {
@@ -6202,7 +6966,7 @@ index 7acee0ae1624c45c4b62c80b48b9524512edbdec..19a72ebee0c514da6abb99c5f46350df
                  StorageCacheUtils.setData(b.getLocation(), SMART_FILL_MODE, String.valueOf(false));
                  updateBlockMenu(menu, b);
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/cargo/CargoManager.java b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/cargo/CargoManager.java
-index a53f3d3689967fed70bf305cb9a55de68f865cd1..2b464e1e9f8fde64292a4598ca8bcff7d9e6c300 100644
+index a53f3d3..2b464e1 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/cargo/CargoManager.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/cargo/CargoManager.java
 @@ -70,10 +70,10 @@ public class CargoManager extends SlimefunItem implements HologramOwner, NotRota
@@ -6219,7 +6983,7 @@ index a53f3d3689967fed70bf305cb9a55de68f865cd1..2b464e1e9f8fde64292a4598ca8bcff7
                          }
                      }
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/cargo/ReactorAccessPort.java b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/cargo/ReactorAccessPort.java
-index 47ce0900387f09c7402c2f5160e62cc79603760d..2eb64ff8aa236308ba8238896de5744aed23fe97 100644
+index 47ce090..2eb64ff 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/cargo/ReactorAccessPort.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/cargo/ReactorAccessPort.java
 @@ -51,7 +51,7 @@ public class ReactorAccessPort extends SlimefunItem {
@@ -6280,7 +7044,7 @@ index 47ce0900387f09c7402c2f5160e62cc79603760d..2eb64ff8aa236308ba8238896de5744a
      }
  
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/electric/AbstractEnergyProvider.java b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/electric/AbstractEnergyProvider.java
-index ffce04464044e75f532946b35552267c4bad0a35..7d319e298147b99c04bfa2c98a128489e088ddf7 100644
+index ffce044..7d319e2 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/electric/AbstractEnergyProvider.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/electric/AbstractEnergyProvider.java
 @@ -128,9 +128,9 @@ public abstract class AbstractEnergyProvider extends SlimefunItem
@@ -6296,7 +7060,7 @@ index ffce04464044e75f532946b35552267c4bad0a35..7d319e298147b99c04bfa2c98a128489
                      + " J"));
              im.setLore(lore);
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/electric/EnergyConnector.java b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/electric/EnergyConnector.java
-index cc9fde297240e041dc29877b62303ca2c794777d..d23c11e45cae106874433642e229b262f880d151 100644
+index cc9fde2..d23c11e 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/electric/EnergyConnector.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/electric/EnergyConnector.java
 @@ -49,9 +49,9 @@ public class EnergyConnector extends SimpleSlimefunItem<BlockUseHandler> impleme
@@ -6312,7 +7076,7 @@ index cc9fde297240e041dc29877b62303ca2c794777d..d23c11e45cae106874433642e229b262
          };
      }
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/electric/EnergyRegulator.java b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/electric/EnergyRegulator.java
-index 307ad2f4b2969b895e8506dda31dfe00076c3bc6..91be47c8cfaaa34af2f2b39e1ab2e7f943d2c88a 100644
+index 307ad2f..91be47c 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/electric/EnergyRegulator.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/electric/EnergyRegulator.java
 @@ -55,7 +55,7 @@ public class EnergyRegulator extends SlimefunItem implements HologramOwner, NotR
@@ -6325,7 +7089,7 @@ index 307ad2f4b2969b895e8506dda31dfe00076c3bc6..91be47c8cfaaa34af2f2b39e1ab2e7f9
          };
      }
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/electric/gadgets/MultiTool.java b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/electric/gadgets/MultiTool.java
-index e2c513ce69cb6263586f78621e5d1e35cb97a3c8..a16848076190d4c59fd6691c7b7ab785b3ffe1ac 100644
+index e2c513c..a168480 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/electric/gadgets/MultiTool.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/electric/gadgets/MultiTool.java
 @@ -100,7 +100,7 @@ public class MultiTool extends SlimefunItem implements Rechargeable {
@@ -6338,7 +7102,7 @@ index e2c513ce69cb6263586f78621e5d1e35cb97a3c8..a16848076190d4c59fd6691c7b7ab785
  
                  pdc.set(multiToolMode, PersistentDataType.INTEGER, index);
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/electric/machines/enchanting/AbstractEnchantmentMachine.java b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/electric/machines/enchanting/AbstractEnchantmentMachine.java
-index b15f3e90d542abc2f94ca5723ffadd0069883fbc..4aef82f9163167847a5e07eaba29befe2e937304 100644
+index b15f3e9..4aef82f 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/electric/machines/enchanting/AbstractEnchantmentMachine.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/electric/machines/enchanting/AbstractEnchantmentMachine.java
 @@ -35,7 +35,7 @@ abstract class AbstractEnchantmentMachine extends AContainer {
@@ -6369,7 +7133,7 @@ index b15f3e90d542abc2f94ca5723ffadd0069883fbc..4aef82f9163167847a5e07eaba29befe
  
          String notice = ChatColors.color(Slimefun.getLocalization().getMessage("messages.above-enchant-limit"));
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/electric/machines/entities/AbstractEntityAssembler.java b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/electric/machines/entities/AbstractEntityAssembler.java
-index 576a44b830aecd4db23650bbd28343a38849003a..604fa28ed850001b01ffab0dacc0accb66904711 100644
+index 576a44b..604fa28 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/electric/machines/entities/AbstractEntityAssembler.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/electric/machines/entities/AbstractEntityAssembler.java
 @@ -169,14 +169,14 @@ public abstract class AbstractEntityAssembler<T extends Entity> extends SimpleSl
@@ -6418,7 +7182,7 @@ index 576a44b830aecd4db23650bbd28343a38849003a..604fa28ed850001b01ffab0dacc0accb
      }
  
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/electric/machines/entities/IronGolemAssembler.java b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/electric/machines/entities/IronGolemAssembler.java
-index 0127c1187fb63604b7ae3aec6efa016c1f1ed840..c89d547a4e55ef3d1e5aad085e3fb6fc3839c8f1 100644
+index 0127c11..c89d547 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/electric/machines/entities/IronGolemAssembler.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/electric/machines/entities/IronGolemAssembler.java
 @@ -64,15 +64,15 @@ public class IronGolemAssembler extends AbstractEntityAssembler<IronGolem> {
@@ -6441,7 +7205,7 @@ index 0127c1187fb63604b7ae3aec6efa016c1f1ed840..c89d547a4e55ef3d1e5aad085e3fb6fc
      }
  
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/electric/machines/entities/ProduceCollector.java b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/electric/machines/entities/ProduceCollector.java
-index 91a4027b06617282242b75a281ad6dea73af39df..e6e868a31b06d7adb5f2dcdfbe53496a5af070c2 100644
+index 91a4027..e6e868a 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/electric/machines/entities/ProduceCollector.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/electric/machines/entities/ProduceCollector.java
 @@ -112,15 +112,15 @@ public class ProduceCollector extends AContainer implements RecipeDisplayItem {
@@ -6464,7 +7228,7 @@ index 91a4027b06617282242b75a281ad6dea73af39df..e6e868a31b06d7adb5f2dcdfbe53496a
  
          return displayRecipes;
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/electric/machines/entities/WitherAssembler.java b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/electric/machines/entities/WitherAssembler.java
-index d9092e2759cd8ccd66b164708b72a4ff6592fea0..ad6459535f172fd2bca79b19f1effc38a506326c 100644
+index d9092e2..ad64595 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/electric/machines/entities/WitherAssembler.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/electric/machines/entities/WitherAssembler.java
 @@ -62,13 +62,13 @@ public class WitherAssembler extends AbstractEntityAssembler<Wither> {
@@ -6485,7 +7249,7 @@ index d9092e2759cd8ccd66b164708b72a4ff6592fea0..ad6459535f172fd2bca79b19f1effc38
      }
  
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/electric/reactors/Reactor.java b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/electric/reactors/Reactor.java
-index 6dd27266c40a0259f65ad4e7411d080fb8b2db12..7505311aa86a6526b8aa00fc17063575b0c54b3a 100644
+index 6dd2726..7505311 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/electric/reactors/Reactor.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/electric/reactors/Reactor.java
 @@ -159,13 +159,13 @@ public abstract class Reactor extends AbstractEnergyProvider
@@ -6583,7 +7347,7 @@ index 6dd27266c40a0259f65ad4e7411d080fb8b2db12..7505311aa86a6526b8aa00fc17063575
          }
      }
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/elevator/ElevatorPlate.java b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/elevator/ElevatorPlate.java
-index 9c5a9a795c9920231a1b211e95e480ad0a909a5f..be665b7953ea8ddab3e16a92f51b7b855b074c59 100644
+index 9c5a9a7..be665b7 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/elevator/ElevatorPlate.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/elevator/ElevatorPlate.java
 @@ -77,7 +77,7 @@ public class ElevatorPlate extends SimpleSlimefunItem<BlockUseHandler> {
@@ -6605,7 +7369,7 @@ index 9c5a9a795c9920231a1b211e95e480ad0a909a5f..be665b7953ea8ddab3e16a92f51b7b85
                          ChatColor.WHITE + ChatColors.color(StorageCacheUtils.getData(b.getLocation(), DATA_KEY))));
          menu.addMenuClickHandler(4, (pl, slot, item, action) -> {
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/geo/GEOMiner.java b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/geo/GEOMiner.java
-index 8dfec8a569175593d4cee83bb865efd9a9a6d71e..c038f55da7f3f9f26aea28998876314d2e4304e0 100644
+index 8dfec8a..c038f55 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/geo/GEOMiner.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/geo/GEOMiner.java
 @@ -202,7 +202,7 @@ public class GEOMiner extends SlimefunItem
@@ -6657,7 +7421,7 @@ index 8dfec8a569175593d4cee83bb865efd9a9a6d71e..c038f55da7f3f9f26aea28998876314d
      }
  }
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/magical/KnowledgeTome.java b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/magical/KnowledgeTome.java
-index 77889c4af03f3c8d3c8334f2c9558965543edd36..34b0c64c6811a304f2a02d54f83d18f1032132d5 100644
+index 77889c4..34b0c64 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/magical/KnowledgeTome.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/magical/KnowledgeTome.java
 @@ -48,7 +48,7 @@ public class KnowledgeTome extends SimpleSlimefunItem<ItemUseHandler> {
@@ -6670,7 +7434,7 @@ index 77889c4af03f3c8d3c8334f2c9558965543edd36..34b0c64c6811a304f2a02d54f83d18f1
                  im.setLore(lore);
                  item.setItemMeta(im);
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/magical/MagicEyeOfEnder.java b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/magical/MagicEyeOfEnder.java
-index e88fb7e50deb8ebbe710d70d07d76fa116354e7a..3a00412294fbea3cb68ceb525680541371f61ac3 100644
+index e88fb7e..3a00412 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/magical/MagicEyeOfEnder.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/magical/MagicEyeOfEnder.java
 @@ -43,7 +43,7 @@ public class MagicEyeOfEnder extends SimpleSlimefunItem<ItemUseHandler> {
@@ -6683,7 +7447,7 @@ index e88fb7e50deb8ebbe710d70d07d76fa116354e7a..3a00412294fbea3cb68ceb5256805413
          };
      }
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/magical/talismans/Talisman.java b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/magical/talismans/Talisman.java
-index 8bde02a420e59763c6965348fe9323ac32a10615..9a0383a78d552e8856b4dfd717d4c0a8ea272b3f 100644
+index 8bde02a..9a0383a 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/magical/talismans/Talisman.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/magical/talismans/Talisman.java
 @@ -103,14 +103,14 @@ public class Talisman extends SlimefunItem {
@@ -6706,7 +7470,7 @@ index 8bde02a420e59763c6965348fe9323ac32a10615..9a0383a78d552e8856b4dfd717d4c0a8
                  lore.add(line);
              }
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/misc/StrangeNetherGoo.java b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/misc/StrangeNetherGoo.java
-index d480492de3fc0ae53419b7191da7cde552a6c2ac..efdbd33ed97187094a4dcb20185ecc27be0abc87 100644
+index d480492..efdbd33 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/misc/StrangeNetherGoo.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/misc/StrangeNetherGoo.java
 @@ -80,7 +80,7 @@ public class StrangeNetherGoo extends SimpleSlimefunItem<ItemUseHandler> impleme
@@ -6719,7 +7483,7 @@ index d480492de3fc0ae53419b7191da7cde552a6c2ac..efdbd33ed97187094a4dcb20185ecc27
              }
          };
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/multiblocks/ArmorForge.java b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/multiblocks/ArmorForge.java
-index 1e028eca2c68567770e27420513baed8dcbf1c6f..03352bed5f3a6c02cb7515f51571a0162e3f7dd7 100644
+index 1e028ec..03352be 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/multiblocks/ArmorForge.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/multiblocks/ArmorForge.java
 @@ -37,7 +37,7 @@ public class ArmorForge extends AbstractCraftingTable {
@@ -6732,7 +7496,7 @@ index 1e028eca2c68567770e27420513baed8dcbf1c6f..03352bed5f3a6c02cb7515f51571a016
                  },
                  BlockFace.SELF);
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/multiblocks/Compressor.java b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/multiblocks/Compressor.java
-index 37c2f1f2c44fe36638ee7174d0cad32fde443e47..6ca675afe4079cfd307a1dea66d2241cca58fc80 100644
+index 37c2f1f..6ca675a 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/multiblocks/Compressor.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/multiblocks/Compressor.java
 @@ -39,7 +39,7 @@ public class Compressor extends MultiBlockMachine {
@@ -6745,7 +7509,7 @@ index 37c2f1f2c44fe36638ee7174d0cad32fde443e47..6ca675afe4079cfd307a1dea66d2241c
                  },
                  BlockFace.SELF);
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/multiblocks/GrindStone.java b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/multiblocks/GrindStone.java
-index d0d85a4cf188eeb2a4f7a96d3c9b54aba29c41ab..15f0b24253dc0d0070453e0c6cfdcd99c26b7b68 100644
+index d0d85a4..15f0b24 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/multiblocks/GrindStone.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/multiblocks/GrindStone.java
 @@ -40,7 +40,7 @@ public class GrindStone extends MultiBlockMachine {
@@ -6758,7 +7522,7 @@ index d0d85a4cf188eeb2a4f7a96d3c9b54aba29c41ab..15f0b24253dc0d0070453e0c6cfdcd99
                  },
                  BlockFace.SELF);
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/multiblocks/Juicer.java b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/multiblocks/Juicer.java
-index 0a51e907a578a5306bdb59ffd5ad28f79ea9d905..fcf7b51f6504e62a485f961adc13b294e5d33fad 100644
+index 0a51e90..fcf7b51 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/multiblocks/Juicer.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/multiblocks/Juicer.java
 @@ -50,7 +50,7 @@ public class Juicer extends MultiBlockMachine {
@@ -6771,7 +7535,7 @@ index 0a51e907a578a5306bdb59ffd5ad28f79ea9d905..fcf7b51f6504e62a485f961adc13b294
                  },
                  BlockFace.SELF);
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/multiblocks/MakeshiftSmeltery.java b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/multiblocks/MakeshiftSmeltery.java
-index e85dd3ee9855408acfa401ec912805ed50824d5b..6f10365f0bb7b1869ddce4fb85bc02d58da4be4c 100644
+index e85dd3e..6f10365 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/multiblocks/MakeshiftSmeltery.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/multiblocks/MakeshiftSmeltery.java
 @@ -35,7 +35,7 @@ public class MakeshiftSmeltery extends AbstractSmeltery {
@@ -6784,7 +7548,7 @@ index e85dd3ee9855408acfa401ec912805ed50824d5b..6f10365f0bb7b1869ddce4fb85bc02d5
                      null,
                      new ItemStack(Material.FLINT_AND_STEEL),
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/multiblocks/OreCrusher.java b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/multiblocks/OreCrusher.java
-index 664a49e3832b86aa9f10ee0f1249e8090a43edbf..69abd97bcc9b1bb06c0bee8d55a0f6b8f041a64e 100644
+index 664a49e..69abd97 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/multiblocks/OreCrusher.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/multiblocks/OreCrusher.java
 @@ -52,7 +52,7 @@ public class OreCrusher extends MultiBlockMachine {
@@ -6797,7 +7561,7 @@ index 664a49e3832b86aa9f10ee0f1249e8090a43edbf..69abd97bcc9b1bb06c0bee8d55a0f6b8
                  },
                  BlockFace.SELF);
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/multiblocks/PressureChamber.java b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/multiblocks/PressureChamber.java
-index d42b0dda0798aee4ad8dd18a1dedd2f3a075eb53..17a6db8da37cd5e024e899537304a2d090c5e239 100644
+index d42b0dd..17a6db8 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/multiblocks/PressureChamber.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/multiblocks/PressureChamber.java
 @@ -33,7 +33,7 @@ public class PressureChamber extends MultiBlockMachine {
@@ -6810,7 +7574,7 @@ index d42b0dda0798aee4ad8dd18a1dedd2f3a075eb53..17a6db8da37cd5e024e899537304a2d0
                      new ItemStack(Material.PISTON),
                      new ItemStack(Material.GLASS),
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/multiblocks/Smeltery.java b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/multiblocks/Smeltery.java
-index 828e7d2747e64bbf64f1f8888622c1282b3f5c11..8dea990e64c25ab0e6cddfbd39f139054ad5f1ca 100644
+index 828e7d2..8dea990 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/multiblocks/Smeltery.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/multiblocks/Smeltery.java
 @@ -56,7 +56,7 @@ public class Smeltery extends AbstractSmeltery {
@@ -6823,7 +7587,7 @@ index 828e7d2747e64bbf64f1f8888622c1282b3f5c11..8dea990e64c25ab0e6cddfbd39f13905
                      null,
                      new ItemStack(Material.FLINT_AND_STEEL),
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/multiblocks/miner/IndustrialMiner.java b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/multiblocks/miner/IndustrialMiner.java
-index 9c8f12b8628438e311e3a81e44de5da68f2235d3..b5a1390400294001cc2ee9f3940d45ebbbb84278 100644
+index 9c8f12b..b5a1390 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/multiblocks/miner/IndustrialMiner.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/multiblocks/miner/IndustrialMiner.java
 @@ -63,9 +63,9 @@ public class IndustrialMiner extends MultiBlockMachine {
@@ -6857,7 +7621,7 @@ index 9c8f12b8628438e311e3a81e44de5da68f2235d3..b5a1390400294001cc2ee9f3940d45eb
              item.setItemMeta(im);
              list.add(item);
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/tools/PortableDustbin.java b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/tools/PortableDustbin.java
-index 81ffd06c736ba24b7923e4763635afb27ab83c10..0ee779d692ae1945c9409b33cc37f539a262774d 100644
+index 81ffd06..0ee779d 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/tools/PortableDustbin.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/items/tools/PortableDustbin.java
 @@ -37,7 +37,7 @@ public class PortableDustbin extends SimpleSlimefunItem<ItemUseHandler> implemen
@@ -6870,23 +7634,205 @@ index 81ffd06c736ba24b7923e4763635afb27ab83c10..0ee779d692ae1945c9409b33cc37f539
              SoundEffect.PORTABLE_DUSTBIN_OPEN_SOUND.playFor(p);
          };
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/listeners/BackpackListener.java b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/listeners/BackpackListener.java
-index abc311d6f207e3a8873d8c3c94aa2056a9fa2336..b483c8e400d3052816890ea6be15586ddcc5f9a6 100644
+index abc311d..9e4f39b 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/listeners/BackpackListener.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/listeners/BackpackListener.java
-@@ -268,6 +268,11 @@ public class BackpackListener implements Listener {
-                             if (bp == null || bp.isInvalid()) {
-                                 return;
-                             }
+@@ -4,16 +4,15 @@ import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
+ import io.github.thebusybiscuit.slimefun4.api.player.PlayerBackpack;
+ import io.github.thebusybiscuit.slimefun4.api.player.PlayerProfile;
+ import io.github.thebusybiscuit.slimefun4.core.services.sounds.SoundEffect;
++import io.github.thebusybiscuit.slimefun4.core.services.stability.BackpackOpenRegistry;
+ import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
+ import io.github.thebusybiscuit.slimefun4.implementation.items.backpacks.Cooler;
+ import io.github.thebusybiscuit.slimefun4.implementation.items.backpacks.SlimefunBackpack;
+ import io.github.thebusybiscuit.slimefun4.utils.ThreadUtils;
+-import java.util.HashMap;
+-import java.util.HashSet;
+ import java.util.Map;
+ import java.util.Objects;
+-import java.util.Set;
+ import java.util.UUID;
++import java.util.concurrent.ConcurrentHashMap;
+ import java.util.logging.Level;
+ import javax.annotation.Nonnull;
+ import javax.annotation.Nullable;
+@@ -31,6 +30,7 @@ import org.bukkit.event.inventory.InventoryType;
+ import org.bukkit.event.player.PlayerDropItemEvent;
+ import org.bukkit.event.player.PlayerInteractAtEntityEvent;
+ import org.bukkit.event.player.PlayerInteractEntityEvent;
++import org.bukkit.event.player.PlayerQuitEvent;
+ import org.bukkit.event.player.PlayerSwapHandItemsEvent;
+ import org.bukkit.inventory.ItemStack;
+ 
+@@ -51,9 +51,9 @@ import org.bukkit.inventory.ItemStack;
+  */
+ public class BackpackListener implements Listener {
+     // Stores the player uuid maps to the opening backpack uuid
+-    private final Set<UUID> openingPlayers = new HashSet<>();
+-    private final Map<UUID, UUID> backpacks = new HashMap<>();
+-    private final Map<UUID, SlimefunBackpack> backpackInstances = new HashMap<>();
++    private final BackpackOpenRegistry openRegistry = new BackpackOpenRegistry();
++    private final Map<UUID, UUID> backpacks = new ConcurrentHashMap<>();
++    private final Map<UUID, SlimefunBackpack> backpackInstances = new ConcurrentHashMap<>();
+ 
+     public void register(@Nonnull Slimefun plugin) {
+         plugin.getServer().getPluginManager().registerEvents(this, plugin);
+@@ -64,7 +64,7 @@ public class BackpackListener implements Listener {
+         Player p = (Player) e.getPlayer();
+ 
+         if (e.getInventory().getHolder(false) instanceof PlayerBackpack backpack) {
+-            openingPlayers.remove(p.getUniqueId());
++            openRegistry.release(p.getUniqueId());
+             backpacks.remove(p.getUniqueId());
+             backpackInstances.remove(p.getUniqueId());
+             // The changedSlot computation and refreshSnapshot is moved to the
+@@ -74,9 +74,17 @@ public class BackpackListener implements Listener {
+         }
+     }
+ 
++    @EventHandler
++    public void onQuit(PlayerQuitEvent e) {
++        UUID playerId = e.getPlayer().getUniqueId();
++        openRegistry.release(playerId);
++        backpacks.remove(playerId);
++        backpackInstances.remove(playerId);
++    }
 +
-+                            // Upgrade legacy visible backpack IDs to the current PDC
-+                            // identity while we are safely back on the main thread.
-+                            PlayerBackpack.migrateLegacyItem(item, bp);
+     @EventHandler
+     public void onItemDrop(PlayerDropItemEvent e) {
+-        if (!openingPlayers.isEmpty() && openingPlayers.contains(e.getPlayer().getUniqueId())) {
++        if (openRegistry.isOpening(e.getPlayer().getUniqueId())) {
+             e.setCancelled(true);
+             return;
+         }
+@@ -92,7 +100,7 @@ public class BackpackListener implements Listener {
+ 
+     @EventHandler
+     public void onPlayerSwap(PlayerSwapHandItemsEvent e) {
+-        if (!openingPlayers.isEmpty() && openingPlayers.contains(e.getPlayer().getUniqueId())) {
++        if (openRegistry.isOpening(e.getPlayer().getUniqueId())) {
+             e.setCancelled(true);
+             return;
+         }
+@@ -114,8 +122,7 @@ public class BackpackListener implements Listener {
+ 
+     @EventHandler
+     public void onPlayerInteractAtEntity(PlayerInteractAtEntityEvent atEntityEvent) {
+-        if (!openingPlayers.isEmpty()
+-                && openingPlayers.contains(atEntityEvent.getPlayer().getUniqueId())) {
++        if (openRegistry.isOpening(atEntityEvent.getPlayer().getUniqueId())) {
+             atEntityEvent.setCancelled(true);
+             return;
+         }
+@@ -128,8 +135,7 @@ public class BackpackListener implements Listener {
+ 
+     @EventHandler
+     public void onPlayerInteractEntity(PlayerInteractEntityEvent atEntityEvent) {
+-        if (!openingPlayers.isEmpty()
+-                && openingPlayers.contains(atEntityEvent.getPlayer().getUniqueId())) {
++        if (openRegistry.isOpening(atEntityEvent.getPlayer().getUniqueId())) {
+             atEntityEvent.setCancelled(true);
+             return;
+         }
+@@ -142,8 +148,7 @@ public class BackpackListener implements Listener {
+ 
+     @EventHandler(ignoreCancelled = true)
+     public void onClick(InventoryClickEvent e) {
+-        if (!openingPlayers.isEmpty()
+-                && openingPlayers.contains(e.getWhoClicked().getUniqueId())) {
++        if (openRegistry.isOpening(e.getWhoClicked().getUniqueId())) {
+             e.setCancelled(true);
+             return;
+         }
+@@ -252,33 +257,60 @@ public class BackpackListener implements Listener {
+          * trigger parallel loads, as that can open a duplicate backpack instance
+          * with a stale snapshot and allow item duplication.
+          */
+-        if (backpacks.containsKey(p.getUniqueId()) || !openingPlayers.add(p.getUniqueId())) {
++        UUID playerId = p.getUniqueId();
++        String reservationKey = getReservationKey(meta);
++        if (backpacks.containsKey(playerId) || !openRegistry.reserve(playerId, reservationKey)) {
++            Slimefun.getLocalization().sendMessage(p, "backpack.already-open", true);
+             return;
+         }
+-        PlayerBackpack.getAsync(item)
+-                .whenCompleteAsync(
+-                        (bp, ex) -> {
+-                            openingPlayers.remove(p.getUniqueId());
+-                            if (ex != null) {
+-                                Slimefun.logger()
+-                                        .log(Level.SEVERE, "An Exception occurred while opening a backpack", ex);
+-                                return;
+-                            }
+-                            // Check if the backpack item contains invalid backpack data
+-                            if (bp == null || bp.isInvalid()) {
+-                                return;
+-                            }
+-                            // Check if someone else is currently viewing this backpack
+-                            if (backpacks.containsValue(bp.getUniqueId())
+-                                    || !bp.getInventory().getViewers().isEmpty()) {
+-                                Slimefun.getLocalization().sendMessage(p, "backpack.already-open", true);
+-                                return;
+-                            }
+-                            SoundEffect.BACKPACK_OPEN_SOUND.playAt(p.getLocation(), SoundCategory.PLAYERS);
+-                            bp.open(p);
+-                            backpacks.put(p.getUniqueId(), bp.getUniqueId());
+-                            backpackInstances.put(p.getUniqueId(), backpackItem);
+-                        },
+-                        ThreadUtils.getMainThreadExecutor());
 +
-                             // Check if someone else is currently viewing this backpack
-                             if (backpacks.containsValue(bp.getUniqueId())
-                                     || !bp.getInventory().getViewers().isEmpty()) {
++        try {
++            PlayerBackpack.getAsync(item)
++                    .whenCompleteAsync(
++                            (bp, ex) -> {
++                                try {
++                                    if (!p.isOnline()) {
++                                        return;
++                                    }
++                                    if (ex != null) {
++                                        Slimefun.logger()
++                                                .log(Level.SEVERE, "An Exception occurred while opening a backpack", ex);
++                                        return;
++                                    }
++                                    if (bp == null || bp.isInvalid()) {
++                                        return;
++                                    }
++
++                                    PlayerBackpack.migrateLegacyItem(item, bp);
++
++                                    if (backpacks.containsValue(bp.getUniqueId())
++                                            || !bp.getInventory().getViewers().isEmpty()) {
++                                        Slimefun.getLocalization().sendMessage(p, "backpack.already-open", true);
++                                        return;
++                                    }
++
++                                    SoundEffect.BACKPACK_OPEN_SOUND.playAt(p.getLocation(), SoundCategory.PLAYERS);
++                                    backpacks.put(playerId, bp.getUniqueId());
++                                    backpackInstances.put(playerId, backpackItem);
++                                    bp.open(p);
++                                } finally {
++                                    openRegistry.release(playerId, reservationKey);
++                                }
++                            },
++                            ThreadUtils.getMainThreadExecutor());
++        } catch (RuntimeException ex) {
++            openRegistry.release(playerId, reservationKey);
++            throw ex;
++        }
+     }
++
++    private String getReservationKey(@Nonnull org.bukkit.inventory.meta.ItemMeta meta) {
++        return PlayerBackpack.getBackpackUUID(meta)
++                .map(uuid -> "uuid:" + uuid)
++                .orElseGet(() -> "legacy:"
++                        + PlayerBackpack.getOwnerUUID(meta).orElse("unknown")
++                        + ':'
++                        + PlayerBackpack.getBackpackID(meta).orElse(-1));
++    }
++
+ }
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/listeners/DebugFishListener.java b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/listeners/DebugFishListener.java
-index 2ff75673cf87d45d958cd1178cba218605e3a35e..93ffb98efe5b098bef6de0881f0de2b7cce12698 100644
+index 2ff7567..93ffb98 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/listeners/DebugFishListener.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/listeners/DebugFishListener.java
 @@ -119,7 +119,7 @@ public class DebugFishListener implements Listener {
@@ -6899,7 +7845,7 @@ index 2ff75673cf87d45d958cd1178cba218605e3a35e..93ffb98efe5b098bef6de0881f0de2b7
                                      },
                                      () -> sendVanillaInfo(p, b)));
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/listeners/VersionedMiddleClickListener.java b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/listeners/VersionedMiddleClickListener.java
-index cc759435f3428fafd7505a644f0ee35207b2979e..cbb19ae5811558b8a02c538bb49947534e7d0fc6 100644
+index cc75943..cbb19ae 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/listeners/VersionedMiddleClickListener.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/listeners/VersionedMiddleClickListener.java
 @@ -28,7 +28,7 @@ public class VersionedMiddleClickListener implements Listener {
@@ -6912,7 +7858,7 @@ index cc759435f3428fafd7505a644f0ee35207b2979e..cbb19ae5811558b8a02c538bb4994753
      }
  
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/resources/NetherIceResource.java b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/resources/NetherIceResource.java
-index 3b578baa93d4adeb30e47c3e664524136acede9e..6b730832b57e0ca51cc3c902e9f1946e835b0a7d 100644
+index 3b578ba..6b73083 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/resources/NetherIceResource.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/resources/NetherIceResource.java
 @@ -20,7 +20,7 @@ class NetherIceResource extends AbstractResource {
@@ -6925,7 +7871,7 @@ index 3b578baa93d4adeb30e47c3e664524136acede9e..6b730832b57e0ca51cc3c902e9f1946e
          biomes = getBiomeMap(this, "/biome-maps/nether_ice_v1.16.json");
      }
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/resources/OilResource.java b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/resources/OilResource.java
-index 5031fef5e583268a79eb844ddf78bdadc9210542..6c2e1213a8a72bc800d4d6c64b97403f1e50cfcb 100644
+index 5031fef..6c2e121 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/resources/OilResource.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/resources/OilResource.java
 @@ -27,7 +27,7 @@ class OilResource extends AbstractResource {
@@ -6938,7 +7884,7 @@ index 5031fef5e583268a79eb844ddf78bdadc9210542..6c2e1213a8a72bc800d4d6c64b97403f
          MinecraftVersion version = Slimefun.getMinecraftVersion();
  
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/resources/SaltResource.java b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/resources/SaltResource.java
-index 98e4328f7a7e5418677469b63457f1ab50f9911a..382b22dabd376a546258e57d7b4ff68ef7a9afd7 100644
+index 98e4328..382b22d 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/resources/SaltResource.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/resources/SaltResource.java
 @@ -22,7 +22,7 @@ class SaltResource extends AbstractResource {
@@ -6951,7 +7897,7 @@ index 98e4328f7a7e5418677469b63457f1ab50f9911a..382b22dabd376a546258e57d7b4ff68e
  
          if (version.isAtLeast(MinecraftVersion.MINECRAFT_1_18)) {
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/resources/UraniumResource.java b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/resources/UraniumResource.java
-index 85c9e9c10edbc1f746fc34d541d60da29dec0f42..419ef0d301f4b68db5fe34f1bab78411b2370f7b 100644
+index 85c9e9c..419ef0d 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/resources/UraniumResource.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/resources/UraniumResource.java
 @@ -21,7 +21,7 @@ class UraniumResource extends AbstractResource {
@@ -6964,7 +7910,7 @@ index 85c9e9c10edbc1f746fc34d541d60da29dec0f42..419ef0d301f4b68db5fe34f1bab78411
          MinecraftVersion version = Slimefun.getMinecraftVersion();
  
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/setup/PostSetup.java b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/setup/PostSetup.java
-index 724ab90b82e6f231b00e68da3ec88433fe78a0c4..6e964c2405047024f607ebed8d3ac07d4dd5205e 100644
+index 724ab90..6e964c2 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/setup/PostSetup.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/setup/PostSetup.java
 @@ -29,7 +29,7 @@ public final class PostSetup {
@@ -7016,7 +7962,7 @@ index 724ab90b82e6f231b00e68da3ec88433fe78a0c4..6e964c2405047024f607ebed8d3ac07d
          sender.sendMessage("");
  
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/setup/RickFlexGroup.java b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/setup/RickFlexGroup.java
-index 25e3f9181e4f6860ec6865cf322b732b24128b90..5b4bd601e9009baef5bf24b65881caf79b342b6a 100644
+index 25e3f91..5b4bd60 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/setup/RickFlexGroup.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/setup/RickFlexGroup.java
 @@ -22,7 +22,7 @@ class RickFlexGroup extends FlexItemGroup {
@@ -7029,7 +7975,7 @@ index 25e3f9181e4f6860ec6865cf322b732b24128b90..5b4bd601e9009baef5bf24b65881caf7
  
      // Gonna override this method
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/setup/SlimefunItemSetup.java b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/setup/SlimefunItemSetup.java
-index f112f02e2638e5dd94df84147c575b66edb8ec13..49cf2fa285475f282058339ce97960e287946b02 100644
+index f112f02..49cf2fa 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/setup/SlimefunItemSetup.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/setup/SlimefunItemSetup.java
 @@ -3985,7 +3985,7 @@ public final class SlimefunItemSetup {
@@ -7051,10 +7997,18 @@ index f112f02e2638e5dd94df84147c575b66edb8ec13..49cf2fa285475f282058339ce97960e2
                              null,
                              null,
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/tasks/TickerTask.java b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/tasks/TickerTask.java
-index 3638beb7af065608060faee489894698e6be92e2..694765b952e6fc05eac44f25e037c02cde4b5d84 100644
+index 3638beb..6149273 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/tasks/TickerTask.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/tasks/TickerTask.java
-@@ -52,6 +52,13 @@ public class TickerTask implements Runnable {
+@@ -9,6 +9,7 @@ import io.github.bakedlibs.dough.blocks.BlockPosition;
+ import io.github.bakedlibs.dough.blocks.ChunkPosition;
+ import io.github.thebusybiscuit.slimefun4.api.ErrorReport;
+ import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
++import io.github.thebusybiscuit.slimefun4.core.services.stability.MachineCircuitBreaker;
+ import io.github.thebusybiscuit.slimefun4.core.ticker.TickLocation;
+ import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
+ import java.util.Collections;
+@@ -52,6 +53,17 @@ public class TickerTask implements Runnable {
       */
      private final Map<BlockPosition, Integer> bugs = new ConcurrentHashMap<>();
  
@@ -7064,11 +8018,15 @@ index 3638beb7af065608060faee489894698e6be92e2..694765b952e6fc05eac44f25e037c02c
 +     * to the main thread so inventory mutations cannot race player clicks.
 +     */
 +    private final Set<BlockPosition> viewedInventories = ConcurrentHashMap.newKeySet();
++    private final Set<BlockPosition> queuedSynchronousTicks = ConcurrentHashMap.newKeySet();
++    private final MachineCircuitBreaker<BlockPosition> circuitBreaker = new MachineCircuitBreaker<>();
++
++    private static final int CIRCUIT_FAILURE_THRESHOLD = 4;
 +
      private int tickRate;
      private boolean halted = false;
      private boolean running = false;
-@@ -123,6 +130,9 @@ public class TickerTask implements Runnable {
+@@ -123,6 +135,9 @@ public class TickerTask implements Runnable {
                              () -> "An Exception was caught while ticking the Block Tickers Task for Slimefun v"
                                      + Slimefun.getVersion());
              reset();
@@ -7078,39 +8036,80 @@ index 3638beb7af065608060faee489894698e6be92e2..694765b952e6fc05eac44f25e037c02c
          }
      }
  
-@@ -158,10 +168,14 @@ public class TickerTask implements Runnable {
+@@ -146,8 +161,11 @@ public class TickerTask implements Runnable {
+     }
+ 
+     private void tickLocation(@Nonnull Set<BlockTicker> tickers, @Nonnull Location l) {
++        BlockPosition position = new BlockPosition(l);
+         var blockData = StorageCacheUtils.getBlock(l);
+         if (blockData == null || !blockData.isDataLoaded() || blockData.isPendingRemove()) {
++            circuitBreaker.clear(position);
++            bugs.remove(position);
+             return;
+         }
+ 
+@@ -157,30 +175,60 @@ public class TickerTask implements Runnable {
+             if (item.isDisabledIn(l.getWorld())) {
                  return;
              }
- 
++            if (!canAttemptTick(position)) {
++                return;
++            }
++
 +            BlockTicker ticker = item.getBlockTicker();
 +            boolean owedProfilerEntry = false;
-+
+ 
              try {
 -                if (item.getBlockTicker().isSynchronized()) {
-+                if (ticker.isSynchronized() || isInventoryViewed(l)) {
-                     Slimefun.getProfiler().scheduleEntries(1);
+-                    Slimefun.getProfiler().scheduleEntries(1);
 -                    item.getBlockTicker().update();
-+                    owedProfilerEntry = Slimefun.getProfiler().isProfiling();
+-
+-                    /**
+-                     * We are inserting a new timestamp because synchronized actions
+-                     * are always ran with a 50ms delay (1 game tick)
+-                     */
++                if (ticker.isSynchronized() || isInventoryViewed(l)) {
++                    if (!queuedSynchronousTicks.add(position)) {
++                        return;
++                    }
++                    boolean profilerScheduled = Slimefun.getProfiler().isProfiling();
++                    if (profilerScheduled) {
++                        Slimefun.getProfiler().scheduleEntries(1);
++                        owedProfilerEntry = true;
++                    }
 +                    ticker.update();
- 
-                     /**
-                      * We are inserting a new timestamp because synchronized actions
-@@ -169,18 +183,25 @@ public class TickerTask implements Runnable {
-                      */
++
                      Slimefun.runSync(() -> {
-                         if (blockData.isPendingRemove()) {
-+                            Slimefun.getProfiler().cancelScheduledEntry();
-                             return;
+-                        if (blockData.isPendingRemove()) {
+-                            return;
++                        try {
++                            if (!blockData.isDataLoaded() || blockData.isPendingRemove()) {
++                                circuitBreaker.clear(position);
++                                bugs.remove(position);
++                                if (profilerScheduled) {
++                                    Slimefun.getProfiler().cancelScheduledEntry();
++                                }
++                                return;
++                            }
++                            long timestamp = profilerScheduled ? System.nanoTime() : 0L;
++                            if (tickBlock(l, item, blockData, timestamp)) {
++                                markTickSuccess(position);
++                            }
++                        } finally {
++                            queuedSynchronousTicks.remove(position);
                          }
-                         tickBlock(l, item, blockData, System.nanoTime());
+-                        tickBlock(l, item, blockData, System.nanoTime());
                      });
 +                    owedProfilerEntry = false;
                  } else {
                      long timestamp = Slimefun.getProfiler().newEntry();
 -                    item.getBlockTicker().update();
+-                    tickBlock(l, item, blockData, timestamp);
 +                    owedProfilerEntry = timestamp != 0;
 +                    ticker.update();
-                     tickBlock(l, item, blockData, timestamp);
++                    if (tickBlock(l, item, blockData, timestamp)) {
++                        markTickSuccess(position);
++                    }
 +                    owedProfilerEntry = false;
                  }
  
@@ -7118,45 +8117,88 @@ index 3638beb7af065608060faee489894698e6be92e2..694765b952e6fc05eac44f25e037c02c
 -            } catch (Exception x) {
 +                tickers.add(ticker);
 +            } catch (Exception | LinkageError x) {
++                queuedSynchronousTicks.remove(position);
 +                if (owedProfilerEntry) {
 +                    Slimefun.getProfiler().cancelScheduledEntry();
 +                }
                  reportErrors(l, item, x);
              }
          }
-@@ -196,10 +217,14 @@ public class TickerTask implements Runnable {
+@@ -188,44 +236,80 @@ public class TickerTask implements Runnable {
+ 
+     @ParametersAreNonnullByDefault
+     private void tickUniversalLocation(UUID uuid, Location l, @Nonnull Set<BlockTicker> tickers) {
++        BlockPosition position = new BlockPosition(l);
+         var data = StorageCacheUtils.getUniversalBlock(uuid);
++        if (data == null || !data.isDataLoaded() || data.isPendingRemove()) {
++            circuitBreaker.clear(position);
++            bugs.remove(position);
++            return;
++        }
+         var item = SlimefunItem.getById(data.getSfId());
+ 
+         if (item != null && item.getBlockTicker() != null) {
+             if (item.isDisabledIn(l.getWorld())) {
                  return;
              }
- 
++            if (!canAttemptTick(position)) {
++                return;
++            }
++
 +            BlockTicker ticker = item.getBlockTicker();
 +            boolean owedProfilerEntry = false;
-+
+ 
              try {
 -                if (item.getBlockTicker().isSynchronized()) {
-+                if (ticker.isSynchronized() || isInventoryViewed(l)) {
-                     Slimefun.getProfiler().scheduleEntries(1);
+-                    Slimefun.getProfiler().scheduleEntries(1);
 -                    item.getBlockTicker().update();
-+                    owedProfilerEntry = Slimefun.getProfiler().isProfiling();
+-
+-                    /**
+-                     * We are inserting a new timestamp because synchronized actions
+-                     * are always ran with a 50ms delay (1 game tick)
+-                     */
++                if (ticker.isSynchronized() || isInventoryViewed(l)) {
++                    if (!queuedSynchronousTicks.add(position)) {
++                        return;
++                    }
++                    boolean profilerScheduled = Slimefun.getProfiler().isProfiling();
++                    if (profilerScheduled) {
++                        Slimefun.getProfiler().scheduleEntries(1);
++                        owedProfilerEntry = true;
++                    }
 +                    ticker.update();
- 
-                     /**
-                      * We are inserting a new timestamp because synchronized actions
-@@ -207,18 +232,25 @@ public class TickerTask implements Runnable {
-                      */
++
                      Slimefun.runSync(() -> {
-                         if (data.isPendingRemove()) {
-+                            Slimefun.getProfiler().cancelScheduledEntry();
-                             return;
+-                        if (data.isPendingRemove()) {
+-                            return;
++                        try {
++                            if (!data.isDataLoaded() || data.isPendingRemove()) {
++                                circuitBreaker.clear(position);
++                                bugs.remove(position);
++                                if (profilerScheduled) {
++                                    Slimefun.getProfiler().cancelScheduledEntry();
++                                }
++                                return;
++                            }
++                            long timestamp = profilerScheduled ? System.nanoTime() : 0L;
++                            if (tickBlock(l, item, data, timestamp)) {
++                                markTickSuccess(position);
++                            }
++                        } finally {
++                            queuedSynchronousTicks.remove(position);
                          }
-                         tickBlock(l, item, data, System.nanoTime());
+-                        tickBlock(l, item, data, System.nanoTime());
                      });
 +                    owedProfilerEntry = false;
                  } else {
                      long timestamp = Slimefun.getProfiler().newEntry();
 -                    item.getBlockTicker().update();
+-                    tickBlock(l, item, data, timestamp);
 +                    owedProfilerEntry = timestamp != 0;
 +                    ticker.update();
-                     tickBlock(l, item, data, timestamp);
++                    if (tickBlock(l, item, data, timestamp)) {
++                        markTickSuccess(position);
++                    }
 +                    owedProfilerEntry = false;
                  }
  
@@ -7164,35 +8206,133 @@ index 3638beb7af065608060faee489894698e6be92e2..694765b952e6fc05eac44f25e037c02c
 -            } catch (Exception x) {
 +                tickers.add(ticker);
 +            } catch (Exception | LinkageError x) {
++                queuedSynchronousTicks.remove(position);
 +                if (owedProfilerEntry) {
 +                    Slimefun.getProfiler().cancelScheduledEntry();
 +                }
                  reportErrors(l, item, x);
              }
          }
-@@ -260,9 +292,9 @@ public class TickerTask implements Runnable {
+     }
+ 
+     @ParametersAreNonnullByDefault
+-    private void tickBlock(Location l, SlimefunItem item, ASlimefunDataContainer data, long timestamp) {
++    private boolean tickBlock(Location l, SlimefunItem item, ASlimefunDataContainer data, long timestamp) {
+         try {
+             if (item.getBlockTicker().isUniversal()) {
+                 if (data instanceof SlimefunUniversalData universalData) {
+@@ -240,8 +324,10 @@ public class TickerTask implements Runnable {
+                     throw new IllegalStateException("BlockTicker is non-universal but item is universal!");
+                 }
+             }
++            return true;
+         } catch (Exception | LinkageError x) {
+             reportErrors(l, item, x);
++            return false;
+         } finally {
+             Slimefun.getProfiler().closeEntry(l, item, timestamp);
+         }
+@@ -250,28 +336,73 @@ public class TickerTask implements Runnable {
+     @ParametersAreNonnullByDefault
+     private void reportErrors(Location l, SlimefunItem item, Throwable x) {
+         BlockPosition position = new BlockPosition(l);
+-        int errors = bugs.getOrDefault(position, 0) + 1;
++        if (circuitBreaker.isOpen(position)) {
++            long cooldownSeconds = getCircuitCooldownSeconds();
++            circuitBreaker.open(position, System.currentTimeMillis() + cooldownSeconds * 1000L);
++            bugs.remove(position);
++            Slimefun.logger().log(Level.SEVERE,
++                    "The retry for machine {0} at {1}, {2}, {3} failed; its circuit has been reopened for {4} seconds.",
++                    new Object[] {item.getId(), l.getBlockX(), l.getBlockY(), l.getBlockZ(), cooldownSeconds});
++            return;
++        }
++
++        int errors = bugs.merge(position, 1, Integer::sum);
+ 
+         if (errors == 1) {
+-            // Generate a new Error-Report
+             new ErrorReport<>(x, l, item);
+-            bugs.put(position, errors);
+-        } else if (errors == 4) {
++        }
++
++        if (errors >= CIRCUIT_FAILURE_THRESHOLD) {
++            long cooldownSeconds = getCircuitCooldownSeconds();
++            circuitBreaker.open(position, System.currentTimeMillis() + cooldownSeconds * 1000L);
++            bugs.remove(position);
++
              Slimefun.logger().log(Level.SEVERE, "X: {0} Y: {1} Z: {2} ({3})", new Object[] {
                  l.getBlockX(), l.getBlockY(), l.getBlockZ(), item.getId()
              });
 -            Slimefun.logger().log(Level.SEVERE, "在过去的 4 个 Tick 中发生多次错误，该方块对应的机器已被停用。");
 -            Slimefun.logger().log(Level.SEVERE, "请在 /plugins/Slimefun/error-reports/ 文件夹中查看错误详情。");
 -            Slimefun.logger().log(Level.SEVERE, "如果你要向他人求助，请向他人发送上述错误报告文件,而不是发送这个窗口的截图");
-+            Slimefun.logger().log(Level.SEVERE, "Multiple errors occurred in the past 4 ticks, the machine at this block has been disabled.");
-+            Slimefun.logger().log(Level.SEVERE, "Please check the error details in the /plugins/Slimefun/error-reports/ folder.");
-+            Slimefun.logger().log(Level.SEVERE, "If you want to report this error, send the above error report file to others, not a screenshot of this window.");
-             Slimefun.logger().log(Level.SEVERE, " ");
-             bugs.remove(position);
+-            Slimefun.logger().log(Level.SEVERE, " ");
+-            bugs.remove(position);
+-
+-            disableTicker(l);
+-        } else {
+-            bugs.put(position, errors);
++            Slimefun.logger().log(Level.SEVERE,
++                    "This machine failed {0} consecutive ticks and has been paused for {1} seconds.",
++                    new Object[] {CIRCUIT_FAILURE_THRESHOLD, cooldownSeconds});
++            Slimefun.logger().log(Level.SEVERE,
++                    "It will be retried automatically. The ticker registration and stored machine data were preserved.");
+         }
+     }
  
-@@ -408,6 +440,8 @@ public class TickerTask implements Runnable {
++    private long getCircuitCooldownSeconds() {
++        int configured = Slimefun.getCfg().getInt("stability.machine-circuit-breaker-cooldown-seconds");
++        return configured > 0 ? Math.max(30L, configured) : 300L;
++    }
++
++    private boolean canAttemptTick(BlockPosition position) {
++        return circuitBreaker.canAttempt(position, System.currentTimeMillis());
++    }
++
++    private void markTickSuccess(BlockPosition position) {
++        bugs.remove(position);
++        circuitBreaker.clear(position);
++    }
++
++    public boolean retryMachine(@Nonnull Location location) {
++        BlockPosition position = new BlockPosition(location);
++        bugs.remove(position);
++        queuedSynchronousTicks.remove(position);
++        return circuitBreaker.clear(position);
++    }
++
++    public int retryAllMachines() {
++        int count = circuitBreaker.clearAll();
++        bugs.clear();
++        return count;
++    }
++
++    public int getPausedMachineCount() {
++        return circuitBreaker.size();
++    }
++
++    public boolean isPaused() {
++        return paused;
++    }
++
+     public boolean isHalted() {
+         return halted;
+     }
+@@ -408,6 +539,12 @@ public class TickerTask implements Runnable {
      public void disableTicker(@Nonnull Location l) {
          Validate.notNull(l, "Location cannot be null!");
  
-+        viewedInventories.remove(new BlockPosition(l));
++        BlockPosition position = new BlockPosition(l);
++        viewedInventories.remove(position);
++        queuedSynchronousTicks.remove(position);
++        circuitBreaker.clear(position);
++        bugs.remove(position);
 +
          synchronized (tickingLocations) {
              ChunkPosition chunk = new ChunkPosition(l.getWorld(), l.getBlockX() >> 4, l.getBlockZ() >> 4);
              Set<TickLocation> locations = tickingLocations.get(chunk);
-@@ -439,4 +473,32 @@ public class TickerTask implements Runnable {
+@@ -439,4 +576,32 @@ public class TickerTask implements Runnable {
              tickingLocations.values().forEach(loc -> loc.removeIf(tk -> uuid.equals(tk.getUuid())));
          }
      }
@@ -7226,7 +8366,7 @@ index 3638beb7af065608060faee489894698e6be92e2..694765b952e6fc05eac44f25e037c02c
 +    }
  }
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/tasks/armor/RadiationTask.java b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/tasks/armor/RadiationTask.java
-index 2975ee7d21645ce9abc36f115c8b7822b6e43e6e..a0d33edad4d9ccd14325277d69f40d4ae6fd7773 100644
+index 2975ee7..a0d33ed 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/tasks/armor/RadiationTask.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/implementation/tasks/armor/RadiationTask.java
 @@ -2,6 +2,7 @@ package io.github.thebusybiscuit.slimefun4.implementation.tasks.armor;
@@ -7252,7 +8392,7 @@ index 2975ee7d21645ce9abc36f115c8b7822b6e43e6e..a0d33edad4d9ccd14325277d69f40d4a
                      if (symptom.shouldApply(exposureLevelAfter)) {
                          symptom.apply(p);
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/utils/LoreBuilder.java b/src/main/java/io/github/thebusybiscuit/slimefun4/utils/LoreBuilder.java
-index 9db717a4de67a823ea902b3d885f1ce5e616a216..2faebde384ca1fd7aeae46ae6bc09fef06084077 100644
+index 9db717a..2faebde 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/utils/LoreBuilder.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/utils/LoreBuilder.java
 @@ -21,11 +21,11 @@ import javax.annotation.Nonnull;
@@ -7310,7 +8450,7 @@ index 9db717a4de67a823ea902b3d885f1ce5e616a216..2faebde384ca1fd7aeae46ae6bc09fef
      }
  }
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/utils/PatternUtils.java b/src/main/java/io/github/thebusybiscuit/slimefun4/utils/PatternUtils.java
-index d8030832ae6e3b188d28aa283acbb8e3d03ae4e3..6b595b47cf287132d90266f512e13f002a781908 100644
+index d803083..6b595b4 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/utils/PatternUtils.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/utils/PatternUtils.java
 @@ -26,5 +26,5 @@ public final class PatternUtils {
@@ -7321,7 +8461,7 @@ index d8030832ae6e3b188d28aa283acbb8e3d03ae4e3..6b595b47cf287132d90266f512e13f00
 +    public static final Pattern USES_LEFT_LORE = Pattern.compile(ChatColors.color("&7Uses left: &e[0-9]+"));
  }
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/utils/SlimefunUtils.java b/src/main/java/io/github/thebusybiscuit/slimefun4/utils/SlimefunUtils.java
-index 3fce8e91639069f2497ae854940d84d02ea2cd6a..0346bd18feac8910d637815eeb52a5c4fbd19254 100644
+index 3fce8e9..0346bd1 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/utils/SlimefunUtils.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/utils/SlimefunUtils.java
 @@ -60,7 +60,7 @@ import org.bukkit.persistence.PersistentDataType;
@@ -7363,7 +8503,7 @@ index 3fce8e91639069f2497ae854940d84d02ea2cd6a..0346bd18feac8910d637815eeb52a5c4
              @Nonnull ItemMeta itemMeta, @Nonnull ItemMetaSnapshot itemMetaSnapshot, boolean checkLore) {
          return equalsItemMeta(itemMeta, itemMetaSnapshot, checkLore, false);
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/utils/compatibility/VersionedBiome.java b/src/main/java/io/github/thebusybiscuit/slimefun4/utils/compatibility/VersionedBiome.java
-index 4a832249f44a6ff164b27b3695b87aa4a8b6ca32..ef409044ae04d17eae4d843e17751343e5aa99cb 100644
+index 4a83224..ef40904 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/utils/compatibility/VersionedBiome.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/utils/compatibility/VersionedBiome.java
 @@ -24,7 +24,7 @@ public final class VersionedBiome {
@@ -7395,7 +8535,7 @@ index 4a832249f44a6ff164b27b3695b87aa4a8b6ca32..ef409044ae04d17eae4d843e17751343
      }
  }
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/utils/compatibility/VersionedSound.java b/src/main/java/io/github/thebusybiscuit/slimefun4/utils/compatibility/VersionedSound.java
-index 92344a6097bf75e0bd5dbb31ae680b76c4e97666..f622973e431496eb5860bba24449d8bdd1d25d3d 100644
+index 92344a6..f622973 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/utils/compatibility/VersionedSound.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/utils/compatibility/VersionedSound.java
 @@ -36,7 +36,7 @@ public final class VersionedSound {
@@ -7444,7 +8584,7 @@ index 92344a6097bf75e0bd5dbb31ae680b76c4e97666..f622973e431496eb5860bba24449d8bd
      }
  }
 diff --git a/src/main/java/io/github/thebusybiscuit/slimefun4/utils/itemstack/SlimefunGuideItem.java b/src/main/java/io/github/thebusybiscuit/slimefun4/utils/itemstack/SlimefunGuideItem.java
-index 43a2308549fd265aa9bc50bd917cb2899b7dc793..80dc6f2ada5f7cba8874bdf7f026f77bff540c35 100644
+index 43a2308..80dc6f2 100644
 --- a/src/main/java/io/github/thebusybiscuit/slimefun4/utils/itemstack/SlimefunGuideItem.java
 +++ b/src/main/java/io/github/thebusybiscuit/slimefun4/utils/itemstack/SlimefunGuideItem.java
 @@ -32,9 +32,9 @@ public class SlimefunGuideItem extends ItemStack {
@@ -7461,7 +8601,7 @@ index 43a2308549fd265aa9bc50bd917cb2899b7dc793..80dc6f2ada5f7cba8874bdf7f026f77b
          meta.setLore(lore);
  
 diff --git a/src/main/java/me/mrCookieSlime/CSCoreLibPlugin/general/Inventory/MenuListener.java b/src/main/java/me/mrCookieSlime/CSCoreLibPlugin/general/Inventory/MenuListener.java
-index 49730ddce0a92dd546a104b9ac199237320a1e0a..37fa855db5b0e3b17c2d78b0547c3cee679687e9 100644
+index 49730dd..37fa855 100644
 --- a/src/main/java/me/mrCookieSlime/CSCoreLibPlugin/general/Inventory/MenuListener.java
 +++ b/src/main/java/me/mrCookieSlime/CSCoreLibPlugin/general/Inventory/MenuListener.java
 @@ -9,9 +9,14 @@ import org.bukkit.Material;
@@ -7567,7 +8707,7 @@ index 49730ddce0a92dd546a104b9ac199237320a1e0a..37fa855db5b0e3b17c2d78b0547c3cee
          if (handler instanceof AdvancedMenuClickHandler advancedHandler) {
              e.setCancelled(!advancedHandler.onClick(
 diff --git a/src/main/java/me/mrCookieSlime/Slimefun/api/inventory/BlockMenu.java b/src/main/java/me/mrCookieSlime/Slimefun/api/inventory/BlockMenu.java
-index c86d4990d2e1065214bea3f70db85208e5997366..679d63bafa043798667c631fd3290f67056ea25a 100644
+index c86d499..679d63b 100644
 --- a/src/main/java/me/mrCookieSlime/Slimefun/api/inventory/BlockMenu.java
 +++ b/src/main/java/me/mrCookieSlime/Slimefun/api/inventory/BlockMenu.java
 @@ -7,6 +7,7 @@ import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
@@ -7604,7 +8744,7 @@ index c86d4990d2e1065214bea3f70db85208e5997366..679d63bafa043798667c631fd3290f67
          return location.getBlock();
      }
 diff --git a/src/main/java/net/guizhanss/slimefun4/utils/WikiUtils.java b/src/main/java/net/guizhanss/slimefun4/utils/WikiUtils.java
-index f9ba6939ee8aafa9b109e3cedf48d60bdf0e6b8d..dd069d828ad2a6be5eeda4370d37f0db87f2bcdc 100644
+index f9ba693..dd069d8 100644
 --- a/src/main/java/net/guizhanss/slimefun4/utils/WikiUtils.java
 +++ b/src/main/java/net/guizhanss/slimefun4/utils/WikiUtils.java
 @@ -43,7 +43,7 @@ public final class WikiUtils {
@@ -7629,7 +8769,7 @@ index f9ba6939ee8aafa9b109e3cedf48d60bdf0e6b8d..dd069d828ad2a6be5eeda4370d37f0db
      }
  }
 diff --git a/src/main/resources/block-storage.yml b/src/main/resources/block-storage.yml
-index a239ee465c56673b920348d1dcaebb4f2dcbfdc8..25f1ff1b7c39e793be3b96f7f30514be19607897 100644
+index a239ee4..25f1ff1 100644
 --- a/src/main/resources/block-storage.yml
 +++ b/src/main/resources/block-storage.yml
 @@ -1,89 +1,91 @@
@@ -7766,7 +8906,7 @@ index a239ee465c56673b920348d1dcaebb4f2dcbfdc8..25f1ff1b7c39e793be3b96f7f30514be
  #########################################################################
 \ No newline at end of file
 diff --git a/src/main/resources/config.yml b/src/main/resources/config.yml
-index e98a78c741575fc4485ea83e3f0bfb59565b6b9f..ae52a66de405f1f75d24e2f1afb13033fe0b8077 100644
+index e98a78c..a357879 100644
 --- a/src/main/resources/config.yml
 +++ b/src/main/resources/config.yml
 @@ -1,24 +1,9 @@
@@ -7843,7 +8983,7 @@ index e98a78c741575fc4485ea83e3f0bfb59565b6b9f..ae52a66de405f1f75d24e2f1afb13033
    disable-learning-animation: false
  
  URID:
-@@ -78,45 +64,45 @@ metrics:
+@@ -78,45 +64,49 @@ metrics:
    auto-update: false
  
  backpack:
@@ -7928,8 +9068,12 @@ index e98a78c741575fc4485ea83e3f0bfb59565b6b9f..ae52a66de405f1f75d24e2f1afb13033
 +  - Great Master
 +  - Proficient Master
 +  - The Chosen One
++
++# Albion stability safeguards
++stability:
++  machine-circuit-breaker-cooldown-seconds: 300
 diff --git a/src/main/resources/plugin.yml b/src/main/resources/plugin.yml
-index e39fa739632575edfa727eecc166ad0a1744d239..7dd29d24f50122e79d6ab701cfd060098c6116fa 100644
+index e39fa73..b10e4b0 100644
 --- a/src/main/resources/plugin.yml
 +++ b/src/main/resources/plugin.yml
 @@ -4,8 +4,8 @@ version: ${version}
@@ -7943,8 +9087,18 @@ index e39fa739632575edfa727eecc166ad0a1744d239..7dd29d24f50122e79d6ab701cfd06009
  
  # Technical settings
  main: io.github.thebusybiscuit.slimefun4.implementation.Slimefun
+@@ -86,6 +86,9 @@ permissions:
+   slimefun.command.migrate:
+     description: Allows you to do /sf migrate
+     default: op
++  slimefun.command.stability:
++    description: Allows use of /sf stability health and machine recovery commands
++    default: op
+   slimefun.command.blockdata:
+     description: Allows you to do /sf blockdata
+     default: op
 diff --git a/src/main/resources/profile-storage.yml b/src/main/resources/profile-storage.yml
-index ab9f474df15f4ea09e7e90d7abab6fbc896231b8..6bea563fdd229f1e66c4b43b18a3920d73ebf563 100644
+index ab9f474..6bea563 100644
 --- a/src/main/resources/profile-storage.yml
 +++ b/src/main/resources/profile-storage.yml
 @@ -1,69 +1,69 @@
@@ -8047,264 +9201,81 @@ index ab9f474df15f4ea09e7e90d7abab6fbc896231b8..6bea563fdd229f1e66c4b43b18a3920d
    maxConnection: 10
  #########################################################################
 \ No newline at end of file
-diff --git a/src/test/java/io/github/thebusybiscuit/slimefun4/api/player/TestBackpackIdentityHardening.java b/src/test/java/io/github/thebusybiscuit/slimefun4/api/player/TestBackpackIdentityHardening.java
+diff --git b/src/test/java/io/github/thebusybiscuit/slimefun4/core/services/stability/TestBackpackOpenRegistry.java b/src/test/java/io/github/thebusybiscuit/slimefun4/core/services/stability/TestBackpackOpenRegistry.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..0b7fbe8bb584e6869b8db26e3765c9e5117f0a6f
+index 0000000..8e6ef87
 --- /dev/null
-+++ b/src/test/java/io/github/thebusybiscuit/slimefun4/api/player/TestBackpackIdentityHardening.java
-@@ -0,0 +1,51 @@
-+package io.github.thebusybiscuit.slimefun4.api.player;
++++ b/src/test/java/io/github/thebusybiscuit/slimefun4/core/services/stability/TestBackpackOpenRegistry.java
+@@ -0,0 +1,36 @@
++package io.github.thebusybiscuit.slimefun4.core.services.stability;
 +
-+import io.github.bakedlibs.dough.common.ChatColors;
-+import java.util.List;
-+import org.bukkit.Material;
-+import org.bukkit.inventory.ItemStack;
-+import org.bukkit.inventory.meta.ItemMeta;
-+import org.junit.jupiter.api.AfterAll;
++import java.util.UUID;
 +import org.junit.jupiter.api.Assertions;
-+import org.junit.jupiter.api.BeforeAll;
-+import org.junit.jupiter.api.DisplayName;
 +import org.junit.jupiter.api.Test;
-+import org.mockbukkit.mockbukkit.MockBukkit;
 +
-+class TestBackpackIdentityHardening {
++class TestBackpackOpenRegistry {
 +
-+    @BeforeAll
-+    static void loadServer() {
-+        MockBukkit.mock();
-+    }
++    @Test
++    void duplicateBackpackReservationDoesNotReleaseOriginalPlayer() {
++        BackpackOpenRegistry registry = new BackpackOpenRegistry();
++        UUID first = UUID.randomUUID();
++        UUID second = UUID.randomUUID();
 +
-+    @AfterAll
-+    static void unloadServer() {
-+        MockBukkit.unmock();
++        Assertions.assertTrue(registry.reserve(first, "uuid:backpack"));
++        Assertions.assertFalse(registry.reserve(second, "uuid:backpack"));
++        Assertions.assertTrue(registry.isOpening(first));
++        Assertions.assertFalse(registry.isOpening(second));
++
++        registry.release(first, "uuid:backpack");
++        Assertions.assertTrue(registry.reserve(second, "uuid:backpack"));
 +    }
 +
 +    @Test
-+    @DisplayName("Legacy backpack identities are recognized without fragile lore assumptions")
-+    void testLegacyIdentityParsing() {
-+        ItemStack item = new ItemStack(Material.CHEST);
-+        ItemMeta meta = item.getItemMeta();
-+        meta.setLore(List.of(ChatColors.color("&7ID: 123e4567-e89b-12d3-a456-426614174000#12")));
++    void wrongReservationKeyCannotUnlockBackpack() {
++        BackpackOpenRegistry registry = new BackpackOpenRegistry();
++        UUID player = UUID.randomUUID();
++        UUID other = UUID.randomUUID();
 +
-+        Assertions.assertTrue(PlayerBackpack.hasBackpackIdentity(meta));
-+        Assertions.assertEquals(12, PlayerBackpack.getBackpackID(meta).orElseThrow());
-+
-+        meta.setLore(null);
-+        Assertions.assertFalse(PlayerBackpack.getBackpackID(meta).isPresent());
-+    }
-+
-+    @Test
-+    @DisplayName("Malformed legacy backpack lore is ignored instead of throwing")
-+    void testMalformedLegacyIdentity() {
-+        ItemStack item = new ItemStack(Material.CHEST);
-+        ItemMeta meta = item.getItemMeta();
-+        meta.setLore(List.of(ChatColors.color("&7ID: not-a-uuid#broken")));
-+
-+        Assertions.assertFalse(PlayerBackpack.hasBackpackIdentity(meta));
-+        Assertions.assertFalse(PlayerBackpack.getBackpackID(meta).isPresent());
++        Assertions.assertTrue(registry.reserve(player, "uuid:one"));
++        registry.release(player, "uuid:two");
++        Assertions.assertTrue(registry.isOpening(player));
++        Assertions.assertFalse(registry.reserve(player, "uuid:two"));
++        Assertions.assertFalse(registry.reserve(other, "uuid:one"));
 +    }
 +}
-diff --git a/src/test/java/io/github/thebusybiscuit/slimefun4/core/services/profiler/TestProfilerQueueRecovery.java b/src/test/java/io/github/thebusybiscuit/slimefun4/core/services/profiler/TestProfilerQueueRecovery.java
+diff --git b/src/test/java/io/github/thebusybiscuit/slimefun4/core/services/stability/TestMachineCircuitBreaker.java b/src/test/java/io/github/thebusybiscuit/slimefun4/core/services/stability/TestMachineCircuitBreaker.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..4f75290639024d5da8aceea26ff4c6cc312ba0bb
+index 0000000..594763c
 --- /dev/null
-+++ b/src/test/java/io/github/thebusybiscuit/slimefun4/core/services/profiler/TestProfilerQueueRecovery.java
-@@ -0,0 +1,27 @@
-+package io.github.thebusybiscuit.slimefun4.core.services.profiler;
++++ b/src/test/java/io/github/thebusybiscuit/slimefun4/core/services/stability/TestMachineCircuitBreaker.java
+@@ -0,0 +1,30 @@
++package io.github.thebusybiscuit.slimefun4.core.services.stability;
 +
 +import org.junit.jupiter.api.Assertions;
-+import org.junit.jupiter.api.DisplayName;
 +import org.junit.jupiter.api.Test;
 +
-+class TestProfilerQueueRecovery {
++class TestMachineCircuitBreaker {
 +
 +    @Test
-+    @DisplayName("Cancelled ticker samples cannot leave the profiler queue stuck")
-+    void testCancelScheduledEntry() {
-+        SlimefunProfiler profiler = new SlimefunProfiler();
-+        try {
-+            profiler.start();
-+            profiler.scheduleEntries(1);
-+            Assertions.assertEquals(1, profiler.getQueuedEntries());
++    void onlyOneHalfOpenProbeIsAllowed() {
++        MachineCircuitBreaker<String> breaker = new MachineCircuitBreaker<>();
++        breaker.open("machine", 100L);
 +
-+            profiler.cancelScheduledEntry();
-+            Assertions.assertEquals(0, profiler.getQueuedEntries());
-+
-+            profiler.cancelScheduledEntry();
-+            Assertions.assertEquals(0, profiler.getQueuedEntries(), "The queue must never become negative");
-+        } finally {
-+            profiler.kill();
-+        }
-+    }
-+}
-diff --git a/src/test/java/io/github/thebusybiscuit/slimefun4/implementation/tasks/TestViewedInventoryGuard.java b/src/test/java/io/github/thebusybiscuit/slimefun4/implementation/tasks/TestViewedInventoryGuard.java
-new file mode 100644
-index 0000000000000000000000000000000000000000..7028bb312757bcaeab6bac241cfa5e5656165463
---- /dev/null
-+++ b/src/test/java/io/github/thebusybiscuit/slimefun4/implementation/tasks/TestViewedInventoryGuard.java
-@@ -0,0 +1,44 @@
-+package io.github.thebusybiscuit.slimefun4.implementation.tasks;
-+
-+import org.bukkit.Location;
-+import org.bukkit.World;
-+import org.junit.jupiter.api.AfterAll;
-+import org.junit.jupiter.api.Assertions;
-+import org.junit.jupiter.api.BeforeAll;
-+import org.junit.jupiter.api.DisplayName;
-+import org.junit.jupiter.api.Test;
-+import org.mockbukkit.mockbukkit.MockBukkit;
-+import org.mockbukkit.mockbukkit.ServerMock;
-+
-+class TestViewedInventoryGuard {
-+
-+    private static ServerMock server;
-+
-+    @BeforeAll
-+    static void loadServer() {
-+        server = MockBukkit.mock();
-+    }
-+
-+    @AfterAll
-+    static void unloadServer() {
-+        MockBukkit.unmock();
++        Assertions.assertFalse(breaker.canAttempt("machine", 99L));
++        Assertions.assertTrue(breaker.canAttempt("machine", 100L));
++        Assertions.assertFalse(breaker.canAttempt("machine", 101L));
 +    }
 +
 +    @Test
-+    @DisplayName("Viewed-machine tracking is isolated by block location")
-+    void testViewedLocationTracking() {
-+        World world = server.addSimpleWorld("viewed-machine-test");
-+        Location viewed = new Location(world, 10, 64, 10);
-+        Location neighbour = viewed.clone().add(1, 0, 0);
-+        TickerTask tickerTask = new TickerTask();
++    void reopeningResetsHalfOpenProbe() {
++        MachineCircuitBreaker<String> breaker = new MachineCircuitBreaker<>();
++        breaker.open("machine", 100L);
++        Assertions.assertTrue(breaker.canAttempt("machine", 100L));
 +
-+        Assertions.assertFalse(tickerTask.isInventoryViewed(viewed));
-+
-+        tickerTask.setInventoryViewed(viewed, true);
-+        Assertions.assertTrue(tickerTask.isInventoryViewed(viewed));
-+        Assertions.assertFalse(tickerTask.isInventoryViewed(neighbour));
-+
-+        tickerTask.setInventoryViewed(viewed, false);
-+        Assertions.assertFalse(tickerTask.isInventoryViewed(viewed));
-+    }
-+}
-diff --git a/src/test/java/io/github/thebusybiscuit/slimefun4/utils/TestDistinctiveItemComparison.java b/src/test/java/io/github/thebusybiscuit/slimefun4/utils/TestDistinctiveItemComparison.java
-new file mode 100644
-index 0000000000000000000000000000000000000000..aac792af13d346ea13c6b497bb79078aea13214a
---- /dev/null
-+++ b/src/test/java/io/github/thebusybiscuit/slimefun4/utils/TestDistinctiveItemComparison.java
-@@ -0,0 +1,54 @@
-+package io.github.thebusybiscuit.slimefun4.utils;
-+
-+import io.github.thebusybiscuit.slimefun4.core.attributes.DistinctiveItem;
-+import org.bukkit.Material;
-+import org.bukkit.inventory.ItemStack;
-+import org.bukkit.inventory.meta.ItemMeta;
-+import org.junit.jupiter.api.AfterAll;
-+import org.junit.jupiter.api.Assertions;
-+import org.junit.jupiter.api.BeforeAll;
-+import org.junit.jupiter.api.DisplayName;
-+import org.junit.jupiter.api.Test;
-+import org.mockbukkit.mockbukkit.MockBukkit;
-+
-+class TestDistinctiveItemComparison {
-+
-+    @BeforeAll
-+    static void loadServer() {
-+        MockBukkit.mock();
-+    }
-+
-+    @AfterAll
-+    static void unloadServer() {
-+        MockBukkit.unmock();
-+    }
-+
-+    @Test
-+    @DisplayName("Distinctive comparisons receive the metadata from the actual two stacks")
-+    void testActualStackMetadataIsCompared() {
-+        ItemStack first = namedChest("First identity");
-+        ItemStack second = namedChest("Second identity");
-+        DistinctiveItem compareNames = new DistinctiveItem() {
-+            @Override
-+            public String getId() {
-+                return "TEST_DISTINCTIVE";
-+            }
-+
-+            @Override
-+            public boolean canStack(ItemMeta firstMeta, ItemMeta secondMeta) {
-+                return firstMeta.getDisplayName().equals(secondMeta.getDisplayName());
-+            }
-+        };
-+
-+        Assertions.assertFalse(SlimefunUtils.compareDistinctiveStacks(compareNames, first, second));
-+        Assertions.assertTrue(SlimefunUtils.compareDistinctiveStacks(compareNames, first, first.clone()));
-+    }
-+
-+    private static ItemStack namedChest(String name) {
-+        ItemStack item = new ItemStack(Material.CHEST);
-+        ItemMeta meta = item.getItemMeta();
-+        meta.setDisplayName(name);
-+        item.setItemMeta(meta);
-+        return item;
-+    }
-+}
-diff --git a/src/test/java/me/mrCookieSlime/CSCoreLibPlugin/general/Inventory/TestMenuListenerSecurityGuards.java b/src/test/java/me/mrCookieSlime/CSCoreLibPlugin/general/Inventory/TestMenuListenerSecurityGuards.java
-new file mode 100644
-index 0000000000000000000000000000000000000000..b9b3ce6c03aaa320aa9b2a5c20d5f002c2f44d1c
---- /dev/null
-+++ b/src/test/java/me/mrCookieSlime/CSCoreLibPlugin/general/Inventory/TestMenuListenerSecurityGuards.java
-@@ -0,0 +1,55 @@
-+package me.mrCookieSlime.CSCoreLibPlugin.general.Inventory;
-+
-+import java.util.List;
-+import org.bukkit.Material;
-+import org.bukkit.inventory.ItemStack;
-+import org.junit.jupiter.api.AfterAll;
-+import org.junit.jupiter.api.Assertions;
-+import org.junit.jupiter.api.BeforeAll;
-+import org.junit.jupiter.api.DisplayName;
-+import org.junit.jupiter.api.Test;
-+import org.mockbukkit.mockbukkit.MockBukkit;
-+
-+class TestMenuListenerSecurityGuards {
-+
-+    @BeforeAll
-+    static void loadServer() {
-+        MockBukkit.mock();
-+    }
-+
-+    @AfterAll
-+    static void unloadServer() {
-+        MockBukkit.unmock();
-+    }
-+
-+    private static ChestMenu createMenu() {
-+        ChestMenu menu = new ChestMenu("Security Test", 9);
-+        menu.addItem(0, new ItemStack(Material.GRAY_STAINED_GLASS_PANE), (player, slot, item, action) -> false);
-+        menu.addItem(1, new ItemStack(Material.IRON_INGOT));
-+        menu.getContents();
-+        return menu;
-+    }
-+
-+    @Test
-+    @DisplayName("Double-click collection is blocked when it would touch a protected slot")
-+    void testCollectGuard() {
-+        ChestMenu menu = createMenu();
-+
-+        Assertions.assertTrue(MenuListener.collectWouldTouchProtectedSlot(
-+                new ItemStack(Material.GRAY_STAINED_GLASS_PANE), menu.toInventory(), menu));
-+        Assertions.assertFalse(MenuListener.collectWouldTouchProtectedSlot(
-+                new ItemStack(Material.IRON_INGOT), menu.toInventory(), menu));
-+        Assertions.assertFalse(MenuListener.collectWouldTouchProtectedSlot(
-+                new ItemStack(Material.DIAMOND), menu.toInventory(), menu));
-+    }
-+
-+    @Test
-+    @DisplayName("Inventory drags are blocked only when they touch protected top-inventory slots")
-+    void testDragGuard() {
-+        ChestMenu menu = createMenu();
-+        int topSize = menu.toInventory().getSize();
-+
-+        Assertions.assertTrue(MenuListener.dragTouchesProtectedSlot(List.of(0, topSize + 1), topSize, menu));
-+        Assertions.assertFalse(MenuListener.dragTouchesProtectedSlot(List.of(1, topSize + 1), topSize, menu));
++        breaker.open("machine", 200L);
++        Assertions.assertFalse(breaker.canAttempt("machine", 199L));
++        Assertions.assertTrue(breaker.canAttempt("machine", 200L));
++        Assertions.assertTrue(breaker.clear("machine"));
++        Assertions.assertTrue(breaker.canAttempt("machine", 0L));
 +    }
 +}

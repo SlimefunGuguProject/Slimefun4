@@ -499,6 +499,11 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
         // Kill our Profiler Threads
         profiler.kill();
 
+        // Close inventories before profile/database shutdown so close handlers can persist final contents.
+        for (Player p : Bukkit.getOnlinePlayers()) {
+            p.closeInventory();
+        }
+
         // Save all Player Profiles that are still in memory
         PlayerProfile.iterator().forEachRemaining(profile -> {
             if (profile.isDirty()) {
@@ -519,13 +524,6 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
         // Terminate our Plugin instance
         setInstance(null);
 
-        /**
-         * Close all inventories on the server to prevent item dupes
-         * (Incase some idiot uses /reload)
-         */
-        for (Player p : Bukkit.getOnlinePlayers()) {
-            p.closeInventory();
-        }
     }
 
     /**

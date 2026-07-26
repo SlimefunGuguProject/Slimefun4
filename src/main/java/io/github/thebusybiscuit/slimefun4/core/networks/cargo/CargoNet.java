@@ -8,9 +8,9 @@ import io.github.thebusybiscuit.slimefun4.api.network.Network;
 import io.github.thebusybiscuit.slimefun4.api.network.NetworkComponent;
 import io.github.thebusybiscuit.slimefun4.core.attributes.HologramOwner;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -144,9 +144,6 @@ public class CargoNet extends AbstractItemNetwork implements HologramOwner {
             // Reset the internal threshold, so we can start skipping again
             tickDelayThreshold = 0;
 
-            Map<Location, Integer> inputs = mapInputNodes();
-            Map<Integer, List<Location>> outputs = mapOutputNodes();
-
             if (StorageCacheUtils.getData(b.getLocation(), "visualizer") == null) {
                 display();
             }
@@ -155,6 +152,12 @@ public class CargoNet extends AbstractItemNetwork implements HologramOwner {
                 if (blockData.isPendingRemove()) {
                     return;
                 }
+
+                // Build a stable topology snapshot on the main thread. This avoids
+                // iterating mutable node sets and resolving block data concurrently
+                // with placement, breaking, or protection-plugin callbacks.
+                Map<Location, Integer> inputs = mapInputNodes();
+                Map<Integer, List<Location>> outputs = mapOutputNodes();
                 var event = new CargoTickEvent(inputs, outputs);
                 Bukkit.getPluginManager().callEvent(event);
                 event.getHologramMsg().ifPresent(msg -> updateHologram(b, msg));
@@ -162,7 +165,6 @@ public class CargoNet extends AbstractItemNetwork implements HologramOwner {
                     return;
                 }
 
-                Slimefun.getProfiler().scheduleEntries(inputs.size() + 1);
                 new CargoNetworkTask(this, inputs, outputs).run();
             });
         }
@@ -183,38 +185,16 @@ public class CargoNet extends AbstractItemNetwork implements HologramOwner {
     }
 
     private @Nonnull Map<Integer, List<Location>> mapOutputNodes() {
-        Map<Integer, List<Location>> output = new HashMap<>();
-
-        List<Location> list = new LinkedList<>();
-        int lastFrequency = -1;
+        Map<Integer, List<Location>> outputs = new HashMap<>();
 
         for (Location node : outputNodes) {
             int frequency = getFrequency(node);
-            if (frequency == -1) {
-                continue;
+            if (frequency >= 0 && frequency < 16) {
+                outputs.computeIfAbsent(frequency, ignored -> new ArrayList<>()).add(node);
             }
-
-            if (frequency != lastFrequency && lastFrequency != -1) {
-                output.merge(lastFrequency, list, (prev, next) -> {
-                    prev.addAll(next);
-                    return prev;
-                });
-
-                list = new LinkedList<>();
-            }
-
-            list.add(node);
-            lastFrequency = frequency;
         }
 
-        if (!list.isEmpty()) {
-            output.merge(lastFrequency, list, (prev, next) -> {
-                prev.addAll(next);
-                return prev;
-            });
-        }
-
-        return output;
+        return outputs;
     }
 
     /**

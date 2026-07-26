@@ -86,6 +86,9 @@ permissions:
   slimefun.command.migrate:
     description: Allows you to do /sf migrate
     default: op
+  slimefun.command.stability:
+    description: Allows use of /sf stability health and machine recovery commands
+    default: op
   slimefun.command.blockdata:
     description: Allows you to do /sf blockdata
     default: op

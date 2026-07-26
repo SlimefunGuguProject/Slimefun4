@@ -106,3 +106,7 @@ research-ranks:
   - Great Master
   - Proficient Master
   - The Chosen One
+
+# Albion stability safeguards
+stability:
+  machine-circuit-breaker-cooldown-seconds: 300

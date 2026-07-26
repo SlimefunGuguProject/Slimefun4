@@ -4,16 +4,15 @@ import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.api.player.PlayerBackpack;
 import io.github.thebusybiscuit.slimefun4.api.player.PlayerProfile;
 import io.github.thebusybiscuit.slimefun4.core.services.sounds.SoundEffect;
+import io.github.thebusybiscuit.slimefun4.core.services.stability.BackpackOpenRegistry;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.implementation.items.backpacks.Cooler;
 import io.github.thebusybiscuit.slimefun4.implementation.items.backpacks.SlimefunBackpack;
 import io.github.thebusybiscuit.slimefun4.utils.ThreadUtils;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -31,6 +30,7 @@ import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractAtEntityEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerSwapHandItemsEvent;
 import org.bukkit.inventory.ItemStack;
 
@@ -51,9 +51,9 @@ import org.bukkit.inventory.ItemStack;
  */
 public class BackpackListener implements Listener {
     // Stores the player uuid maps to the opening backpack uuid
-    private final Set<UUID> openingPlayers = new HashSet<>();
-    private final Map<UUID, UUID> backpacks = new HashMap<>();
-    private final Map<UUID, SlimefunBackpack> backpackInstances = new HashMap<>();
+    private final BackpackOpenRegistry openRegistry = new BackpackOpenRegistry();
+    private final Map<UUID, UUID> backpacks = new ConcurrentHashMap<>();
+    private final Map<UUID, SlimefunBackpack> backpackInstances = new ConcurrentHashMap<>();
 
     public void register(@Nonnull Slimefun plugin) {
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
@@ -64,7 +64,7 @@ public class BackpackListener implements Listener {
         Player p = (Player) e.getPlayer();
 
         if (e.getInventory().getHolder(false) instanceof PlayerBackpack backpack) {
-            openingPlayers.remove(p.getUniqueId());
+            openRegistry.release(p.getUniqueId());
             backpacks.remove(p.getUniqueId());
             backpackInstances.remove(p.getUniqueId());
             // The changedSlot computation and refreshSnapshot is moved to the
@@ -75,8 +75,16 @@ public class BackpackListener implements Listener {
     }
 
     @EventHandler
+    public void onQuit(PlayerQuitEvent e) {
+        UUID playerId = e.getPlayer().getUniqueId();
+        openRegistry.release(playerId);
+        backpacks.remove(playerId);
+        backpackInstances.remove(playerId);
+    }
+
+    @EventHandler
     public void onItemDrop(PlayerDropItemEvent e) {
-        if (!openingPlayers.isEmpty() && openingPlayers.contains(e.getPlayer().getUniqueId())) {
+        if (openRegistry.isOpening(e.getPlayer().getUniqueId())) {
             e.setCancelled(true);
             return;
         }
@@ -92,7 +100,7 @@ public class BackpackListener implements Listener {
 
     @EventHandler
     public void onPlayerSwap(PlayerSwapHandItemsEvent e) {
-        if (!openingPlayers.isEmpty() && openingPlayers.contains(e.getPlayer().getUniqueId())) {
+        if (openRegistry.isOpening(e.getPlayer().getUniqueId())) {
             e.setCancelled(true);
             return;
         }
@@ -114,8 +122,7 @@ public class BackpackListener implements Listener {
 
     @EventHandler
     public void onPlayerInteractAtEntity(PlayerInteractAtEntityEvent atEntityEvent) {
-        if (!openingPlayers.isEmpty()
-                && openingPlayers.contains(atEntityEvent.getPlayer().getUniqueId())) {
+        if (openRegistry.isOpening(atEntityEvent.getPlayer().getUniqueId())) {
             atEntityEvent.setCancelled(true);
             return;
         }
@@ -128,8 +135,7 @@ public class BackpackListener implements Listener {
 
     @EventHandler
     public void onPlayerInteractEntity(PlayerInteractEntityEvent atEntityEvent) {
-        if (!openingPlayers.isEmpty()
-                && openingPlayers.contains(atEntityEvent.getPlayer().getUniqueId())) {
+        if (openRegistry.isOpening(atEntityEvent.getPlayer().getUniqueId())) {
             atEntityEvent.setCancelled(true);
             return;
         }
@@ -142,8 +148,7 @@ public class BackpackListener implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onClick(InventoryClickEvent e) {
-        if (!openingPlayers.isEmpty()
-                && openingPlayers.contains(e.getWhoClicked().getUniqueId())) {
+        if (openRegistry.isOpening(e.getWhoClicked().getUniqueId())) {
             e.setCancelled(true);
             return;
         }
@@ -252,38 +257,60 @@ public class BackpackListener implements Listener {
          * trigger parallel loads, as that can open a duplicate backpack instance
          * with a stale snapshot and allow item duplication.
          */
-        if (backpacks.containsKey(p.getUniqueId()) || !openingPlayers.add(p.getUniqueId())) {
+        UUID playerId = p.getUniqueId();
+        String reservationKey = getReservationKey(meta);
+        if (backpacks.containsKey(playerId) || !openRegistry.reserve(playerId, reservationKey)) {
+            Slimefun.getLocalization().sendMessage(p, "backpack.already-open", true);
             return;
         }
-        PlayerBackpack.getAsync(item)
-                .whenCompleteAsync(
-                        (bp, ex) -> {
-                            openingPlayers.remove(p.getUniqueId());
-                            if (ex != null) {
-                                Slimefun.logger()
-                                        .log(Level.SEVERE, "An Exception occurred while opening a backpack", ex);
-                                return;
-                            }
-                            // Check if the backpack item contains invalid backpack data
-                            if (bp == null || bp.isInvalid()) {
-                                return;
-                            }
 
-                            // Upgrade legacy visible backpack IDs to the current PDC
-                            // identity while we are safely back on the main thread.
-                            PlayerBackpack.migrateLegacyItem(item, bp);
+        try {
+            PlayerBackpack.getAsync(item)
+                    .whenCompleteAsync(
+                            (bp, ex) -> {
+                                try {
+                                    if (!p.isOnline()) {
+                                        return;
+                                    }
+                                    if (ex != null) {
+                                        Slimefun.logger()
+                                                .log(Level.SEVERE, "An Exception occurred while opening a backpack", ex);
+                                        return;
+                                    }
+                                    if (bp == null || bp.isInvalid()) {
+                                        return;
+                                    }
 
-                            // Check if someone else is currently viewing this backpack
-                            if (backpacks.containsValue(bp.getUniqueId())
-                                    || !bp.getInventory().getViewers().isEmpty()) {
-                                Slimefun.getLocalization().sendMessage(p, "backpack.already-open", true);
-                                return;
-                            }
-                            SoundEffect.BACKPACK_OPEN_SOUND.playAt(p.getLocation(), SoundCategory.PLAYERS);
-                            bp.open(p);
-                            backpacks.put(p.getUniqueId(), bp.getUniqueId());
-                            backpackInstances.put(p.getUniqueId(), backpackItem);
-                        },
-                        ThreadUtils.getMainThreadExecutor());
+                                    PlayerBackpack.migrateLegacyItem(item, bp);
+
+                                    if (backpacks.containsValue(bp.getUniqueId())
+                                            || !bp.getInventory().getViewers().isEmpty()) {
+                                        Slimefun.getLocalization().sendMessage(p, "backpack.already-open", true);
+                                        return;
+                                    }
+
+                                    SoundEffect.BACKPACK_OPEN_SOUND.playAt(p.getLocation(), SoundCategory.PLAYERS);
+                                    backpacks.put(playerId, bp.getUniqueId());
+                                    backpackInstances.put(playerId, backpackItem);
+                                    bp.open(p);
+                                } finally {
+                                    openRegistry.release(playerId, reservationKey);
+                                }
+                            },
+                            ThreadUtils.getMainThreadExecutor());
+        } catch (RuntimeException ex) {
+            openRegistry.release(playerId, reservationKey);
+            throw ex;
+        }
     }
+
+    private String getReservationKey(@Nonnull org.bukkit.inventory.meta.ItemMeta meta) {
+        return PlayerBackpack.getBackpackUUID(meta)
+                .map(uuid -> "uuid:" + uuid)
+                .orElseGet(() -> "legacy:"
+                        + PlayerBackpack.getOwnerUUID(meta).orElse("unknown")
+                        + ':'
+                        + PlayerBackpack.getBackpackID(meta).orElse(-1));
+    }
+
 }

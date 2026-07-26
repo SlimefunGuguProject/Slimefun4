@@ -10,10 +10,6 @@ import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.implementation.SlimefunItems;
 import io.github.thebusybiscuit.slimefun4.utils.SlimefunUtils;
 import io.github.thebusybiscuit.slimefun4.utils.itemstack.ItemStackWrapper;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,6 +42,7 @@ class CargoNetworkTask implements Runnable {
     private final NetworkManager manager;
     private final CargoNet network;
     private final Map<Location, Inventory> inventories = new HashMap<>();
+    private final Map<Location, Optional<Block>> attachedBlocks = new HashMap<>();
 
     private final Map<Location, Integer> inputs;
     private final Map<Integer, List<Location>> outputs;
@@ -55,29 +52,35 @@ class CargoNetworkTask implements Runnable {
         this.network = network;
         this.manager = Slimefun.getNetworkManager();
 
-        this.inputs = inputs;
-        this.outputs = outputs;
+        this.inputs = Map.copyOf(inputs);
+        Map<Integer, List<Location>> outputSnapshot = new HashMap<>();
+        outputs.forEach((frequency, locations) -> outputSnapshot.put(frequency, List.copyOf(locations)));
+        this.outputs = Map.copyOf(outputSnapshot);
     }
 
     @Override
     public void run() {
-        long timestamp = System.nanoTime();
+        long networkTimestamp = Slimefun.getProfiler().newEntry();
 
         try {
-            /**
-             * All operations happen here: Everything gets iterated from the Input Nodes.
-             * (Apart from ChestTerminal Buses)
-             */
             SlimefunItem inputNode = SlimefunItems.CARGO_INPUT_NODE.getItem();
             for (Map.Entry<Location, Integer> entry : inputs.entrySet()) {
-                long nodeTimestamp = System.nanoTime();
-                Location input = entry.getKey();
-                Optional<Block> attachedBlock = network.getAttachedBlock(input);
-
-                attachedBlock.ifPresent(block -> routeItems(input, block, entry.getValue(), outputs));
-
-                // This will prevent this timings from showing up for the Cargo Manager
-                timestamp += Slimefun.getProfiler().closeEntry(entry.getKey(), inputNode, nodeTimestamp);
+                long nodeTimestamp = Slimefun.getProfiler().newEntry();
+                try {
+                    Location input = entry.getKey();
+                    getAttachedBlock(input).ifPresent(block -> routeItems(input, block, entry.getValue(), outputs));
+                } catch (Exception | LinkageError ex) {
+                    Slimefun.logger().log(
+                            Level.SEVERE,
+                            ex,
+                            () -> "An Exception was caught while routing Cargo input node @ "
+                                    + new BlockPosition(entry.getKey()));
+                } finally {
+                    long childTime = Slimefun.getProfiler().closeEntry(entry.getKey(), inputNode, nodeTimestamp);
+                    if (networkTimestamp != 0) {
+                        networkTimestamp += childTime;
+                    }
+                }
             }
         } catch (Exception | LinkageError x) {
             Slimefun.logger()
@@ -86,10 +89,10 @@ class CargoNetworkTask implements Runnable {
                             x,
                             () -> "An Exception was caught while ticking a Cargo network @ "
                                     + new BlockPosition(network.getRegulator()));
+        } finally {
+            Slimefun.getProfiler().closeEntry(
+                    network.getRegulator(), SlimefunItems.CARGO_MANAGER.getItem(), networkTimestamp);
         }
-
-        // Submit a timings report
-        Slimefun.getProfiler().closeEntry(network.getRegulator(), SlimefunItems.CARGO_MANAGER.getItem(), timestamp);
     }
 
     @ParametersAreNonnullByDefault
@@ -152,70 +155,44 @@ class CargoNetworkTask implements Runnable {
 
     @Nullable @ParametersAreNonnullByDefault
     private ItemStack distributeItem(ItemStack stack, Location inputNode, List<Location> outputNodes) {
-        ItemStack item = stack;
-
-        var blockData = StorageCacheUtils.getBlock(inputNode);
-        boolean roundrobin = Objects.equals(blockData.getData("round-robin"), "true");
-        boolean smartFill = Objects.equals(blockData.getData("smart-fill"), "true");
-
-        int index = 0;
-        Collection<Location> destinations;
-        if (roundrobin) {
-            // The current round-robin index of the (unsorted) outputNodes list,
-            // or the index at which to start searching for valid output nodes
-            index = network.roundRobin.getOrDefault(inputNode, 0);
-            // Use an ArrayDeque to perform round-robin sorting
-            // Since the impl for roundRobinSort just does Deque.addLast(Deque#removeFirst)
-            // An ArrayDequeue is preferable as opposed to a LinkedList:
-            // - The number of elements does not change.
-            // - ArrayDequeue has better iterative performance
-            Deque<Location> tempDestinations = new ArrayDeque<>(outputNodes);
-            roundRobinSort(index, tempDestinations);
-            destinations = tempDestinations;
-        } else {
-            // Using an ArrayList here since we won't need to sort the destinations
-            // The ArrayList has the best performance for iteration bar a primitive array
-            destinations = new ArrayList<>(outputNodes);
+        if (outputNodes.isEmpty()) {
+            return stack;
         }
 
-        for (Location output : destinations) {
-            Optional<Block> target = network.getAttachedBlock(output);
+        ItemStack item = stack;
+        var blockData = StorageCacheUtils.getBlock(inputNode);
+        boolean roundRobin = blockData != null && Objects.equals(blockData.getData("round-robin"), "true");
+        boolean smartFill = blockData != null && Objects.equals(blockData.getData("smart-fill"), "true");
 
-            if (target.isPresent()) {
-                ItemStackWrapper wrapper = ItemStackWrapper.wrap(item);
-                item = CargoUtils.insert(
-                        network, inventories, output.getBlock(), target.get(), smartFill, item, wrapper);
+        int size = outputNodes.size();
+        int startIndex = roundRobin ? Math.floorMod(network.roundRobin.getOrDefault(inputNode, 0), size) : 0;
 
-                if (item == null) {
-                    if (roundrobin) {
-                        // The output was valid, set the round robin index to the node after this one
-                        network.roundRobin.put(inputNode, (index + 1) % outputNodes.size());
-                    }
-                    break;
-                }
+        for (int offset = 0; offset < size; offset++) {
+            int outputIndex = roundRobin ? (startIndex + offset) % size : offset;
+            Location output = outputNodes.get(outputIndex);
+            Optional<Block> target = getAttachedBlock(output);
+
+            if (target.isEmpty()) {
+                continue;
             }
-            index++;
+
+            ItemStackWrapper wrapper = ItemStackWrapper.wrap(item);
+            item = CargoUtils.insert(
+                    network, inventories, output.getBlock(), target.get(), smartFill, item, wrapper);
+
+            if (item == null) {
+                if (roundRobin) {
+                    network.roundRobin.put(inputNode, (outputIndex + 1) % size);
+                }
+                return null;
+            }
         }
 
         return item;
     }
 
-    /**
-     * This method sorts a given {@link Deque} of output node locations using a semi-accurate
-     * round-robin method.
-     *
-     * @param index
-     *            The round-robin index of the input node
-     * @param outputNodes
-     *            A {@link Deque} of {@link Location Locations} of the output nodes
-     */
-    private void roundRobinSort(int index, Deque<Location> outputNodes) {
-        if (index < outputNodes.size()) {
-            // Not ideal but actually not bad performance-wise over more elegant alternatives
-            for (int i = 0; i < index; i++) {
-                Location temp = outputNodes.removeFirst();
-                outputNodes.add(temp);
-            }
-        }
+    private Optional<Block> getAttachedBlock(Location node) {
+        return attachedBlocks.computeIfAbsent(node, network::getAttachedBlock);
     }
+
 }

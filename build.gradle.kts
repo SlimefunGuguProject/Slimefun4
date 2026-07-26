@@ -60,15 +60,9 @@ dependencies {
 
     compileOnly(libs.log4j.core)
     testImplementation(libs.junit.jupiter)
-    testImplementation(libs.mockbukkit)
-    // Main compileOnly dependencies are not inherited by the test source set.
-    // Add Paper explicitly so Bukkit/Paper types used by MockBukkit tests compile and run.
-    testImplementation(libs.paper.api)
-    // Main Slimefun signatures use JSR-305 while Paper signatures use JetBrains annotations.
+    // Stability tests intentionally target server-independent helpers so they do not
+    // bootstrap Paper registries or depend on a running Minecraft server.
     testImplementation(libs.jsr305)
-    // Force the plain JVM JAR. JetBrains 26.1.x publishes Gradle metadata with
-    // multiple platform variants, which can leave NotNull.class off javac's classpath.
-    testImplementation("org.jetbrains:annotations:26.0.2@jar")
     testRuntimeOnly(libs.junit.platform.launcher)
 
     implementation(libs.dough.api)

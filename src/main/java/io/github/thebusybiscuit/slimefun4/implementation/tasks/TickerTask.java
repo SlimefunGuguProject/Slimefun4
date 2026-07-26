@@ -9,6 +9,7 @@ import io.github.bakedlibs.dough.blocks.BlockPosition;
 import io.github.bakedlibs.dough.blocks.ChunkPosition;
 import io.github.thebusybiscuit.slimefun4.api.ErrorReport;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
+import io.github.thebusybiscuit.slimefun4.core.services.stability.MachineCircuitBreaker;
 import io.github.thebusybiscuit.slimefun4.core.ticker.TickLocation;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import java.util.Collections;
@@ -58,6 +59,10 @@ public class TickerTask implements Runnable {
      * to the main thread so inventory mutations cannot race player clicks.
      */
     private final Set<BlockPosition> viewedInventories = ConcurrentHashMap.newKeySet();
+    private final Set<BlockPosition> queuedSynchronousTicks = ConcurrentHashMap.newKeySet();
+    private final MachineCircuitBreaker<BlockPosition> circuitBreaker = new MachineCircuitBreaker<>();
+
+    private static final int CIRCUIT_FAILURE_THRESHOLD = 4;
 
     private int tickRate;
     private boolean halted = false;
@@ -156,8 +161,11 @@ public class TickerTask implements Runnable {
     }
 
     private void tickLocation(@Nonnull Set<BlockTicker> tickers, @Nonnull Location l) {
+        BlockPosition position = new BlockPosition(l);
         var blockData = StorageCacheUtils.getBlock(l);
         if (blockData == null || !blockData.isDataLoaded() || blockData.isPendingRemove()) {
+            circuitBreaker.clear(position);
+            bugs.remove(position);
             return;
         }
 
@@ -167,38 +175,57 @@ public class TickerTask implements Runnable {
             if (item.isDisabledIn(l.getWorld())) {
                 return;
             }
+            if (!canAttemptTick(position)) {
+                return;
+            }
 
             BlockTicker ticker = item.getBlockTicker();
             boolean owedProfilerEntry = false;
 
             try {
                 if (ticker.isSynchronized() || isInventoryViewed(l)) {
-                    Slimefun.getProfiler().scheduleEntries(1);
-                    owedProfilerEntry = Slimefun.getProfiler().isProfiling();
+                    if (!queuedSynchronousTicks.add(position)) {
+                        return;
+                    }
+                    boolean profilerScheduled = Slimefun.getProfiler().isProfiling();
+                    if (profilerScheduled) {
+                        Slimefun.getProfiler().scheduleEntries(1);
+                        owedProfilerEntry = true;
+                    }
                     ticker.update();
 
-                    /**
-                     * We are inserting a new timestamp because synchronized actions
-                     * are always ran with a 50ms delay (1 game tick)
-                     */
                     Slimefun.runSync(() -> {
-                        if (blockData.isPendingRemove()) {
-                            Slimefun.getProfiler().cancelScheduledEntry();
-                            return;
+                        try {
+                            if (!blockData.isDataLoaded() || blockData.isPendingRemove()) {
+                                circuitBreaker.clear(position);
+                                bugs.remove(position);
+                                if (profilerScheduled) {
+                                    Slimefun.getProfiler().cancelScheduledEntry();
+                                }
+                                return;
+                            }
+                            long timestamp = profilerScheduled ? System.nanoTime() : 0L;
+                            if (tickBlock(l, item, blockData, timestamp)) {
+                                markTickSuccess(position);
+                            }
+                        } finally {
+                            queuedSynchronousTicks.remove(position);
                         }
-                        tickBlock(l, item, blockData, System.nanoTime());
                     });
                     owedProfilerEntry = false;
                 } else {
                     long timestamp = Slimefun.getProfiler().newEntry();
                     owedProfilerEntry = timestamp != 0;
                     ticker.update();
-                    tickBlock(l, item, blockData, timestamp);
+                    if (tickBlock(l, item, blockData, timestamp)) {
+                        markTickSuccess(position);
+                    }
                     owedProfilerEntry = false;
                 }
 
                 tickers.add(ticker);
             } catch (Exception | LinkageError x) {
+                queuedSynchronousTicks.remove(position);
                 if (owedProfilerEntry) {
                     Slimefun.getProfiler().cancelScheduledEntry();
                 }
@@ -209,11 +236,20 @@ public class TickerTask implements Runnable {
 
     @ParametersAreNonnullByDefault
     private void tickUniversalLocation(UUID uuid, Location l, @Nonnull Set<BlockTicker> tickers) {
+        BlockPosition position = new BlockPosition(l);
         var data = StorageCacheUtils.getUniversalBlock(uuid);
+        if (data == null || !data.isDataLoaded() || data.isPendingRemove()) {
+            circuitBreaker.clear(position);
+            bugs.remove(position);
+            return;
+        }
         var item = SlimefunItem.getById(data.getSfId());
 
         if (item != null && item.getBlockTicker() != null) {
             if (item.isDisabledIn(l.getWorld())) {
+                return;
+            }
+            if (!canAttemptTick(position)) {
                 return;
             }
 
@@ -222,32 +258,48 @@ public class TickerTask implements Runnable {
 
             try {
                 if (ticker.isSynchronized() || isInventoryViewed(l)) {
-                    Slimefun.getProfiler().scheduleEntries(1);
-                    owedProfilerEntry = Slimefun.getProfiler().isProfiling();
+                    if (!queuedSynchronousTicks.add(position)) {
+                        return;
+                    }
+                    boolean profilerScheduled = Slimefun.getProfiler().isProfiling();
+                    if (profilerScheduled) {
+                        Slimefun.getProfiler().scheduleEntries(1);
+                        owedProfilerEntry = true;
+                    }
                     ticker.update();
 
-                    /**
-                     * We are inserting a new timestamp because synchronized actions
-                     * are always ran with a 50ms delay (1 game tick)
-                     */
                     Slimefun.runSync(() -> {
-                        if (data.isPendingRemove()) {
-                            Slimefun.getProfiler().cancelScheduledEntry();
-                            return;
+                        try {
+                            if (!data.isDataLoaded() || data.isPendingRemove()) {
+                                circuitBreaker.clear(position);
+                                bugs.remove(position);
+                                if (profilerScheduled) {
+                                    Slimefun.getProfiler().cancelScheduledEntry();
+                                }
+                                return;
+                            }
+                            long timestamp = profilerScheduled ? System.nanoTime() : 0L;
+                            if (tickBlock(l, item, data, timestamp)) {
+                                markTickSuccess(position);
+                            }
+                        } finally {
+                            queuedSynchronousTicks.remove(position);
                         }
-                        tickBlock(l, item, data, System.nanoTime());
                     });
                     owedProfilerEntry = false;
                 } else {
                     long timestamp = Slimefun.getProfiler().newEntry();
                     owedProfilerEntry = timestamp != 0;
                     ticker.update();
-                    tickBlock(l, item, data, timestamp);
+                    if (tickBlock(l, item, data, timestamp)) {
+                        markTickSuccess(position);
+                    }
                     owedProfilerEntry = false;
                 }
 
                 tickers.add(ticker);
             } catch (Exception | LinkageError x) {
+                queuedSynchronousTicks.remove(position);
                 if (owedProfilerEntry) {
                     Slimefun.getProfiler().cancelScheduledEntry();
                 }
@@ -257,7 +309,7 @@ public class TickerTask implements Runnable {
     }
 
     @ParametersAreNonnullByDefault
-    private void tickBlock(Location l, SlimefunItem item, ASlimefunDataContainer data, long timestamp) {
+    private boolean tickBlock(Location l, SlimefunItem item, ASlimefunDataContainer data, long timestamp) {
         try {
             if (item.getBlockTicker().isUniversal()) {
                 if (data instanceof SlimefunUniversalData universalData) {
@@ -272,8 +324,10 @@ public class TickerTask implements Runnable {
                     throw new IllegalStateException("BlockTicker is non-universal but item is universal!");
                 }
             }
+            return true;
         } catch (Exception | LinkageError x) {
             reportErrors(l, item, x);
+            return false;
         } finally {
             Slimefun.getProfiler().closeEntry(l, item, timestamp);
         }
@@ -282,26 +336,71 @@ public class TickerTask implements Runnable {
     @ParametersAreNonnullByDefault
     private void reportErrors(Location l, SlimefunItem item, Throwable x) {
         BlockPosition position = new BlockPosition(l);
-        int errors = bugs.getOrDefault(position, 0) + 1;
+        if (circuitBreaker.isOpen(position)) {
+            long cooldownSeconds = getCircuitCooldownSeconds();
+            circuitBreaker.open(position, System.currentTimeMillis() + cooldownSeconds * 1000L);
+            bugs.remove(position);
+            Slimefun.logger().log(Level.SEVERE,
+                    "The retry for machine {0} at {1}, {2}, {3} failed; its circuit has been reopened for {4} seconds.",
+                    new Object[] {item.getId(), l.getBlockX(), l.getBlockY(), l.getBlockZ(), cooldownSeconds});
+            return;
+        }
+
+        int errors = bugs.merge(position, 1, Integer::sum);
 
         if (errors == 1) {
-            // Generate a new Error-Report
             new ErrorReport<>(x, l, item);
-            bugs.put(position, errors);
-        } else if (errors == 4) {
+        }
+
+        if (errors >= CIRCUIT_FAILURE_THRESHOLD) {
+            long cooldownSeconds = getCircuitCooldownSeconds();
+            circuitBreaker.open(position, System.currentTimeMillis() + cooldownSeconds * 1000L);
+            bugs.remove(position);
+
             Slimefun.logger().log(Level.SEVERE, "X: {0} Y: {1} Z: {2} ({3})", new Object[] {
                 l.getBlockX(), l.getBlockY(), l.getBlockZ(), item.getId()
             });
-            Slimefun.logger().log(Level.SEVERE, "Multiple errors occurred in the past 4 ticks, the machine at this block has been disabled.");
-            Slimefun.logger().log(Level.SEVERE, "Please check the error details in the /plugins/Slimefun/error-reports/ folder.");
-            Slimefun.logger().log(Level.SEVERE, "If you want to report this error, send the above error report file to others, not a screenshot of this window.");
-            Slimefun.logger().log(Level.SEVERE, " ");
-            bugs.remove(position);
-
-            disableTicker(l);
-        } else {
-            bugs.put(position, errors);
+            Slimefun.logger().log(Level.SEVERE,
+                    "This machine failed {0} consecutive ticks and has been paused for {1} seconds.",
+                    new Object[] {CIRCUIT_FAILURE_THRESHOLD, cooldownSeconds});
+            Slimefun.logger().log(Level.SEVERE,
+                    "It will be retried automatically. The ticker registration and stored machine data were preserved.");
         }
+    }
+
+    private long getCircuitCooldownSeconds() {
+        int configured = Slimefun.getCfg().getInt("stability.machine-circuit-breaker-cooldown-seconds");
+        return configured > 0 ? Math.max(30L, configured) : 300L;
+    }
+
+    private boolean canAttemptTick(BlockPosition position) {
+        return circuitBreaker.canAttempt(position, System.currentTimeMillis());
+    }
+
+    private void markTickSuccess(BlockPosition position) {
+        bugs.remove(position);
+        circuitBreaker.clear(position);
+    }
+
+    public boolean retryMachine(@Nonnull Location location) {
+        BlockPosition position = new BlockPosition(location);
+        bugs.remove(position);
+        queuedSynchronousTicks.remove(position);
+        return circuitBreaker.clear(position);
+    }
+
+    public int retryAllMachines() {
+        int count = circuitBreaker.clearAll();
+        bugs.clear();
+        return count;
+    }
+
+    public int getPausedMachineCount() {
+        return circuitBreaker.size();
+    }
+
+    public boolean isPaused() {
+        return paused;
     }
 
     public boolean isHalted() {
@@ -440,7 +539,11 @@ public class TickerTask implements Runnable {
     public void disableTicker(@Nonnull Location l) {
         Validate.notNull(l, "Location cannot be null!");
 
-        viewedInventories.remove(new BlockPosition(l));
+        BlockPosition position = new BlockPosition(l);
+        viewedInventories.remove(position);
+        queuedSynchronousTicks.remove(position);
+        circuitBreaker.clear(position);
+        bugs.remove(position);
 
         synchronized (tickingLocations) {
             ChunkPosition chunk = new ChunkPosition(l.getWorld(), l.getBlockX() >> 4, l.getBlockZ() >> 4);
