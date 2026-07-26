@@ -27,7 +27,7 @@ public class AsyncAutoEnchanterProcessEvent extends Event implements Cancellable
 
     public AsyncAutoEnchanterProcessEvent(
             @Nonnull ItemStack item, @Nonnull ItemStack enchantedBook, @Nonnull BlockMenu menu) {
-        super(true);
+        super(EventThreading.isCurrentThreadAsynchronous());
 
         Validate.notNull(item, "The item to enchant cannot be null!");
         Validate.notNull(enchantedBook, "The enchanted book to enchant cannot be null!");

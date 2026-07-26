@@ -24,13 +24,13 @@ public class AutoDisenchantEvent extends Event implements Cancellable {
     private boolean cancelled;
 
     public AutoDisenchantEvent(@Nonnull ItemStack item) {
-        super(true);
+        super(EventThreading.isCurrentThreadAsynchronous());
 
         this.item = item;
     }
 
     public AutoDisenchantEvent(@Nonnull ItemStack item, @Nullable Block block) {
-        super(true);
+        super(EventThreading.isCurrentThreadAsynchronous());
 
         this.item = item;
         this.block = block;
