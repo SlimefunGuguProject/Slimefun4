@@ -1,0 +1,6 @@
+5f76cb35828554ae9d6442a1df3a2323d79a887201b90e8a6687f12cf8ef6056  ./README_FIRST.md
+153807a62cafcd451263ae624e61df834864464f7d57e04bc5c4ebfe3b63d21a  ./src/main/java/io/github/thebusybiscuit/slimefun4/core/commands/subcommands/DoctorCommand.java
+4965e6b658bb5054161eab3d65b9d3d4a538d55326008bfb90911636cf002b45  ./src/main/java/io/github/thebusybiscuit/slimefun4/core/services/stability/ItemDoctorService.java
+e087c5d0526322c892fdddae7f583a1daaf41f763f7fefbc841561cb3f55423c  ./src/main/java/io/github/thebusybiscuit/slimefun4/core/services/stability/ItemDoctorText.java
+a2cf5d8c245d9372bcabbad00182d19a3660e8e867b54f261fdfa16fd3707e21  ./src/main/java/io/github/thebusybiscuit/slimefun4/core/services/stability/ItemPresentationDoctor.java
+f4eb16944acc37acf254689e700cdce1aa75e957ea4436ce1ff25e6c0de7c2e1  ./src/test/java/io/github/thebusybiscuit/slimefun4/core/services/stability/TestItemDoctorText.java
