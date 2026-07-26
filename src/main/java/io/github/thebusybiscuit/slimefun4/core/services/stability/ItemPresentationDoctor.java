@@ -76,7 +76,12 @@ public final class ItemPresentationDoctor {
         report.stackScanned();
         boolean changed = inspectSlimefunPresentation(item, repair, report);
         if (depth < MAX_CONTAINER_DEPTH) {
-            changed |= inspectNestedItems(item, repair, report, depth + 1);
+            try {
+                changed |= inspectNestedItems(item, repair, report, depth + 1);
+            } catch (RuntimeException ex) {
+                report.failure();
+                Slimefun.logger().log(Level.WARNING, "Item doctor could not inspect a nested container.", ex);
+            }
         }
         return changed;
     }
@@ -115,17 +120,37 @@ public final class ItemPresentationDoctor {
             return false;
         }
 
+        DynamicState state = DynamicState.empty();
+        if (hasCjkLore) {
+            try {
+                state = DynamicState.capture(item, sfItem);
+            } catch (RuntimeException ex) {
+                report.failure();
+                report.unresolvedTemplateFound(itemId);
+                Slimefun.logger().log(
+                        Level.WARNING,
+                        "Item doctor could not safely read dynamic state for Slimefun item " + itemId + '.',
+                        ex);
+                return false;
+            }
+
+            if (!state.safelyRestorable
+                    || (sfItem instanceof AbstractMonsterSpawner && state.entityType == null)
+                    || !ItemDoctorText.canSafelyMergeDynamicTokens(
+                            currentMeta.hasLore() ? currentMeta.getLore() : null,
+                            canonicalMeta.hasLore() ? canonicalMeta.getLore() : null,
+                            state::canRestoreDynamicLine)) {
+                report.unresolvedTemplateFound(itemId);
+                return false;
+            }
+        }
+
         if (!repair) {
             return false;
         }
 
         ItemMeta originalMeta = currentMeta.clone();
         try {
-            DynamicState state = DynamicState.capture(item, sfItem);
-            if (sfItem instanceof AbstractMonsterSpawner && hasCjkLore && state.entityType == null) {
-                report.unresolvedTemplateFound(itemId);
-                return false;
-            }
             if (hasCjkName) {
                 currentMeta.setDisplayName(canonicalMeta.hasDisplayName() ? canonicalMeta.getDisplayName() : null);
             }
@@ -136,7 +161,9 @@ public final class ItemPresentationDoctor {
                 currentMeta.setLore(repairedLore.isEmpty() ? null : repairedLore);
             }
             item.setItemMeta(currentMeta);
-            restoreDynamicPresentation(item, sfItem, state);
+            if (hasCjkLore) {
+                restoreDynamicPresentation(item, sfItem, state);
+            }
             report.stackRepaired();
             return true;
         } catch (RuntimeException ex) {
@@ -155,21 +182,12 @@ public final class ItemPresentationDoctor {
     }
 
     private void restoreDynamicPresentation(ItemStack item, SlimefunItem sfItem, DynamicState state) {
-        if (sfItem instanceof Rechargeable rechargeable) {
-            float recoveredCharge = state.charge == null ? rechargeable.getItemCharge(item) : state.charge;
-            float maximum = rechargeable.getMaxItemCharge(item);
-            if (!Float.isFinite(recoveredCharge)) {
-                recoveredCharge = 0F;
-            }
-            rechargeable.setItemCharge(item, Math.max(0F, Math.min(recoveredCharge, maximum)));
+        if (sfItem instanceof Rechargeable rechargeable && state.charge != null) {
+            rechargeable.setItemCharge(item, state.charge);
         }
 
-        if (sfItem instanceof LimitedUseItem limitedUseItem) {
-            if (state.usesLeft == null) {
-                limitedUseItem.refreshUsesLore(item);
-            } else {
-                limitedUseItem.restoreUsesLore(item, state.usesLeft);
-            }
+        if (sfItem instanceof LimitedUseItem limitedUseItem && state.usesLeft != null) {
+            limitedUseItem.restoreUsesLore(item, state.usesLeft);
         }
 
         if (sfItem instanceof AbstractMonsterSpawner spawner && state.entityType != null) {
@@ -196,7 +214,9 @@ public final class ItemPresentationDoctor {
         if (state.legacyBackpackIdentity != null) {
             refreshLegacyBackpackIdentity(item, state.legacyBackpackIdentity);
         }
-        refreshBackpackOwner(item);
+        if (sfItem instanceof SlimefunBackpack) {
+            refreshBackpackOwner(item);
+        }
     }
 
     private void refreshBackpackOwner(ItemStack item) {
@@ -320,6 +340,7 @@ public final class ItemPresentationDoctor {
         private final UUID tomeOwner;
         private final String legacyBackpackIdentity;
         private final boolean soulbound;
+        private final boolean safelyRestorable;
 
         private DynamicState(
                 @Nullable Float charge,
@@ -327,25 +348,43 @@ public final class ItemPresentationDoctor {
                 @Nullable EntityType entityType,
                 @Nullable UUID tomeOwner,
                 @Nullable String legacyBackpackIdentity,
-                boolean soulbound) {
+                boolean soulbound,
+                boolean safelyRestorable) {
             this.charge = charge;
             this.usesLeft = usesLeft;
             this.entityType = entityType;
             this.tomeOwner = tomeOwner;
             this.legacyBackpackIdentity = legacyBackpackIdentity;
             this.soulbound = soulbound;
+            this.safelyRestorable = safelyRestorable;
+        }
+
+        private static DynamicState empty() {
+            return new DynamicState(null, null, null, null, null, false, true);
         }
 
         private static DynamicState capture(ItemStack item, SlimefunItem sfItem) {
             ItemMeta meta = item.getItemMeta();
             List<String> lore = meta.hasLore() ? meta.getLore() : null;
 
+            boolean safelyRestorable = true;
+
             Float charge = null;
-            if (sfItem instanceof Rechargeable) {
+            if (sfItem instanceof Rechargeable rechargeable) {
                 charge = meta.getPersistentDataContainer()
                         .get(Slimefun.getRegistry().getItemChargeDataKey(), PersistentDataType.FLOAT);
                 if (charge == null) {
                     charge = ItemDoctorText.findLegacyCharge(lore);
+                }
+
+                float maximum = rechargeable.getMaxItemCharge(item);
+                if (charge == null
+                        || !Float.isFinite(charge)
+                        || !Float.isFinite(maximum)
+                        || maximum <= 0F
+                        || charge < 0F
+                        || charge > maximum) {
+                    safelyRestorable = false;
                 }
             }
 
@@ -354,7 +393,10 @@ public final class ItemPresentationDoctor {
                 var storedUses = limitedUseItem.getStoredUses(item);
                 usesLeft = storedUses.isPresent()
                         ? storedUses.getAsInt()
-                        : ItemDoctorText.findSingleLegacyInteger(lore);
+                        : ItemDoctorText.findLegacyUsesLeft(lore);
+                if (usesLeft == null || usesLeft < 1 || usesLeft > limitedUseItem.getMaxUseCount()) {
+                    safelyRestorable = false;
+                }
             }
 
             EntityType type = null;
@@ -363,17 +405,24 @@ public final class ItemPresentationDoctor {
             }
 
             UUID tomeOwner = null;
-            if (sfItem instanceof KnowledgeTome && lore != null) {
-                for (String line : lore) {
-                    String ownerValue = ChatColor.stripColor(line);
-                    try {
-                        if (ownerValue != null && !ownerValue.isBlank()) {
-                            tomeOwner = UUID.fromString(ownerValue.trim());
-                            break;
+            if (sfItem instanceof KnowledgeTome) {
+                String hiddenOwner = lore != null && lore.size() > 1 ? ChatColor.stripColor(lore.get(1)) : null;
+                boolean unboundTome = hiddenOwner != null && hiddenOwner.isBlank();
+                if (lore != null) {
+                    for (String line : lore) {
+                        String ownerValue = ChatColor.stripColor(line);
+                        try {
+                            if (ownerValue != null && !ownerValue.isBlank()) {
+                                tomeOwner = UUID.fromString(ownerValue.trim());
+                                break;
+                            }
+                        } catch (IllegalArgumentException ignored) {
+                            // Continue until a hidden owner UUID is found.
                         }
-                    } catch (IllegalArgumentException ignored) {
-                        // Continue until a hidden owner UUID is found.
                     }
+                }
+                if (!unboundTome && tomeOwner == null) {
+                    safelyRestorable = false;
                 }
             }
 
@@ -394,8 +443,39 @@ public final class ItemPresentationDoctor {
                 }
             }
 
+            if (sfItem instanceof SlimefunBackpack
+                    && PlayerBackpack.getBackpackUUID(meta).isEmpty()
+                    && PlayerBackpack.getOwnerUUID(meta).isPresent()
+                    && legacyBackpackIdentity == null) {
+                safelyRestorable = false;
+            }
+
             boolean soulbound = SlimefunUtils.isSoulbound(item) || hasLegacyChineseSoulboundLine(lore);
-            return new DynamicState(charge, usesLeft, type, tomeOwner, legacyBackpackIdentity, soulbound);
+            return new DynamicState(
+                    charge,
+                    usesLeft,
+                    type,
+                    tomeOwner,
+                    legacyBackpackIdentity,
+                    soulbound,
+                    safelyRestorable);
+        }
+
+        private boolean canRestoreDynamicLine(String line) {
+            String plain = ChatColor.stripColor(line);
+            if (plain == null) {
+                return false;
+            }
+            if (legacyBackpackIdentity != null && plain.contains(legacyBackpackIdentity)) {
+                return true;
+            }
+            if (tomeOwner != null && plain.contains(tomeOwner.toString())) {
+                return true;
+            }
+            if (charge != null && ItemDoctorText.findLegacyCharge(List.of(line)) != null) {
+                return true;
+            }
+            return usesLeft != null && ItemDoctorText.findLegacyUsesLeft(List.of(line)) != null;
         }
 
         private static boolean hasLegacyChineseSoulboundLine(@Nullable List<String> lore) {

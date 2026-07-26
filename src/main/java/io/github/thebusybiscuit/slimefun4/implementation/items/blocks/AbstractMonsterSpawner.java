@@ -6,6 +6,7 @@ import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
 import io.github.thebusybiscuit.slimefun4.api.recipes.RecipeType;
 import io.github.thebusybiscuit.slimefun4.core.attributes.DistinctiveItem;
 import io.github.thebusybiscuit.slimefun4.utils.ChatUtils;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -52,25 +53,39 @@ public abstract class AbstractMonsterSpawner extends SlimefunItem implements Dis
         Validate.notNull(item, "The Item cannot be null");
 
         ItemMeta meta = item.getItemMeta();
-
-        // We may want to update this in the future to also make use of the BlockStateMeta
-        for (String line : meta.getLore()) {
-            String stripColor = ChatColor.stripColor(line);
-
-            if ((stripColor.startsWith("type: ") || stripColor.startsWith("Type:"))
-                    && (!line.contains("<type>") || line.contains("<Type>"))) {
-                EntityType type = EntityType.valueOf(ChatColor.stripColor(line)
-                        .replace("type: ", "")
-                        .replace("Type: ", "")
-                        .replace(' ', '_')
-                        .toUpperCase(Locale.ROOT));
+        if (meta instanceof BlockStateMeta blockStateMeta
+                && blockStateMeta.hasBlockState()
+                && blockStateMeta.getBlockState() instanceof CreatureSpawner spawner) {
+            EntityType type = spawner.getSpawnedType();
+            if (type != null) {
                 return Optional.of(type);
             }
         }
-        if (meta instanceof BlockStateMeta blockStateMeta) {
-            if (blockStateMeta.hasBlockState() && blockStateMeta.getBlockState() instanceof CreatureSpawner spawner) {
-                EntityType type = spawner.getSpawnedType();
-                if (type != null) return Optional.of(type);
+
+        if (!meta.hasLore()) {
+            return Optional.empty();
+        }
+
+        for (String line : meta.getLore()) {
+            String plain = ChatColor.stripColor(line);
+            if (plain == null) {
+                continue;
+            }
+
+            String normalized = plain.trim();
+            if (!normalized.toLowerCase(Locale.ROOT).startsWith("type:") || normalized.contains("<")) {
+                continue;
+            }
+
+            String serializedType = normalized.substring(normalized.indexOf(':') + 1)
+                    .trim()
+                    .replace(' ', '_')
+                    .toUpperCase(Locale.ROOT);
+            try {
+                return Optional.of(EntityType.valueOf(serializedType));
+            } catch (IllegalArgumentException ignored) {
+                // Translated or malformed legacy lore is not authoritative. The item doctor
+                // will skip it unless a safe BlockState-backed entity type can be recovered.
             }
         }
 
@@ -78,9 +93,58 @@ public abstract class AbstractMonsterSpawner extends SlimefunItem implements Dis
     }
 
     /**
+     * Updates the entity type presentation on an existing spawner item while preserving all other metadata.
+     *
+     * @param item
+     *            The existing Slimefun spawner item
+     * @param type
+     *            The entity type to retain
+     */
+    public void refreshEntityTypePresentation(@Nonnull ItemStack item, @Nonnull EntityType type) {
+        Validate.notNull(type, "The EntityType cannot be null");
+        applyEntityTypePresentation(item, type);
+    }
+
+    private void applyEntityTypePresentation(@Nonnull ItemStack item, @Nullable EntityType type) {
+        Validate.notNull(item, "The Item cannot be null");
+
+        ItemMeta meta = item.getItemMeta();
+        if (type != null && type.isSpawnable() && meta instanceof BlockStateMeta stateMeta) {
+            BlockState state = stateMeta.getBlockState();
+            if (state instanceof CreatureSpawner spawner) {
+                spawner.setSpawnedType(type);
+                stateMeta.setBlockState(state);
+            }
+        }
+
+        List<String> lore = meta.hasLore() ? new ArrayList<>(meta.getLore()) : new ArrayList<>();
+        String typeName = type == null ? "None" : ChatUtils.humanize(type.name());
+        boolean replaced = false;
+        for (int i = 0; i < lore.size(); i++) {
+            String currentLine = lore.get(i);
+            String plain = ChatColor.stripColor(currentLine);
+            if (currentLine.contains("<Type>") || currentLine.contains("<type>")) {
+                lore.set(i, currentLine.replace("<Type>", typeName).replace("<type>", typeName));
+                replaced = true;
+                break;
+            }
+            if (plain != null && plain.trim().toLowerCase(Locale.ROOT).startsWith("type:")) {
+                lore.set(i, ChatColor.GRAY + "Type: " + typeName);
+                replaced = true;
+                break;
+            }
+        }
+        if (!replaced) {
+            lore.add(ChatColor.GRAY + "Type: " + typeName);
+        }
+
+        meta.setLore(lore);
+        item.setItemMeta(meta);
+    }
+
+    /**
      * This method returns a finished {@link ItemStack} of this {@link SlimefunItem}, modified
      * to hold and represent the given {@link EntityType}.
-     * It updates the lore and {@link BlockStateMeta} to reflect the specified {@link EntityType}.
      *
      * @param type
      *            The {@link EntityType} to apply
@@ -89,38 +153,8 @@ public abstract class AbstractMonsterSpawner extends SlimefunItem implements Dis
      */
     @Nonnull
     public ItemStack getItemForEntityType(@Nullable EntityType type) {
-        // Validate.notNull(type, "The EntityType cannot be null");
-
         ItemStack item = getItem().clone();
-        ItemMeta meta = item.getItemMeta();
-        // fix: you can't set null type or a not-spawnable type, for example ,player
-        if (type != null && type.isSpawnable()) {
-
-            // Fixes #2583 - Proper NBT handling of Spawners
-            if (meta instanceof BlockStateMeta stateMeta) {
-                BlockState state = stateMeta.getBlockState();
-
-                if (state instanceof CreatureSpawner spawner) {
-                    spawner.setSpawnedType(type);
-                }
-
-                stateMeta.setBlockState(state);
-            }
-        }
-        // Setting the lore to indicate the Type visually
-        List<String> lore = meta.getLore();
-
-        for (int i = 0; i < lore.size(); i++) {
-            String currentLine = lore.get(i);
-            if (currentLine.contains("<Type>") || currentLine.contains("<type>")) {
-                String typeName = type == null ? "None" : ChatUtils.humanize(type.name());
-                lore.set(i, currentLine.replace("<Type>", typeName).replace("<type>", typeName));
-                break;
-            }
-        }
-
-        meta.setLore(lore);
-        item.setItemMeta(meta);
+        applyEntityTypePresentation(item, type);
         return item;
     }
     // to fix the bug of stacking two BROKEN_SPAWNER/REINFORCED_SPAWNER containing different EntityType using cargo or

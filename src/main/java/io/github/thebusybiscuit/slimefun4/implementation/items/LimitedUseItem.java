@@ -13,6 +13,7 @@ import io.github.thebusybiscuit.slimefun4.utils.LoreBuilder;
 import io.github.thebusybiscuit.slimefun4.utils.PatternUtils;
 import java.util.Collections;
 import java.util.List;
+import java.util.OptionalInt;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
 import org.apache.commons.lang.Validate;
@@ -126,24 +127,61 @@ public abstract class LimitedUseItem extends SimpleSlimefunItem<ItemUseHandler> 
         }
     }
 
+    /**
+     * Returns the explicitly stored remaining-use count without falling back to the configured maximum.
+     *
+     * @param item
+     *            The item to inspect
+     *
+     * @return The stored use count, or an empty result for untouched legacy items
+     */
+    public final @Nonnull OptionalInt getStoredUses(@Nonnull ItemStack item) {
+        Validate.notNull(item, "The item cannot be null");
+        ItemMeta meta = item.getItemMeta();
+        Integer stored = meta.getPersistentDataContainer().get(getStorageKey(), PersistentDataType.INTEGER);
+        return stored == null ? OptionalInt.empty() : OptionalInt.of(stored);
+    }
+
+    /** Rebuilds the visible remaining-use line without changing the stored use count. */
+    public final void refreshUsesLore(@Nonnull ItemStack item) {
+        Validate.notNull(item, "The item cannot be null");
+        int usesLeft = getStoredUses(item).orElse(getMaxUseCount());
+        updateItemLore(item, item.getItemMeta(), usesLeft);
+    }
+
+    /**
+     * Restores a recovered legacy use count to persistent data and rebuilds its English lore line.
+     */
+    public final void restoreUsesLore(@Nonnull ItemStack item, int usesLeft) {
+        Validate.notNull(item, "The item cannot be null");
+        Validate.isTrue(usesLeft > 0 && usesLeft <= getMaxUseCount(), "The remaining use count is invalid");
+        ItemMeta meta = item.getItemMeta();
+        meta.getPersistentDataContainer().set(getStorageKey(), PersistentDataType.INTEGER, usesLeft);
+        updateItemLore(item, meta, usesLeft);
+    }
+
     @ParametersAreNonnullByDefault
     private void updateItemLore(ItemStack item, ItemMeta meta, int usesLeft) {
         List<String> lore = meta.getLore();
-
         String newLine = ChatColors.color(LoreBuilder.usesLeft(usesLeft));
-        if (lore != null && !lore.isEmpty()) {
-            // find the correct line
-            for (int i = 0; i < lore.size(); i++) {
-                if (PatternUtils.USES_LEFT_LORE.matcher(lore.get(i)).matches()) {
-                    lore.set(i, newLine);
-                    meta.setLore(lore);
-                    item.setItemMeta(meta);
-                    return;
-                }
-            }
-        } else {
+
+        if (lore == null || lore.isEmpty()) {
             meta.setLore(Collections.singletonList(newLine));
             item.setItemMeta(meta);
+            return;
         }
+
+        for (int i = 0; i < lore.size(); i++) {
+            if (PatternUtils.USES_LEFT_LORE.matcher(lore.get(i)).matches()) {
+                lore.set(i, newLine);
+                meta.setLore(lore);
+                item.setItemMeta(meta);
+                return;
+            }
+        }
+
+        lore.add(newLine);
+        meta.setLore(lore);
+        item.setItemMeta(meta);
     }
 }

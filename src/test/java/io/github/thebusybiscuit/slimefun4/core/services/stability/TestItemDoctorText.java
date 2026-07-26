@@ -75,6 +75,16 @@ class TestItemDoctorText {
     }
 
     @Test
+    void doesNotAppendDuplicateCanonicalUuidLines() {
+        String owner = "cc5e8e27-7e4e-45cd-9396-62b41ecfd717";
+        List<String> repaired = ItemDoctorText.mergeEnglishLore(
+                List.of("§7\u6240\u6709\u8005 UUID: " + owner),
+                List.of("§7Owner UUID: 00000000-0000-0000-0000-000000000000"));
+
+        Assertions.assertEquals(List.of("§7Owner UUID: " + owner), repaired);
+    }
+
+    @Test
     void carriesUuidAndSignedDynamicValues() {
         String owner = "cc5e8e27-7e4e-45cd-9396-62b41ecfd717";
         Assertions.assertEquals(
@@ -94,8 +104,43 @@ class TestItemDoctorText {
                 ItemDoctorText.findLegacyCharge(List.of("§7\u5F53\u524D\u7535\u91CF: 64.5 / 128 J")));
         Assertions.assertEquals(
                 7,
-                ItemDoctorText.findSingleLegacyInteger(List.of("§7\u5269\u4F59\u4F7F\u7528\u6B21\u6570: 7")));
-        Assertions.assertNull(ItemDoctorText.findSingleLegacyInteger(List.of(
-                "§7\u7B49\u7EA7: 2", "§7\u5269\u4F59\u4F7F\u7528\u6B21\u6570: 7")));
+                ItemDoctorText.findLegacyUsesLeft(List.of("§7\u5269\u4F59\u4F7F\u7528\u6B21\u6570: 7")));
+        Assertions.assertEquals(
+                7,
+                ItemDoctorText.findLegacyUsesLeft(List.of("§7Uses left: §e7")));
+        Assertions.assertEquals(
+                64.5F,
+                ItemDoctorText.findLegacyCharge(List.of("§8⇨ §e⚡ §764.5 / 128 J")));
+        Assertions.assertEquals(
+                7,
+                ItemDoctorText.findLegacyUsesLeft(List.of(
+                        "§7\u7B49\u7EA7: 2", "§7\u5269\u4F59\u4F7F\u7528\u6B21\u6570: 7")));
+        Assertions.assertNull(ItemDoctorText.findLegacyUsesLeft(List.of("§7\u7B49\u7EA7: 2")));
+        Assertions.assertNull(ItemDoctorText.findLegacyUsesLeft(List.of("§7Uses left: 7", "§7Remaining uses: 6")));
+    }
+
+    @Test
+    void rejectsAmbiguousDynamicStateMappings() {
+        Assertions.assertFalse(ItemDoctorText.canSafelyMergeDynamicTokens(
+                List.of("§7等级: 2 / 4"), List.of("§7Level: 0")));
+        Assertions.assertFalse(ItemDoctorText.canSafelyMergeDynamicTokens(
+                List.of("§7剩余次数: 7"), null));
+        Assertions.assertTrue(ItemDoctorText.canSafelyMergeDynamicTokens(
+                List.of("§7剩余次数: 7"), List.of("§7Uses left: 20")));
+        Assertions.assertTrue(ItemDoctorText.canSafelyMergeDynamicTokens(
+                List.of("§7纯文本说明"), List.of("§7Plain description")));
+    }
+
+    @Test
+    void permitsExplicitlyRestoredLegacyStateLines() {
+        String identity = "cc5e8e27-7e4e-45cd-9396-62b41ecfd717#4";
+        Assertions.assertTrue(ItemDoctorText.canSafelyMergeDynamicTokens(
+                List.of("§7背包编号: " + identity),
+                List.of("§7Owner: None"),
+                line -> line.contains(identity)));
+        Assertions.assertFalse(ItemDoctorText.canSafelyMergeDynamicTokens(
+                List.of("§7背包编号: " + identity),
+                List.of("§7Owner: None"),
+                line -> false));
     }
 }

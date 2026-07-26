@@ -157,8 +157,7 @@ public class ProfileDataController extends ADataController {
                 num,
                 size,
                 getBackpackInv(idStr, size));
-        backpackCache.put(re);
-        return re;
+        return backpackCache.put(re);
     }
 
     public CompletableFuture<PlayerBackpack> getBackpackAsync(String uuid) {
@@ -170,13 +169,60 @@ public class ProfileDataController extends ADataController {
         return CompletableFuture.supplyAsync(() -> getBackpack(uuid), readExecutor);
     }
 
+    /** Returns every stored backpack UUID without loading backpack inventories. */
+    public CompletableFuture<Set<String>> getAllBackpackIdsAsync() {
+        checkDestroy();
+        return CompletableFuture.supplyAsync(() -> {
+            var key = new RecordKey(DataScope.BACKPACK_PROFILE);
+            key.addField(FieldKey.BACKPACK_ID);
+            return getData(key).stream()
+                    .map(record -> record.get(FieldKey.BACKPACK_ID))
+                    .filter(id -> id != null && !id.isBlank())
+                    .collect(Collectors.toCollection(java.util.LinkedHashSet::new));
+        }, readExecutor);
+    }
+
+    /**
+     * Loads a backpack for a maintenance operation without evicting or replacing an instance
+     * already used by normal gameplay.
+     */
+    public CompletableFuture<MaintenanceBackpack> getBackpackForMaintenanceAsync(String uuid) {
+        checkDestroy();
+        return CompletableFuture.supplyAsync(() -> {
+            PlayerBackpack cached = backpackCache.peek(uuid);
+            if (cached != null) {
+                return new MaintenanceBackpack(cached, false);
+            }
+
+            PlayerBackpack loaded = loadBackpackByUuid(uuid);
+            if (loaded == null) {
+                return null;
+            }
+
+            BackpackCache.MaintenanceResult result = backpackCache.putForMaintenance(loaded);
+            return new MaintenanceBackpack(result.backpack(), result.maintenanceOwned());
+        }, readExecutor);
+    }
+
+    /** Releases a backpack only when it remained exclusive to the maintenance operation. */
+    public void releaseMaintenanceBackpack(@Nonnull PlayerBackpack backpack) {
+        backpackCache.releaseMaintenance(backpack);
+    }
+
+    public record MaintenanceBackpack(@Nonnull PlayerBackpack backpack, boolean maintenanceOwned) {}
+
     @Nullable public PlayerBackpack getBackpack(String uuid) {
         checkDestroy();
-        var re = backpackCache.get(uuid);
-        if (re != null) {
-            return re;
+        PlayerBackpack cached = backpackCache.get(uuid);
+        if (cached != null) {
+            return cached;
         }
 
+        PlayerBackpack loaded = loadBackpackByUuid(uuid);
+        return loaded == null ? null : backpackCache.put(loaded);
+    }
+
+    @Nullable private PlayerBackpack loadBackpackByUuid(String uuid) {
         var key = new RecordKey(DataScope.BACKPACK_PROFILE);
         key.addField(FieldKey.BACKPACK_ID);
         key.addField(FieldKey.BACKPACK_SIZE);
@@ -193,16 +239,13 @@ public class ProfileDataController extends ADataController {
         var result = resultSet.get(0);
         var idStr = result.get(FieldKey.BACKPACK_ID);
         var size = result.getInt(FieldKey.BACKPACK_SIZE);
-
-        re = new PlayerBackpack(
+        return new PlayerBackpack(
                 Bukkit.getOfflinePlayer(UUID.fromString(result.get(FieldKey.PLAYER_UUID))),
                 UUID.fromString(idStr),
                 DataUtils.profileDataDebase64(result.getOrDef(FieldKey.BACKPACK_NAME, "")),
                 result.getInt(FieldKey.BACKPACK_NUMBER),
                 size,
                 getBackpackInv(idStr, size));
-        backpackCache.put(re);
-        return re;
     }
 
     @Nonnull

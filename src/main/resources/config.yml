@@ -110,3 +110,14 @@ research-ranks:
 # Albion stability safeguards
 stability:
   machine-circuit-breaker-cooldown-seconds: 300
+  item-doctor:
+    # Repairs only visible names and lore. Slimefun IDs, PDC/NBT, enchantments,
+    # attributes, custom model data, inventory contents, and functional state are preserved.
+    enabled: true
+    repair-player-on-join: true
+    repair-opened-inventories: true
+    repair-chunks-on-load: true
+    repair-picked-up-items: true
+    # Number of top-level inventories or dropped items processed per server tick
+    # during /slimefun doctor scan or repair confirm.
+    inventories-per-tick: 12

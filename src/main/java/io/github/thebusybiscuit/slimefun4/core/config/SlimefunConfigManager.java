@@ -128,6 +128,14 @@ public class SlimefunConfigManager {
 
             pluginConfig.setDefaultValue("researches.auto-convert", false);
             researchAutoConvert = pluginConfig.getBoolean("researches.auto-convert");
+
+            pluginConfig.setDefaultValue("stability.machine-circuit-breaker-cooldown-seconds", 300);
+            pluginConfig.setDefaultValue("stability.item-doctor.enabled", true);
+            pluginConfig.setDefaultValue("stability.item-doctor.repair-player-on-join", true);
+            pluginConfig.setDefaultValue("stability.item-doctor.repair-opened-inventories", true);
+            pluginConfig.setDefaultValue("stability.item-doctor.repair-chunks-on-load", true);
+            pluginConfig.setDefaultValue("stability.item-doctor.repair-picked-up-items", true);
+            pluginConfig.setDefaultValue("stability.item-doctor.inventories-per-tick", 12);
         } catch (Exception x) {
             plugin.getLogger()
                     .log(

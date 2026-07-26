@@ -89,6 +89,9 @@ permissions:
   slimefun.command.stability:
     description: Allows use of /sf stability health and machine recovery commands
     default: op
+  slimefun.command.doctor:
+    description: Allows use of /slimefun doctor item diagnosis and repair commands
+    default: op
   slimefun.command.blockdata:
     description: Allows you to do /sf blockdata
     default: op

@@ -48,6 +48,7 @@ public final class SlimefunSubCommands {
         commands.add(new UnbanItemCommand(plugin, cmd));
         commands.add(new ClearDataCommand(plugin, cmd));
         commands.add(new StabilityCommand(plugin, cmd));
+        commands.add(new DoctorCommand(plugin, cmd));
         return commands;
     }
 }

@@ -85,6 +85,7 @@ final class DoctorCommand extends SubCommand {
         ItemStack item = player.getInventory().getItemInMainHand();
         ItemDoctorReport report = service.inspectItem(item, true);
         if (report.getRepairedStacks() > 0) {
+            player.getInventory().setItemInMainHand(item);
             send(sender, "&aRepaired the visible English name and lore while preserving item data.");
         } else if (report.getCjkStacks() == 0) {
             send(sender, "&eNo registered Slimefun item with Chinese presentation was found in your hand.");

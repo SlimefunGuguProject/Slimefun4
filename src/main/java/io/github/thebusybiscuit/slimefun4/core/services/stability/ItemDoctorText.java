@@ -2,6 +2,7 @@ package io.github.thebusybiscuit.slimefun4.core.services.stability;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.annotation.Nonnull;
@@ -12,8 +13,13 @@ public final class ItemDoctorText {
 
     private static final Pattern DYNAMIC_TOKEN = Pattern.compile(
             "(?i)[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}|(?<!§)[+-]?\\d+(?:[.,]\\d+)?");
+    private static final Pattern LEGACY_COLOR_CODE = Pattern.compile("(?i)§[0-9A-FK-ORX]");
     private static final Pattern LEGACY_CHARGE = Pattern.compile(
             "(?i)(?<!§)([+-]?\\d+(?:[.,]\\d+)?)\\s*/\\s*([+-]?\\d+(?:[.,]\\d+)?)\\s*J");
+    private static final Pattern LEGACY_USES_LEFT = Pattern.compile(
+            "(?i)(?:uses?\\s+left|remaining\\s+uses?|\u5269\u4F59(?:\u4F7F\u7528)?\u6B21\u6570"
+                    + "|\u5269\u9918(?:\u4F7F\u7528)?\u6B21\u6578)"
+                    + "\\s*[:：]?\\s*(?<!§)([+-]?\\d+)");
 
     private ItemDoctorText() {}
 
@@ -92,6 +98,61 @@ public final class ItemDoctorText {
         return result;
     }
 
+    /**
+     * Returns whether every dynamic number or UUID in translated lore can be mapped one-to-one
+     * onto the registered English template. Refusing ambiguous mappings prevents display repair
+     * from silently resetting lore-backed addon state.
+     */
+    static boolean canSafelyMergeDynamicTokens(
+            @Nullable List<String> currentLore, @Nullable List<String> canonicalLore) {
+        return canSafelyMergeDynamicTokens(currentLore, canonicalLore, ignored -> false);
+    }
+
+    static boolean canSafelyMergeDynamicTokens(
+            @Nullable List<String> currentLore,
+            @Nullable List<String> canonicalLore,
+            @Nonnull Predicate<String> safelyRestoredLine) {
+        if (currentLore == null) {
+            return true;
+        }
+
+        List<String> canonical = canonicalLore == null ? List.of() : canonicalLore;
+        for (int i = 0; i < currentLore.size(); i++) {
+            String currentLine = currentLore.get(i);
+            if (!containsCjk(currentLine)) {
+                continue;
+            }
+
+            List<Token> currentTokens = extractTokens(currentLine);
+            if (currentTokens.isEmpty()) {
+                continue;
+            }
+            if (i >= canonical.size()) {
+                if (safelyRestoredLine.test(currentLine)) {
+                    continue;
+                }
+                return false;
+            }
+
+            List<Token> canonicalTokens = extractTokens(canonical.get(i));
+            if (currentTokens.size() != canonicalTokens.size()) {
+                if (safelyRestoredLine.test(currentLine)) {
+                    continue;
+                }
+                return false;
+            }
+            for (int tokenIndex = 0; tokenIndex < currentTokens.size(); tokenIndex++) {
+                if (currentTokens.get(tokenIndex).uuid() != canonicalTokens.get(tokenIndex).uuid()) {
+                    if (safelyRestoredLine.test(currentLine)) {
+                        break;
+                    }
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
     static @Nullable String carryDynamicTokens(
             @Nullable String currentLine, @Nullable String canonicalLine) {
         if (currentLine == null || canonicalLine == null) {
@@ -129,11 +190,11 @@ public final class ItemDoctorText {
 
         Float result = null;
         for (String line : lore) {
-            if (!containsCjk(line)) {
+            if (line == null) {
                 continue;
             }
 
-            Matcher matcher = LEGACY_CHARGE.matcher(line);
+            Matcher matcher = LEGACY_CHARGE.matcher(stripLegacyColorCodes(line));
             if (!matcher.find()) {
                 continue;
             }
@@ -151,25 +212,24 @@ public final class ItemDoctorText {
         return result;
     }
 
-    static @Nullable Integer findSingleLegacyInteger(@Nullable List<String> lore) {
+    static @Nullable Integer findLegacyUsesLeft(@Nullable List<String> lore) {
         if (lore == null) {
             return null;
         }
 
         Integer result = null;
         for (String line : lore) {
-            if (!containsCjk(line)) {
+            if (line == null) {
                 continue;
             }
 
-            List<Token> tokens = extractTokens(line);
-            if (tokens.size() != 1 || tokens.get(0).uuid() || tokens.get(0).value().contains(".")
-                    || tokens.get(0).value().contains(",")) {
+            Matcher matcher = LEGACY_USES_LEFT.matcher(stripLegacyColorCodes(line));
+            if (!matcher.find()) {
                 continue;
             }
 
             try {
-                int value = Integer.parseInt(tokens.get(0).value());
+                int value = Integer.parseInt(matcher.group(1));
                 if (result != null) {
                     return null;
                 }
@@ -213,9 +273,13 @@ public final class ItemDoctorText {
         if (text == null) {
             return "";
         }
-        return text.replaceAll("(?i)§[0-9A-FK-ORX]", "")
-                .replaceAll("\\d+(?:[.,]\\d+)?", "#")
-                .trim();
+
+        String withoutColors = stripLegacyColorCodes(text);
+        return DYNAMIC_TOKEN.matcher(withoutColors).replaceAll("#").trim();
+    }
+
+    private static String stripLegacyColorCodes(String text) {
+        return LEGACY_COLOR_CODE.matcher(text).replaceAll("");
     }
 
     private record Token(int start, int end, String value, boolean uuid) {}

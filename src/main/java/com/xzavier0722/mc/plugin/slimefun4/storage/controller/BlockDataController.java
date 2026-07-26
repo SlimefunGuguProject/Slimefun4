@@ -1228,6 +1228,10 @@ public class BlockDataController extends ADataController {
         return new HashSet<>(loadedChunk.values());
     }
 
+    public Set<SlimefunUniversalData> getAllLoadedUniversalData() {
+        return new HashSet<>(loadedUniversalData.values());
+    }
+
     public void removeAllDataInChunk(Chunk chunk) {
         var cKey = LocationUtils.getChunkKey(chunk);
         var cache = loadedChunk.remove(cKey);

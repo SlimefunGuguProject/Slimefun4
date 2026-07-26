@@ -37,6 +37,7 @@ import io.github.thebusybiscuit.slimefun4.core.services.ThreadService;
 import io.github.thebusybiscuit.slimefun4.core.services.UpdaterService;
 import io.github.thebusybiscuit.slimefun4.core.services.github.GitHubService;
 import io.github.thebusybiscuit.slimefun4.core.services.holograms.HologramsService;
+import io.github.thebusybiscuit.slimefun4.core.services.stability.ItemDoctorService;
 import io.github.thebusybiscuit.slimefun4.core.services.profiler.SlimefunProfiler;
 import io.github.thebusybiscuit.slimefun4.core.services.sounds.SoundService;
 import io.github.thebusybiscuit.slimefun4.implementation.items.altar.AncientAltar;
@@ -197,6 +198,7 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
     private final ThreadService threadService = new ThreadService(this);
     private final AnalyticsService analyticsService = new AnalyticsService(this);
     private final ItemStackService itemStackService = new ItemStackService();
+    private final ItemDoctorService itemDoctorService = new ItemDoctorService(this);
 
     // Some other things we need
     private final IntegrationsManager integrations = new IntegrationsManager(this);
@@ -384,6 +386,7 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
         SlimefunExtended.init(this);
 
         registerListeners();
+        itemDoctorService.register();
 
         // Initiating various Stuff and all items with a slight delay (0ms after the Server finished
         // loading)
@@ -475,6 +478,7 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
             return;
         }
 
+        itemDoctorService.shutdown();
         SlimefunExtended.shutdown();
         getSQLProfiler().shutdown();
 
@@ -864,6 +868,11 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
     public static @Nonnull TickerTask getTickerTask() {
         validateInstance();
         return instance.ticker;
+    }
+
+    public static @Nonnull ItemDoctorService getItemDoctorService() {
+        validateInstance();
+        return instance.itemDoctorService;
     }
 
     /**

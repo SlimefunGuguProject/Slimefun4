@@ -156,7 +156,7 @@ public final class ItemDoctorService implements Listener {
         Player player = event.getPlayer();
         Slimefun.runSync(() -> {
             if (player.isOnline()) {
-                repairAutomatic(player.getInventory(), player.getEnderChest());
+                repairAutomatic(automaticReport, player.getInventory(), player.getEnderChest());
             }
         }, 20L);
     }
@@ -169,10 +169,15 @@ public final class ItemDoctorService implements Listener {
             return;
         }
         Slimefun.runSync(() -> {
-            repairAutomatic(event.getInventory(), event.getPlayer().getInventory());
-            ItemStack cursor = event.getPlayer().getItemOnCursor();
-            if (doctor.inspectItem(cursor, true, automaticReport)) {
-                event.getPlayer().setItemOnCursor(cursor);
+            repairAutomatic(automaticReport, event.getInventory(), event.getPlayer().getInventory());
+            try {
+                ItemStack cursor = event.getPlayer().getItemOnCursor();
+                if (doctor.inspectItem(cursor, true, automaticReport)) {
+                    event.getPlayer().setItemOnCursor(cursor);
+                }
+            } catch (RuntimeException ex) {
+                automaticReport.failure();
+                plugin.getLogger().log(Level.WARNING, "Item doctor could not repair the cursor item.", ex);
             }
         });
     }
@@ -207,7 +212,7 @@ public final class ItemDoctorService implements Listener {
         });
     }
 
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onPickup(EntityPickupItemEvent event) {
         if (!(event.getEntity() instanceof Player)
                 || shuttingDown
@@ -217,16 +222,27 @@ public final class ItemDoctorService implements Listener {
         }
 
         Item itemEntity = event.getItem();
-        ItemStack item = itemEntity.getItemStack();
-        if (doctor.inspectItem(item, true, automaticReport)) {
-            itemEntity.setItemStack(item);
+        try {
+            ItemStack item = itemEntity.getItemStack();
+            if (doctor.inspectItem(item, true, automaticReport)) {
+                itemEntity.setItemStack(item);
+            }
+        } catch (RuntimeException ex) {
+            automaticReport.failure();
+            plugin.getLogger().log(Level.WARNING, "Item doctor could not repair a picked-up item.", ex);
         }
     }
 
-    private void repairAutomatic(Inventory... inventories) {
+    private void repairAutomatic(ItemDoctorReport report, Inventory... inventories) {
         for (Inventory inventory : inventories) {
-            if (inventory != null) {
-                doctor.repairInventory(inventory, true, automaticReport);
+            if (inventory == null) {
+                continue;
+            }
+            try {
+                doctor.repairInventory(inventory, true, report);
+            } catch (RuntimeException ex) {
+                report.failure();
+                plugin.getLogger().log(Level.WARNING, "Item doctor could not repair an automatic inventory.", ex);
             }
         }
     }
@@ -235,16 +251,21 @@ public final class ItemDoctorService implements Listener {
         Set<Inventory> seen = Collections.newSetFromMap(new IdentityHashMap<>());
         for (BlockState state : chunk.getTileEntities()) {
             if (state instanceof InventoryHolder holder && seen.add(holder.getInventory())) {
-                doctor.repairInventory(holder.getInventory(), true, report);
+                repairAutomatic(report, holder.getInventory());
             }
         }
         for (Entity entity : chunk.getEntities()) {
             if (entity instanceof InventoryHolder holder && seen.add(holder.getInventory())) {
-                doctor.repairInventory(holder.getInventory(), true, report);
+                repairAutomatic(report, holder.getInventory());
             } else if (entity instanceof Item itemEntity) {
-                ItemStack item = itemEntity.getItemStack();
-                if (doctor.inspectItem(item, true, report)) {
-                    itemEntity.setItemStack(item);
+                try {
+                    ItemStack item = itemEntity.getItemStack();
+                    if (doctor.inspectItem(item, true, report)) {
+                        itemEntity.setItemStack(item);
+                    }
+                } catch (RuntimeException ex) {
+                    report.failure();
+                    plugin.getLogger().log(Level.WARNING, "Item doctor could not repair a dropped item.", ex);
                 }
             }
         }
@@ -254,8 +275,17 @@ public final class ItemDoctorService implements Listener {
             BlockDataController controller, SlimefunChunkData chunkData, ItemDoctorReport report) {
         for (SlimefunBlockData blockData : chunkData.getAllBlockData()) {
             BlockMenu menu = blockData.getBlockMenu();
-            if (menu != null && doctor.repairInventory(menu.toInventory(), true, report)) {
+            if (menu == null) {
+                continue;
+            }
+            try {
+                doctor.repairInventory(menu.toInventory(), true, report);
+                // Always reconcile the database snapshot. The physical inventory pass may have
+                // repaired the same menu before its database-backed representation was reached.
                 controller.saveBlockInventory(blockData);
+            } catch (RuntimeException ex) {
+                report.failure();
+                plugin.getLogger().log(Level.WARNING, "Item doctor could not repair a Slimefun block menu.", ex);
             }
         }
     }
@@ -265,6 +295,9 @@ public final class ItemDoctorService implements Listener {
         private final Consumer<ItemDoctorReport> completion;
         private final Queue<InventoryTarget> inventories = new ArrayDeque<>();
         private final Queue<Item> droppedItems = new ArrayDeque<>();
+        private final Queue<SlimefunChunkData> slimefunChunks = new ArrayDeque<>();
+        private final Queue<SlimefunUniversalData> universalData = new ArrayDeque<>();
+        private final Queue<Chunk> physicalChunks = new ArrayDeque<>();
         private final Map<Inventory, InventoryTarget> inventoryTargets = new IdentityHashMap<>();
         private volatile boolean inventoriesDone;
         private volatile boolean backpacksDone;
@@ -283,31 +316,14 @@ public final class ItemDoctorService implements Listener {
                 addInventory(player.getEnderChest(), null);
             }
 
-            // Collect database-backed menus before physical chunk inventories. If Bukkit exposes
-            // the same storage through more than one wrapper, the first target must carry the
-            // explicit Slimefun save action so a repair cannot be persisted only in memory.
+            // Queue database-backed and physical storage for incremental collection. This keeps
+            // the command responsive even when a server has thousands of loaded machines/chunks.
             BlockDataController controller = Slimefun.getDatabaseManager().getBlockDataController();
-            for (var chunkData : controller.getAllLoadedChunkData()) {
-                for (SlimefunBlockData blockData : chunkData.getAllBlockData()) {
-                    BlockMenu menu = blockData.getBlockMenu();
-                    if (menu != null) {
-                        addInventory(menu.toInventory(), () -> controller.saveBlockInventory(blockData));
-                    }
-                }
-            }
-
-            for (SlimefunUniversalData universalData : controller.getAllLoadedUniversalData()) {
-                if (universalData.getMenu() != null) {
-                    addInventory(
-                            universalData.getMenu().toInventory(),
-                            () -> controller.saveUniversalInventory(universalData));
-                }
-            }
+            slimefunChunks.addAll(controller.getAllLoadedChunkData());
+            universalData.addAll(controller.getAllLoadedUniversalData());
 
             for (World world : Bukkit.getWorlds()) {
-                for (Chunk chunk : world.getLoadedChunks()) {
-                    collectChunk(chunk);
-                }
+                Collections.addAll(physicalChunks, world.getLoadedChunks());
             }
         }
 
@@ -323,6 +339,24 @@ public final class ItemDoctorService implements Listener {
                 } else if (entity instanceof Item itemEntity) {
                     droppedItems.add(itemEntity);
                 }
+            }
+        }
+
+        private void collectSlimefunChunk(SlimefunChunkData chunkData) {
+            BlockDataController controller = Slimefun.getDatabaseManager().getBlockDataController();
+            for (SlimefunBlockData blockData : chunkData.getAllBlockData()) {
+                BlockMenu menu = blockData.getBlockMenu();
+                if (menu != null) {
+                    addInventory(menu.toInventory(), () -> controller.saveBlockInventory(blockData));
+                }
+            }
+        }
+
+        private void collectUniversalData(SlimefunUniversalData data) {
+            var menu = data.getMenu();
+            if (menu != null) {
+                BlockDataController controller = Slimefun.getDatabaseManager().getBlockDataController();
+                addInventory(menu.toInventory(), () -> controller.saveUniversalInventory(data));
             }
         }
 
@@ -361,6 +395,26 @@ public final class ItemDoctorService implements Listener {
                         Item itemEntity = droppedItems.poll();
                         if (itemEntity != null) {
                             inspectDroppedItem(itemEntity);
+                            continue;
+                        }
+
+                        SlimefunChunkData slimefunChunk = slimefunChunks.poll();
+                        if (slimefunChunk != null) {
+                            collectSlimefunChunk(slimefunChunk);
+                            continue;
+                        }
+
+                        SlimefunUniversalData data = universalData.poll();
+                        if (data != null) {
+                            collectUniversalData(data);
+                            continue;
+                        }
+
+                        Chunk physicalChunk = physicalChunks.poll();
+                        if (physicalChunk != null) {
+                            if (physicalChunk.isLoaded()) {
+                                collectChunk(physicalChunk);
+                            }
                             continue;
                         }
 
@@ -443,10 +497,12 @@ public final class ItemDoctorService implements Listener {
             ProfileDataController controller = Slimefun.getDatabaseManager().getProfileDataController();
             controller.getBackpackForMaintenanceAsync(id).whenComplete((loadedBackpack, error) -> {
                 if (aborted || shuttingDown) {
+                    releaseMaintenanceBackpack(controller, loadedBackpack);
                     return;
                 }
-                Slimefun.runSync(() -> {
+                BukkitTask scheduled = Slimefun.runSync(() -> {
                     if (aborted || shuttingDown) {
+                        releaseMaintenanceBackpack(controller, loadedBackpack);
                         return;
                     }
                     if (error != null) {
@@ -464,12 +520,26 @@ public final class ItemDoctorService implements Listener {
                     }
                     processNextBackpack();
                 });
+                if (scheduled == null && !plugin.isEnabled()) {
+                    releaseMaintenanceBackpack(controller, loadedBackpack);
+                }
             });
+        }
+
+        private void releaseMaintenanceBackpack(
+                ProfileDataController controller,
+                @Nullable ProfileDataController.MaintenanceBackpack loadedBackpack) {
+            if (loadedBackpack != null && loadedBackpack.maintenanceOwned()) {
+                controller.releaseMaintenanceBackpack(loadedBackpack.backpack());
+            }
         }
 
         private void repairBackpack(
                 ProfileDataController controller, PlayerBackpack backpack, boolean maintenanceLoaded) {
             try {
+                if (backpack.isInvalid()) {
+                    return;
+                }
                 report.backpackScanned();
                 boolean changed = doctor.repairInventory(backpack.getInventory(), report.isRepairMode(), report);
                 if (changed) {

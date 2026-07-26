@@ -1,4 +1,5 @@
 # Table of contents
+- [Legacy Stability Release 1 (26 Jul 2026)](#legacy-stability-release-1-26-jul-2026)
 - [Release Candidate 38 (TBD)](#release-candidate-38-tbd)
 - [Release Candidate 37 (25 Feb 2024)](#release-candidate-37-25-feb-2024)
 - [Release Candidate 36 (20 Dec 2023)](#release-candidate-36-20-dec-2023)
@@ -37,6 +38,26 @@
 - [Release Candidate 3 (21 Nov 2019)](#release-candidate-3-21-nov-2019)
 - [Release Candidate 2 (29 Sep 2019)](#release-candidate-2-29-sep-2019)
 - [Release Candidate 1 (26 Sep 2019)](#release-candidate-1-26-sep-2019)
+
+
+## Legacy Stability Release 1 (26 Jul 2026)
+
+#### Additions
+* Add `/slimefun doctor` and `/sf doctor` for safe English item presentation scanning and repair.
+* Add batched coverage for online inventories, loaded storage, dropped items, machines, nested containers, and all database backpacks.
+* Add automatic repair hooks for player joins, inventory opens, chunk loads, and item pickup.
+* Add release workflow packaging, checksums, addon compatibility CI, and public API compatibility reporting.
+
+#### Changes
+* Preserve charge, limited-use counts, spawner types, Soulbound state, Knowledge Tome owners, backpack identity, and safely mapped addon values during presentation repair.
+* Enumerate and maintain database backpacks without replacing or evicting a backpack opened concurrently by a player.
+* Retain the Cargo #1223 topology/allocation optimization and profiler-accounting corrections.
+
+#### Fixes
+* Reject duplicate and re-entrant backpack open requests and clean reservations after disconnects or failures.
+* Add clean-shutdown tracking and pending-write status.
+* Isolate repeatedly failing machine tickers with a cooldown circuit breaker and administrator retry controls.
+* Skip unknown, untranslated, malformed, or ambiguous item state instead of guessing or destructively rebuilding it.
 
 ## Release Candidate 38 (TBD)
 
