@@ -11,6 +11,7 @@ import io.github.thebusybiscuit.slimefun4.implementation.items.electric.machines
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -55,6 +56,7 @@ public class IntegrationsManager {
     private boolean isClearLagInstalled = false;
     private boolean isItemsAdderInstalled = false;
     private boolean isOrebfuscatorInstalled = false;
+    private @Nullable AdvancedEnchantmentsIntegration advancedEnchantments;
 
     /**
      * This initializes the {@link IntegrationsManager}
@@ -148,6 +150,11 @@ public class IntegrationsManager {
             new OrebfuscatorIntegration(plugin).register();
             isOrebfuscatorInstalled = true;
         });
+
+        // Runtime-only integration avoids making either plugin a required dependency or creating a soft-dependency
+        // cycle when AdvancedEnchantments also detects Slimefun.
+        load("AdvancedEnchantments", integration ->
+                advancedEnchantments = new AdvancedEnchantmentsIntegration(integration));
     }
 
     /**
@@ -306,6 +313,15 @@ public class IntegrationsManager {
                 logError("mcMMO", x);
             }
         }
+    }
+
+    /**
+     * Returns the optional AdvancedEnchantments bridge.
+     *
+     * @return the bridge, or {@code null} when AdvancedEnchantments is absent or its API could not be loaded
+     */
+    public @Nullable AdvancedEnchantmentsIntegration getAdvancedEnchantments() {
+        return advancedEnchantments;
     }
 
     public boolean isPlaceholderAPIInstalled() {
