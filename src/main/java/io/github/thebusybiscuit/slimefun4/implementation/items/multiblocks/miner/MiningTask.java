@@ -252,7 +252,7 @@ class MiningTask implements Runnable {
             return;
         }
 
-        Slimefun.runSyncAt(furnace.getLocation(), this, 5L);
+        Slimefun.runSyncAt(chest.getRelative(BlockFace.DOWN).getLocation(), this, 5L);
     }
 
     /**
