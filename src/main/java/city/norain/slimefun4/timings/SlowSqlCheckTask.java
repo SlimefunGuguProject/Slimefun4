@@ -19,9 +19,9 @@ public class SlowSqlCheckTask implements Runnable {
             var entry = mapEntry.getKey();
             var startTime = mapEntry.getValue();
 
-            long elapsedTime = System.currentTimeMillis() - startTime;
+            long elapsedNanos = System.nanoTime() - startTime;
 
-            if (elapsedTime > 5000) {
+            if (elapsedNanos > 5_000_000_000L) {
                 Slimefun.logger().log(Level.WARNING, "Detected slow SQL: {0}", entry.normalize());
                 break;
             }

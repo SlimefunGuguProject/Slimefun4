@@ -2,6 +2,7 @@ package me.mrCookieSlime.Slimefun.api;
 
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
@@ -21,6 +22,7 @@ import org.bukkit.configuration.file.FileConfiguration;
  * @author creator3
  * @see BlockStorage
  */
+@SlimefunAPI
 public class BlockInfoConfig extends Config {
 
     private final Map<String, String> data;

@@ -9,11 +9,10 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.time.Duration;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
@@ -33,18 +32,17 @@ public class SQLProfiler {
     @Getter
     private volatile boolean isProfiling = false;
 
-    private final Map<TimingEntry, Long> samplingEntries = new HashMap<>();
+    private final Map<TimingEntry, Long> samplingEntries = new ConcurrentHashMap<>();
 
-    private final Map<TimingEntry, Long> entries = new HashMap<>();
+    private final Map<TimingEntry, Long> entries = new ConcurrentHashMap<>();
 
-    private final Set<CommandSender> subscribers = new HashSet<>();
+    private final Set<CommandSender> subscribers = ConcurrentHashMap.newKeySet();
 
     private long startTime = -1L;
 
     public void initSlowSqlCheck(@Nonnull Slimefun plugin) {
-        plugin.getServer()
-                .getScheduler()
-                .runTaskTimerAsynchronously(plugin, new SlowSqlCheckTask(() -> samplingEntries), 20L, 20L);
+        Slimefun.getSchedulerService()
+                .runAsyncAtFixedRate(new SlowSqlCheckTask(() -> samplingEntries), 20L, 20L);
     }
 
     public void start() {

@@ -1,5 +1,6 @@
 package me.mrCookieSlime.Slimefun.api.inventory;
 
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.utils.ChestMenuUtils;
@@ -18,6 +19,7 @@ import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.ItemStack;
 
 // This class will be deprecated, relocated and rewritten in a future version.
+@SlimefunAPI
 public abstract class BlockMenuPreset extends ChestMenu {
 
     protected final Set<Integer> occupiedSlots = new HashSet<>();
@@ -220,7 +222,7 @@ public abstract class BlockMenuPreset extends ChestMenu {
     public void newInstance(@Nonnull BlockMenu menu, @Nonnull Location l) {
         Validate.notNull(l, "Cannot create a new BlockMenu without a Location");
 
-        Slimefun.runSync(() -> {
+        Slimefun.runSyncAt(l, () -> {
             locked = true;
 
             try {

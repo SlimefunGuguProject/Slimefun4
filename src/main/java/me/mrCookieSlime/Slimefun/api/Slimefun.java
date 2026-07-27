@@ -1,5 +1,6 @@
 package me.mrCookieSlime.Slimefun.api;
 
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import org.bukkit.entity.Player;
 
@@ -13,6 +14,7 @@ import org.bukkit.entity.Player;
  * @author Poslovitch
  */
 @Deprecated
+@SlimefunAPI
 public final class Slimefun {
 
     private Slimefun() {}

@@ -5,6 +5,7 @@ import java.util.logging.Level;
 import javax.annotation.Nonnull;
 import me.mrCookieSlime.CSCoreLibPlugin.general.Inventory.ChestMenu.AdvancedMenuClickHandler;
 import me.mrCookieSlime.CSCoreLibPlugin.general.Inventory.ChestMenu.MenuClickHandler;
+import me.mrCookieSlime.Slimefun.api.inventory.BlockMenu;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -16,7 +17,6 @@ import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
-import me.mrCookieSlime.Slimefun.api.inventory.BlockMenu;
 
 /**
  * An old {@link Listener} for CS-CoreLib
@@ -47,7 +47,7 @@ public class MenuListener implements Listener {
                  * no viewer remains. This prevents an async machine tick from racing
                  * the last inventory click during close.
                  */
-                Slimefun.runSync(() -> Slimefun.getTickerTask()
+                Slimefun.runSyncAt(blockMenu.getLocation(), () -> Slimefun.getTickerTask()
                         .setInventoryViewed(blockMenu.getLocation(), blockMenu.hasViewer()));
             }
         }

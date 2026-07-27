@@ -74,16 +74,15 @@ class EnvironmentChecker {
     }
 
     static void scheduleSlimeGlueCheck(@Nonnull Slimefun sf) {
-        Bukkit.getScheduler()
-                .runTaskLater(
-                        sf,
-                        () -> {
-                            if (Bukkit.getPluginManager().getPlugin("SlimeGlue") == null) {
-                                sf.getLogger().log(Level.WARNING, "SlimeGlue (slime adhesive) is not installed, you will lack additional protection checks for some plugins!");
-                                sf.getLogger().log(Level.WARNING, "Download: https://github.com/Xzavier0722/SlimeGlue");
-                            }
-                        },
-                        300); // 15s
+        Slimefun.getSchedulerService().runLater(() -> {
+            if (Bukkit.getPluginManager().getPlugin("SlimeGlue") == null) {
+                sf.getLogger()
+                        .log(
+                                Level.WARNING,
+                                "SlimeGlue (slime adhesive) is not installed; additional protection checks for some plugins will be unavailable.");
+                sf.getLogger().log(Level.WARNING, "Download: https://github.com/Xzavier0722/SlimeGlue");
+            }
+        }, 300L); // 15s
     }
 
     private static void printBorder(@Nonnull Logger logger) {

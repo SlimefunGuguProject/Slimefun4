@@ -18,7 +18,7 @@ public class InventoryUtil {
         if (Bukkit.isPrimaryThread()) {
             p.openInventory(inventory);
         } else {
-            Slimefun.runSync(() -> p.openInventory(inventory));
+            Slimefun.runSyncFor(p, () -> p.openInventory(inventory));
         }
     }
 

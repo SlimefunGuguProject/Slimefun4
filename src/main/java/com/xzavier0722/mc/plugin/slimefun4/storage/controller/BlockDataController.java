@@ -22,6 +22,7 @@ import com.xzavier0722.mc.plugin.slimefun4.storage.util.InvSnapshot;
 import com.xzavier0722.mc.plugin.slimefun4.storage.util.InvStorageUtils;
 import com.xzavier0722.mc.plugin.slimefun4.storage.util.LocationUtils;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
+import io.github.thebusybiscuit.slimefun4.core.services.scheduling.TaskHandle;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -45,7 +46,6 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
-import org.bukkit.scheduler.BukkitTask;
 
 /**
  * 方块数据控制器
@@ -87,7 +87,7 @@ public class BlockDataController extends ADataController {
     private boolean enableDelayedSaving = false;
 
     private int delayedSecond = 0;
-    private BukkitTask looperTask;
+    private TaskHandle looperTask;
     /**
      * 区块数据加载模式
      * {@link ChunkDataLoadMode}
@@ -129,39 +129,31 @@ public class BlockDataController extends ADataController {
             case LOAD_ON_STARTUP -> loadLoadedWorlds();
         }
 
-        Bukkit.getScheduler().runTaskLater(Slimefun.instance(), this::loadUniversalRecord, 1);
+        Slimefun.getSchedulerService().runLater(this::loadUniversalRecord, 1L);
     }
 
     /**
      * 加载所有服务器已加载的世界中的数据
      */
     private void loadLoadedWorlds() {
-        Bukkit.getScheduler()
-                .runTaskLater(
-                        Slimefun.instance(),
-                        () -> {
-                            for (var world : Bukkit.getWorlds()) {
-                                loadWorld(world);
-                            }
-                        },
-                        1);
+        Slimefun.getSchedulerService().runLater(() -> {
+            for (var world : Bukkit.getWorlds()) {
+                loadWorld(world);
+            }
+        }, 1L);
     }
 
     /**
      * 加载所有服务器已加载的世界区块中的数据
      */
     private void loadLoadedChunks() {
-        Bukkit.getScheduler()
-                .runTaskLater(
-                        Slimefun.instance(),
-                        () -> {
-                            for (var world : Bukkit.getWorlds()) {
-                                for (var chunk : world.getLoadedChunks()) {
-                                    loadChunk(chunk, false, true);
-                                }
-                            }
-                        },
-                        1);
+        Slimefun.getSchedulerService().runLater(() -> {
+            for (var world : Bukkit.getWorlds()) {
+                for (var chunk : world.getLoadedChunks()) {
+                    loadChunk(chunk, false, true);
+                }
+            }
+        }, 1L);
     }
 
     /**
@@ -178,13 +170,12 @@ public class BlockDataController extends ADataController {
         }
         enableDelayedSaving = true;
         this.delayedSecond = delayedSecond;
-        looperTask = Bukkit.getScheduler()
-                .runTaskTimerAsynchronously(
-                        p,
+        looperTask = Slimefun.getSchedulerService()
+                .runAsyncAtFixedRate(
                         new DelayedSavingLooperTask(
                                 forceSavePeriod, () -> new HashMap<>(delayedWriteTasks), delayedWriteTasks::remove),
-                        20,
-                        20);
+                        20L,
+                        20L);
     }
 
     public boolean isDelayedSavingEnabled() {
@@ -1166,7 +1157,7 @@ public class BlockDataController extends ADataController {
         // loadChunk fires SlimefunChunkDataLoadEvent and touches Bukkit chunk state. Paper requires
         // that work to remain on the primary server thread, even when callers use the async API.
         CompletableFuture<SlimefunChunkData> future = new CompletableFuture<>();
-        BukkitTask task = Slimefun.runSync(() -> {
+        var task = Slimefun.runSyncAt(chunk.getBlock(0, 0, 0).getLocation(), () -> {
             try {
                 future.complete(getChunkData(chunk));
             } catch (Throwable error) {
@@ -1614,7 +1605,8 @@ public class BlockDataController extends ADataController {
 
             var universalData = createUniversalBlock(l, sfId);
 
-            Slimefun.runSync(
+            Slimefun.runSyncAt(
+                    l,
                     () -> {
                         if (Slimefun.getBlockDataService()
                                 .isTileEntity(l.getBlock().getType())) {
