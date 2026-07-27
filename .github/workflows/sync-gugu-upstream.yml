@@ -53,12 +53,30 @@ jobs:
           git remote add upstream https://github.com/SlimefunGuguProject/Slimefun4.git
           git fetch --no-tags upstream "+refs/heads/${{ steps.refs.outputs.upstream_ref }}:refs/remotes/upstream/${{ steps.refs.outputs.upstream_ref }}"
           UPSTREAM_SHA="$(git rev-parse upstream/${{ steps.refs.outputs.upstream_ref }})"
-          if git merge-base --is-ancestor "$UPSTREAM_SHA" HEAD; then
-            echo "has_updates=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "has_updates=true" >> "$GITHUB_OUTPUT"
+          MARKER_SHA=""
+          if [[ -f .gugu-upstream-base ]]; then
+            MARKER_SHA="$(tr -d '[:space:]' < .gugu-upstream-base)"
+            if [[ ! "$MARKER_SHA" =~ ^[0-9a-fA-F]{40}$ ]]; then
+              echo "Invalid .gugu-upstream-base value." >&2
+              exit 1
+            fi
+            if ! git cat-file -e "${MARKER_SHA}^{commit}" 2>/dev/null; then
+              echo "The recorded Gugu baseline is unavailable from upstream history." >&2
+              exit 1
+            fi
           fi
+
+          if git merge-base --is-ancestor "$UPSTREAM_SHA" HEAD; then
+            HAS_UPDATES=false
+          elif [[ -n "$MARKER_SHA" ]] && git merge-base --is-ancestor "$UPSTREAM_SHA" "$MARKER_SHA"; then
+            HAS_UPDATES=false
+          else
+            HAS_UPDATES=true
+          fi
+
+          echo "has_updates=$HAS_UPDATES" >> "$GITHUB_OUTPUT"
           echo "upstream_sha=$UPSTREAM_SHA" >> "$GITHUB_OUTPUT"
+          echo "integrated_sha=${MARKER_SHA:-none}" >> "$GITHUB_OUTPUT"
 
       - name: Set up Java 25
         if: steps.pending.outputs.has_updates == 'true'
@@ -122,13 +140,14 @@ jobs:
           {
             echo "Automated, history-preserving merge from \`SlimefunGuguProject/Slimefun4:${{ steps.refs.outputs.upstream_ref }}\`."
             echo
+            echo "- Previously integrated baseline: \`${{ steps.pending.outputs.integrated_sha }}\`"
             echo "- Upstream commit: \`${{ steps.pending.outputs.upstream_sha }}\`"
             echo "- The merge used Git history; it did not rsync or replace the fork tree."
             echo "- This PR remains a draft for manual review."
             echo "- Back up the Slimefun database before testing storage-schema changes."
             echo
             if [[ "$STATUS" == "0" ]]; then
-              echo "**Validation:** English guard, Part 2 invariants, API annotations, Spotless, tests, and build passed."
+              echo "**Validation:** English guard, Part 2 and Part 3 invariants, API annotations, Spotless, tests, and build passed."
             else
               echo "**Validation:** one or more checks failed. Review the workflow artifact before changing this PR from draft."
             fi

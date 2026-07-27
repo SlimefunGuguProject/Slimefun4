@@ -30,6 +30,7 @@ jobs:
         run: |
           python3 scripts/check_api_annotations.py
           python3 scripts/verify_part2.py .
+          python3 scripts/verify_part3.py .
 
       - name: Apply code formatting
         run: ./gradlew spotlessApply --no-daemon

@@ -1,0 +1,86 @@
+name: Build Third Maintenance Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Release version used in the JAR name
+        required: true
+        default: Legacy-Maintenance-3
+        type: string
+      create_release:
+        description: Create a GitHub release after all checks pass
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+jobs:
+  maintenance-release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      RELEASE_VERSION: ${{ inputs.version }}
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6
+
+      - name: Set up Java 25
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: gradle
+
+      - name: Verify release invariants
+        run: |
+          python3 scripts/verify_english.py .
+          python3 scripts/verify_chunk_load_threading.py .
+          python3 scripts/check_api_annotations.py
+          python3 scripts/verify_part2.py .
+          python3 scripts/verify_part3.py .
+
+      - name: Format and build release
+        run: |
+          chmod +x gradlew
+          ./gradlew spotlessApply --no-daemon
+          ./gradlew spotlessCheck clean build -PprojectVersion="$RELEASE_VERSION" --no-daemon
+
+      - name: Assemble release bundle
+        run: |
+          set -euo pipefail
+          mkdir -p dist source-package
+
+          JAR="$(find build/libs -maxdepth 1 -name "Slimefun-${RELEASE_VERSION}.jar" -print -quit)"
+          SOURCES="$(find build/libs -maxdepth 1 -name "Slimefun-${RELEASE_VERSION}-sources.jar" -print -quit)"
+          test -n "$JAR"
+          test -n "$SOURCES"
+
+          cp "$JAR" "$SOURCES" THIRD_MAINTENANCE_RELEASE.md PART3_VALIDATION.md dist/
+
+          rsync -a ./ source-package/ \
+            --exclude '.git/' \
+            --exclude '.gradle/' \
+            --exclude 'build/' \
+            --exclude 'dist/' \
+            --exclude 'source-package/'
+          (cd source-package && zip -qr "../dist/Slimefun-${RELEASE_VERSION}-source.zip" .)
+          (cd dist && sha256sum * > SHA256SUMS.txt)
+
+      - name: Upload release bundle
+        uses: actions/upload-artifact@v7
+        with:
+          name: Slimefun-${{ inputs.version }}
+          path: dist/*
+          if-no-files-found: error
+
+      - name: Create GitHub release
+        if: ${{ inputs.create_release }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$RELEASE_VERSION" dist/* \
+            --title "Slimefun Legacy $RELEASE_VERSION" \
+            --notes-file THIRD_MAINTENANCE_RELEASE.md

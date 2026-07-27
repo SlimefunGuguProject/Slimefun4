@@ -23,8 +23,13 @@ jobs:
           java-version: '25'
           cache: gradle
 
-      - name: Verify English-only behavior
-        run: python3 scripts/verify_english.py .
+      - name: Verify maintenance invariants
+        run: |
+          python3 scripts/verify_english.py .
+          python3 scripts/verify_chunk_load_threading.py .
+          python3 scripts/check_api_annotations.py
+          python3 scripts/verify_part2.py .
+          python3 scripts/verify_part3.py .
 
       - name: Build
         run: |
