@@ -117,7 +117,7 @@ public class SlimefunAutoCrafter extends AbstractAutoCrafter {
                     SoundEffect.AUTO_CRAFTER_UPDATE_RECIPE.playAt(b);
 
                     if (!task.isEmpty()) {
-                        task.start(menu.toInventory());
+                        task.start(menu.toInventory(), p);
                     }
                 } else {
                     Slimefun.getLocalization().sendMessage(p, "messages.auto-crafting.no-recipes");

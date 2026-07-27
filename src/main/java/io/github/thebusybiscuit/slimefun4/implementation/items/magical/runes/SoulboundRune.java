@@ -52,7 +52,7 @@ public class SoulboundRune extends SimpleSlimefunItem<ItemDropHandler> {
                     return true;
                 }
 
-                Slimefun.runSync(() -> activate(p, item), 20L);
+                Slimefun.runSyncFor(item, () -> activate(p, item), 20L);
 
                 return true;
             }
@@ -78,7 +78,8 @@ public class SoulboundRune extends SimpleSlimefunItem<ItemDropHandler> {
                 // This lightning is just an effect, it deals no damage.
                 l.getWorld().strikeLightningEffect(l);
 
-                Slimefun.runSync(
+                Slimefun.runSyncAt(
+                        l,
                         () -> {
                             // Being sure entities are still valid and not picked up or whatsoever.
                             if (rune.isValid() && item.isValid() && itemStack.getAmount() == 1) {

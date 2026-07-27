@@ -93,7 +93,8 @@ public class PressureChamber extends MultiBlockMachine {
         for (int i = 0; i < 4; i++) {
             int j = i;
 
-            Slimefun.runSync(
+            Slimefun.runSyncAt(
+                    b.getLocation(),
                     () -> {
                         SoundEffect.PRESSURE_CHAMBER_WORKING_SOUND.playAt(b);
                         p.getWorld().playEffect(b.getRelative(BlockFace.UP).getLocation(), Effect.SMOKE, 4);

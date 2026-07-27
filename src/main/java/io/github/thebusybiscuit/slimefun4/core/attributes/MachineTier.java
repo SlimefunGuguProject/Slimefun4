@@ -1,7 +1,9 @@
 package io.github.thebusybiscuit.slimefun4.core.attributes;
 
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import javax.annotation.Nonnull;
 
+@SlimefunAPI
 public enum MachineTier {
     BASIC("&eBasic"),
     AVERAGE("&6Standard"),

@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.core.attributes.interactions;
 
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import io.github.thebusybiscuit.slimefun4.core.attributes.ExternallyInteractable;
 import java.util.Collections;
 import java.util.HashSet;
@@ -10,6 +11,7 @@ import org.bukkit.inventory.ItemStack;
 /**
  * This class represents the result of an interaction on an {@link ExternallyInteractable} item.
  */
+@SlimefunAPI
 public class ItemInteractionResult extends InteractionResult {
 
     private final @Nonnull Set<ItemStack> resultItems = new HashSet<>();

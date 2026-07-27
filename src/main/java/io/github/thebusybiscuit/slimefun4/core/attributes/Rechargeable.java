@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.core.attributes;
 
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.core.networks.energy.EnergyNet;
 import io.github.thebusybiscuit.slimefun4.implementation.items.electric.gadgets.Jetpack;
@@ -24,6 +25,7 @@ import org.bukkit.inventory.meta.ItemMeta;
  * @see MultiTool
  *
  */
+@SlimefunAPI
 public interface Rechargeable extends ItemAttribute {
 
     /**

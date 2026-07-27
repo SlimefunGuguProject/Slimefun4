@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.core.attributes;
 
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.implementation.items.blocks.WitherProofBlock;
 import javax.annotation.Nonnull;
@@ -17,6 +18,7 @@ import org.bukkit.event.entity.EntityChangeBlockEvent;
  * @see WitherProofBlock
  *
  */
+@SlimefunAPI
 public interface WitherProof extends ItemAttribute {
 
     /**

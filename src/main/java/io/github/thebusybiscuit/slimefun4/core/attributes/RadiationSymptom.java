@@ -1,6 +1,7 @@
 package io.github.thebusybiscuit.slimefun4.core.attributes;
 
 import com.google.common.base.Preconditions;
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.utils.RadiationUtils;
 import io.github.thebusybiscuit.slimefun4.utils.compatibility.VersionedPotionEffectType;
@@ -21,6 +22,7 @@ import org.bukkit.potion.PotionEffectType;
  *
  * @see RadiationUtils
  */
+@SlimefunAPI
 public enum RadiationSymptom {
     SLOW(10, VersionedPotionEffectType.SLOWNESS, 3),
     WITHER_LOW(25, PotionEffectType.WITHER, 0),

@@ -19,8 +19,8 @@ import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
-import org.bukkit.World;
 import org.bukkit.World.Environment;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
@@ -109,7 +109,7 @@ public class ArmorTask implements Runnable {
             }
 
             if (item != null && armorpiece.getItem().isPresent()) {
-                Slimefun.runSync(() -> {
+                Slimefun.runSyncFor(p, () -> {
                     SlimefunArmorPiece slimefunArmor = armorpiece.getItem().get();
 
                     if (slimefunArmor.canUse(p, true)) {
@@ -172,7 +172,7 @@ public class ArmorTask implements Runnable {
                 // If the item is enabled in the world, then make radioactivity do its job
                 Slimefun.getLocalization().sendMessage(p, "messages.radiation");
 
-                Slimefun.runSync(() -> {
+                Slimefun.runSyncFor(p, () -> {
                     p.addPotionEffects(radiationEffects);
 
                     // if radioactive fire is enabled, set them on fire

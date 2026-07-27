@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.core.attributes;
 
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
 import io.github.thebusybiscuit.slimefun4.utils.SlimefunUtils;
@@ -13,6 +14,7 @@ import org.bukkit.inventory.meta.ItemMeta;
  *
  * @author Sefiraat
  */
+@SlimefunAPI
 public interface DistinctiveItem extends ItemAttribute {
 
     /**

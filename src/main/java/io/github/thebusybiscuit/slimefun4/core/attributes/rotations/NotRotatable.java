@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.core.attributes.rotations;
 
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.core.attributes.ItemAttribute;
 import org.bukkit.block.BlockFace;
@@ -11,6 +12,7 @@ import org.bukkit.block.BlockFace;
  * @author Ddggdd135
  *
  */
+@SlimefunAPI
 public interface NotRotatable extends ItemAttribute {
     default BlockFace getRotation() {
         return BlockFace.NORTH;

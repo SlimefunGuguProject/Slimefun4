@@ -7,15 +7,18 @@ import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunChunkData;
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunUniversalData;
 import com.xzavier0722.mc.plugin.slimefun4.storage.event.SlimefunChunkDataLoadEvent;
 import io.github.thebusybiscuit.slimefun4.api.player.PlayerBackpack;
+import io.github.thebusybiscuit.slimefun4.core.services.scheduling.TaskHandle;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
-import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import javax.annotation.Nonnull;
@@ -23,6 +26,7 @@ import javax.annotation.Nullable;
 import me.mrCookieSlime.Slimefun.api.inventory.BlockMenu;
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
+import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.BlockState;
 import org.bukkit.entity.Entity;
@@ -38,8 +42,6 @@ import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.scheduler.BukkitTask;
 
 /** Automatic and operator-triggered repair service for localized item metadata. */
 public final class ItemDoctorService implements Listener {
@@ -158,7 +160,7 @@ public final class ItemDoctorService implements Listener {
             return;
         }
         Player player = event.getPlayer();
-        Slimefun.runSync(() -> {
+        Slimefun.getSchedulerService().runForLater(player, () -> {
             if (player.isOnline()) {
                 repairAutomatic(automaticReport, player.getInventory(), player.getEnderChest());
             }
@@ -172,7 +174,7 @@ public final class ItemDoctorService implements Listener {
                 || !Slimefun.getCfg().getBoolean("stability.item-doctor.repair-opened-inventories")) {
             return;
         }
-        Slimefun.runSync(() -> {
+        Slimefun.getSchedulerService().runFor(event.getPlayer(), () -> {
             repairAutomatic(automaticReport, event.getInventory(), event.getPlayer().getInventory());
             try {
                 ItemStack cursor = event.getPlayer().getItemOnCursor();
@@ -195,7 +197,7 @@ public final class ItemDoctorService implements Listener {
         }
 
         Chunk chunk = event.getChunk();
-        Slimefun.runSync(() -> {
+        Slimefun.getSchedulerService().runAt(chunk.getBlock(0, 0, 0).getLocation(), () -> {
             if (!shuttingDown && chunk.isLoaded()) {
                 repairChunk(chunk, automaticReport);
             }
@@ -214,7 +216,8 @@ public final class ItemDoctorService implements Listener {
     }
 
     private void scheduleSlimefunMenuRepair(SlimefunChunkData chunkData, int attemptsRemaining) {
-        Slimefun.runSync(
+        Slimefun.getSchedulerService().runAtLater(
+                chunkData.getChunk().getBlock(0, 0, 0).getLocation(),
                 () -> {
                     if (shuttingDown || !chunkData.getChunk().isLoaded()) {
                         return;
@@ -321,16 +324,18 @@ public final class ItemDoctorService implements Listener {
     private final class ServerRun {
         private final ItemDoctorReport report;
         private final Consumer<ItemDoctorReport> completion;
-        private final Queue<InventoryTarget> inventories = new ArrayDeque<>();
-        private final Queue<Item> droppedItems = new ArrayDeque<>();
-        private final Queue<SlimefunChunkData> slimefunChunks = new ArrayDeque<>();
-        private final Queue<SlimefunUniversalData> universalData = new ArrayDeque<>();
-        private final Queue<Chunk> physicalChunks = new ArrayDeque<>();
+        private final Queue<Player> players = new ConcurrentLinkedQueue<>();
+        private final Queue<InventoryTarget> inventories = new ConcurrentLinkedQueue<>();
+        private final Queue<Item> droppedItems = new ConcurrentLinkedQueue<>();
+        private final Queue<SlimefunChunkData> slimefunChunks = new ConcurrentLinkedQueue<>();
+        private final Queue<SlimefunUniversalData> universalData = new ConcurrentLinkedQueue<>();
+        private final Queue<Chunk> physicalChunks = new ConcurrentLinkedQueue<>();
         private final Map<Inventory, InventoryTarget> inventoryTargets = new IdentityHashMap<>();
+        private final AtomicInteger pendingOwnedWork = new AtomicInteger();
         private volatile boolean inventoriesDone;
         private volatile boolean backpacksDone;
         private volatile boolean aborted;
-        private volatile BukkitTask inventoryTask;
+        private volatile TaskHandle inventoryTask;
         private Iterator<String> backpackIds = Collections.emptyIterator();
 
         private ServerRun(ItemDoctorReport report, Consumer<ItemDoctorReport> completion) {
@@ -339,10 +344,7 @@ public final class ItemDoctorService implements Listener {
         }
 
         private void collectLoadedInventories() {
-            for (Player player : Bukkit.getOnlinePlayers()) {
-                addInventory(player.getInventory(), null);
-                addInventory(player.getEnderChest(), null);
-            }
+            players.addAll(Bukkit.getOnlinePlayers());
 
             // Queue database-backed and physical storage for incremental collection. This keeps
             // the command responsive even when a server has thousands of loaded machines/chunks.
@@ -358,12 +360,12 @@ public final class ItemDoctorService implements Listener {
         private void collectChunk(Chunk chunk) {
             for (BlockState state : chunk.getTileEntities()) {
                 if (state instanceof InventoryHolder holder) {
-                    addInventory(holder.getInventory(), null);
+                    addInventory(holder.getInventory(), null, null, state.getLocation());
                 }
             }
             for (Entity entity : chunk.getEntities()) {
                 if (entity instanceof InventoryHolder holder) {
-                    addInventory(holder.getInventory(), null);
+                    addInventory(holder.getInventory(), null, entity, null);
                 } else if (entity instanceof Item itemEntity) {
                     droppedItems.add(itemEntity);
                 }
@@ -375,7 +377,11 @@ public final class ItemDoctorService implements Listener {
             for (SlimefunBlockData blockData : chunkData.getAllBlockData()) {
                 BlockMenu menu = blockData.getBlockMenu();
                 if (menu != null) {
-                    addInventory(menu.toInventory(), () -> controller.saveBlockInventory(blockData));
+                    addInventory(
+                            menu.toInventory(),
+                            () -> controller.saveBlockInventory(blockData),
+                            null,
+                            blockData.getLocation());
                 }
             }
         }
@@ -384,79 +390,187 @@ public final class ItemDoctorService implements Listener {
             var menu = data.getMenu();
             if (menu != null) {
                 BlockDataController controller = Slimefun.getDatabaseManager().getBlockDataController();
-                addInventory(menu.toInventory(), () -> controller.saveUniversalInventory(data));
+                addInventory(menu.toInventory(), () -> controller.saveUniversalInventory(data), null, null);
             }
         }
 
-        private void addInventory(Inventory inventory, @Nullable Runnable saveAction) {
+        private void addInventory(
+                Inventory inventory,
+                @Nullable Runnable saveAction,
+                @Nullable Entity ownerEntity,
+                @Nullable Location ownerLocation) {
             if (inventory == null) {
                 return;
             }
 
-            InventoryTarget existing = inventoryTargets.get(inventory);
-            if (existing != null) {
-                existing.addSaveAction(saveAction);
-                return;
-            }
+            synchronized (inventoryTargets) {
+                InventoryTarget existing = inventoryTargets.get(inventory);
+                if (existing != null) {
+                    existing.merge(saveAction, ownerEntity, ownerLocation);
+                    return;
+                }
 
-            InventoryTarget target = new InventoryTarget(inventory, saveAction);
-            inventoryTargets.put(inventory, target);
-            inventories.add(target);
+                InventoryTarget target = new InventoryTarget(inventory, saveAction, ownerEntity, ownerLocation);
+                inventoryTargets.put(inventory, target);
+                inventories.add(target);
+            }
         }
 
         private void startInventoryTask() {
             int perTick = Math.max(1, Slimefun.getCfg().getInt("stability.item-doctor.inventories-per-tick"));
-            inventoryTask = new BukkitRunnable() {
-                @Override
-                public void run() {
-                    if (aborted || shuttingDown) {
-                        cancel();
-                        return;
-                    }
-                    for (int i = 0; i < perTick; i++) {
-                        InventoryTarget target = inventories.poll();
-                        if (target != null) {
-                            inspectInventoryTarget(target);
-                            continue;
-                        }
+            inventoryTask = Slimefun.getSchedulerService()
+                    .runAtFixedRate(() -> processInventoryBatch(perTick), 1L, 1L);
+        }
 
-                        Item itemEntity = droppedItems.poll();
-                        if (itemEntity != null) {
-                            inspectDroppedItem(itemEntity);
-                            continue;
-                        }
+        private void processInventoryBatch(int perTick) {
+            if (aborted || shuttingDown) {
+                cancelInventoryTask();
+                return;
+            }
 
-                        SlimefunChunkData slimefunChunk = slimefunChunks.poll();
-                        if (slimefunChunk != null) {
-                            collectSlimefunChunk(slimefunChunk);
-                            continue;
+            for (int i = 0; i < perTick; i++) {
+                Player player = players.poll();
+                if (player != null) {
+                    dispatchFor(player, () -> {
+                        if (player.isOnline()) {
+                            addInventory(player.getInventory(), null, player, null);
+                            addInventory(player.getEnderChest(), null, player, null);
                         }
-
-                        SlimefunUniversalData data = universalData.poll();
-                        if (data != null) {
-                            collectUniversalData(data);
-                            continue;
-                        }
-
-                        Chunk physicalChunk = physicalChunks.poll();
-                        if (physicalChunk != null) {
-                            if (physicalChunk.isLoaded()) {
-                                collectChunk(physicalChunk);
-                            }
-                            continue;
-                        }
-
-                        inventoriesDone = true;
-                        cancel();
-                        finishIfReady();
-                        return;
-                    }
+                    });
+                    continue;
                 }
-            }.runTaskTimer(plugin, 1L, 1L);
+
+                InventoryTarget target = inventories.poll();
+                if (target != null) {
+                    scheduleInventoryTarget(target);
+                    continue;
+                }
+
+                Item itemEntity = droppedItems.poll();
+                if (itemEntity != null) {
+                    dispatchFor(itemEntity, () -> inspectDroppedItem(itemEntity));
+                    continue;
+                }
+
+                SlimefunChunkData slimefunChunk = slimefunChunks.poll();
+                if (slimefunChunk != null) {
+                    Location owner = slimefunChunk.getChunk().getBlock(0, 0, 0).getLocation();
+                    dispatchAt(owner, () -> collectSlimefunChunk(slimefunChunk));
+                    continue;
+                }
+
+                SlimefunUniversalData data = universalData.poll();
+                if (data != null) {
+                    dispatchGlobal(() -> collectUniversalData(data));
+                    continue;
+                }
+
+                Chunk physicalChunk = physicalChunks.poll();
+                if (physicalChunk != null) {
+                    Location owner = physicalChunk.getBlock(0, 0, 0).getLocation();
+                    dispatchAt(owner, () -> {
+                        if (physicalChunk.isLoaded()) {
+                            collectChunk(physicalChunk);
+                        }
+                    });
+                    continue;
+                }
+
+                tryFinishInventoryPhase();
+                return;
+            }
+        }
+
+        private void cancelInventoryTask() {
+            TaskHandle task = inventoryTask;
+            if (task != null) {
+                task.cancel();
+            }
+        }
+
+        private void scheduleInventoryTarget(InventoryTarget target) {
+            Entity ownerEntity = target.ownerEntity();
+            if (ownerEntity != null) {
+                dispatchFor(ownerEntity, () -> inspectInventoryTarget(target));
+                return;
+            }
+
+            Location ownerLocation = target.ownerLocation();
+            if (ownerLocation != null) {
+                dispatchAt(ownerLocation, () -> inspectInventoryTarget(target));
+                return;
+            }
+
+            dispatchGlobal(() -> inspectInventoryTarget(target));
+        }
+
+        private void dispatchGlobal(Runnable work) {
+            dispatchOwnedWork(work, (task, retired) -> Slimefun.getSchedulerService().run(task));
+        }
+
+        private void dispatchAt(Location location, Runnable work) {
+            dispatchOwnedWork(
+                    work,
+                    (task, retired) -> Slimefun.getSchedulerService().runAt(location, task));
+        }
+
+        private void dispatchFor(Entity entity, Runnable work) {
+            dispatchOwnedWork(
+                    work,
+                    (task, retired) -> Slimefun.getSchedulerService().runFor(entity, task, retired));
+        }
+
+        private void dispatchOwnedWork(
+                Runnable work, BiFunction<Runnable, Runnable, TaskHandle> scheduler) {
+            pendingOwnedWork.incrementAndGet();
+            AtomicBoolean completed = new AtomicBoolean();
+            Runnable completion = () -> {
+                if (completed.compareAndSet(false, true)) {
+                    pendingOwnedWork.decrementAndGet();
+                }
+            };
+            Runnable trackedWork = () -> {
+                try {
+                    if (!aborted && !shuttingDown) {
+                        work.run();
+                    }
+                } finally {
+                    completion.run();
+                }
+            };
+
+            try {
+                TaskHandle scheduled = scheduler.apply(trackedWork, completion);
+                if (scheduled.isCancelled()) {
+                    completion.run();
+                }
+            } catch (RuntimeException | LinkageError ex) {
+                completion.run();
+                report.failure();
+                plugin.getLogger().log(Level.WARNING, "Item doctor could not dispatch owned work.", ex);
+            }
+        }
+
+        private void tryFinishInventoryPhase() {
+            if (pendingOwnedWork.get() != 0
+                    || !players.isEmpty()
+                    || !inventories.isEmpty()
+                    || !droppedItems.isEmpty()
+                    || !slimefunChunks.isEmpty()
+                    || !universalData.isEmpty()
+                    || !physicalChunks.isEmpty()) {
+                return;
+            }
+
+            inventoriesDone = true;
+            cancelInventoryTask();
+            finishIfReady();
         }
 
         private void inspectInventoryTarget(InventoryTarget target) {
-            inventoryTargets.remove(target.inventory());
+            synchronized (inventoryTargets) {
+                inventoryTargets.remove(target.inventory());
+            }
             try {
                 boolean changed = doctor.repairInventory(target.inventory(), report.isRepairMode(), report);
                 if (changed && target.saveAction() != null) {
@@ -489,7 +603,7 @@ public final class ItemDoctorService implements Listener {
                 if (aborted || shuttingDown) {
                     return;
                 }
-                Slimefun.runSync(() -> {
+                Slimefun.getSchedulerService().run(() -> {
                     if (aborted || shuttingDown) {
                         return;
                     }
@@ -528,7 +642,7 @@ public final class ItemDoctorService implements Listener {
                     releaseMaintenanceBackpack(controller, loadedBackpack);
                     return;
                 }
-                BukkitTask scheduled = Slimefun.runSync(() -> {
+                TaskHandle scheduled = Slimefun.getSchedulerService().run(() -> {
                     if (aborted || shuttingDown) {
                         releaseMaintenanceBackpack(controller, loadedBackpack);
                         return;
@@ -548,7 +662,7 @@ public final class ItemDoctorService implements Listener {
                     }
                     processNextBackpack();
                 });
-                if (scheduled == null && !plugin.isEnabled()) {
+                if (scheduled.isCancelled() && !plugin.isEnabled()) {
                     releaseMaintenanceBackpack(controller, loadedBackpack);
                 }
             });
@@ -592,10 +706,7 @@ public final class ItemDoctorService implements Listener {
             }
 
             aborted = true;
-            BukkitTask task = inventoryTask;
-            if (task != null) {
-                task.cancel();
-            }
+            cancelInventoryTask();
             if (!report.isComplete()) {
                 report.markComplete();
             }
@@ -645,11 +756,19 @@ public final class ItemDoctorService implements Listener {
 
     private static final class InventoryTarget {
         private final Inventory inventory;
-        private Runnable saveAction;
+        private volatile Runnable saveAction;
+        private volatile Entity ownerEntity;
+        private volatile Location ownerLocation;
 
-        private InventoryTarget(Inventory inventory, @Nullable Runnable saveAction) {
+        private InventoryTarget(
+                Inventory inventory,
+                @Nullable Runnable saveAction,
+                @Nullable Entity ownerEntity,
+                @Nullable Location ownerLocation) {
             this.inventory = inventory;
             this.saveAction = saveAction;
+            this.ownerEntity = ownerEntity;
+            this.ownerLocation = ownerLocation;
         }
 
         private Inventory inventory() {
@@ -660,18 +779,35 @@ public final class ItemDoctorService implements Listener {
             return saveAction;
         }
 
-        private void addSaveAction(@Nullable Runnable additionalAction) {
-            if (additionalAction == null || additionalAction == saveAction) {
-                return;
+        private @Nullable Entity ownerEntity() {
+            return ownerEntity;
+        }
+
+        private @Nullable Location ownerLocation() {
+            return ownerLocation;
+        }
+
+        private synchronized void merge(
+                @Nullable Runnable additionalAction,
+                @Nullable Entity additionalEntity,
+                @Nullable Location additionalLocation) {
+            if (additionalAction != null && additionalAction != saveAction) {
+                if (saveAction == null) {
+                    saveAction = additionalAction;
+                } else {
+                    Runnable previousAction = saveAction;
+                    saveAction = () -> {
+                        previousAction.run();
+                        additionalAction.run();
+                    };
+                }
             }
-            if (saveAction == null) {
-                saveAction = additionalAction;
-            } else {
-                Runnable previousAction = saveAction;
-                saveAction = () -> {
-                    previousAction.run();
-                    additionalAction.run();
-                };
+
+            if (ownerEntity == null && additionalEntity != null) {
+                ownerEntity = additionalEntity;
+                ownerLocation = null;
+            } else if (ownerEntity == null && ownerLocation == null && additionalLocation != null) {
+                ownerLocation = additionalLocation;
             }
         }
     }

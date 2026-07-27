@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.core.attributes;
 
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import io.github.thebusybiscuit.slimefun4.implementation.items.armor.HazmatArmorPiece;
 import io.github.thebusybiscuit.slimefun4.implementation.items.armor.SlimefunArmorPiece;
 import javax.annotation.Nonnull;
@@ -20,6 +21,7 @@ import org.bukkit.entity.Player;
  * @see HazmatArmorPiece
  * @see ItemAttribute
  */
+@SlimefunAPI
 public interface ProtectiveArmor extends ItemAttribute {
 
     /**

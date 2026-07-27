@@ -1,6 +1,7 @@
 package io.github.thebusybiscuit.slimefun4.core.attributes;
 
 import io.github.bakedlibs.dough.common.ChatColors;
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import io.github.thebusybiscuit.slimefun4.core.services.holograms.HologramsService;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.implementation.items.blocks.HologramProjector;
@@ -20,6 +21,7 @@ import org.bukkit.util.Vector;
  * @see HologramsService
  *
  */
+@SlimefunAPI
 public interface HologramOwner extends ItemAttribute {
 
     /**
@@ -45,7 +47,7 @@ public interface HologramOwner extends ItemAttribute {
             return;
         }
 
-        Slimefun.runSync(() -> {
+        Slimefun.runSyncAt(b.getLocation(), () -> {
             if (abort.get()) {
                 return;
             }

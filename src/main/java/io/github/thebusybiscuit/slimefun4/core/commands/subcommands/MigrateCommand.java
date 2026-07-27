@@ -8,9 +8,9 @@ import io.github.thebusybiscuit.slimefun4.core.commands.SubCommand;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import java.util.logging.Level;
 import javax.annotation.Nonnull;
-import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
+import org.bukkit.entity.Entity;
 
 public class MigrateCommand extends SubCommand {
     MigrateCommand(Slimefun plugin, SlimefunCommand cmd) {
@@ -29,22 +29,28 @@ public class MigrateCommand extends SubCommand {
             if (args.length > 1 && args[1].equalsIgnoreCase("confirm")) {
                 Slimefun.getLocalization().sendMessage(sender, "commands.migrate.started", true);
 
-                Bukkit.getScheduler().runTaskAsynchronously(Slimefun.instance(), () -> {
+                Slimefun.getSchedulerService().runAsync(() -> {
                     try {
                         var status = PlayerProfileMigrator.getInstance().migrateData();
-                        sendMigrateStatus("playerdata", sender, status);
+                        runForSender(sender, () -> sendMigrateStatus("playerdata", sender, status));
                     } catch (Exception e) {
-                        Slimefun.getLocalization().sendMessage(sender, "commands.migrate.failed", true);
+                        runForSender(
+                                sender,
+                                () -> Slimefun.getLocalization()
+                                        .sendMessage(sender, "commands.migrate.failed", true));
                         plugin.getLogger().log(Level.WARNING, "An unexpected error occurred while migrating data", e);
                     }
                 });
 
-                Bukkit.getScheduler().runTaskAsynchronously(Slimefun.instance(), () -> {
+                Slimefun.getSchedulerService().runAsync(() -> {
                     try {
                         var status = BlockStorageMigrator.getInstance().migrateData();
-                        sendMigrateStatus("blockdata", sender, status);
+                        runForSender(sender, () -> sendMigrateStatus("blockdata", sender, status));
                     } catch (Exception e) {
-                        Slimefun.getLocalization().sendMessage(sender, "commands.migrate.failed", true);
+                        runForSender(
+                                sender,
+                                () -> Slimefun.getLocalization()
+                                        .sendMessage(sender, "commands.migrate.failed", true));
                         plugin.getLogger().log(Level.WARNING, "An unexpected error occurred while migrating data", e);
                     }
                 });
@@ -53,6 +59,14 @@ public class MigrateCommand extends SubCommand {
             }
         } else {
             Slimefun.getLocalization().sendMessage(sender, "messages.no-permission", true);
+        }
+    }
+
+    private void runForSender(@Nonnull CommandSender sender, @Nonnull Runnable task) {
+        if (sender instanceof Entity entity) {
+            Slimefun.getSchedulerService().runFor(entity, task);
+        } else {
+            Slimefun.getSchedulerService().run(task);
         }
     }
 

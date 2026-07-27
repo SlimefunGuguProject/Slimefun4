@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.core.attributes;
 
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.core.machines.MachineOperation;
 import io.github.thebusybiscuit.slimefun4.core.machines.MachineProcessor;
@@ -15,6 +16,7 @@ import javax.annotation.Nonnull;
  * @param <T>
  *            The type of {@link MachineOperation} the {@link MachineProcessor} should hold.
  */
+@SlimefunAPI
 public interface MachineProcessHolder<T extends MachineOperation> extends ItemAttribute {
 
     /**

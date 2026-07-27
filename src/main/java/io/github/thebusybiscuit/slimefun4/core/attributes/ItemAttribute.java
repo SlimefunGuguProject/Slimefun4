@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.core.attributes;
 
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemHandler;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import javax.annotation.Nonnull;
@@ -16,6 +17,7 @@ import javax.annotation.Nonnull;
  * @see ItemHandler
  *
  */
+@SlimefunAPI
 public interface ItemAttribute {
 
     /**

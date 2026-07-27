@@ -68,7 +68,7 @@ public final class SlimefunGuide {
 
     @ParametersAreNonnullByDefault
     private static void openMainMenuAsync(Player player, SlimefunGuideMode mode, int selectedPage) {
-        if (!PlayerProfile.get(player, profile -> Slimefun.runSync(() -> openMainMenu(profile, mode, selectedPage)))) {
+        if (!PlayerProfile.get(player, profile -> Slimefun.runSyncFor(player, () -> openMainMenu(profile, mode, selectedPage)))) {
             Slimefun.getLocalization().sendMessage(player, "messages.opening-guide");
         }
     }

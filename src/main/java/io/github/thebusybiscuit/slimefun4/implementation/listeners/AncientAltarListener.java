@@ -17,12 +17,13 @@ import io.github.thebusybiscuit.slimefun4.implementation.tasks.AncientAltarTask;
 import io.github.thebusybiscuit.slimefun4.utils.SlimefunUtils;
 import io.github.thebusybiscuit.slimefun4.utils.itemstack.ItemStackWrapper;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
 import org.bukkit.GameMode;
@@ -54,10 +55,10 @@ public class AncientAltarListener implements Listener {
     private AncientAltar altarItem;
     private AncientPedestal pedestalItem;
 
-    private final Set<Location> altarsInUse = new HashSet<>();
+    private final Set<Location> altarsInUse = ConcurrentHashMap.newKeySet();
 
-    private final List<Block> altars = new ArrayList<>();
-    private final Set<UUID> removedItems = new HashSet<>();
+    private final List<Block> altars = new CopyOnWriteArrayList<>();
+    private final Set<UUID> removedItems = ConcurrentHashMap.newKeySet();
 
     @ParametersAreNonnullByDefault
     public AncientAltarListener(Slimefun plugin, AncientAltar altar, AncientPedestal pedestal) {
@@ -239,7 +240,7 @@ public class AncientAltarListener implements Listener {
 
                 AncientAltarTask task =
                         new AncientAltarTask(this, b, altarItem.getStepDelay(), result.get(), pedestals, consumed, p);
-                Slimefun.runSync(task, 10L);
+                Slimefun.runSyncAt(b.getLocation(), task, 10L);
             } else {
                 altars.remove(b);
 

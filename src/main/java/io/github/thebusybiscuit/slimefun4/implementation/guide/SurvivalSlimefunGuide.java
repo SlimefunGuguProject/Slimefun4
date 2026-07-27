@@ -37,8 +37,8 @@ import java.util.Optional;
 import java.util.logging.Level;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
-import me.mrCookieSlime.CSCoreLibPlugin.general.Inventory.ChestMenu;
 import me.mrCookieSlime.CSCoreLibPlugin.general.Inventory.ChestMenu.MenuClickHandler;
+import me.mrCookieSlime.CSCoreLibPlugin.general.Inventory.ChestMenu;
 import org.apache.commons.lang.Validate;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -48,8 +48,8 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.Recipe;
-import org.bukkit.inventory.RecipeChoice;
 import org.bukkit.inventory.RecipeChoice.MaterialChoice;
+import org.bukkit.inventory.RecipeChoice;
 
 /**
  * The {@link SurvivalSlimefunGuide} is the standard version of our {@link SlimefunGuide}.
@@ -537,7 +537,7 @@ public class SurvivalSlimefunGuide implements SlimefunGuideImplementation {
         menu.open(p);
 
         if (!task.isEmpty()) {
-            task.start(menu.toInventory());
+            task.start(menu.toInventory(), p);
         }
     }
 
@@ -612,7 +612,7 @@ public class SurvivalSlimefunGuide implements SlimefunGuideImplementation {
         menu.open(p);
 
         if (!task.isEmpty()) {
-            task.start(menu.toInventory());
+            task.start(menu.toInventory(), p);
         }
     }
 

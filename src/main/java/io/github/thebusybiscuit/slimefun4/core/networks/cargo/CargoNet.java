@@ -148,7 +148,7 @@ public class CargoNet extends AbstractItemNetwork implements HologramOwner {
                 display();
             }
 
-            Slimefun.runSync(() -> {
+            Slimefun.runSyncAt(b.getLocation(), () -> {
                 if (blockData.isPendingRemove()) {
                     return;
                 }

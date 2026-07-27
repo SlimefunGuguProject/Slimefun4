@@ -119,7 +119,7 @@ public class VanillaAutoCrafter extends AbstractAutoCrafter implements NotDiagon
             offerRecipe(p, b, recipes, 0, menu, task);
 
             menu.open(p);
-            task.start(menu.toInventory());
+            task.start(menu.toInventory(), p);
             SoundEffect.VANILLA_AUTO_CRAFTER_UPDATE_RECIPE_SOUND.playAt(p.getLocation(), SoundCategory.PLAYERS);
         }
     }

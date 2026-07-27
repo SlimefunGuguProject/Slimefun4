@@ -15,11 +15,11 @@ import io.github.thebusybiscuit.slimefun4.implementation.items.SimpleSlimefunIte
 import io.github.thebusybiscuit.slimefun4.utils.ChatUtils;
 import io.github.thebusybiscuit.slimefun4.utils.ChestMenuUtils;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -57,7 +57,7 @@ public class ElevatorPlate extends SimpleSlimefunItem<BlockUseHandler> {
      * This is our {@link Set} of currently teleporting {@link Player Players}.
      * It is used to prevent them from triggering the {@link ElevatorPlate} they land on.
      */
-    private final Set<UUID> users = new HashSet<>();
+    private final Set<UUID> users = ConcurrentHashMap.newKeySet();
 
     @ParametersAreNonnullByDefault
     public ElevatorPlate(
@@ -235,7 +235,7 @@ public class ElevatorPlate extends SimpleSlimefunItem<BlockUseHandler> {
 
     @ParametersAreNonnullByDefault
     private void teleport(Player player, ElevatorFloor floor) {
-        Slimefun.runSync(() -> {
+        Slimefun.runSyncFor(player, () -> {
             users.add(player.getUniqueId());
 
             float yaw = player.getEyeLocation().getYaw() + 180;
@@ -255,7 +255,10 @@ public class ElevatorPlate extends SimpleSlimefunItem<BlockUseHandler> {
 
             player.teleportAsync(destination).thenAccept(teleported -> {
                 if (teleported.booleanValue()) {
-                    player.sendTitle(ChatColor.WHITE + ChatColors.color(floor.getName()), null, 20, 60, 20);
+                    Slimefun.runSyncFor(
+                            player,
+                            () -> player.sendTitle(
+                                    ChatColor.WHITE + ChatColors.color(floor.getName()), null, 20, 60, 20));
                 }
             });
         });

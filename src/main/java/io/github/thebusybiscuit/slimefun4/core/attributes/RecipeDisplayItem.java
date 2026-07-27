@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.core.attributes;
 
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.core.guide.SlimefunGuide;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
@@ -26,6 +27,7 @@ import org.bukkit.inventory.ItemStack;
  * @see AGenerator
  *
  */
+@SlimefunAPI
 public interface RecipeDisplayItem extends ItemAttribute {
 
     /**

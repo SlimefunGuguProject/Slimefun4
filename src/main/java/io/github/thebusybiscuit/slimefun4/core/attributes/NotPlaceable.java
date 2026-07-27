@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.core.attributes;
 
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import org.bukkit.block.Block;
 import org.bukkit.event.block.BlockPlaceEvent;
@@ -15,4 +16,5 @@ import org.bukkit.event.block.BlockPlaceEvent;
  * @author TheBusyBiscuit
  *
  */
+@SlimefunAPI
 public interface NotPlaceable extends ItemAttribute {}

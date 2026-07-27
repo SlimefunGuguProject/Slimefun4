@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.core.attributes;
 
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.api.recipes.RecipeType;
 import io.github.thebusybiscuit.slimefun4.implementation.listeners.entity.PiglinListener;
@@ -16,6 +17,7 @@ import org.bukkit.event.entity.EntityDropItemEvent;
  * @see RandomMobDrop
  *
  */
+@SlimefunAPI
 public interface PiglinBarterDrop extends ItemAttribute {
 
     /**

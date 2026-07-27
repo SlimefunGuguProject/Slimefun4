@@ -23,15 +23,21 @@ public abstract class AbstractArmorTask implements Runnable {
 
     @Override
     public final void run() {
-        for (Player p : Bukkit.getOnlinePlayers()) {
-            if (!p.isValid() || p.isDead()) {
-                continue;
-            }
+        onTick();
 
-            PlayerProfile.get(p, profile -> onPlayerTick(p, profile));
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            Slimefun.getSchedulerService().runFor(player, () -> tickPlayer(player));
+        }
+    }
+
+    private void tickPlayer(Player player) {
+        if (!player.isValid() || player.isDead()) {
+            return;
         }
 
-        onTick();
+        PlayerProfile.find(player).ifPresentOrElse(
+                profile -> onPlayerTick(player, profile),
+                () -> PlayerProfile.request(player));
     }
 
     /**
@@ -54,7 +60,7 @@ public abstract class AbstractArmorTask implements Runnable {
                             new Object[] {getClass().getSimpleName(), tickInterval});
         }
 
-        plugin.getServer().getScheduler().runTaskTimerAsynchronously(plugin, this, 0L, tickInterval);
+        Slimefun.getSchedulerService().runAtFixedRate(this, 0L, tickInterval);
     }
 
     /**

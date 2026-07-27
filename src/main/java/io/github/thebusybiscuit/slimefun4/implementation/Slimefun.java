@@ -101,6 +101,7 @@ import io.github.thebusybiscuit.slimefun4.implementation.listeners.entity.MobDro
 import io.github.thebusybiscuit.slimefun4.implementation.listeners.entity.PiglinListener;
 import io.github.thebusybiscuit.slimefun4.implementation.listeners.entity.WitherListener;
 import io.github.thebusybiscuit.slimefun4.implementation.resources.GEOResourcesSetup;
+import io.github.thebusybiscuit.slimefun4.implementation.scheduling.LegacyBukkitTask;
 import io.github.thebusybiscuit.slimefun4.implementation.scheduling.PaperScheduler;
 import io.github.thebusybiscuit.slimefun4.implementation.setup.PostSetup;
 import io.github.thebusybiscuit.slimefun4.implementation.setup.ResearchSetup;
@@ -131,9 +132,11 @@ import me.mrCookieSlime.CSCoreLibPlugin.general.Inventory.MenuListener;
 import net.guizhanss.slimefun4.updater.AutoUpdateTask;
 import org.apache.commons.lang.Validate;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.Server;
 import org.bukkit.World;
 import org.bukkit.command.Command;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.inventory.Recipe;
@@ -449,7 +452,7 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
 
         if (cfgManager.isAutoUpdate()) {
             // Community fork auto-update
-            Bukkit.getScheduler().runTask(this, new AutoUpdateTask(this, getFile()));
+            schedulerService.run(new AutoUpdateTask(this, getFile()));
         }
 
         // Hooray!
@@ -1179,7 +1182,103 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
             return null;
         }
 
-        return instance.getServer().getScheduler().runTaskLater(instance, runnable, delay);
+        return new LegacyBukkitTask(instance, instance.schedulerService.runLater(runnable, delay), true);
+    }
+
+    /**
+     * Schedules a location-owned task while preserving the historical {@link BukkitTask} handle shape.
+     *
+     * @param location the location whose region owns the work
+     * @param runnable the work to run
+     * @param delay the delay in ticks
+     * @return the adapted task handle, or {@code null} when Slimefun is disabled
+     */
+    public static @Nullable BukkitTask runSyncAt(
+            @Nonnull Location location, @Nonnull Runnable runnable, long delay) {
+        Validate.notNull(location, "Location cannot be null");
+        Validate.notNull(runnable, "Cannot run null");
+        Validate.isTrue(delay >= 0, "The delay cannot be negative");
+
+        if (getMinecraftVersion() == MinecraftVersion.UNIT_TEST) {
+            runnable.run();
+            return null;
+        }
+
+        if (instance == null || !instance.isEnabled()) {
+            return null;
+        }
+
+        return new LegacyBukkitTask(instance, instance.schedulerService.runAtLater(location, runnable, delay), true);
+    }
+
+    /**
+     * Schedules a location-owned task without a delay.
+     *
+     * @param location the location whose region owns the work
+     * @param runnable the work to run
+     * @return the adapted task handle, or {@code null} when Slimefun is disabled
+     */
+    public static @Nullable BukkitTask runSyncAt(@Nonnull Location location, @Nonnull Runnable runnable) {
+        return runSyncAt(location, runnable, 0L);
+    }
+
+    /**
+     * Schedules an entity-owned task while preserving the historical {@link BukkitTask} handle shape.
+     *
+     * @param entity the entity whose scheduler owns the work
+     * @param runnable the work to run
+     * @param delay the delay in ticks
+     * @return the adapted task handle, or {@code null} when Slimefun is disabled
+     */
+    public static @Nullable BukkitTask runSyncFor(
+            @Nonnull Entity entity, @Nonnull Runnable runnable, long delay) {
+        return runSyncFor(entity, runnable, () -> {}, delay);
+    }
+
+    /**
+     * Schedules entity-owned work and provides cleanup when the entity retires before execution.
+     *
+     * @param entity the entity whose scheduler owns the work
+     * @param runnable the work to run
+     * @param retired cleanup to run if the entity retires before the work executes
+     * @param delay the delay in ticks
+     * @return the adapted task handle, or {@code null} when Slimefun is disabled
+     */
+    public static @Nullable BukkitTask runSyncFor(
+            @Nonnull Entity entity,
+            @Nonnull Runnable runnable,
+            @Nonnull Runnable retired,
+            long delay) {
+        Validate.notNull(entity, "Entity cannot be null");
+        Validate.notNull(runnable, "Cannot run null");
+        Validate.notNull(retired, "Retired callback cannot be null");
+        Validate.isTrue(delay >= 0, "The delay cannot be negative");
+
+        if (getMinecraftVersion() == MinecraftVersion.UNIT_TEST) {
+            runnable.run();
+            return null;
+        }
+
+        if (instance == null || !instance.isEnabled()) {
+            retired.run();
+            return null;
+        }
+
+        return new LegacyBukkitTask(
+                instance,
+                instance.schedulerService.runForLater(entity, runnable, retired, delay),
+                true);
+    }
+
+    /**
+     * Schedules an entity-owned task without a delay.
+     *
+     * @param entity the entity whose scheduler owns the work
+     * @param runnable the work to run
+     * @return the adapted task handle, or {@code null} when Slimefun is disabled
+     */
+    public static @Nullable BukkitTask runSyncFor(@Nonnull Entity entity, @Nonnull Runnable runnable) {
+        return runSyncFor(entity, runnable, 0L);
     }
 
     /**
@@ -1207,7 +1306,7 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
             return null;
         }
 
-        return instance.getServer().getScheduler().runTask(instance, runnable);
+        return new LegacyBukkitTask(instance, instance.schedulerService.run(runnable), true);
     }
 
     @Nonnull

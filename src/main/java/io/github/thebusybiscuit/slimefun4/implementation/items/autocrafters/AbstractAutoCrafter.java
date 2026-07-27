@@ -448,7 +448,7 @@ public abstract class AbstractAutoCrafter extends SlimefunItem implements Energy
 
         // Only schedule the task if necessary
         if (!task.isEmpty()) {
-            task.start(menu.toInventory());
+            task.start(menu.toInventory(), p);
         }
     }
 

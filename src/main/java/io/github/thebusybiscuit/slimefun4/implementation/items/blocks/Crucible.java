@@ -179,7 +179,7 @@ public class Crucible extends SimpleSlimefunItem<BlockUseHandler> implements Rec
             block.setType(level == 0 || level == 8 ? Material.OBSIDIAN : Material.STONE);
             SoundEffect.CRUCIBLE_GENERATE_LIQUID_SOUND.playAt(block);
         } else {
-            Slimefun.runSync(() -> placeLiquid(block, isWater), 50L);
+            Slimefun.runSyncAt(block.getLocation(), () -> placeLiquid(block, isWater), 50L);
         }
     }
 
@@ -191,11 +191,12 @@ public class Crucible extends SimpleSlimefunItem<BlockUseHandler> implements Rec
         }
 
         if (level == 0) {
-            Slimefun.runSync(() -> runPostTask(
+            Slimefun.runSyncAt(block.getLocation(), () -> runPostTask(
                     block, water ? SoundEffect.CRUCIBLE_ADD_WATER_SOUND : SoundEffect.CRUCIBLE_ADD_LAVA_SOUND, 1));
         } else {
             int finalLevel = 7 - level;
-            Slimefun.runSync(
+            Slimefun.runSyncAt(
+                    block.getLocation(),
                     () -> runPostTask(
                             block,
                             water ? SoundEffect.CRUCIBLE_ADD_WATER_SOUND : SoundEffect.CRUCIBLE_ADD_LAVA_SOUND,
@@ -232,7 +233,7 @@ public class Crucible extends SimpleSlimefunItem<BlockUseHandler> implements Rec
         block.setBlockData(le, false);
 
         if (times < 8) {
-            Slimefun.runSync(() -> runPostTask(block, sound, times + 1), 50L);
+            Slimefun.runSyncAt(block.getLocation(), () -> runPostTask(block, sound, times + 1), 50L);
         } else {
             SoundEffect.CRUCIBLE_INTERACT_SOUND.playAt(block);
         }

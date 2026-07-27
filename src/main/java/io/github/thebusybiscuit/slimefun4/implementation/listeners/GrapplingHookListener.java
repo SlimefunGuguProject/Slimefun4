@@ -3,11 +3,10 @@ package io.github.thebusybiscuit.slimefun4.implementation.listeners;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.implementation.items.tools.GrapplingHook;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -18,8 +17,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityPortalEnterEvent;
 import org.bukkit.event.entity.EntityUnleashEvent;
 import org.bukkit.event.entity.PlayerLeashEntityEvent;
@@ -44,8 +43,8 @@ public class GrapplingHookListener implements Listener {
 
     private GrapplingHook grapplingHook;
 
-    private final Map<UUID, GrapplingHookEntity> activeHooks = new HashMap<>();
-    private final Set<UUID> invulnerability = new HashSet<>();
+    private final Map<UUID, GrapplingHookEntity> activeHooks = new ConcurrentHashMap<>();
+    private final Set<UUID> invulnerability = ConcurrentHashMap.newKeySet();
 
     public void register(@Nonnull Slimefun plugin, @Nonnull GrapplingHook grapplingHook) {
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
@@ -70,7 +69,9 @@ public class GrapplingHookListener implements Listener {
             return;
         }
 
-        Slimefun.runSync(
+        Location impactLocation = e.getEntity().getLocation();
+        Slimefun.runSyncAt(
+                impactLocation,
                 () -> {
                     if (e.getEntity() instanceof Arrow arrow) {
                         handleGrapplingHook(arrow);
@@ -100,9 +101,7 @@ public class GrapplingHookListener implements Listener {
             return;
         }
 
-        UUID uuid = e.getPlayer().getUniqueId();
-        activeHooks.remove(uuid);
-        invulnerability.remove(uuid);
+        removeHook(e.getPlayer());
     }
 
     @EventHandler
@@ -111,9 +110,7 @@ public class GrapplingHookListener implements Listener {
             return;
         }
 
-        UUID uuid = e.getPlayer().getUniqueId();
-        activeHooks.remove(uuid);
-        invulnerability.remove(uuid);
+        removeHook(e.getPlayer());
     }
 
     @EventHandler
@@ -212,6 +209,15 @@ public class GrapplingHookListener implements Listener {
         }
     }
 
+    private void removeHook(@Nonnull Player player) {
+        UUID uuid = player.getUniqueId();
+        GrapplingHookEntity hook = activeHooks.remove(uuid);
+        if (hook != null) {
+            hook.remove();
+        }
+        invulnerability.remove(uuid);
+    }
+
     public boolean isGrappling(@Nonnull UUID uuid) {
         return activeHooks.containsKey(uuid);
     }
@@ -225,20 +231,18 @@ public class GrapplingHookListener implements Listener {
         activeHooks.put(uuid, hook);
 
         // To fix issue #253
-        Slimefun.runSync(
+        Slimefun.runSyncFor(
+                p,
                 () -> {
                     GrapplingHookEntity entity = activeHooks.get(uuid);
 
                     if (entity != null) {
                         Slimefun.getBowListener().getProjectileData().remove(uuid);
                         entity.remove();
+                        activeHooks.remove(uuid, entity);
 
-                        Slimefun.runSync(
-                                () -> {
-                                    activeHooks.remove(uuid);
-                                    invulnerability.remove(uuid);
-                                },
-                                20L);
+                        // This delayed state cleanup does not touch Bukkit world state.
+                        Slimefun.runSync(() -> invulnerability.remove(uuid), 20L);
                     }
                 },
                 despawnTicks);

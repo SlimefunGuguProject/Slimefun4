@@ -10,6 +10,7 @@ import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
@@ -42,24 +43,30 @@ public class ButcherAndroidListener implements Listener {
             AndroidInstance obj = (AndroidInstance)
                     e.getEntity().getMetadata(METADATA_KEY).get(0).value();
 
-            Slimefun.runSync(
+            Location deathLocation = e.getEntity().getLocation();
+            EntityType entityType = e.getEntityType();
+
+            Slimefun.runSyncAt(
+                    deathLocation,
                     () -> {
                         List<ItemStack> items = new ArrayList<>();
 
-                        // Collect any nearby dropped items
-                        for (Entity n : e.getEntity().getNearbyEntities(0.5D, 0.5D, 0.5D)) {
-                            if (n instanceof Item item && n.isValid() && !SlimefunUtils.hasNoPickupFlag(item)) {
+                        // Collect any nearby dropped items from the region that owns the death location.
+                        for (Entity nearby : deathLocation.getWorld().getNearbyEntities(deathLocation, 0.5D, 0.5D, 0.5D)) {
+                            if (nearby instanceof Item item
+                                    && nearby.isValid()
+                                    && !SlimefunUtils.hasNoPickupFlag(item)) {
                                 items.add(item.getItemStack());
-                                n.remove();
+                                nearby.remove();
                             }
                         }
 
-                        addExtraDrops(items, e.getEntityType());
+                        addExtraDrops(items, entityType);
 
                         obj.getAndroid().addItems(obj.getBlock(), items.toArray(new ItemStack[0]));
-                        ExperienceOrb exp = (ExperienceOrb) e.getEntity()
+                        ExperienceOrb exp = (ExperienceOrb) deathLocation
                                 .getWorld()
-                                .spawnEntity(e.getEntity().getLocation(), EntityType.EXPERIENCE_ORB);
+                                .spawnEntity(deathLocation, EntityType.EXPERIENCE_ORB);
                         exp.setExperience(1 + ThreadLocalRandom.current().nextInt(6));
                     },
                     1L);

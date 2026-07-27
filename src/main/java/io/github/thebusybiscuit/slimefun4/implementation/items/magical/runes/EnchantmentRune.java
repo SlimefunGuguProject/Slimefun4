@@ -81,7 +81,8 @@ public class EnchantmentRune extends SimpleSlimefunItem<ItemDropHandler> {
         return (e, p, item) -> {
             if (isItem(item.getItemStack())) {
                 if (canUse(p, true)) {
-                    Slimefun.runSync(
+                    Slimefun.runSyncFor(
+                            item,
                             () -> {
                                 try {
                                     addRandomEnchantment(p, item);
@@ -150,7 +151,8 @@ public class EnchantmentRune extends SimpleSlimefunItem<ItemDropHandler> {
                 // This lightning is just an effect, it deals no damage.
                 l.getWorld().strikeLightningEffect(l);
 
-                Slimefun.runSync(
+                Slimefun.runSyncAt(
+                        l,
                         () -> {
                             // Being sure entities are still valid and not picked up or whatsoever.
                             if (rune.isValid() && item.isValid() && itemStack.getAmount() == 1) {

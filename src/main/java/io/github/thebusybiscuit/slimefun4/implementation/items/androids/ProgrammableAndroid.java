@@ -42,8 +42,8 @@ import java.util.function.Predicate;
 import java.util.logging.Level;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
-import me.mrCookieSlime.CSCoreLibPlugin.general.Inventory.ChestMenu;
 import me.mrCookieSlime.CSCoreLibPlugin.general.Inventory.ChestMenu.AdvancedMenuClickHandler;
+import me.mrCookieSlime.CSCoreLibPlugin.general.Inventory.ChestMenu;
 import me.mrCookieSlime.CSCoreLibPlugin.general.Inventory.ClickAction;
 import me.mrCookieSlime.Slimefun.Objects.SlimefunItem.abstractItems.MachineFuel;
 import me.mrCookieSlime.Slimefun.Objects.SlimefunItem.interfaces.InventoryBlock;
@@ -1042,7 +1042,7 @@ public class ProgrammableAndroid extends SlimefunItem
 
             Slimefun.getDatabaseManager().getBlockDataController().move(uniData, to.getLocation());
 
-            Slimefun.runSync(() -> {
+            Slimefun.runSyncAt(to.getLocation(), () -> {
                 PlayerSkin skin = PlayerSkin.fromBase64(texture);
                 Material type = to.getType();
                 // Ensure that this Block is still a Player Head

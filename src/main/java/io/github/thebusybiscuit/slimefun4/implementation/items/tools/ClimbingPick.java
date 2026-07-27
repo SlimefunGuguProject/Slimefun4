@@ -17,11 +17,11 @@ import io.github.thebusybiscuit.slimefun4.utils.tags.SlimefunTag;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -60,7 +60,7 @@ public class ClimbingPick extends SimpleSlimefunItem<ItemUseHandler> implements 
     private final ItemSetting<Boolean> damageOnUse = new ItemSetting<>(this, "damage-on-use", true);
 
     private final Map<Material, ClimbableSurface> surfaces = new EnumMap<>(Material.class);
-    private final Set<UUID> users = new HashSet<>();
+    private final Set<UUID> users = ConcurrentHashMap.newKeySet();
 
     @ParametersAreNonnullByDefault
     public ClimbingPick(ItemGroup itemGroup, SlimefunItemStack item, RecipeType recipeType, ItemStack[] recipe) {

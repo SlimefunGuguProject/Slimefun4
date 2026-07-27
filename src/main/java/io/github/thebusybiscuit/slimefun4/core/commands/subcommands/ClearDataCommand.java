@@ -12,6 +12,7 @@ import javax.annotation.ParametersAreNonnullByDefault;
 import org.bukkit.*;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
+import org.bukkit.entity.Entity;
 
 public class ClearDataCommand extends SubCommand {
     public static final List<String> ValidClearTypes = List.of("block", "oil");
@@ -53,7 +54,7 @@ public class ClearDataCommand extends SubCommand {
                         if (cleartype.equals("block")) {
                             controller.removeAllDataInWorldAsync(
                                     world,
-                                    () -> Slimefun.runSync(() -> Slimefun.getLocalization()
+                                    () -> runForSender(sender, () -> Slimefun.getLocalization()
                                             .sendMessage(
                                                     sender,
                                                     "commands.cleardata.success",
@@ -73,7 +74,7 @@ public class ClearDataCommand extends SubCommand {
                             controller.removeFromAllChunkInWorldAsync(
                                     world,
                                     oilresource.getKey().toString().replace(":", "-"),
-                                    () -> Slimefun.runSync(() -> Slimefun.getLocalization()
+                                    () -> runForSender(sender, () -> Slimefun.getLocalization()
                                             .sendMessage(
                                                     sender,
                                                     "commands.cleardata.success",
@@ -104,4 +105,13 @@ public class ClearDataCommand extends SubCommand {
     public String getDescription() {
         return "commands.cleardata.description";
     }
+
+    private void runForSender(@Nonnull CommandSender sender, @Nonnull Runnable task) {
+        if (sender instanceof Entity entity) {
+            Slimefun.getSchedulerService().runFor(entity, task);
+        } else {
+            Slimefun.getSchedulerService().run(task);
+        }
+    }
+
 }

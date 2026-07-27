@@ -36,8 +36,46 @@ public interface SlimefunScheduler {
     @Nonnull
     TaskHandle runFor(@Nonnull Entity entity, @Nonnull Runnable task);
 
+    /**
+     * Runs entity-owned work and invokes {@code retired} if the entity becomes retired before execution.
+     *
+     * <p>The default implementation preserves compatibility for third-party scheduler implementations. Implementations
+     * with native entity-retirement support should override this method.
+     *
+     * @param entity the entity that owns the task
+     * @param task the work to execute
+     * @param retired cleanup to execute when the entity retires before the task can run
+     * @return the scheduled task handle
+     */
+    @Nonnull
+    default TaskHandle runFor(
+            @Nonnull Entity entity, @Nonnull Runnable task, @Nonnull Runnable retired) {
+        return runFor(entity, task);
+    }
+
     @Nonnull
     TaskHandle runForLater(@Nonnull Entity entity, @Nonnull Runnable task, long delayTicks);
+
+    /**
+     * Runs delayed entity-owned work and invokes {@code retired} if the entity becomes retired before execution.
+     *
+     * <p>The default implementation preserves compatibility for third-party scheduler implementations. Implementations
+     * with native entity-retirement support should override this method.
+     *
+     * @param entity the entity that owns the task
+     * @param task the work to execute
+     * @param retired cleanup to execute when the entity retires before the task can run
+     * @param delayTicks the delay in server ticks
+     * @return the scheduled task handle
+     */
+    @Nonnull
+    default TaskHandle runForLater(
+            @Nonnull Entity entity,
+            @Nonnull Runnable task,
+            @Nonnull Runnable retired,
+            long delayTicks) {
+        return runForLater(entity, task, delayTicks);
+    }
 
     @Nonnull
     TaskHandle runForAtFixedRate(

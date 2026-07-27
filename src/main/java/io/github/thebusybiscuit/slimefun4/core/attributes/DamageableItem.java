@@ -1,6 +1,7 @@
 package io.github.thebusybiscuit.slimefun4.core.attributes;
 
 import io.github.bakedlibs.dough.config.Config;
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.utils.UnbreakingAlgorithm;
 import io.github.thebusybiscuit.slimefun4.utils.compatibility.VersionedEnchantment;
@@ -26,6 +27,7 @@ import org.bukkit.inventory.meta.ItemMeta;
  * @see UnbreakingAlgorithm
  *
  */
+@SlimefunAPI
 public interface DamageableItem extends ItemAttribute {
 
     /**

@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.core.attributes;
 
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 
 /**
@@ -8,4 +9,5 @@ import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
  *
  * @author TheBusyBiscuit
  */
+@SlimefunAPI
 public interface NotConfigurable extends ItemAttribute {}

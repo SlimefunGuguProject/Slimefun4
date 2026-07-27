@@ -117,7 +117,8 @@ public class MagicWorkbench extends AbstractCraftingTable {
     private void startAnimation(Player p, Block b, Inventory dispInv, Block dispenser, ItemStack output) {
         for (int j = 0; j < 4; j++) {
             int current = j;
-            Slimefun.runSync(
+            Slimefun.runSyncAt(
+                    b.getLocation(),
                     () -> {
                         p.getWorld().playEffect(b.getLocation(), Effect.MOBSPAWNER_FLAMES, 1);
                         p.getWorld().playEffect(b.getLocation(), Effect.ENDER_SIGNAL, 1);

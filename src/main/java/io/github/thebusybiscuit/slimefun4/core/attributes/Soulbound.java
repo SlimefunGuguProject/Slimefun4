@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.core.attributes;
 
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.implementation.items.magical.SoulboundItem;
 
@@ -11,4 +12,5 @@ import io.github.thebusybiscuit.slimefun4.implementation.items.magical.Soulbound
  * @author TheBusyBiscuit
  * @see SoulboundItem
  */
+@SlimefunAPI
 public interface Soulbound extends ItemAttribute {}

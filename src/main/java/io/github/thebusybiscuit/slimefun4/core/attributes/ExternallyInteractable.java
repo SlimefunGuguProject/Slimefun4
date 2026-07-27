@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.core.attributes;
 
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.core.attributes.interactions.InteractionResult;
 import javax.annotation.Nonnull;
@@ -12,6 +13,7 @@ import org.bukkit.Location;
  * @author Sefiraat
  */
 @FunctionalInterface
+@SlimefunAPI
 public interface ExternallyInteractable {
 
     /**

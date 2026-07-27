@@ -1,6 +1,7 @@
 package io.github.thebusybiscuit.slimefun4.implementation.tasks;
 
 import io.github.bakedlibs.dough.collections.LoopIterator;
+import io.github.thebusybiscuit.slimefun4.core.services.scheduling.TaskHandle;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.implementation.guide.SurvivalSlimefunGuide;
 import java.util.HashMap;
@@ -9,14 +10,13 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import javax.annotation.Nonnull;
 import org.apache.commons.lang.Validate;
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Tag;
+import org.bukkit.entity.Entity;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.Recipe;
 import org.bukkit.inventory.RecipeChoice.MaterialChoice;
-import org.bukkit.scheduler.BukkitTask;
 
 /**
  * A {@link AsyncRecipeChoiceTask} is a repeating task that cycles
@@ -36,7 +36,7 @@ public class AsyncRecipeChoiceTask implements Runnable {
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
     private Inventory inventory;
-    private BukkitTask task;
+    private TaskHandle task;
 
     /**
      * This will start this task for the given {@link Inventory}.
@@ -47,6 +47,25 @@ public class AsyncRecipeChoiceTask implements Runnable {
     public void start(@Nonnull Inventory inv) {
         Validate.notNull(inv, "Inventory must not be null");
 
+        Entity owner = inv.getHolder() instanceof Entity entity
+                ? entity
+                : inv.getViewers().stream()
+                        .filter(Entity.class::isInstance)
+                        .map(Entity.class::cast)
+                        .findFirst()
+                        .orElse(null);
+        start(inv, owner);
+    }
+
+    /**
+     * Starts this task on the scheduler that owns the viewing entity.
+     *
+     * @param inv the inventory whose recipe choices are cycled
+     * @param owner the entity that owns the inventory interaction, or {@code null} for a global fallback
+     */
+    public void start(@Nonnull Inventory inv, Entity owner) {
+        Validate.notNull(inv, "Inventory must not be null");
+
         inventory = inv;
 
         if (task != null) {
@@ -54,7 +73,9 @@ public class AsyncRecipeChoiceTask implements Runnable {
         }
 
         // Inventory contents and viewers are Bukkit state and must be accessed on a server-owned thread.
-        task = Bukkit.getScheduler().runTaskTimer(Slimefun.instance(), this, 0, UPDATE_INTERVAL);
+        task = owner == null
+                ? Slimefun.getSchedulerService().runAtFixedRate(this, 0L, UPDATE_INTERVAL)
+                : Slimefun.getSchedulerService().runForAtFixedRate(owner, this, 0L, UPDATE_INTERVAL);
     }
 
     public void add(int slot, @Nonnull MaterialChoice choice) {

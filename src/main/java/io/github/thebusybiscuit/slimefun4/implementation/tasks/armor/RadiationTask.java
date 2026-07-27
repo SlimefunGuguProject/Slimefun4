@@ -11,14 +11,12 @@ import io.github.thebusybiscuit.slimefun4.core.attributes.Radioactive;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.implementation.listeners.RadioactivityListener;
 import io.github.thebusybiscuit.slimefun4.utils.RadiationUtils;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
-import net.md_5.bungee.api.ChatMessageType;
-import net.md_5.bungee.api.chat.BaseComponent;
-import net.md_5.bungee.api.chat.ComponentBuilder;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
@@ -33,7 +31,7 @@ import org.bukkit.inventory.ItemStack;
 public class RadiationTask extends AbstractArmorTask {
 
     private static final int GRACE_PERIOD_DURATION = Slimefun.getCfg().getInt("options.radiation-grace-period");
-    private static final Map<UUID, Long> ACTIVE_GRACE_PERIODS = new HashMap<>();
+    private static final Map<UUID, Long> ACTIVE_GRACE_PERIODS = new ConcurrentHashMap<>();
 
     private final RadiationSymptom[] symptoms = RadiationSymptom.values();
 
@@ -77,28 +75,22 @@ public class RadiationTask extends AbstractArmorTask {
 
             int exposureLevelAfter = RadiationUtils.getExposure(p);
 
-            Slimefun.runSync(() -> {
-                RadiationDamageEvent event = new RadiationDamageEvent(p, exposureLevelAfter);
-                Bukkit.getPluginManager().callEvent(event);
+            RadiationDamageEvent event = new RadiationDamageEvent(p, exposureLevelAfter);
+            Bukkit.getPluginManager().callEvent(event);
 
-                if (event.isCancelled()) {
-                    return;
-                }
-
+            if (!event.isCancelled()) {
                 for (RadiationSymptom symptom : symptoms) {
                     if (symptom.shouldApply(exposureLevelAfter)) {
                         symptom.apply(p);
                     }
                 }
-            });
+            }
 
             if (exposureLevelAfter > 0 || exposureLevelBefore > 0) {
                 String msg = Slimefun.getLocalization()
                         .getMessage(p, "actionbar.radiation")
                         .replace("%level%", "" + exposureLevelAfter);
-                BaseComponent[] components =
-                        new ComponentBuilder().append(ChatColors.color(msg)).create();
-                p.spigot().sendMessage(ChatMessageType.ACTION_BAR, components);
+                p.sendActionBar(LegacyComponentSerializer.legacySection().deserialize(ChatColors.color(msg)));
             }
         } else {
             int exposureLevelBefore = RadiationUtils.getExposure(p);

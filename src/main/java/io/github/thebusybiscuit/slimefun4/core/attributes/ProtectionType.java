@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.core.attributes;
 
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import org.bukkit.entity.Bee;
 
 /**
@@ -10,6 +11,7 @@ import org.bukkit.entity.Bee;
  * @author Seggan
  * @see ProtectiveArmor
  */
+@SlimefunAPI
 public enum ProtectionType {
 
     /**

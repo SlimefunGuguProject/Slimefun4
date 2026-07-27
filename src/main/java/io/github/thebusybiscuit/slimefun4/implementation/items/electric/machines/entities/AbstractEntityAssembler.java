@@ -224,7 +224,7 @@ public abstract class AbstractEntityAssembler<T extends Entity> extends SimpleSl
                         removeCharge(b.getLocation(), getEnergyConsumption());
                         double offset = Double.parseDouble(data.getData(KEY_OFFSET));
 
-                        Slimefun.runSync(() -> {
+                        Slimefun.runSyncAt(b.getLocation(), () -> {
                             Location loc =
                                     new Location(b.getWorld(), b.getX() + 0.5D, b.getY() + offset, b.getZ() + 0.5D);
                             spawnEntity(loc);

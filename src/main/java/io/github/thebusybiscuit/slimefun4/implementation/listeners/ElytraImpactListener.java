@@ -17,8 +17,8 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityToggleGlideEvent;
 
 /**
@@ -45,7 +45,7 @@ public class ElytraImpactListener implements Listener {
             gliding.add(uuid);
         }
         // We tick 1 tick later because the player is being toggled of at the same tick as it takes damage.
-        Slimefun.instance().getServer().getScheduler().runTaskLater(Slimefun.instance(), gliding::clear, 1);
+        Slimefun.getSchedulerService().runLater(gliding::clear, 1L);
     }
 
     @EventHandler

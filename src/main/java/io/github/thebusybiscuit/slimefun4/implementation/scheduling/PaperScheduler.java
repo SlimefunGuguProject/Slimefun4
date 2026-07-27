@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.logging.Level;
 import javax.annotation.Nonnull;
 import org.apache.commons.lang.Validate;
 import org.bukkit.Bukkit;
@@ -175,8 +176,15 @@ public final class PaperScheduler implements SlimefunScheduler {
 
     @Override
     public @Nonnull TaskHandle runFor(@Nonnull Entity entity, @Nonnull Runnable task) {
+        return runFor(entity, task, () -> {});
+    }
+
+    @Override
+    public @Nonnull TaskHandle runFor(
+            @Nonnull Entity entity, @Nonnull Runnable task, @Nonnull Runnable retired) {
         Validate.notNull(entity, "Entity cannot be null");
         Validate.notNull(task, "Task cannot be null");
+        Validate.notNull(retired, "Retired callback cannot be null");
 
         if (!FOLIA) {
             return run(task);
@@ -187,14 +195,25 @@ public final class PaperScheduler implements SlimefunScheduler {
             return handle;
         }
 
-        handle.attach(entity.getScheduler().run(plugin, ignored -> handle.execute(task), handle::retire));
+        handle.attach(entity.getScheduler()
+                .run(plugin, ignored -> handle.execute(task), () -> handle.retire(retired)));
         return handle;
     }
 
     @Override
     public @Nonnull TaskHandle runForLater(@Nonnull Entity entity, @Nonnull Runnable task, long delayTicks) {
+        return runForLater(entity, task, () -> {}, delayTicks);
+    }
+
+    @Override
+    public @Nonnull TaskHandle runForLater(
+            @Nonnull Entity entity,
+            @Nonnull Runnable task,
+            @Nonnull Runnable retired,
+            long delayTicks) {
         Validate.notNull(entity, "Entity cannot be null");
         Validate.notNull(task, "Task cannot be null");
+        Validate.notNull(retired, "Retired callback cannot be null");
         Validate.isTrue(delayTicks >= 0, "Delay cannot be negative");
 
         if (!FOLIA) {
@@ -202,7 +221,7 @@ public final class PaperScheduler implements SlimefunScheduler {
         }
 
         if (delayTicks == 0) {
-            return runFor(entity, task);
+            return runFor(entity, task, retired);
         }
 
         TrackedTask handle = track(false);
@@ -211,7 +230,11 @@ public final class PaperScheduler implements SlimefunScheduler {
         }
 
         handle.attach(entity.getScheduler()
-                .runDelayed(plugin, ignored -> handle.execute(task), handle::retire, delayTicks));
+                .runDelayed(
+                        plugin,
+                        ignored -> handle.execute(task),
+                        () -> handle.retire(retired),
+                        delayTicks));
         return handle;
     }
 
@@ -393,8 +416,20 @@ public final class PaperScheduler implements SlimefunScheduler {
         }
 
         private void retire() {
-            cancelled.set(true);
+            retire(null);
+        }
+
+        private void retire(Runnable retiredCallback) {
+            boolean firstRetirement = cancelled.compareAndSet(false, true);
             tasks.remove(this);
+
+            if (firstRetirement && retiredCallback != null) {
+                try {
+                    retiredCallback.run();
+                } catch (RuntimeException | LinkageError ex) {
+                    plugin.getLogger().log(Level.WARNING, "A scheduler retirement callback failed.", ex);
+                }
+            }
         }
 
         private void execute(Runnable runnable) {
