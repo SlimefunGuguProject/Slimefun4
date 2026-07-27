@@ -136,44 +136,8 @@ The maintained codebase includes:
 - `@SlimefunAPI` and `@SlimefunInternal` annotations
 - Preserved legacy method descriptors for addon compatibility
 
----
 
-## Screenshots
 
-The artwork above is original project artwork. For the best project page, add three current in-game screenshots from a test or production server:
-
-| Slimefun Guide | Automation and Cargo | Storage Doctor |
-| --- | --- | --- |
-| Guide home page or item category | A factory, reactor, power grid, or Cargo network | `/sf doctor status` or a completed dry-run summary |
-
-Save the screenshots as:
-
-```text
-docs/images/slimefun-guide.png
-docs/images/automation-cargo.png
-docs/images/storage-doctor.png
-```
-
-Then replace this note with:
-
-```html
-<table>
-<tr>
-<td width="33%"><img src="docs/images/slimefun-guide.png" alt="Slimefun Legacy guide"></td>
-<td width="33%"><img src="docs/images/automation-cargo.png" alt="Slimefun Legacy automation and Cargo network"></td>
-<td width="33%"><img src="docs/images/storage-doctor.png" alt="Slimefun Legacy Storage Doctor"></td>
-</tr>
-<tr>
-<td align="center"><strong>Explore hundreds of items</strong></td>
-<td align="center"><strong>Build advanced automation</strong></td>
-<td align="center"><strong>Inspect and repair stored items</strong></td>
-</tr>
-</table>
-```
-
-> Use screenshots you created yourself or have permission to publish. Avoid copying another project's gallery without the original creator's permission and attribution.
-
----
 
 ## Requirements
 
@@ -187,7 +151,8 @@ The repository build uses a Java 25 toolchain while emitting Java 21-compatible 
 
 ### Players
 
-Players use a normal Minecraft Java client. No client-side mod is required for core Slimefun gameplay.
+Players use a normal Minecraft Java client. No client-side mod is required for core Slimefun gameplay. 
+I personally use ItemsAdder by LoneDev to force an unofficial slimefun resource pack
 
 Some servers may optionally provide a resource pack for custom item textures. That resource pack is separate from Slimefun Legacy.
 
