@@ -74,7 +74,7 @@ This fork:
 
 - Defaults to `language: en`
 - Defaults to `enable-translations: false`
-- Replaces hard-coded Chinese player-facing text with English
+- Replaces hard-coded Chinese player-facing text with English if you used the Gugu fork of slimefun at any point. (basically a server wide fix)
 - Ignores stale per-player Chinese language preferences while translations are disabled
 - Disables the in-plugin auto-updater so another upstream JAR cannot silently replace this build
 - Includes automated verification to prevent untranslated player-facing text from entering releases
