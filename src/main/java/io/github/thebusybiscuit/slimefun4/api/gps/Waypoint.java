@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.api.gps;
 
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import io.github.thebusybiscuit.slimefun4.api.events.WaypointCreateEvent;
 import io.github.thebusybiscuit.slimefun4.api.player.PlayerProfile;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
@@ -27,6 +28,7 @@ import org.bukkit.inventory.ItemStack;
  * @see Teleporter
  *
  */
+@SlimefunAPI
 public class Waypoint {
 
     private final UUID ownerId;

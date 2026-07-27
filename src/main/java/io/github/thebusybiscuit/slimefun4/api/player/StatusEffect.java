@@ -2,6 +2,7 @@ package io.github.thebusybiscuit.slimefun4.api.player;
 
 import io.github.bakedlibs.dough.common.CommonPatterns;
 import io.github.bakedlibs.dough.data.persistent.PersistentDataAPI;
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.concurrent.TimeUnit;
@@ -22,6 +23,7 @@ import org.bukkit.entity.Player;
  * @author TheBusyBiscuit
  *
  */
+@SlimefunAPI
 public class StatusEffect implements Keyed {
 
     private final NamespacedKey key;

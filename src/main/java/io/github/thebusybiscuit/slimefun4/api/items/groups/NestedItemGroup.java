@@ -1,6 +1,7 @@
 package io.github.thebusybiscuit.slimefun4.api.items.groups;
 
 import io.github.bakedlibs.dough.items.CustomItemStack;
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import io.github.thebusybiscuit.slimefun4.api.player.PlayerProfile;
 import io.github.thebusybiscuit.slimefun4.core.guide.GuideHistory;
 import io.github.thebusybiscuit.slimefun4.core.guide.SlimefunGuide;
@@ -20,6 +21,7 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
+@SlimefunAPI
 public class NestedItemGroup extends FlexItemGroup {
 
     private static final int GROUP_SIZE = 36;

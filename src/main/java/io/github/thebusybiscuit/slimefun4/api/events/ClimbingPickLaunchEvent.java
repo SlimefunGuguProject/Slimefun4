@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.api.events;
 
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import io.github.thebusybiscuit.slimefun4.implementation.items.tools.ClimbingPick;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -20,6 +21,7 @@ import org.bukkit.util.Vector;
  * @author Linox
  * @see ClimbingPick
  */
+@SlimefunAPI
 public class ClimbingPickLaunchEvent extends PlayerEvent implements Cancellable {
 
     private static final HandlerList handlers = new HandlerList();

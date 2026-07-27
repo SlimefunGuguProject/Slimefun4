@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.api.events;
 
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemSpawnReason;
 import java.util.Optional;
 import javax.annotation.Nonnull;
@@ -22,6 +23,7 @@ import org.bukkit.inventory.ItemStack;
  *
  * @see ItemSpawnReason
  */
+@SlimefunAPI
 public class SlimefunItemSpawnEvent extends Event implements Cancellable {
 
     private static final HandlerList handlers = new HandlerList();

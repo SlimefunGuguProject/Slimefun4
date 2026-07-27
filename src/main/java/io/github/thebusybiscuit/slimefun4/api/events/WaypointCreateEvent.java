@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.api.events;
 
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import io.github.thebusybiscuit.slimefun4.api.gps.GPSNetwork;
 import io.github.thebusybiscuit.slimefun4.api.gps.TeleportationManager;
 import io.github.thebusybiscuit.slimefun4.api.gps.Waypoint;
@@ -22,6 +23,7 @@ import org.bukkit.event.player.PlayerEvent;
  * @see Waypoint
  *
  */
+@SlimefunAPI
 public class WaypointCreateEvent extends PlayerEvent implements Cancellable {
 
     private static final HandlerList handlers = new HandlerList();

@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableSet;
 import com.xzavier0722.mc.plugin.slimefun4.storage.callback.IAsyncReadCallback;
 import io.github.bakedlibs.dough.common.ChatColors;
 import io.github.bakedlibs.dough.config.Config;
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import io.github.thebusybiscuit.slimefun4.api.events.AsyncProfileLoadEvent;
 import io.github.thebusybiscuit.slimefun4.api.gps.Waypoint;
 import io.github.thebusybiscuit.slimefun4.api.items.HashedArmorpiece;
@@ -50,6 +51,7 @@ import org.bukkit.entity.Player;
  * @see HashedArmorpiece
  *
  */
+@SlimefunAPI
 public class PlayerProfile {
     private static final Map<UUID, Boolean> processProfiles = new ConcurrentHashMap<>();
 

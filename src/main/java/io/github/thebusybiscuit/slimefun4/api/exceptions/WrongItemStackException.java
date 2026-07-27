@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.api.exceptions;
 
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
 import io.github.thebusybiscuit.slimefun4.core.attributes.DamageableItem;
@@ -19,6 +20,7 @@ import org.bukkit.inventory.ItemStack;
  * @see SlimefunItem
  *
  */
+@SlimefunAPI
 public class WrongItemStackException extends RuntimeException {
 
     private static final long serialVersionUID = 9144658137363309071L;

@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.api.items.groups;
 
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.api.player.PlayerProfile;
@@ -21,6 +22,7 @@ import org.bukkit.inventory.ItemStack;
  * @author TheBusyBiscuit
  *
  */
+@SlimefunAPI
 public abstract class FlexItemGroup extends ItemGroup {
 
     @ParametersAreNonnullByDefault

@@ -1,6 +1,7 @@
 package io.github.thebusybiscuit.slimefun4.api;
 
 import city.norain.slimefun4.SlimefunExtended;
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import javax.annotation.Nonnull;
 import org.apache.commons.lang.Validate;
@@ -13,6 +14,7 @@ import org.bukkit.Server;
  * @author Walshy
  * @see Slimefun
  */
+@SlimefunAPI
 public enum MinecraftVersion {
 
     /**

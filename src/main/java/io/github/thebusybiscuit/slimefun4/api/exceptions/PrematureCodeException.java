@@ -1,6 +1,7 @@
 package io.github.thebusybiscuit.slimefun4.api.exceptions;
 
 import io.github.thebusybiscuit.slimefun4.api.SlimefunAddon;
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import javax.annotation.ParametersAreNonnullByDefault;
 
 /**
@@ -10,6 +11,7 @@ import javax.annotation.ParametersAreNonnullByDefault;
  *
  * @author TheBusyBiscuit
  */
+@SlimefunAPI
 public class PrematureCodeException extends RuntimeException {
 
     private static final long serialVersionUID = -7409054512888866955L;

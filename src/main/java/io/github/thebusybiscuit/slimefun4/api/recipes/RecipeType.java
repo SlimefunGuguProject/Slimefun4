@@ -2,6 +2,7 @@ package io.github.thebusybiscuit.slimefun4.api.recipes;
 
 import io.github.bakedlibs.dough.items.CustomItemStack;
 import io.github.bakedlibs.dough.recipes.MinecraftRecipe;
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
 import io.github.thebusybiscuit.slimefun4.core.multiblocks.MultiBlockMachine;
@@ -29,6 +30,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
 // TODO: Remove this class and rewrite the recipe system
+@SlimefunAPI
 public class RecipeType implements Keyed {
 
     public static final RecipeType MULTIBLOCK = new RecipeType(

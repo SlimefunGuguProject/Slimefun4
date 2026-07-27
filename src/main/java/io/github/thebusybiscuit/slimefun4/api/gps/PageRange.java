@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.api.gps;
 
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
 
@@ -16,6 +17,7 @@ import javax.annotation.ParametersAreNonnullByDefault;
  * window even when the requested page or sizes are out of bounds.
  *
  */
+@SlimefunAPI
 public class PageRange {
     private final int from;
     private final int to;

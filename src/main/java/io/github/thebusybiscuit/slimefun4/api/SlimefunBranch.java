@@ -1,6 +1,7 @@
 package io.github.thebusybiscuit.slimefun4.api;
 
 import io.github.bakedlibs.dough.common.CommonPatterns;
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import javax.annotation.Nonnull;
 import org.apache.commons.lang.Validate;
 
@@ -11,6 +12,7 @@ import org.apache.commons.lang.Validate;
  * @author TheBusyBiscuit
  *
  */
+@SlimefunAPI
 public enum SlimefunBranch {
 
     /**

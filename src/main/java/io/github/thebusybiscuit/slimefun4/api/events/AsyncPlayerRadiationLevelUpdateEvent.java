@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.api.events;
 
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import javax.annotation.Nonnull;
 import lombok.Getter;
 import org.bukkit.Bukkit;
@@ -17,6 +18,7 @@ import org.jetbrains.annotations.NotNull;
  *
  */
 @Getter
+@SlimefunAPI
 public class AsyncPlayerRadiationLevelUpdateEvent extends PlayerEvent {
     private static final HandlerList handlers = new HandlerList();
     /**

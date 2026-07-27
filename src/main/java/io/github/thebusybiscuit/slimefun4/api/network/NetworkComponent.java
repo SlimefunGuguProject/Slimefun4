@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.api.network;
 
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import io.github.thebusybiscuit.slimefun4.core.networks.NetworkManager;
 
 /**
@@ -10,6 +11,7 @@ import io.github.thebusybiscuit.slimefun4.core.networks.NetworkManager;
  * @see Network
  * @see NetworkManager
  */
+@SlimefunAPI
 public enum NetworkComponent {
     CONNECTOR,
     REGULATOR,

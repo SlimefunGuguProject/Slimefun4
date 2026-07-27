@@ -1,6 +1,7 @@
 package io.github.thebusybiscuit.slimefun4.api.researches;
 
 import city.norain.slimefun4.VaultIntegration;
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import io.github.thebusybiscuit.slimefun4.api.events.PlayerPreResearchEvent;
 import io.github.thebusybiscuit.slimefun4.api.events.ResearchUnlockEvent;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
@@ -36,6 +37,7 @@ import org.bukkit.inventory.ItemStack;
  * @see ResearchSetup
  * @see ResearchUnlockEvent
  */
+@SlimefunAPI
 public class Research implements Keyed {
 
     private final NamespacedKey key;

@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.api.events;
 
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.implementation.items.blocks.BlockPlacer;
 import javax.annotation.Nonnull;
@@ -18,6 +19,7 @@ import org.bukkit.inventory.ItemStack;
  * @author TheBusyBiscuit
  *
  */
+@SlimefunAPI
 public class BlockPlacerPlaceEvent extends BlockEvent implements Cancellable {
 
     private static final HandlerList handlers = new HandlerList();

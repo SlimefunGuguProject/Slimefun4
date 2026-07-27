@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.api.items.virtual;
 
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemHandler;
 import java.util.function.Predicate;
 import javax.annotation.Nonnull;
@@ -16,6 +17,7 @@ import org.bukkit.inventory.ItemStack;
  * <p>Register this handler on a {@link io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem}
  * via {@link io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem#addItemHandler(ItemHandler...)}.
  */
+@SlimefunAPI
 public interface VirtualItemHandler extends ItemHandler {
 
     @Override

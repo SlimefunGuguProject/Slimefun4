@@ -1,6 +1,7 @@
 package io.github.thebusybiscuit.slimefun4.api.items.groups;
 
 import io.github.thebusybiscuit.slimefun4.api.SlimefunAddon;
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.api.player.PlayerProfile;
@@ -29,6 +30,7 @@ import org.bukkit.inventory.ItemStack;
  * @see SeasonalItemGroup
  *
  */
+@SlimefunAPI
 public class LockedItemGroup extends ItemGroup {
 
     private final NamespacedKey[] keys;

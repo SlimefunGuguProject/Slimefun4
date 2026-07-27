@@ -5,6 +5,7 @@ import city.norain.slimefun4.utils.InventoryUtil;
 import com.xzavier0722.mc.plugin.slimefun4.storage.util.InvSnapshot;
 import io.github.bakedlibs.dough.common.ChatColors;
 import io.github.bakedlibs.dough.common.CommonPatterns;
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.implementation.items.backpacks.SlimefunBackpack;
 import io.github.thebusybiscuit.slimefun4.implementation.listeners.BackpackListener;
@@ -42,6 +43,7 @@ import org.bukkit.persistence.PersistentDataType;
  * @see SlimefunBackpack
  * @see BackpackListener
  */
+@SlimefunAPI
 public class PlayerBackpack extends SlimefunInventoryHolder {
     public static final String LORE_OWNER = "&7Owner: ";
     private static final String COLORED_LORE_OWNER = ChatColors.color(LORE_OWNER);

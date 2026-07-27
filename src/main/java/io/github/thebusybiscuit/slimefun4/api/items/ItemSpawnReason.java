@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.api.items;
 
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import io.github.thebusybiscuit.slimefun4.api.events.SlimefunItemSpawnEvent;
 import io.github.thebusybiscuit.slimefun4.core.multiblocks.MultiBlockMachine;
 import io.github.thebusybiscuit.slimefun4.core.networks.cargo.CargoNet;
@@ -19,6 +20,7 @@ import org.bukkit.inventory.ItemStack;
  * @see SlimefunItemSpawnEvent
  *
  */
+@SlimefunAPI
 public enum ItemSpawnReason {
 
     /**

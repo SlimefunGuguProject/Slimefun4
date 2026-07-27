@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.api.items;
 
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import io.github.thebusybiscuit.slimefun4.implementation.items.VanillaItem;
 
 /**
@@ -8,6 +9,7 @@ import io.github.thebusybiscuit.slimefun4.implementation.items.VanillaItem;
  * @author Poslovitch
  * @see SlimefunItem
  */
+@SlimefunAPI
 public enum ItemState {
 
     /**

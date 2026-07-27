@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.api.events;
 
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.api.researches.Research;
 import io.github.thebusybiscuit.slimefun4.implementation.guide.CheatSheetSlimefunGuide;
@@ -22,6 +23,7 @@ import org.bukkit.event.HandlerList;
  * @see SurvivalSlimefunGuide
  *
  */
+@SlimefunAPI
 public class PlayerPreResearchEvent extends Event implements Cancellable {
 
     private static final HandlerList handlers = new HandlerList();

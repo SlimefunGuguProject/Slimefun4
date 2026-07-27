@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.api.events;
 
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import io.github.thebusybiscuit.slimefun4.core.multiblocks.MultiBlockMachine;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -19,6 +20,7 @@ import org.bukkit.inventory.ItemStack;
  * @author char321
  * @author JustAHuman
  */
+@SlimefunAPI
 public class MultiBlockCraftEvent extends PlayerEvent implements Cancellable {
     private static final HandlerList handlers = new HandlerList();
 

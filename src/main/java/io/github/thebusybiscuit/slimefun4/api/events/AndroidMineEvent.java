@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.api.events;
 
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import io.github.thebusybiscuit.slimefun4.implementation.items.androids.AndroidInstance;
 import io.github.thebusybiscuit.slimefun4.implementation.items.androids.MinerAndroid;
 import javax.annotation.Nonnull;
@@ -15,6 +16,7 @@ import org.bukkit.event.HandlerList;
  *
  * @author poma123
  */
+@SlimefunAPI
 public class AndroidMineEvent extends Event implements Cancellable {
 
     private static final HandlerList handlers = new HandlerList();

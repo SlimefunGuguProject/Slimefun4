@@ -1,7 +1,7 @@
 package io.github.thebusybiscuit.slimefun4.api.events;
 
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import javax.annotation.Nonnull;
-
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
@@ -12,6 +12,7 @@ import org.bukkit.event.HandlerList;
  *
  * @author HoosierTransfer
  */
+@SlimefunAPI
 public class RadiationDamageEvent extends Event implements Cancellable {
     private static final HandlerList handlers = new HandlerList();
 
@@ -26,6 +27,7 @@ public class RadiationDamageEvent extends Event implements Cancellable {
      * @param exposure The amount of radiation exposure
      */
     public RadiationDamageEvent(@Nonnull Player player, int exposure) {
+        super(EventThreading.isCurrentThreadAsynchronous());
         this.player = player;
         this.exposure = exposure;
     }

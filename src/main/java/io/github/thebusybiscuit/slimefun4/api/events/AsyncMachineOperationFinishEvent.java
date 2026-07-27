@@ -1,6 +1,7 @@
 package io.github.thebusybiscuit.slimefun4.api.events;
 
 import io.github.bakedlibs.dough.blocks.BlockPosition;
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import io.github.thebusybiscuit.slimefun4.core.machines.MachineOperation;
 import io.github.thebusybiscuit.slimefun4.core.machines.MachineProcessor;
 import javax.annotation.Nonnull;
@@ -16,6 +17,7 @@ import org.bukkit.event.HandlerList;
  * @author TheBusyBiscuit
  *
  */
+@SlimefunAPI
 public class AsyncMachineOperationFinishEvent extends Event {
 
     private static final HandlerList handlers = new HandlerList();

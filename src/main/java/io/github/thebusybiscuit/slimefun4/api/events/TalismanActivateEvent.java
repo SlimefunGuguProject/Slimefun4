@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.api.events;
 
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import io.github.thebusybiscuit.slimefun4.implementation.items.magical.talismans.Talisman;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -14,6 +15,7 @@ import org.bukkit.inventory.ItemStack;
  *
  * @author cworldstar
  */
+@SlimefunAPI
 public class TalismanActivateEvent extends PlayerEvent implements Cancellable {
 
     private static final HandlerList handlers = new HandlerList();

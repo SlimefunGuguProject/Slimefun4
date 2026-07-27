@@ -1,6 +1,7 @@
 package io.github.thebusybiscuit.slimefun4.api.exceptions;
 
 import io.github.thebusybiscuit.slimefun4.api.SlimefunAddon;
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import javax.annotation.ParametersAreNonnullByDefault;
 
 /**
@@ -10,6 +11,7 @@ import javax.annotation.ParametersAreNonnullByDefault;
  * @author TheBusyBiscuit
  * @see SlimefunAddon
  */
+@SlimefunAPI
 public class MissingDependencyException extends RuntimeException {
 
     private static final long serialVersionUID = -2255888430181930571L;

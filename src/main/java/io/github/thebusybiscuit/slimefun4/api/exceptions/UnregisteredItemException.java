@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.api.exceptions;
 
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import javax.annotation.ParametersAreNonnullByDefault;
 import org.bukkit.plugin.Plugin;
@@ -15,6 +16,7 @@ import org.bukkit.plugin.Plugin;
  * @author TheBusyBiscuit
  *
  */
+@SlimefunAPI
 public class UnregisteredItemException extends RuntimeException {
 
     private static final long serialVersionUID = -4684752240435069678L;

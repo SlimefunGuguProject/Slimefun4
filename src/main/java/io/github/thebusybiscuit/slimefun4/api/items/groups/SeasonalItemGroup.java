@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.api.items.groups;
 
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
 import java.time.LocalDate;
 import java.time.Month;
@@ -19,6 +20,7 @@ import org.bukkit.inventory.ItemStack;
  * @see ItemGroup
  * @see LockedItemGroup
  */
+@SlimefunAPI
 public class SeasonalItemGroup extends ItemGroup {
 
     private final Month month;

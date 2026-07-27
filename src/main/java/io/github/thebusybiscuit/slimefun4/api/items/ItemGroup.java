@@ -2,6 +2,7 @@ package io.github.thebusybiscuit.slimefun4.api.items;
 
 import io.github.bakedlibs.dough.items.CustomItemStack;
 import io.github.thebusybiscuit.slimefun4.api.SlimefunAddon;
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import io.github.thebusybiscuit.slimefun4.api.items.groups.LockedItemGroup;
 import io.github.thebusybiscuit.slimefun4.api.items.groups.SeasonalItemGroup;
 import io.github.thebusybiscuit.slimefun4.core.guide.SlimefunGuide;
@@ -34,6 +35,7 @@ import org.bukkit.inventory.meta.ItemMeta;
  * @see SeasonalItemGroup
  *
  */
+@SlimefunAPI
 public class ItemGroup implements Keyed {
 
     private SlimefunAddon addon;

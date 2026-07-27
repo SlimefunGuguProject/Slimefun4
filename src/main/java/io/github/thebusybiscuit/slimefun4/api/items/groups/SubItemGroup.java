@@ -1,6 +1,7 @@
 package io.github.thebusybiscuit.slimefun4.api.items.groups;
 
 import io.github.thebusybiscuit.slimefun4.api.SlimefunAddon;
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import javax.annotation.Nonnull;
@@ -19,6 +20,7 @@ import org.bukkit.inventory.ItemStack;
  * @see NestedItemGroup
  *
  */
+@SlimefunAPI
 public class SubItemGroup extends ItemGroup {
 
     private final NestedItemGroup parentItemGroup;

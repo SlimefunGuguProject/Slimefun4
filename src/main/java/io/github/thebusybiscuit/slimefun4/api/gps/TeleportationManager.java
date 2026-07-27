@@ -2,6 +2,7 @@ package io.github.thebusybiscuit.slimefun4.api.gps;
 
 import io.github.bakedlibs.dough.common.ChatColors;
 import io.github.bakedlibs.dough.items.CustomItemStack;
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import io.github.thebusybiscuit.slimefun4.api.player.PlayerProfile;
 import io.github.thebusybiscuit.slimefun4.core.services.sounds.SoundEffect;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
@@ -40,6 +41,7 @@ import org.bukkit.potion.PotionEffect;
  * @see Teleporter
  *
  */
+@SlimefunAPI
 public final class TeleportationManager {
     private static final int PREV_SLOT = 46;
     private static final int NEXT_SLOT = 52;
@@ -144,7 +146,7 @@ public final class TeleportationManager {
                         getTeleportationPageHandler(pr, ownerUUID, b, complexity, -1),
                         getTeleportationPageHandler(pr, ownerUUID, b, complexity, 1));
 
-                Slimefun.runSync(() -> menu.open(p));
+                Slimefun.runSyncFor(p, () -> menu.open(p));
             });
         }
     }
@@ -264,7 +266,8 @@ public final class TeleportationManager {
 
                 source.getWorld().spawnParticle(Particle.PORTAL, source, progress * 2, 0.2F, 0.8F, 0.2F);
                 SoundEffect.TELEPORT_UPDATE_SOUND.playFor(p);
-                Slimefun.runSync(
+                Slimefun.runSyncFor(
+                        p,
                         () -> updateProgress(uuid, speed, progress + speed, source, destination, resistance), 10L);
             }
         } else {
@@ -278,7 +281,7 @@ public final class TeleportationManager {
          * This needs to run on the main Thread so we force it, as
          * the async teleportation might happen on a separate Thread.
          */
-        Slimefun.runSync(() -> {
+        Slimefun.runSyncFor(p, () -> {
             if (success) {
                 // Apply Resistance Effect, if enabled
                 if (resistance) {

@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.api.items;
 
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import io.github.thebusybiscuit.slimefun4.implementation.items.armor.SlimefunArmorPiece;
 import io.github.thebusybiscuit.slimefun4.implementation.tasks.armor.SlimefunArmorTask;
 import java.util.Optional;
@@ -24,6 +25,7 @@ import org.bukkit.inventory.meta.ItemMeta;
  * @see SlimefunArmorPiece
  * @see SlimefunArmorTask
  */
+@SlimefunAPI
 public final class HashedArmorpiece {
 
     private int hash;

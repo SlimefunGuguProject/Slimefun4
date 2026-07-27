@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.api.events;
 
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import io.github.thebusybiscuit.slimefun4.implementation.items.electric.machines.enchanting.AutoEnchanter;
 import javax.annotation.Nonnull;
 import me.mrCookieSlime.Slimefun.api.inventory.BlockMenu;
@@ -15,6 +16,7 @@ import org.bukkit.inventory.ItemStack;
  *
  * @author StarWishsama
  */
+@SlimefunAPI
 public class AsyncAutoEnchanterProcessEvent extends Event implements Cancellable {
 
     private static final HandlerList handlers = new HandlerList();

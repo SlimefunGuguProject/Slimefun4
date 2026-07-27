@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.api;
 
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.core.attributes.EnergyNetProvider;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
@@ -37,6 +38,7 @@ import org.bukkit.plugin.Plugin;
  * @author TheBusyBiscuit
  *
  */
+@SlimefunAPI
 public class ErrorReport<T extends Throwable> {
 
     private static final DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm", Locale.ROOT);
@@ -109,7 +111,7 @@ public class ErrorReport<T extends Throwable> {
                     Slimefun.getDatabaseManager().getBlockDataController().getBlockData(l);
 
             if (blockData == null) {
-                Slimefun.runSync(() -> Slimefun.getBlockDataService()
+                Slimefun.runSyncAt(l, () -> Slimefun.getBlockDataService()
                         .getUniversalDataUUID(l.getBlock())
                         .ifPresentOrElse(
                                 uuid -> {

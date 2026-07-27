@@ -1,6 +1,7 @@
 package io.github.thebusybiscuit.slimefun4.api.network;
 
 import com.xzavier0722.mc.plugin.slimefun4.storage.util.LocationUtils;
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import io.github.thebusybiscuit.slimefun4.core.debug.Debug;
 import io.github.thebusybiscuit.slimefun4.core.debug.TestCase;
 import io.github.thebusybiscuit.slimefun4.core.networks.NetworkManager;
@@ -26,6 +27,7 @@ import org.bukkit.Particle;
  * @see NetworkManager
  *
  */
+@SlimefunAPI
 public abstract class Network {
 
     /**
@@ -227,7 +229,7 @@ public abstract class Network {
      */
     public void display() {
         if (manager.isVisualizerEnabled()) {
-            Slimefun.runSync(new NetworkVisualizer(this, Color.BLUE));
+            Slimefun.runSyncAt(regulator, new NetworkVisualizer(this, Color.BLUE));
         }
     }
 

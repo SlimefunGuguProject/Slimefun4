@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.api.events;
 
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -15,6 +16,7 @@ import org.bukkit.inventory.ItemStack;
  *
  * @author J3fftw1
  */
+@SlimefunAPI
 public class SlimefunBlockBreakEvent extends Event implements Cancellable {
 
     private static final HandlerList handlers = new HandlerList();

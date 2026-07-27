@@ -2,6 +2,7 @@ package io.github.thebusybiscuit.slimefun4.api.events;
 
 import com.xzavier0722.mc.plugin.slimefun4.storage.util.StorageCacheUtils;
 import io.github.bakedlibs.dough.data.TriStateOptional;
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import java.util.Optional;
 import javax.annotation.Nonnull;
@@ -28,6 +29,7 @@ import org.bukkit.inventory.ItemStack;
  * @author TheBusyBiscuit
  *
  */
+@SlimefunAPI
 public class PlayerRightClickEvent extends PlayerEvent {
 
     private static final HandlerList handlers = new HandlerList();

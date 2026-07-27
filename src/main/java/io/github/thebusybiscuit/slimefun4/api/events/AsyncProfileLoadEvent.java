@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.api.events;
 
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import io.github.thebusybiscuit.slimefun4.api.player.PlayerProfile;
 import java.util.UUID;
 import javax.annotation.Nonnull;
@@ -20,6 +21,7 @@ import org.bukkit.event.HandlerList;
  * @see PlayerProfile
  *
  */
+@SlimefunAPI
 public class AsyncProfileLoadEvent extends Event {
 
     private static final HandlerList handlers = new HandlerList();

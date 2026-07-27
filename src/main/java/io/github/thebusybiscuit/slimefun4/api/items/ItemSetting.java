@@ -1,6 +1,7 @@
 package io.github.thebusybiscuit.slimefun4.api.items;
 
 import io.github.bakedlibs.dough.config.Config;
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import java.util.List;
 import java.util.Objects;
@@ -17,6 +18,7 @@ import org.apache.commons.lang.Validate;
  * @param <T>
  *            The type of data stored under this {@link ItemSetting}
  */
+@SlimefunAPI
 public class ItemSetting<T> {
 
     private final SlimefunItem item;

@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.api.items.settings;
 
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemSetting;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import javax.annotation.Nonnull;
@@ -16,6 +17,7 @@ import org.apache.commons.lang.Validate;
  * @see DoubleRangeSetting
  *
  */
+@SlimefunAPI
 public class IntRangeSetting extends ItemSetting<Integer> {
 
     private final int min;

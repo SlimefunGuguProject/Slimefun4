@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.api.events;
 
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import io.github.thebusybiscuit.slimefun4.implementation.items.electric.machines.enchanting.AutoDisenchanter;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -15,6 +16,7 @@ import org.bukkit.inventory.ItemStack;
  *
  * @author poma123
  */
+@SlimefunAPI
 public class AutoDisenchantEvent extends Event implements Cancellable {
 
     private static final HandlerList handlers = new HandlerList();

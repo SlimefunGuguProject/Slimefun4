@@ -4,6 +4,7 @@ import com.xzavier0722.mc.plugin.slimefun4.storage.util.StorageCacheUtils;
 import io.github.bakedlibs.dough.chat.ChatInput;
 import io.github.bakedlibs.dough.common.ChatColors;
 import io.github.bakedlibs.dough.items.CustomItemStack;
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import io.github.thebusybiscuit.slimefun4.api.events.WaypointCreateEvent;
 import io.github.thebusybiscuit.slimefun4.api.geo.GEOResource;
 import io.github.thebusybiscuit.slimefun4.api.geo.ResourceManager;
@@ -33,8 +34,8 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Server;
-import org.bukkit.World;
 import org.bukkit.World.Environment;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
@@ -49,6 +50,7 @@ import org.bukkit.inventory.ItemStack;
  * @see ResourceManager
  *
  */
+@SlimefunAPI
 public class GPSNetwork {
     private static final int PREV_SLOT = 46;
     private static final int NEXT_SLOT = 52;
@@ -404,7 +406,7 @@ public class GPSNetwork {
                 return;
             }
 
-            Slimefun.runSync(() -> {
+            Slimefun.runSyncFor(p, () -> {
                 WaypointCreateEvent event = new WaypointCreateEvent(p, name, l);
                 Bukkit.getPluginManager().callEvent(event);
 

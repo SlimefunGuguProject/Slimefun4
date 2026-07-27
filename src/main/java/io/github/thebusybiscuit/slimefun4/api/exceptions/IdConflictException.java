@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.api.exceptions;
 
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import javax.annotation.ParametersAreNonnullByDefault;
 
@@ -10,6 +11,7 @@ import javax.annotation.ParametersAreNonnullByDefault;
  * @author TheBusyBiscuit
  *
  */
+@SlimefunAPI
 public class IdConflictException extends RuntimeException {
 
     private static final long serialVersionUID = -733012666374895255L;

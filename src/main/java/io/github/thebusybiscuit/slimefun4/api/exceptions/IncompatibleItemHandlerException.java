@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.api.exceptions;
 
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemHandler;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.core.handlers.BlockUseHandler;
@@ -20,6 +21,7 @@ import org.bukkit.plugin.Plugin;
  * @see SlimefunItem
  *
  */
+@SlimefunAPI
 public class IncompatibleItemHandlerException extends RuntimeException {
 
     private static final long serialVersionUID = -6723066421114874138L;

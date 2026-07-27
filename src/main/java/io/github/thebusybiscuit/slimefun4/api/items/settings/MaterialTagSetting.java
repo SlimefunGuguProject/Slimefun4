@@ -1,5 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.api.items.settings;
 
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemSetting;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import java.util.List;
@@ -21,6 +22,7 @@ import org.bukkit.Tag;
  * @see ItemSetting
  *
  */
+@SlimefunAPI
 public class MaterialTagSetting extends ItemSetting<List<String>> {
 
     private final Tag<Material> defaultTag;
