@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 600" role="img" aria-labelledby="title desc">
+<title id="title">Slimefun Legacy</title>
+<desc id="desc">A dark Minecraft-inspired banner with a glowing slime emblem, machinery, electricity, and the words Slimefun Legacy.</desc>
+<defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#07131c"/>
+    <stop offset="0.48" stop-color="#102434"/>
+    <stop offset="1" stop-color="#1a1030"/>
+  </linearGradient>
+  <linearGradient id="slime" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#b9ff55"/>
+    <stop offset="1" stop-color="#38c96b"/>
+  </linearGradient>
+  <linearGradient id="energy" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0" stop-color="#36cfff"/>
+    <stop offset="1" stop-color="#b45cff"/>
+  </linearGradient>
+  <filter id="glow">
+    <feGaussianBlur stdDeviation="10" result="blur"/>
+    <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+  <pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse">
+    <path d="M48 0H0V48" fill="none" stroke="#ffffff" stroke-opacity=".035" stroke-width="2"/>
+  </pattern>
+</defs>
+<rect width="1600" height="600" rx="30" fill="url(#bg)"/>
+<rect width="1600" height="600" rx="30" fill="url(#grid)"/>
+<g opacity=".35">
+  <path d="M0 455H1600" stroke="#3fdcff" stroke-width="3"/>
+  <path d="M0 465H1600" stroke="#b45cff" stroke-width="2"/>
+</g>
+<g transform="translate(150 80)" filter="url(#glow)">
+  <path d="M210 20C145 100 65 170 65 285c0 95 77 172 172 172s172-77 172-172C409 170 330 100 265 20c-15-18-40-18-55 0z" fill="url(#slime)"/>
+  <path d="M125 283c22-32 50-49 84-52 7 0 12 7 9 14-12 29-15 61-8 96 2 10-7 18-17 15-38-13-63-36-76-69-1-2 3-3 8-4z" fill="#e9ffd5" opacity=".75"/>
+  <circle cx="185" cy="279" r="18" fill="#082519"/>
+  <circle cx="292" cy="279" r="18" fill="#082519"/>
+  <path d="M184 344c37 29 75 29 112 0" fill="none" stroke="#082519" stroke-width="14" stroke-linecap="round"/>
+</g>
+<g transform="translate(505 105)">
+  <text x="0" y="120" fill="#f5fbff" font-family="Arial, Helvetica, sans-serif" font-size="108" font-weight="800" letter-spacing="2">SLIMEFUN</text>
+  <text x="2" y="232" fill="url(#energy)" font-family="Arial, Helvetica, sans-serif" font-size="125" font-weight="900" letter-spacing="10">LEGACY</text>
+  <text x="7" y="302" fill="#d6e7f4" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="600" letter-spacing="5">ENGLISH • STABILITY • COMPATIBILITY</text>
+  <rect x="4" y="345" width="790" height="4" rx="2" fill="url(#energy)"/>
+  <text x="7" y="410" fill="#9fb8ca" font-family="Arial, Helvetica, sans-serif" font-size="28">A modern continuation of the classic modpack-like experience</text>
+</g>
+<g transform="translate(1280 95)" opacity=".95">
+  <rect x="0" y="0" width="155" height="155" rx="16" fill="#182b37" stroke="#36cfff" stroke-width="4"/>
+  <rect x="35" y="35" width="85" height="85" rx="8" fill="#243f4d"/>
+  <path d="M88 21L57 80h33l-20 54 54-72H91z" fill="#ffdd52" filter="url(#glow)"/>
+  <rect x="-45" y="210" width="155" height="155" rx="16" fill="#231b34" stroke="#b45cff" stroke-width="4"/>
+  <circle cx="32" cy="287" r="50" fill="none" stroke="#b45cff" stroke-width="16" stroke-dasharray="35 15"/>
+  <circle cx="32" cy="287" r="18" fill="#36cfff"/>
+</g>
+</svg>
