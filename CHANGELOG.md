@@ -1,4 +1,13 @@
 # Table of contents
+
+## Gugu upstream sync safety
+
+- Replaced destructive upstream tree replacement with a history-preserving Git merge.
+- Upstream updates now open a draft pull request and never auto-merge.
+- Merge conflicts stop without overwriting fork files.
+- English, Part 2, API annotation, formatting, test, and build checks gate each sync.
+- Added schema-v3 database migration and rollback guidance for the July 2026 Gugu storage update.
+
 - [Legacy Second Maintenance Release (26 Jul 2026)](#legacy-second-maintenance-release-26-jul-2026)
 - [Legacy Stability Release 1 Hotfix 1 (26 Jul 2026)](#legacy-stability-release-1-hotfix-1-26-jul-2026)
 - [Legacy Stability Release 1 (26 Jul 2026)](#legacy-stability-release-1-26-jul-2026)
