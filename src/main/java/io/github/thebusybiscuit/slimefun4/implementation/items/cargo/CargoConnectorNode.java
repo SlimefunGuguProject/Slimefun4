@@ -47,9 +47,9 @@ public class CargoConnectorNode extends SimpleSlimefunItem<BlockUseHandler> impl
             Block b = e.getClickedBlock().get();
 
             if (CargoNet.getNetworkFromLocation(b.getLocation()) != null) {
-                Slimefun.getLocalization().sendActionbarMessage(p, "machines.CARGO_NODES.connected", false);
+                Slimefun.getLocalization().sendMessage(p, "machines.CARGO_NODES.connected", false);
             } else {
-                Slimefun.getLocalization().sendActionbarMessage(p, "machines.CARGO_NODES.not-connected", false);
+                Slimefun.getLocalization().sendMessage(p, "machines.CARGO_NODES.not-connected", false);
             }
         };
     }
