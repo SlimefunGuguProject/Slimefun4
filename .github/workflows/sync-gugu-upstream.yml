@@ -2,61 +2,165 @@ name: Sync Gugu Upstream
 
 on:
   schedule:
-    - cron: '17 */6 * * *'
+    - cron: '17 6 * * *'
   workflow_dispatch:
+    inputs:
+      upstream_ref:
+        description: Gugu branch to merge
+        required: false
+        default: master
+        type: string
 
 permissions:
   contents: write
   pull-requests: write
 
+concurrency:
+  group: gugu-upstream-sync
+  cancel-in-progress: false
+
 jobs:
   sync:
     runs-on: ubuntu-latest
+    env:
+      SYNC_BRANCH: automation/gugu-upstream-sync
+      GH_TOKEN: ${{ github.token }}
+
     steps:
-      - name: Check out English fork
+      - name: Check out Slimefun Legacy
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Resolve branches
+        id: refs
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE_BRANCH="${{ github.event.repository.default_branch }}"
+          UPSTREAM_REF="${{ github.event.inputs.upstream_ref }}"
+          if [[ -z "$UPSTREAM_REF" ]]; then
+            UPSTREAM_REF=master
+          fi
+          echo "base_branch=$BASE_BRANCH" >> "$GITHUB_OUTPUT"
+          echo "upstream_ref=$UPSTREAM_REF" >> "$GITHUB_OUTPUT"
+
+      - name: Check for upstream commits
+        id: pending
+        shell: bash
+        run: |
+          set -euo pipefail
+          git remote add upstream https://github.com/SlimefunGuguProject/Slimefun4.git
+          git fetch --no-tags upstream "+refs/heads/${{ steps.refs.outputs.upstream_ref }}:refs/remotes/upstream/${{ steps.refs.outputs.upstream_ref }}"
+          UPSTREAM_SHA="$(git rev-parse upstream/${{ steps.refs.outputs.upstream_ref }})"
+          if git merge-base --is-ancestor "$UPSTREAM_SHA" HEAD; then
+            echo "has_updates=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_updates=true" >> "$GITHUB_OUTPUT"
+          fi
+          echo "upstream_sha=$UPSTREAM_SHA" >> "$GITHUB_OUTPUT"
 
       - name: Set up Java 25
+        if: steps.pending.outputs.has_updates == 'true'
         uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '25'
           cache: gradle
 
-      - name: Download, patch, and verify upstream
+      - name: Configure Git identity
+        if: steps.pending.outputs.has_updates == 'true'
         run: |
-          chmod +x gradlew scripts/sync_upstream.sh
-          scripts/sync_upstream.sh '' "$RUNNER_TEMP/slimefun-staged"
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
 
-      - name: Replace tracked upstream files
+      - name: Merge and validate upstream
+        if: steps.pending.outputs.has_updates == 'true'
+        id: merge
+        shell: bash
         run: |
-          rsync -a --delete \
-            --exclude '.git/' \
-            --exclude '.github/' \
-            --exclude 'scripts/' \
-            --exclude 'patches/' \
-            --exclude 'README.md' \
-            --exclude 'CONTRIBUTING.md' \
-            --exclude 'ALBION_MERGE_NOTES.md' \
-            "$RUNNER_TEMP/slimefun-staged/" ./
-          chmod +x gradlew scripts/sync_upstream.sh scripts/regenerate_patch.sh
-          python3 scripts/verify_english.py .
+          set -o pipefail
+          export GUGU_SYNC_ABORT_ON_CONFLICT=1
+          export GUGU_SYNC_BUILD=1
+          export GUGU_SYNC_REPORT="$RUNNER_TEMP/gugu-sync-report.txt"
+          chmod +x scripts/sync_upstream.sh gradlew
+          set +e
+          scripts/sync_upstream.sh "${{ steps.refs.outputs.upstream_ref }}" "$SYNC_BRANCH" 2>&1 | tee "$RUNNER_TEMP/gugu-sync.log"
+          STATUS=${PIPESTATUS[0]}
+          set -e
+          echo "status=$STATUS" >> "$GITHUB_OUTPUT"
 
-      - name: Format merged source
-        run: ./gradlew spotlessApply --no-daemon
-
-      - name: Build merged source
-        run: ./gradlew clean build --no-daemon
-
-      - name: Open or update upstream sync pull request
-        uses: peter-evans/create-pull-request@v8
+      - name: Upload sync report
+        if: always() && steps.pending.outputs.has_updates == 'true'
+        uses: actions/upload-artifact@v4
         with:
-          branch: automation/gugu-upstream-sync
-          delete-branch: true
-          commit-message: 'chore: sync SlimefunGuguProject upstream'
-          title: 'Sync latest SlimefunGuguProject updates'
-          body: |
-            Automated sync from `SlimefunGuguProject/Slimefun4` master.
+          name: gugu-upstream-sync-report
+          path: |
+            ${{ runner.temp }}/gugu-sync-report.txt
+            ${{ runner.temp }}/gugu-sync.log
+          if-no-files-found: warn
 
-            The Albion English patch was reapplied, the English-only guard passed,
-            and the Gradle build completed. Review this pull request before merging.
+      - name: Stop on merge conflicts
+        if: steps.pending.outputs.has_updates == 'true' && steps.merge.outputs.status == '3'
+        run: |
+          echo "The upstream merge has conflicts. No branch was pushed and no fork files were overwritten."
+          exit 1
+
+      - name: Push review branch
+        if: steps.pending.outputs.has_updates == 'true' && steps.merge.outputs.status != '3'
+        run: git push --force-with-lease origin "$SYNC_BRANCH:$SYNC_BRANCH"
+
+      - name: Open or update draft pull request
+        if: steps.pending.outputs.has_updates == 'true' && steps.merge.outputs.status != '3'
+        shell: bash
+        run: |
+          set -euo pipefail
+          STATUS="${{ steps.merge.outputs.status }}"
+          REPORT="$RUNNER_TEMP/gugu-sync-report.txt"
+          BODY="$RUNNER_TEMP/gugu-sync-pr-body.md"
+
+          {
+            echo "Automated, history-preserving merge from \`SlimefunGuguProject/Slimefun4:${{ steps.refs.outputs.upstream_ref }}\`."
+            echo
+            echo "- Upstream commit: \`${{ steps.pending.outputs.upstream_sha }}\`"
+            echo "- The merge used Git history; it did not rsync or replace the fork tree."
+            echo "- This PR remains a draft for manual review."
+            echo "- Back up the Slimefun database before testing storage-schema changes."
+            echo
+            if [[ "$STATUS" == "0" ]]; then
+              echo "**Validation:** English guard, Part 2 invariants, API annotations, Spotless, tests, and build passed."
+            else
+              echo "**Validation:** one or more checks failed. Review the workflow artifact before changing this PR from draft."
+            fi
+            echo
+            echo "<details><summary>Sync report</summary>"
+            echo
+            echo '```text'
+            cat "$REPORT"
+            echo '```'
+            echo "</details>"
+          } > "$BODY"
+
+          EXISTING_URL="$(gh pr list --state open --head "$SYNC_BRANCH" --base "${{ steps.refs.outputs.base_branch }}" --json url --jq '.[0].url // empty')"
+          if [[ -z "$EXISTING_URL" ]]; then
+            gh pr create \
+              --draft \
+              --base "${{ steps.refs.outputs.base_branch }}" \
+              --head "$SYNC_BRANCH" \
+              --title "Sync latest SlimefunGuguProject updates" \
+              --body-file "$BODY"
+          else
+            gh pr edit "$EXISTING_URL" \
+              --title "Sync latest SlimefunGuguProject updates" \
+              --body-file "$BODY"
+          fi
+
+      - name: Fail when validation failed
+        if: steps.pending.outputs.has_updates == 'true' && steps.merge.outputs.status != '0' && steps.merge.outputs.status != '3'
+        run: |
+          echo "A draft PR was opened, but validation failed. Review the uploaded sync report."
+          exit 1
+
+      - name: No updates found
+        if: steps.pending.outputs.has_updates == 'false'
+        run: echo "Slimefun Legacy already contains the selected Gugu upstream revision."
