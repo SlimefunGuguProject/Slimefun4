@@ -77,7 +77,7 @@
 ## Legacy Second Maintenance Release (26 Jul 2026)
 
 #### Fixes
-* Replace the hardcoded `connectstate:` connector message with localized `Connected: ✔` / `Connected: ✘` output.
+* Replace the hardcoded `connectstate:` connector message with localized `Connected: ✔` / `Connected: ✕` output.
 * Correct long-capacity energy writes to use long capacity and charge accessors.
 * Correct slow SQL elapsed-time units and GitHub polling interval units.
 * Keep recipe-choice, armor, radiation, research, teleport, machine, reactor, rune, and storage work on scheduler-owned threads.

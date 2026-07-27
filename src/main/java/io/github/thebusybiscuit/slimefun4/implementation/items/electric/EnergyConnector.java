@@ -49,9 +49,9 @@ public class EnergyConnector extends SimpleSlimefunItem<BlockUseHandler> impleme
             Block b = e.getClickedBlock().get();
 
             if (EnergyNet.getNetworkFromLocation(b.getLocation()) != null) {
-                Slimefun.getLocalization().sendMessage(p, "machines.CARGO_NODES.connected", false);
+                Slimefun.getLocalization().sendMessage(p, "machines.CARGO_NODES.connection-status-connected", false);
             } else {
-                Slimefun.getLocalization().sendMessage(p, "machines.CARGO_NODES.not-connected", false);
+                Slimefun.getLocalization().sendMessage(p, "machines.CARGO_NODES.connection-status-disconnected", false);
             }
         };
     }

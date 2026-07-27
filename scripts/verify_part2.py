@@ -22,7 +22,17 @@ def require(path: Path, needle: str, message: str) -> None:
 
 messages = MAIN / "resources/languages/en/messages.yml"
 require(messages, "connected: '&7Connected: &2✔'", "Connected Cargo message is missing")
-require(messages, "not-connected: '&7Connected: &4✘'", "Disconnected Cargo message is missing")
+require(messages, "not-connected: '&7Connected: &4✕'", "Disconnected Cargo message is missing")
+require(
+    messages,
+    "connection-status-connected: '&7Connected: &2✔'",
+    "Stale-language-safe connected message is missing",
+)
+require(
+    messages,
+    "connection-status-disconnected: '&7Connected: &4✕'",
+    "Stale-language-safe disconnected message is missing",
+)
 
 for source in MAIN.rglob("*"):
     if source.is_file() and source.suffix in {".java", ".yml", ".yaml", ".properties"}:

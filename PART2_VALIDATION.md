@@ -2,7 +2,7 @@
 
 ## Passed in this assembly
 
-- Exact connector values validated as `Connected: ✔` and `Connected: ✘`.
+- Exact connector values validated as `Connected: ✔` and `Connected: ✕`.
 - No `connectstate` or `connectedstate` text remains in main sources.
 - No direct Bukkit scheduler calls remain in core outside `PaperScheduler` and the intentional plugin-shutdown fallback.
 - Scheduler abstraction and the legacy `BukkitTask` adapter compiled against Paper/Bukkit API-shaped Java 21 stubs.

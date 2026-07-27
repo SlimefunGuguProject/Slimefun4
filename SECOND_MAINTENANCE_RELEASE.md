@@ -9,7 +9,7 @@ This release finishes the Part 2 maintenance work without removing the legacy ad
 Cargo and energy connector checks now consistently display:
 
 - connected: `Connected: ✔`
-- disconnected: `Connected: ✘`
+- disconnected: `Connected: ✕`
 
 The hardcoded `connectstate:` / `connectedstate:` wording is removed. Internal storage keys and network state are unchanged.
 
