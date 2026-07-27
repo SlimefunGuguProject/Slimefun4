@@ -1,6 +1,6 @@
 # Gugu Upstream Sync
 
-Slimefun Legacy intentionally diverges from SlimefunGuguProject/Slimefun4. It contains English-only behavior, addon compatibility work, the Stability Release, and the Second Maintenance Release. Upstream changes should therefore be merged and reviewed, not copied over the fork.
+Slimefun Legacy intentionally diverges from SlimefunGuguProject/Slimefun4. It contains English-only behavior, addon compatibility work, the Stability Release, the Second Maintenance Release, and the Third Maintenance Release. Upstream changes should therefore be merged and reviewed, not copied over the fork.
 
 ## Why the July 2026 storage update matters
 
@@ -14,6 +14,14 @@ The current upstream comparison contains the database schema v3 storage work:
 - Storage API compatibility and migration tests are added.
 
 This is valuable for modern Paper item metadata and database reliability, but it is not a low-risk cosmetic update. Once a production database has migrated to schema version 3, downgrading to a build that only understands schema version 2 is unsafe without restoring the pre-upgrade database backup.
+
+## Integrated upstream baseline
+
+Part 3 manually integrates the Gugu storage branch through upstream merge commit `ece7368e1d0b40bc95c63d2796117794fcaf190e`. The file `.gugu-upstream-base` records that revision.
+
+When the source changes are uploaded without their original upstream Git parent, the sync script first creates an **ours merge** to connect that recorded upstream revision to the fork history without changing any source files. It then performs a normal merge of only commits newer than the recorded baseline. After a successful sync, the marker advances to the new upstream commit.
+
+Do not delete or manually change `.gugu-upstream-base` unless intentionally re-establishing the upstream integration point. The workflow refuses rewritten or unrelated upstream history rather than guessing.
 
 ## Safe workflow
 
@@ -31,6 +39,8 @@ A clean merge must pass:
 
 - `scripts/verify_english.py`;
 - `scripts/verify_part2.py`;
+- `scripts/verify_part3.py`;
+- `scripts/verify_gugu_sync.py`;
 - `scripts/check_api_annotations.py`;
 - Spotless;
 - the test suite;
@@ -38,7 +48,7 @@ A clean merge must pass:
 
 ## Running it
 
-1. Push the completed Part 2 source to the repository's default branch.
+1. Push the completed Part 3 source to the repository's default branch.
 2. Open **Actions → Sync Gugu Upstream → Run workflow**.
 3. Leave `upstream_ref` as `master` unless testing a specific upstream branch.
 4. Review the generated draft pull request and workflow artifact.

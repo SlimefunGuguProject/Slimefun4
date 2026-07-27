@@ -8,6 +8,7 @@
 - English, Part 2, API annotation, formatting, test, and build checks gate each sync.
 - Added schema-v3 database migration and rollback guidance for the July 2026 Gugu storage update.
 
+- [Legacy Third Maintenance Release (26 Jul 2026)](#legacy-third-maintenance-release-26-jul-2026)
 - [Legacy Second Maintenance Release (26 Jul 2026)](#legacy-second-maintenance-release-26-jul-2026)
 - [Legacy Stability Release 1 Hotfix 1 (26 Jul 2026)](#legacy-stability-release-1-hotfix-1-26-jul-2026)
 - [Legacy Stability Release 1 (26 Jul 2026)](#legacy-stability-release-1-26-jul-2026)
@@ -49,6 +50,28 @@
 - [Release Candidate 3 (21 Nov 2019)](#release-candidate-3-21-nov-2019)
 - [Release Candidate 2 (29 Sep 2019)](#release-candidate-2-29-sep-2019)
 - [Release Candidate 1 (26 Sep 2019)](#release-candidate-1-26-sep-2019)
+
+
+## Legacy Third Maintenance Release (26 Jul 2026)
+
+#### Additions
+* Add schema 3 with versioned binary ItemStack storage for backpack, block, and universal inventories.
+* Add legacy Bukkit object-stream and ItemMeta/skull-profile migration compatibility.
+* Add public storage descriptor, SQLite migration, transaction rollback, real-database, and missing-world tests.
+
+#### Changes
+* Keep legacy String storage APIs as deprecated Base64 views while core adapters retain native binary values.
+* Use MEDIUMBLOB on MySQL, BLOB on SQLite, and BYTEA on PostgreSQL.
+* Publish the database version only after migration work succeeds and restore connection auto-commit state afterward.
+* Resolve universal block locations lazily when their worlds become available.
+
+#### Fixes
+* Correct PostgreSQL universal inventory slot types and metadata insertion syntax.
+* Escape apostrophes in generated SQL text values.
+* Keep migration retries safe when a binary column was converted before a row-level failure.
+
+#### Upgrade warning
+* Back up every Slimefun database before first startup. Restore that backup before any downgrade to a schema-2 build.
 
 
 ## Legacy Second Maintenance Release (26 Jul 2026)

@@ -60,8 +60,9 @@ dependencies {
 
     compileOnly(libs.log4j.core)
     testImplementation(libs.junit.jupiter)
-    // Stability tests intentionally target server-independent helpers so they do not
-    // bootstrap Paper registries or depend on a running Minecraft server.
+    testImplementation(libs.mockbukkit)
+    testImplementation(libs.paper.api)
+    testImplementation(libs.sqlite.jdbc)
     testImplementation(libs.jsr305)
     testRuntimeOnly(libs.junit.platform.launcher)
 
@@ -98,6 +99,9 @@ sourceSets.main {
 
 tasks.test {
     useJUnitPlatform()
+    findProperty("slimefunRealDatabase")?.toString()?.let {
+        systemProperty("slimefun.realDatabase", it)
+    }
     testLogging {
         events = setOf(TestLogEvent.FAILED, TestLogEvent.SKIPPED)
         exceptionFormat = TestExceptionFormat.FULL

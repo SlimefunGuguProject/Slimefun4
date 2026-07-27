@@ -41,8 +41,12 @@ public class LocationUtils {
         try {
             var strArr = lKey.split(";");
             var loc = strArr[1].split(":");
+            var world = Bukkit.getWorld(strArr[0]);
+            if (world == null) {
+                return null;
+            }
             return new Location(
-                    Bukkit.getWorld(strArr[0]),
+                    world,
                     Double.parseDouble(loc[0]),
                     Double.parseDouble(loc[1]),
                     Double.parseDouble(loc[2]));

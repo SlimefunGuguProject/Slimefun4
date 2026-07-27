@@ -48,7 +48,7 @@ public class SlimefunUniversalBlockData extends SlimefunUniversalData {
 
         var data = getData(UniversalDataTrait.BLOCK.getReservedKey());
 
-        // 自动修复丢失的位置数据
+        // Repair missing persisted location data without discarding the in-memory position.
         if (lastPresent != null) {
             if (data == null) {
                 setTraitData(UniversalDataTrait.BLOCK, LocationUtils.getLocKey(lastPresent.toLocation()));
@@ -62,13 +62,18 @@ public class SlimefunUniversalBlockData extends SlimefunUniversalData {
         }
 
         try {
-            lastPresent = new BlockPosition(LocationUtils.toLocation(data));
+            var location = LocationUtils.toLocation(data);
+            if (location == null || location.getWorld() == null) {
+                // Keep the stored location string intact until the world becomes available.
+                return null;
+            }
+            lastPresent = new BlockPosition(location);
         } catch (RuntimeException e) {
             if (data.isEmpty()) {
                 return null;
             }
 
-            // 修复因使用不一致的文本转换导致的位置无法解析
+            // Repair positions written using the old human-readable representation.
             oldLocationFix(data);
         }
 
@@ -78,14 +83,18 @@ public class SlimefunUniversalBlockData extends SlimefunUniversalData {
     private void oldLocationFix(String data) {
         try {
             var lArr = data.split(",");
+            var world = Bukkit.getWorld(lArr[0].replace("[world=", ""));
+            if (world == null) {
+                return;
+            }
+
             var bp = new BlockPosition(
-                    Bukkit.getWorld(lArr[0].replace("[world=", "")),
+                    world,
                     (int) Double.parseDouble(lArr[1].replace("x=", "")),
                     (int) Double.parseDouble(lArr[2].replace("y=", "")),
                     (int) Double.parseDouble(lArr[3].replace("z=", "").replace("]", "")));
 
             setTraitData(UniversalDataTrait.BLOCK, LocationUtils.getLocKey(bp.toLocation()));
-
             lastPresent = bp;
         } catch (Exception x) {
             throw new RuntimeException("Unable to fix location " + data + ", it might be broken", x);

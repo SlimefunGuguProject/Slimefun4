@@ -431,8 +431,9 @@ public class BlockDataController extends ADataController {
 
             removeUniversalBlockDirectly(uuid);
 
-            if (Slimefun.getRegistry().getTickerBlocks().contains(toRemove.getSfId())) {
-                Slimefun.getTickerTask().disableTicker(ubd.getLastPresent().toLocation());
+            var lastPresent = ubd.getLastPresent();
+            if (lastPresent != null && Slimefun.getRegistry().getTickerBlocks().contains(toRemove.getSfId())) {
+                Slimefun.getTickerTask().disableTicker(lastPresent.toLocation());
             }
         }
 
@@ -742,7 +743,12 @@ public class BlockDataController extends ADataController {
     }
 
     private void move(SlimefunUniversalBlockData uniData, Location target) {
-        var loc = uniData.getLastPresent().toLocation();
+        var lastPresent = uniData.getLastPresent();
+        if (lastPresent == null) {
+            uniData.setLastPresent(target);
+            return;
+        }
+        var loc = lastPresent.toLocation();
 
         if (LocationUtils.isSameLoc(loc, target)) {
             return;
@@ -1070,13 +1076,7 @@ public class BlockDataController extends ADataController {
 
             if (uniData instanceof SlimefunUniversalBlockData ubd) {
                 if (ubd.hasTrait(UniversalDataTrait.BLOCK)) {
-                    // 初始化 上次出现位置
-                    var lStr = ubd.getData(UniversalDataTrait.BLOCK.getReservedKey());
-
-                    if (lStr != null && !lStr.isBlank()) {
-                        ubd.setLastPresent(LocationUtils.toLocation(lStr));
-                    }
-
+                    // Resolve the persisted position lazily. Missing worlds must not erase the stored value.
                     var sfItem = SlimefunItem.getById(ubd.getSfId());
 
                     if (sfItem != null && sfItem.isTicking() && ubd.getLastPresent() != null) {

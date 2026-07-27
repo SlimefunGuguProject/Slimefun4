@@ -5,79 +5,124 @@ import com.xzavier0722.mc.plugin.slimefun4.storage.controller.StorageType;
 import io.github.thebusybiscuit.slimefun4.core.debug.Debug;
 import io.github.thebusybiscuit.slimefun4.core.debug.TestCase;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.logging.Level;
 import javax.annotation.Nullable;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.util.io.BukkitObjectInputStream;
-import org.bukkit.util.io.BukkitObjectOutputStream;
 
 public class DataUtils {
+    private static final int MYSQL_MEDIUMBLOB_MAX_BYTES = 16_777_215;
+
+
     /**
-     * 使用 {@link BukkitObjectOutputStream} 序列化 {@link ItemStack}
-     * 为 Base64 字符串，用于数据库存储.
+     * Serializes an item using the legacy String-facing API.
      *
-     * @param itemStack 要序列化的 {@link ItemStack}
-     * @return 序列化后的 Base64 字符串
+     * <p>This method remains for addon source and binary compatibility. New database code should
+     * use {@link #serializeItemStackBytes(ItemStack)} so the native binary payload is not encoded a
+     * second time.
+     *
+     * @param itemStack item to serialize
+     * @return Base64 representation of the versioned binary payload
+     * @deprecated use {@link #serializeItemStackBytes(ItemStack)} for storage
      */
+    @Deprecated
     public static String serializeItemStack(ItemStack itemStack) {
+        var data = serializeItemStackBytes(itemStack);
+        return data.length == 0 ? "" : Base64.getEncoder().encodeToString(data);
+    }
+
+    /**
+     * Serializes an item into Slimefun's versioned binary database format.
+     *
+     * @param itemStack item to serialize
+     * @return versioned binary data, or an empty array for null/failed items
+     */
+    public static byte[] serializeItemStackBytes(ItemStack itemStack) {
         Debug.log(TestCase.BACKPACK, "Serializing itemstack: " + itemStack);
 
         if (itemStack == null) {
-            return "";
+            return new byte[0];
         }
 
-        try (var stream = new ByteArrayOutputStream();
-                var bs = new BukkitObjectOutputStream(stream)) {
-            bs.writeObject(itemStack);
-            var itemStr = Base64.getEncoder().encodeToString(stream.toByteArray());
+        try {
+            var itemData = ItemStackDataCodec.serialize(itemStack);
 
             if (!Slimefun.getConfigManager().isBypassItemLengthCheck()
                     && Slimefun.getDatabaseManager().getBlockDataStorageType() == StorageType.MYSQL
-                    && itemStr.length() > 65535) {
-
-                throw new IllegalArgumentException("Detected an oversized item. Please contact the plugin developer responsible for that item: " + StringUtil.itemStackToString(itemStack)
-                        + ", size = " + itemStr.length());
+                    && itemData.length > MYSQL_MEDIUMBLOB_MAX_BYTES) {
+                throw new IllegalArgumentException(
+                        "Detected an oversized item. Please contact the plugin developer responsible for that item: "
+                                + StringUtil.itemStackToString(itemStack)
+                                + ", size = "
+                                + itemData.length);
             }
 
-            return itemStr;
+            return itemData;
         } catch (Throwable e) {
-            Slimefun.logger().log(Level.SEVERE, "An error occurred during serialisation of the item; an empty value will be stored.", e);
-            return "";
+            Slimefun.logger()
+                    .log(
+                            Level.SEVERE,
+                            "An error occurred while serializing an item; an empty value will be stored.",
+                            e);
+            return new byte[0];
         }
     }
 
     /**
-     * 使用 {@link BukkitObjectInputStream} 反序列化 Base64 字符串
-     * 为 {@link ItemStack} 对象.
+     * Deserializes either the current binary format or a legacy ASCII Base64 payload.
      *
-     * @param base64Str 要反序列化的 Base64 字符串
-     * @return 反序列化后的 {@link ItemStack} 对象
+     * @param itemData stored item bytes
+     * @return item, or null for an empty payload
      */
-    @Nullable public static ItemStack deserializeItemStack(String base64Str) {
-        if (base64Str == null || base64Str.isEmpty() || base64Str.isBlank()) {
+    @Nullable public static ItemStack deserializeItemStack(byte[] itemData) {
+        if (itemData == null || itemData.length == 0) {
             return null;
         }
 
-        Debug.log(TestCase.BACKPACK, "Deserializing itemstack: " + base64Str);
-
-        try (var stream = new ByteArrayInputStream(Base64.getMimeDecoder().decode(base64Str));
-                var bs = new BukkitObjectInputStream(stream)) {
-            var result = (ItemStack) bs.readObject();
-
+        try {
+            var result = ItemStackDataCodec.deserialize(itemData);
             Debug.log(TestCase.BACKPACK, "Deserialized itemstack: " + result);
 
-            if (result.getType().isAir()) {
-                Slimefun.logger().log(Level.SEVERE, "Failed to deserialize item from the database! The corresponding item cannot be displayed.");
+            if (result != null && result.getType().isAir()) {
+                Slimefun.logger()
+                        .log(
+                                Level.SEVERE,
+                                "Failed to deserialize an item from the database; the corresponding item cannot be displayed.");
             }
 
             return result;
         } catch (Exception ex) {
-            throw new RuntimeException("An error occurred during deserialisation of the item; the corresponding item cannot be displayed.", ex);
+            throw new RuntimeException(
+                    "An error occurred while deserializing an item; the corresponding item cannot be displayed.",
+                    ex);
         }
+    }
+
+    /**
+     * Deserializes data supplied through the legacy String-facing API.
+     *
+     * <p>Schema 1/2 values are raw Base64-encoded Bukkit object streams. Values created through the
+     * retained String serializer are Base64-encoded versioned binary data. Both forms are accepted.
+     *
+     * @param base64Str encoded item data
+     * @return item, or null for an empty value
+     */
+    @Deprecated
+    @Nullable public static ItemStack deserializeItemStack(String base64Str) {
+        if (base64Str == null || base64Str.isBlank()) {
+            return null;
+        }
+
+        Debug.log(TestCase.BACKPACK, "Deserializing legacy string item data");
+        var decoded = Base64.getMimeDecoder().decode(base64Str);
+        return ItemStackDataCodec.isCurrent(decoded)
+                ? deserializeItemStack(decoded)
+                : deserializeItemStack(base64Str.getBytes(StandardCharsets.US_ASCII));
+    }
+
+    public static boolean isLegacyItemStack(byte[] data) {
+        return ItemStackDataCodec.isLegacy(data);
     }
 
     public static String blockDataBase64(String text) {

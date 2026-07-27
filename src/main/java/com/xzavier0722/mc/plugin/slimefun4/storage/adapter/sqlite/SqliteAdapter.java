@@ -47,7 +47,7 @@ public class SqliteAdapter extends SqlCommonAdapter<SqliteConfig> {
 
     @Override
     public void setData(RecordKey key, RecordSet item) {
-        var data = item.getAll();
+        var data = item.getAllValues();
         var fields = data.keySet();
         var fieldStr = SqlUtils.buildFieldStr(fields);
         if (fieldStr.isEmpty()) {
@@ -80,7 +80,7 @@ public class SqliteAdapter extends SqlCommonAdapter<SqliteConfig> {
                             ", ",
                             updateFields.stream()
                                     .map(field -> {
-                                        var val = item.get(field);
+                                        var val = item.getValue(field);
                                         if (val == null) {
                                             throw new IllegalArgumentException(
                                                     "Cannot find value in RecordSet for the specific key: " + field);
@@ -220,7 +220,7 @@ public class SqliteAdapter extends SqlCommonAdapter<SqliteConfig> {
                 + FIELD_INVENTORY_SLOT
                 + " INTEGER NOT NULL, "
                 + FIELD_INVENTORY_ITEM
-                + " TEXT NOT NULL, "
+                + " BLOB NOT NULL, "
                 + "FOREIGN KEY ("
                 + FIELD_BACKPACK_ID
                 + ") "
@@ -308,7 +308,7 @@ public class SqliteAdapter extends SqlCommonAdapter<SqliteConfig> {
                 + FIELD_INVENTORY_SLOT
                 + " INTEGER NOT NULL, "
                 + FIELD_INVENTORY_ITEM
-                + " TEXT NOT NULL, "
+                + " BLOB NOT NULL, "
                 + "FOREIGN KEY ("
                 + FIELD_LOCATION
                 + ") "
@@ -335,7 +335,7 @@ public class SqliteAdapter extends SqlCommonAdapter<SqliteConfig> {
                 + FIELD_INVENTORY_SLOT
                 + " TINYINT UNSIGNED NOT NULL, "
                 + FIELD_INVENTORY_ITEM
-                + " TEXT NOT NULL,"
+                + " BLOB NOT NULL,"
                 + "PRIMARY KEY ("
                 + FIELD_UNIVERSAL_UUID
                 + ", "

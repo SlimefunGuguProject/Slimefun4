@@ -36,6 +36,8 @@ import com.xzavier0722.mc.plugin.slimefun4.storage.common.FieldKey;
 import com.xzavier0722.mc.plugin.slimefun4.storage.common.FieldMapper;
 import com.xzavier0722.mc.plugin.slimefun4.storage.common.RecordSet;
 import io.github.bakedlibs.dough.collections.Pair;
+import java.nio.charset.StandardCharsets;
+import java.sql.Blob;
 import java.sql.Connection;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -127,12 +129,68 @@ public class SqlUtils {
                                 .toList());
     }
 
+    /**
+     * Builds a key/value condition through the legacy String-facing API.
+     *
+     * @param key storage field
+     * @param val String value
+     * @return SQL key/value expression
+     * @deprecated use {@link #buildKvStr(FieldKey, Object)}
+     */
+    @Deprecated
     public static String buildKvStr(FieldKey key, String val) {
         return mapField(key) + (isWildcardsMatching(val) ? " LIKE " : "=") + toSqlValStr(key, val);
     }
 
+    public static String buildKvStr(FieldKey key, Object val) {
+        if (val instanceof byte[]) {
+            return mapField(key) + "=" + toSqlValStr(key, val);
+        }
+        var text = String.valueOf(val);
+        return mapField(key) + (isWildcardsMatching(text) ? " LIKE " : "=") + toSqlValStr(key, val);
+    }
+
+    public static String buildPostgreSqlKvStr(FieldKey key, Object val) {
+        return mapField(key) + "=" + toPostgreSqlValStr(key, val);
+    }
+
+    /**
+     * Converts a String through the legacy SQL-value API.
+     *
+     * @param key storage field
+     * @param val String value
+     * @return escaped SQL value
+     * @deprecated use {@link #toSqlValStr(FieldKey, Object)}
+     */
+    @Deprecated
     public static String toSqlValStr(FieldKey key, String val) {
-        return key.isNumType() ? val : "'" + val + "'";
+        return toSqlValStr(key, (Object) val);
+    }
+
+    public static String toSqlValStr(FieldKey key, Object val) {
+        if (val instanceof byte[] bytes) {
+            return "X'" + toHex(bytes) + "'";
+        }
+        return toTextSqlValStr(key, val);
+    }
+
+    public static String toPostgreSqlValStr(FieldKey key, Object val) {
+        if (val instanceof byte[] bytes) {
+            return "decode('" + toHex(bytes) + "', 'hex')";
+        }
+        return toTextSqlValStr(key, val);
+    }
+
+    private static String toTextSqlValStr(FieldKey key, Object val) {
+        if (val == null) {
+            return "NULL";
+        }
+        var text = String.valueOf(val);
+        return key.isNumType() ? text : "'" + text.replace("'", "''") + "'";
+    }
+
+    private static String toHex(byte[] data) {
+        return java.util.HexFormat.of().formatHex(data);
     }
 
     public static List<RecordSet> execQuery(Connection conn, String sql) throws SQLException {
@@ -149,7 +207,19 @@ public class SqlUtils {
                     }
                     var row = new RecordSet();
                     for (var i = 1; i <= columnCount; i++) {
-                        row.put(SqlUtils.mapField(metaData.getColumnName(i)), result.getString(i));
+                        var field = SqlUtils.mapField(metaData.getColumnLabel(i));
+                        if (field == FieldKey.INVENTORY_ITEM) {
+                            var value = result.getObject(i);
+                            if (value instanceof byte[] bytes) {
+                                row.put(field, bytes);
+                            } else if (value instanceof Blob blob) {
+                                row.put(field, blob.getBytes(1, Math.toIntExact(blob.length())));
+                            } else if (value != null) {
+                                row.put(field, String.valueOf(value).getBytes(StandardCharsets.US_ASCII));
+                            }
+                        } else {
+                            row.put(field, result.getString(i));
+                        }
                     }
                     row.readonly();
                     re.add(row);

@@ -14,8 +14,10 @@ import com.xzavier0722.mc.plugin.slimefun4.storage.common.RecordSet;
 import com.xzavier0722.mc.plugin.slimefun4.storage.patch.DatabasePatch;
 import com.xzavier0722.mc.plugin.slimefun4.storage.patch.DatabasePatchV1;
 import com.xzavier0722.mc.plugin.slimefun4.storage.patch.DatabasePatchV2;
+import com.xzavier0722.mc.plugin.slimefun4.storage.patch.DatabasePatchV3;
 import com.zaxxer.hikari.HikariDataSource;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.logging.Level;
@@ -138,6 +140,7 @@ public abstract class SqlCommonAdapter<T extends ISqlCommonConfig> implements ID
         switch (dbVer) {
             case 0 -> patch = new DatabasePatchV1();
             case 1 -> patch = new DatabasePatchV2();
+            case 2 -> patch = new DatabasePatchV3();
         }
 
         if (patch == null) {
@@ -145,17 +148,44 @@ public abstract class SqlCommonAdapter<T extends ISqlCommonConfig> implements ID
         }
 
         try (var conn = ds.getConnection()) {
-            Slimefun.logger().log(Level.INFO, "Updating database version to " + patch.getVersion() + ". This may take a moment...");
-            var stmt = conn.createStatement();
-            patch.updateVersion(stmt, config);
-            patch.patch(stmt, config);
-            Slimefun.logger().log(Level.INFO, "Update completed.");
+            Slimefun.logger().log(
+                    Level.INFO,
+                    "Updating database version to " + patch.getVersion() + ". This may take a moment...");
+            executePatchTransaction(conn, patch, config);
+            Slimefun.logger().log(Level.INFO, "Database update completed.");
 
             if (getDatabaseVersion() != IDataSourceAdapter.DATABASE_VERSION) {
                 patch();
             }
-        } catch (SQLException e) {
-            Slimefun.logger().log(Level.SEVERE, "An issue occurred while updating the database!", e);
+        } catch (SQLException | RuntimeException e) {
+            Slimefun.logger().log(
+                    Level.SEVERE,
+                    "The database update failed and was rolled back. Restore the pre-upgrade backup before downgrading Slimefun.",
+                    e);
+        }
+    }
+
+    static void executePatchTransaction(Connection conn, DatabasePatch patch, ISqlCommonConfig config)
+            throws SQLException {
+        var originalAutoCommit = conn.getAutoCommit();
+        try {
+            conn.setAutoCommit(false);
+            try (var stmt = conn.createStatement()) {
+                patch.patch(stmt, config);
+                patch.updateVersion(stmt, config);
+            }
+            conn.commit();
+        } catch (SQLException | RuntimeException ex) {
+            try {
+                conn.rollback();
+            } catch (SQLException rollbackFailure) {
+                ex.addSuppressed(rollbackFailure);
+            }
+            throw ex;
+        } finally {
+            if (conn.getAutoCommit() != originalAutoCommit) {
+                conn.setAutoCommit(originalAutoCommit);
+            }
         }
     }
 }
