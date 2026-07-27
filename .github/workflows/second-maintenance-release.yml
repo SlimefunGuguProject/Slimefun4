@@ -1,4 +1,4 @@
-name: Build Stability Release
+name: Build Second Maintenance Release
 
 on:
   workflow_dispatch:
@@ -6,7 +6,7 @@ on:
       version:
         description: Release version used in the JAR name
         required: true
-        default: Legacy-Stability-1-Hotfix-1
+        default: Legacy-Maintenance-2
         type: string
       create_release:
         description: Create a GitHub release after all checks pass
@@ -18,9 +18,9 @@ permissions:
   contents: write
 
 jobs:
-  stability-release:
+  maintenance-release:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 35
     env:
       RELEASE_VERSION: ${{ inputs.version }}
     steps:
@@ -34,21 +34,16 @@ jobs:
           java-version: '25'
           cache: gradle
 
-      - name: Verify English-only runtime text
-        run: python3 scripts/verify_english.py .
-
-      - name: Verify chunk-load thread safety
-        run: python3 scripts/verify_chunk_load_threading.py .
-
-      - name: Verify second maintenance release invariants
+      - name: Verify release invariants
         run: |
+          python3 scripts/verify_english.py .
+          python3 scripts/verify_chunk_load_threading.py .
           python3 scripts/check_api_annotations.py
           python3 scripts/verify_part2.py .
 
       - name: Format and build release
         run: |
           chmod +x gradlew
-          ./gradlew spotlessApply --no-daemon
           ./gradlew spotlessCheck clean build -PprojectVersion="$RELEASE_VERSION" --no-daemon
 
       - name: Assemble release bundle
@@ -61,7 +56,7 @@ jobs:
           test -n "$JAR"
           test -n "$SOURCES"
 
-          cp "$JAR" "$SOURCES" STABILITY_RELEASE.md BUILD_VALIDATION.md dist/
+          cp "$JAR" "$SOURCES" SECOND_MAINTENANCE_RELEASE.md PART2_VALIDATION.md dist/
 
           rsync -a ./ source-package/ \
             --exclude '.git/' \
@@ -70,7 +65,6 @@ jobs:
             --exclude 'dist/' \
             --exclude 'source-package/'
           (cd source-package && zip -qr "../dist/Slimefun-${RELEASE_VERSION}-source.zip" .)
-
           (cd dist && sha256sum * > SHA256SUMS.txt)
 
       - name: Upload release bundle
@@ -86,5 +80,5 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release create "$RELEASE_VERSION" dist/* \
-            --title "Slimefun Legacy ${RELEASE_VERSION}" \
-            --notes-file STABILITY_RELEASE.md
+            --title "Slimefun Legacy $RELEASE_VERSION" \
+            --notes-file SECOND_MAINTENANCE_RELEASE.md

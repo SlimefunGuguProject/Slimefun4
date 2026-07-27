@@ -27,6 +27,11 @@ jobs:
       - name: Verify English-only behavior
         run: python3 scripts/verify_english.py .
 
+      - name: Verify second maintenance release invariants
+        run: |
+          python3 scripts/check_api_annotations.py
+          python3 scripts/verify_part2.py .
+
       - name: Format and build
         run: |
           chmod +x gradlew
