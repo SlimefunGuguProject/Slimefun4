@@ -1,5 +1,5 @@
 # Table of contents
-- [Legacy Second Maintenance Release — Part 2 Foundation (26 Jul 2026)](#legacy-second-maintenance-release--part-2-foundation-26-jul-2026)
+- [Legacy Second Maintenance Release (26 Jul 2026)](#legacy-second-maintenance-release-26-jul-2026)
 - [Legacy Stability Release 1 Hotfix 1 (26 Jul 2026)](#legacy-stability-release-1-hotfix-1-26-jul-2026)
 - [Legacy Stability Release 1 (26 Jul 2026)](#legacy-stability-release-1-26-jul-2026)
 - [Release Candidate 38 (TBD)](#release-candidate-38-tbd)
@@ -42,23 +42,30 @@
 - [Release Candidate 1 (26 Sep 2019)](#release-candidate-1-26-sep-2019)
 
 
-## Legacy Second Maintenance Release — Part 2 Foundation (26 Jul 2026)
+## Legacy Second Maintenance Release (26 Jul 2026)
 
 #### Fixes
 * Replace the hardcoded `connectstate:` connector message with localized `Connected: ✔` / `Connected: ✘` output.
 * Correct long-capacity energy writes to use long capacity and charge accessors.
-* Keep recipe-choice inventory updates off asynchronous scheduler threads.
+* Correct slow SQL elapsed-time units and GitHub polling interval units.
+* Keep recipe-choice, armor, radiation, research, teleport, machine, reactor, rune, and storage work on scheduler-owned threads.
 
 #### Additions
-* Add tracked Paper/Folia scheduler, task-handle, location, and entity scheduling abstractions.
+* Add tracked global, location, entity, and asynchronous scheduling abstractions with centralized shutdown cancellation.
+* Preserve legacy `BukkitTask` return compatibility through a scheduler-backed adapter.
 * Add storage-neutral `BlockTicker` and resolved-container long-energy overloads without removing legacy signatures.
-* Add `@SlimefunAPI` and `@SlimefunInternal` annotations and an initial API-boundary pass.
+* Complete `@SlimefunAPI` / `@SlimefunInternal` classification for the binary-compatibility package boundaries.
 * Add fail-closed protection compatibility policy and server-independent tests.
-* Begin Paper deprecation cleanup with `AsyncChatEvent`, entity-scheduled callbacks, modern target-block lookup, and nonblocking callable helpers.
+* Add static Part 2 verification and a dedicated second-maintenance release workflow.
+
+#### Changes
+* Migrate direct core scheduler usage behind the scheduler service, with explicit location/entity ownership where known.
+* Move chat and action-bar handling to current Paper/Adventure APIs.
+* Make cross-owner runtime state concurrent where maintenance tasks can execute on separate region or entity schedulers.
 
 #### Compatibility
-* Retain legacy ticker, storage, and `Slimefun.runSync(...)` bridges while migration continues.
-* Treat this as a Part 2 foundation; remaining direct scheduler users and full addon compatibility gates are still required before final release.
+* Retain legacy ticker, storage, integer-energy, and `Slimefun.runSync(...)` descriptors for existing addons.
+* Keep Paper tick timing while enabling region/entity scheduler routing on Folia-capable servers.
 
 
 ## Legacy Stability Release 1 Hotfix 1 (26 Jul 2026)

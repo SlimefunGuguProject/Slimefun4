@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Verify Paper-safe Slimefun chunk loading in the Stability Release."""
+"""Verify ownership-safe Slimefun chunk loading in maintenance releases."""
 
 from pathlib import Path
 import sys
@@ -18,8 +18,8 @@ failures: list[str] = []
 
 if "CompletableFuture.runAsync(() -> loadChunk" in controller:
     failures.append("BlockDataController still loads chunks on a CompletableFuture executor")
-if "BukkitTask task = Slimefun.runSync" not in controller:
-    failures.append("BlockDataController async API does not marshal chunk loading to the server thread")
+if "Slimefun.runSyncAt(chunk.getBlock(0, 0, 0).getLocation()" not in controller:
+    failures.append("BlockDataController async API does not marshal chunk loading to the owning chunk region")
 if "controller.getChunkDataAsync(chunk)" in doctor:
     failures.append("ItemDoctorService still requests async storage loading from ChunkLoadEvent")
 if "onSlimefunChunkDataLoad(SlimefunChunkDataLoadEvent event)" not in doctor:

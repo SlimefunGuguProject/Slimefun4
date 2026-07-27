@@ -11,6 +11,7 @@ from pathlib import Path
 PUBLIC_PREFIXES = (
     "io/github/thebusybiscuit/slimefun4/api/",
     "io/github/thebusybiscuit/slimefun4/core/attributes/",
+    "io/github/thebusybiscuit/slimefun4/core/services/scheduling/",
     "me/mrCookieSlime/Slimefun/Objects/handlers/",
     "me/mrCookieSlime/Slimefun/api/",
 )

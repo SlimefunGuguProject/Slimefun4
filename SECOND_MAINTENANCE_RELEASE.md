@@ -1,106 +1,115 @@
-# Slimefun Legacy — Second Maintenance Release, Part 2 Foundation
+# Slimefun Legacy — Second Maintenance Release
 
-Status: source foundation for the second maintenance release
+Status: implementation complete; dependency-resolved CI and staging-server validation required before deployment
 
-This package begins Part 2 without removing legacy addon entry points. It fixes the visible Cargo/energy connector state text and introduces the scheduler, ticker, energy, API-boundary, protection, and Paper cleanup foundations needed for the remaining maintenance work.
+This release finishes the Part 2 maintenance work without removing the legacy addon entry points protected by Slimefun Legacy's compatibility checks.
 
-## User-visible fix
+## Player-facing Cargo connector fix
 
-Cargo and energy connector checks now use one localized result:
+Cargo and energy connector checks now consistently display:
 
 - connected: `Connected: ✔`
 - disconnected: `Connected: ✘`
 
-The hardcoded `connectstate:` text has been removed. Internal storage and network state keys were not renamed.
+The hardcoded `connectstate:` / `connectedstate:` wording is removed. Internal storage keys and network state are unchanged.
 
-## Scheduler abstraction
+## Scheduler abstraction and ownership migration
 
-Added a tracked `SlimefunScheduler` and `TaskHandle` API with:
+Slimefun core scheduling now flows through the tracked `SlimefunScheduler` service.
 
-- global, location, entity, and asynchronous scheduling
-- delayed and fixed-rate variants
-- location ownership checks
-- centralized cancellation during plugin shutdown
-- standard Paper tick scheduling through Bukkit
-- Folia-aware global, region, entity, and asynchronous backends
+Implemented scheduling modes:
 
-Initial migrations cover the machine ticker, synchronized machine execution, player tasks, autosaving, hologram work, chat callbacks, and integration startup. Existing `Slimefun.runSync(...)` methods remain for addon and internal compatibility while migration continues.
+- global immediate, delayed, and repeating tasks
+- location-owned immediate, delayed, and repeating tasks
+- entity-owned immediate, delayed, and repeating tasks
+- asynchronous immediate, delayed, and repeating tasks
+- scheduler-neutral `TaskHandle` cancellation
+- centralized shutdown cancellation
 
-This is a foundation, not a claim that every legacy task is Folia-safe. Storage loading, armor tasks, profiler tasks, and other remaining direct Bukkit scheduler users still need later migration and testing.
+Standard Paper retains Bukkit's tick-based timing. Folia-capable servers route known location- and entity-bound work through the corresponding region or entity scheduler.
+
+The maintenance pass migrates the core ticker, storage loading, Item Doctor, armor and radiation processing, recipe-choice animation, teleports, research progression, machine animations, reactors, runes, Android work, Cargo/energy actions, holograms, chat callbacks, GitHub checks, profiler work, and command callbacks. Direct Bukkit scheduler usage is isolated to the scheduler implementation plus a deliberate shutdown fallback.
+
+The historical `Slimefun.runSync(...)` signatures still return `BukkitTask`. A `LegacyBukkitTask` adapter preserves that return shape while routing execution through the tracked scheduler. New `runSyncAt(...)` and `runSyncFor(...)` overloads provide location and entity ownership to internal callers.
 
 ## Modern BlockTicker and energy overloads
 
 ### BlockTicker
 
-Added a storage-neutral overload:
+A storage-neutral overload is available:
 
 ```java
 tick(Block block, SlimefunItem item, ASlimefunDataContainer data)
 ```
 
-It dispatches to the existing block or universal overload. Existing addon overrides and the deprecated `Config` bridge are retained.
+It dispatches to the existing block or universal data overload. Existing `SlimefunBlockData`, `SlimefunUniversalData`, and deprecated `Config` override paths remain available for addon compatibility.
 
 ### Energy
 
-Added long-capacity overloads that accept a resolved `ASlimefunDataContainer` for set, add, and remove operations. Location-only long methods now delegate through the same path.
+Long-capacity energy operations now support already-resolved `ASlimefunDataContainer` instances for charge reads and set/add/remove mutations.
 
-The prior long-charge setter incorrectly used the legacy integer capacity and charge accessors. It now uses `getCapacityLong()` and `getChargeLong(...)`, preserving values above `Integer.MAX_VALUE`.
+The long setter no longer uses legacy integer capacity or charge accessors. Capacity checks, clamping, overflow-safe addition, and texture updates use long values throughout, including capacities above `Integer.MAX_VALUE`.
 
 ## API and internal annotations
 
-Added class-retained annotations:
+The release adds class-retained annotations:
 
 - `@SlimefunAPI` for supported addon-facing contracts
 - `@SlimefunInternal` for implementation details
 
-The first annotation pass covers core addon/item handlers, `SlimefunItem`, `BlockTicker`, energy components, scheduler contracts, storage compatibility wrappers, ticker internals, and protection internals. This is intentionally incremental.
+The annotation inventory is complete for every public top-level type in the same package prefixes monitored by the binary API compatibility workflow:
+
+- `io.github.thebusybiscuit.slimefun4.api`
+- `io.github.thebusybiscuit.slimefun4.core.attributes`
+- `io.github.thebusybiscuit.slimefun4.core.services.scheduling`
+- `me.mrCookieSlime.Slimefun.Objects.handlers`
+- `me.mrCookieSlime.Slimefun.api`
+
+`scripts/check_api_annotations.py` prevents future public types in those boundaries from being left unclassified.
 
 ## Protection compatibility tests
 
-Added a server-independent, fail-closed protection policy used by Cargo and legacy inventory menus.
+Cargo nodes and legacy inventory blocks use one fail-closed protection policy.
 
-Coverage verifies:
+The server-independent test matrix verifies:
 
-- explicit bypass permissions still bypass provider checks
-- local Slimefun permission denial is preserved
-- provider allow/deny results are preserved
-- broken optional protection integrations deny access rather than silently allowing it
+- explicit bypass skips optional provider checks
+- Slimefun's local denial remains authoritative
+- provider allow and deny decisions are preserved
+- provider runtime failures deny access
+- missing or incompatible provider linkage denies access
 
-## Paper deprecation cleanup
+This prevents broken optional protection integrations from silently granting access.
 
-The first cleanup pass includes:
+## Paper cleanup
 
-- Paper `AsyncChatEvent` and Adventure plain-text extraction
-- thread-safe chat-catcher storage
-- entity-scheduled chat callbacks and player tasks
-- nonblocking callable helpers using `CompletableFuture`
-- removal of old `scheduleSyncDelayedTask` and `scheduleSyncRepeatingTask` calls
-- synchronous recipe-choice inventory mutation instead of async Bukkit inventory access
-- `getTargetBlockExact(...)` for the Storm Staff
-- an actual `@Deprecated` marker on the legacy `InventoryBlock`
-- suppression isolated to the unit-test-only legacy `JavaPluginLoader` constructor
+The maintenance pass includes:
 
-## Compatibility boundaries
+- Paper `AsyncChatEvent` with Adventure plain-text extraction
+- Adventure action-bar messages instead of legacy Bungee action-bar dispatch
+- thread-safe chat catcher, radiation grace-period, Cargo/altar/hook, elevator, and profiler state where scheduling can cross ownership boundaries
+- entity- and location-owned callbacks for Bukkit world and inventory access
+- nonblocking callable helpers backed by `CompletableFuture`
+- `getTargetBlockExact(...)` for target lookup
+- removal of legacy `scheduleSync...` and `BukkitRunnable` usage from core
+- corrected wall-clock/nanosecond comparison in slow SQL detection
+- corrected GitHub polling period units
+- isolated suppression for the unit-test-only legacy `JavaPluginLoader` constructor
 
-This foundation deliberately does not remove or change the descriptors of existing public methods. Legacy ticker, storage, and Bukkit task bridges remain available. The new overloads and annotations are additive.
+## Compatibility policy
 
-Before promoting this source to a production release, the remaining Part 2 work should include:
+This update is additive across the protected addon API surface. Legacy ticker overloads, storage bridges, integer energy methods, and `Slimefun.runSync(...)` descriptors remain present. New scheduler helpers and long-energy/container overloads do not replace existing public descriptors.
 
-1. migrate the remaining core scheduler call sites by ownership type
-2. add dependency-resolved Paper integration tests
-3. run addon binary compatibility CI against the resulting shaded JAR
-4. complete the annotation inventory for the public API surface
-5. run the authoritative Java 25 / Java 21-bytecode build and staging-server tests
+## Required release validation
 
-## Validation completed in this assembly
+Run the authoritative build in a dependency-enabled environment:
 
-- targeted Java compilation against Paper/Bukkit API-shaped stubs for the scheduler, BlockTicker, energy API, chat migration, and hologram service
-- scheduler runtime smoke test for execution, cancellation, shutdown rejection, and task tracking
-- long-energy runtime smoke test above the integer limit
-- pure-Java smoke tests for annotations, protection behavior, and tick conversion
-- English YAML parsing and exact Cargo message checks
-- scan confirming no remaining `connectstate` or `connectedstate` text
-- scan confirming no remaining `scheduleSyncDelayedTask` or `scheduleSyncRepeatingTask` calls
-- changed-file whitespace and patch validation
+```bash
+python3 scripts/verify_english.py .
+python3 scripts/verify_chunk_load_threading.py .
+python3 scripts/check_api_annotations.py
+python3 scripts/verify_part2.py .
+./gradlew spotlessCheck clean build --no-daemon
+```
 
-The local Gradle build could not run because the Gradle 9.4.1 wrapper distribution was not available in the container and the container could not resolve `services.gradle.org`. No locally unverified JAR is included. Run the repository build workflow or a dependency-enabled local build before deployment.
+Then test the resulting JAR on a staging Paper server with the Albion addon set before production deployment.
