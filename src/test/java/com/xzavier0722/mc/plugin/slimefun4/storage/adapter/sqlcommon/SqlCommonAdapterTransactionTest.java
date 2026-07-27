@@ -1,5 +1,7 @@
 package com.xzavier0722.mc.plugin.slimefun4.storage.adapter.sqlcommon;
 
+import static com.xzavier0722.mc.plugin.slimefun4.storage.adapter.sqlcommon.SqlConstants.FIELD_TABLE_METADATA_KEY;
+import static com.xzavier0722.mc.plugin.slimefun4.storage.adapter.sqlcommon.SqlConstants.FIELD_TABLE_METADATA_VALUE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -18,7 +20,8 @@ class SqlCommonAdapterTransactionTest {
         try (var connection = DriverManager.getConnection("jdbc:sqlite::memory:");
                 var setup = connection.createStatement()) {
             setup.execute("CREATE TABLE transaction_probe (value TEXT NOT NULL)");
-            setup.execute("CREATE TABLE table_metadata (m_key TEXT PRIMARY KEY, m_value TEXT NOT NULL)");
+            setup.execute("CREATE TABLE table_metadata (%s TEXT PRIMARY KEY, %s TEXT NOT NULL)"
+                    .formatted(FIELD_TABLE_METADATA_KEY, FIELD_TABLE_METADATA_VALUE));
 
             var patch = new DatabasePatch(3) {
                 @Override
@@ -51,7 +54,8 @@ class SqlCommonAdapterTransactionTest {
         try (var connection = DriverManager.getConnection("jdbc:sqlite::memory:");
                 var setup = connection.createStatement()) {
             setup.execute("CREATE TABLE transaction_probe (value TEXT NOT NULL)");
-            setup.execute("CREATE TABLE table_metadata (m_key TEXT PRIMARY KEY, m_value TEXT NOT NULL)");
+            setup.execute("CREATE TABLE table_metadata (%s TEXT PRIMARY KEY, %s TEXT NOT NULL)"
+                    .formatted(FIELD_TABLE_METADATA_KEY, FIELD_TABLE_METADATA_VALUE));
 
             var patch = new DatabasePatch(3) {
                 @Override
@@ -67,7 +71,8 @@ class SqlCommonAdapterTransactionTest {
                 assertTrue(result.next());
                 assertEquals("committed", result.getString(1));
             }
-            try (var result = setup.executeQuery("SELECT m_value FROM table_metadata WHERE m_key='version'")) {
+            try (var result = setup.executeQuery("SELECT %s FROM table_metadata WHERE %s='version'"
+                    .formatted(FIELD_TABLE_METADATA_VALUE, FIELD_TABLE_METADATA_KEY))) {
                 assertTrue(result.next());
                 assertEquals("3", result.getString(1));
             }
