@@ -1,10 +1,11 @@
 package me.mrCookieSlime.Slimefun.Objects.SlimefunItem.interfaces;
 
 import io.github.bakedlibs.dough.protection.Interaction;
+import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunInternal;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
+import io.github.thebusybiscuit.slimefun4.core.services.protection.ProtectionCompatibility;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import java.lang.reflect.Array;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import me.mrCookieSlime.Slimefun.api.inventory.BlockMenuPreset;
 import me.mrCookieSlime.Slimefun.api.item_transport.ItemTransportFlow;
@@ -13,11 +14,11 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 
 /**
- * Legacy inventory compatibility contract used by Slimefun and established addons.
- *
- * <p>Slimefun Legacy intentionally keeps this interface supported so existing machines and addons
- * can continue to load without repeated deprecation warnings.
+ * @deprecated This interface is not designed to be used by addons. The entire inventory system will be replaced
+ * eventually.
  */
+@Deprecated
+@SlimefunInternal
 public interface InventoryBlock {
 
     /**
@@ -41,8 +42,6 @@ public interface InventoryBlock {
     }
 
     default void createPreset(SlimefunItem item, String title, Consumer<BlockMenuPreset> setup) {
-        InventoryBlockCompatibility.logOnce();
-
         new BlockMenuPreset(item.getId(), title) {
 
             @Override
@@ -61,27 +60,12 @@ public interface InventoryBlock {
 
             @Override
             public boolean canOpen(Block b, Player p) {
-                if (p.hasPermission("slimefun.inventory.bypass")) {
-                    return true;
-                } else {
-                    return item.canUse(p, false)
-                            && Slimefun.getProtectionManager()
-                                    .hasPermission(p, b.getLocation(), Interaction.INTERACT_BLOCK);
-                }
+                return ProtectionCompatibility.isAllowed(
+                        p.hasPermission("slimefun.inventory.bypass"),
+                        item.canUse(p, false),
+                        () -> Slimefun.getProtectionManager()
+                                .hasPermission(p, b.getLocation(), Interaction.INTERACT_BLOCK));
             }
         };
-    }
-}
-
-final class InventoryBlockCompatibility {
-
-    private static final AtomicBoolean NOTICE_LOGGED = new AtomicBoolean();
-
-    private InventoryBlockCompatibility() {}
-
-    static void logOnce() {
-        if (NOTICE_LOGGED.compareAndSet(false, true)) {
-            Slimefun.logger().info("Compatibility mode enabled.");
-        }
     }
 }
