@@ -212,7 +212,6 @@ import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.PotionMeta;
-import org.bukkit.potion.PotionData;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.potion.PotionType;
@@ -1986,7 +1985,7 @@ public final class SlimefunItemSetup {
 
         ItemStack weaknessPotion = new ItemStack(Material.POTION);
         PotionMeta meta = (PotionMeta) weaknessPotion.getItemMeta();
-        meta.setBasePotionData(new PotionData(PotionType.WEAKNESS, false, false));
+        meta.setBasePotionType(PotionType.WEAKNESS);
         weaknessPotion.setItemMeta(meta);
 
         new MagicalZombiePills(

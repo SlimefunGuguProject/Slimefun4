@@ -523,19 +523,13 @@ public final class SlimefunUtils {
         }
 
         if (itemMeta instanceof PotionMeta potionMeta && sfitemMeta instanceof PotionMeta sfPotionMeta) {
-            if (Slimefun.getMinecraftVersion().isAtLeast(MinecraftVersion.MINECRAFT_1_20_5)) {
-                if (!potionMeta.hasBasePotionType() && !sfPotionMeta.hasBasePotionType()) {
-                    return true;
-                }
-
-                return potionMeta.hasBasePotionType()
-                        && sfPotionMeta.hasBasePotionType()
-                        && potionMeta.getBasePotionType().equals(sfPotionMeta.getBasePotionType());
-            } else if (SlimefunExtended.isAtLeast(1, 20, 2)) {
-                return potionMeta.getBasePotionType().equals(sfPotionMeta.getBasePotionType());
-            } else {
-                return potionMeta.getBasePotionData().equals(sfPotionMeta.getBasePotionData());
+            if (!potionMeta.hasBasePotionType() && !sfPotionMeta.hasBasePotionType()) {
+                return true;
             }
+
+            return potionMeta.hasBasePotionType()
+                    && sfPotionMeta.hasBasePotionType()
+                    && potionMeta.getBasePotionType() == sfPotionMeta.getBasePotionType();
         }
 
         Debug.log(TestCase.CARGO_INPUT_TESTING, "  All meta checked.");

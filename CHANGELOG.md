@@ -1,3 +1,13 @@
+# Slimefun Legacy Fourth Maintenance Release
+
+- Added Folia-safe concurrent state for Soulbound recovery, Elytra impact grace, and Slimefun bow projectiles.
+- Added entity-owned cleanup with retirement callbacks for transient player and projectile state.
+- Added a keep-inventory duplication guard and ItemStack snapshots for Soulbound recovery.
+- Migrated limited-crafting, potion metadata, and food-level events to current Paper APIs.
+- Made profiler averages zero-safe and independently resettable.
+- Updated `/sf versions` for Java 21+ and Paper/Folia scheduler reporting.
+- Declared Folia support and added Part 4 verification, tests, and release CI.
+
 # Table of contents
 
 ## Gugu upstream sync safety

@@ -8,18 +8,20 @@ import io.github.thebusybiscuit.slimefun4.core.services.sounds.SoundEffect;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.implementation.items.armor.ElytraCap;
 import io.github.thebusybiscuit.slimefun4.implementation.items.armor.SlimefunArmorPiece;
-import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nonnull;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityToggleGlideEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 
 /**
  * The {@link Listener} for the {@link ElytraCap}.
@@ -31,21 +33,32 @@ import org.bukkit.event.entity.EntityToggleGlideEvent;
  */
 public class ElytraImpactListener implements Listener {
 
-    private final Set<UUID> gliding = new HashSet<>();
+    private final Set<UUID> gliding = ConcurrentHashMap.newKeySet();
 
     public ElytraImpactListener(@Nonnull Slimefun plugin) {
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onGlideToggle(EntityToggleGlideEvent event) {
         Entity entity = event.getEntity();
-        if (entity instanceof Player player && player.isGliding()) {
-            UUID uuid = player.getUniqueId();
-            gliding.add(uuid);
+        if (!(entity instanceof Player player)) {
+            return;
         }
-        // We tick 1 tick later because the player is being toggled of at the same tick as it takes damage.
-        Slimefun.getSchedulerService().runLater(gliding::clear, 1L);
+
+        UUID uuid = player.getUniqueId();
+        gliding.add(uuid);
+
+        if (!event.isGliding()) {
+            // Keep a one-tick grace period because impact damage can be fired in the same tick as gliding stops.
+            Slimefun.getSchedulerService()
+                    .runForLater(player, () -> gliding.remove(uuid), () -> gliding.remove(uuid), 1L);
+        }
+    }
+
+    @EventHandler
+    public void onQuit(PlayerQuitEvent event) {
+        gliding.remove(event.getPlayer().getUniqueId());
     }
 
     @EventHandler

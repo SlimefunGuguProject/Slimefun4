@@ -93,8 +93,9 @@ public class SlimefunProfiler {
     private final Queue<PerformanceInspector> requests = new ConcurrentLinkedQueue<>();
 
     private final AtomicLong totalMsTicked = new AtomicLong();
-    private final AtomicInteger ticksPassed = new AtomicInteger();
+    private final AtomicInteger millisecondSamples = new AtomicInteger();
     private final AtomicLong totalNsTicked = new AtomicLong();
+    private final AtomicInteger nanosecondSamples = new AtomicInteger();
     private final AtomicDouble averageTimingsPerMachine = new AtomicDouble();
 
     /**
@@ -261,8 +262,9 @@ public class SlimefunProfiler {
          * This is so when bStats requests the average timings, they're super quick to figure out
          */
         totalMsTicked.addAndGet(TimeUnit.NANOSECONDS.toMillis(totalElapsedTime));
+        millisecondSamples.incrementAndGet();
         totalNsTicked.addAndGet(totalElapsedTime);
-        ticksPassed.incrementAndGet();
+        nanosecondSamples.incrementAndGet();
 
         if (!requests.isEmpty()) {
             PerformanceSummary summary = new PerformanceSummary(this, totalElapsedTime, timings.size());
@@ -443,11 +445,9 @@ public class SlimefunProfiler {
      * @return The average millisecond timing for this {@link SlimefunProfiler}.
      */
     public long getAndResetAverageTimings() {
-        long l = totalMsTicked.get() / ticksPassed.get();
-        totalMsTicked.set(0);
-        ticksPassed.set(0);
-
-        return l;
+        long total = totalMsTicked.getAndSet(0);
+        int samples = millisecondSamples.getAndSet(0);
+        return samples == 0 ? 0 : total / samples;
     }
 
     /**
@@ -456,11 +456,9 @@ public class SlimefunProfiler {
      * @return The average nanosecond timing for this {@link SlimefunProfiler}.
      */
     public double getAndResetAverageNanosecondTimings() {
-        long l = totalNsTicked.get() / ticksPassed.get();
-        totalNsTicked.set(0);
-        ticksPassed.set(0);
-
-        return l;
+        long total = totalNsTicked.getAndSet(0);
+        int samples = nanosecondSamples.getAndSet(0);
+        return samples == 0 ? 0 : (double) total / samples;
     }
 
     /**

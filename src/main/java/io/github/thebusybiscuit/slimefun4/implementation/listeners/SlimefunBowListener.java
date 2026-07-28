@@ -4,9 +4,9 @@ import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.core.handlers.BowShootHandler;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.implementation.items.weapons.SlimefunBow;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nonnull;
 import org.bukkit.entity.Arrow;
 import org.bukkit.entity.LivingEntity;
@@ -30,17 +30,17 @@ import org.bukkit.event.entity.ProjectileHitEvent;
  */
 public class SlimefunBowListener implements Listener {
 
-    private final Map<UUID, SlimefunBow> projectiles = new HashMap<>();
+    private final Map<UUID, SlimefunBow> projectiles = new ConcurrentHashMap<>();
 
     public void register(@Nonnull Slimefun plugin) {
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
 
     /**
-     * This returns a {@link HashMap} holding the {@link UUID} of a {@link Arrow} and the
+     * This returns a thread-safe {@link Map} holding the {@link UUID} of an {@link Arrow} and the
      * associated {@link SlimefunBow} with which this {@link Arrow} was fired from.
      *
-     * @return A {@link HashMap} with all actively tracked {@link Arrow Arrows}
+     * @return A {@link Map} with all actively tracked {@link Arrow Arrows}
      */
     @Nonnull
     public Map<UUID, SlimefunBow> getProjectileData() {
@@ -60,8 +60,18 @@ public class SlimefunBowListener implements Listener {
 
     @EventHandler
     public void onArrowHit(ProjectileHitEvent e) {
-        UUID projectileId = e.getEntity().getUniqueId();
-        Slimefun.runSyncAt(e.getEntity().getLocation(), () -> projectiles.remove(projectileId), 4L);
+        var projectile = e.getEntity();
+        UUID projectileId = projectile.getUniqueId();
+        if (!projectiles.containsKey(projectileId)) {
+            return;
+        }
+
+        Slimefun.getSchedulerService()
+                .runForLater(
+                        projectile,
+                        () -> projectiles.remove(projectileId),
+                        () -> projectiles.remove(projectileId),
+                        4L);
     }
 
     @EventHandler(priority = EventPriority.HIGH)

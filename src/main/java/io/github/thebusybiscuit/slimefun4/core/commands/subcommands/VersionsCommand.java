@@ -6,7 +6,6 @@ import io.github.thebusybiscuit.slimefun4.core.commands.SlimefunCommand;
 import io.github.thebusybiscuit.slimefun4.core.commands.SubCommand;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.utils.NumberUtils;
-import io.papermc.lib.PaperLib;
 import java.net.URI;
 import java.util.Collection;
 import java.util.Locale;
@@ -36,13 +35,14 @@ class VersionsCommand extends SubCommand {
      * This is the Java version we recommend to use.
      * Bump as necessary and adjust the warning.
      */
-    private static final int RECOMMENDED_JAVA_VERSION = 16;
+    private static final int RECOMMENDED_JAVA_VERSION = 21;
 
     /**
      * This is the notice that will be displayed when an
      * older version of Java is detected.
      */
-    private static final String JAVA_VERSION_NOTICE = "As of Minecraft 1.18 Java 17+ is required!";
+    private static final String JAVA_VERSION_NOTICE =
+            "Slimefun Legacy targets Java 21 bytecode and is built and tested using Java 25.";
 
     @ParametersAreNonnullByDefault
     VersionsCommand(Slimefun plugin, SlimefunCommand cmd) {
@@ -52,11 +52,8 @@ class VersionsCommand extends SubCommand {
     @Override
     public void onExecute(@Nonnull CommandSender sender, @Nonnull String[] args) {
         if (sender.hasPermission("slimefun.command.versions") || sender instanceof ConsoleCommandSender) {
-            /*
-             * After all these years... Spigot still displays as "CraftBukkit".
-             * so we will just fix this inconsistency for them :)
-             */
-            String serverSoftware = PaperLib.isSpigot() && !PaperLib.isPaper() ? "Spigot" : Bukkit.getName();
+            String serverSoftware = Bukkit.getName();
+            String schedulerPlatform = isFolia() ? "Folia" : "Paper";
 
             net.kyori.adventure.text.TextComponent.Builder builder = Component.text();
 
@@ -64,6 +61,8 @@ class VersionsCommand extends SubCommand {
                     .append(Component.text(serverSoftware, Style.style(NamedTextColor.GREEN))
                             .append(Component.text(
                                     " " + Bukkit.getVersion() + '\n', Style.style(NamedTextColor.DARK_GREEN))))
+                    .append(Component.text("Scheduler platform ", Style.style(NamedTextColor.GREEN)))
+                    .append(Component.text(schedulerPlatform + '\n', Style.style(NamedTextColor.DARK_GREEN)))
                     .append(Component.text("Slimefun ", Style.style(NamedTextColor.GREEN)))
                     .append(Component.text(
                             Slimefun.getVersion()
@@ -110,6 +109,18 @@ class VersionsCommand extends SubCommand {
             sender.sendMessage(builder.build());
         } else {
             Slimefun.getLocalization().sendMessage(sender, "messages.no-permission", true);
+        }
+    }
+
+    private boolean isFolia() {
+        try {
+            Class.forName(
+                    "io.papermc.paper.threadedregions.RegionizedServer",
+                    false,
+                    VersionsCommand.class.getClassLoader());
+            return true;
+        } catch (ClassNotFoundException | LinkageError ignored) {
+            return false;
         }
     }
 
