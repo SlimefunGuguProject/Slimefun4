@@ -1,0 +1,63 @@
+name: Apply Compatibility Mode Enabled Fix
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apply-fix:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out master
+        uses: actions/checkout@v5
+        with:
+          ref: master
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Apply compatibility-mode console cleanup
+        run: python scripts/apply_compatibility_mode_enabled.py
+
+      - name: Set up Java 25
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "25"
+
+      - name: Format and validate source
+        run: |
+          chmod +x gradlew
+          ./gradlew spotlessApply --no-daemon
+          ./gradlew spotlessCheck compileJava --no-daemon
+
+      - name: Verify console wording
+        shell: bash
+        run: |
+          set -euo pipefail
+          FILE="src/main/java/io/github/thebusybiscuit/slimefun4/api/items/SlimefunItem.java"
+          grep -Fq 'Compatibility mode enabled.' "$FILE"
+          grep -Fq 'COMPATIBILITY_MODE_ADDONS' "$FILE"
+          ! grep -Fq 'warn("The inherited Class' "$FILE"
+          ! grep -Fq 'warn("The implemented Interface' "$FILE"
+          ! grep -Fq 'logSupportedLegacyApi(' "$FILE"
+
+      - name: Commit source update
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet; then
+            echo "Compatibility-mode fix is already present."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/main/java/io/github/thebusybiscuit/slimefun4/api/items/SlimefunItem.java
+          git commit -m "Use compatibility mode notice for legacy APIs"
+          git push origin HEAD:master
