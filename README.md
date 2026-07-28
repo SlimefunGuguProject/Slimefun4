@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/images/slimefun-legacy-banner.svg" alt="Slimefun Legacy" width="100%">
+<img src="docs/images/slimefun-legacy-banner.png" alt="Slimefun Legacy" width="100%">
 
 # Slimefun Legacy
 ### A modern, English-first continuation of the classic Slimefun experience
