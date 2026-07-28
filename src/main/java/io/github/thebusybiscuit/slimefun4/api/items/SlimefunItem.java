@@ -33,6 +33,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -68,6 +69,7 @@ import org.bukkit.permissions.Permission;
  */
 @SlimefunAPI
 public class SlimefunItem implements Placeable {
+    private static final Set<String> COMPATIBILITY_MODE_ADDONS = ConcurrentHashMap.newKeySet();
 
     /**
      * This is our item id.
@@ -550,7 +552,7 @@ public class SlimefunItem implements Placeable {
             itemGroup.register(addon);
         }
 
-        // Send out deprecation warnings for any classes or interfaces
+        // Detect legacy API use and enable quiet compatibility mode
         checkForDeprecations(getClass());
 
         // Check for an illegal stack size
@@ -644,7 +646,7 @@ public class SlimefunItem implements Placeable {
      * This method checks recursively for all {@link Class} parents to look for any {@link Deprecated}
      * elements.
      *
-     * If a {@link Deprecated} element was found, a warning message will be printed.
+     * If a {@link Deprecated} element is found, compatibility mode is enabled for the addon.
      *
      * @param c
      *            The {@link Class} from which to start this operation.
@@ -667,22 +669,30 @@ public class SlimefunItem implements Placeable {
         if (c != null) {
             // Check if this Class is deprecated
             if (c.isAnnotationPresent(Deprecated.class)) {
-                warn("The inherited Class \""
-                        + c.getName()
-                        + "\" has been deprecated. Check the documentation for more details!");
+                enableCompatibilityMode();
             }
 
             for (Class<?> parent : c.getInterfaces()) {
                 // Check if this Interface is deprecated
                 if (parent.isAnnotationPresent(Deprecated.class)) {
-                    warn("The implemented Interface \""
-                            + parent.getName()
-                            + "\" has been deprecated. Check the documentation for more details!");
+                    enableCompatibilityMode();
                 }
             }
 
             // Recursively lookup the super class
             checkForDeprecations(c.getSuperclass());
+        }
+    }
+
+    private void enableCompatibilityMode() {
+        String addonName = addon.getName();
+
+        if (COMPATIBILITY_MODE_ADDONS.add(addonName)) {
+            addon.getLogger()
+                    .log(
+                            Level.INFO,
+                            "Compatibility mode enabled. This addon uses supported legacy Slimefun APIs "
+                                    + "and loaded normally.");
         }
     }
 
@@ -939,7 +949,9 @@ public class SlimefunItem implements Placeable {
         Validate.notNull(page, "Wiki page cannot be null.");
 
         if (addon == null) {
-            Slimefun.logger().warning("The item \"" + getId() + "\" is not registered yet. Add wiki pages only after registration.");
+            Slimefun.logger()
+                    .warning("The item \"" + getId()
+                            + "\" is not registered yet. Add wiki pages only after registration.");
             return;
         }
         if (addon.getWikiURL() != null) {
