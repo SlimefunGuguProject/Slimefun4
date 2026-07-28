@@ -1,0 +1,40 @@
+Slimefun Legacy bStats 32960 drop-in validation
+================================================
+Date: 2026-07-28
+
+Changed files
+-------------
+- build.gradle.kts
+- src/main/java/io/github/thebusybiscuit/slimefun4/core/services/MetricsService.java
+- README.md
+
+Implementation
+--------------
+- Adds org.bstats:bstats-bukkit:3.2.1 as a shaded dependency.
+- Relocates org.bstats into Slimefun's private library namespace.
+- Replaces the downloaded upstream MetricsModule with direct bStats reporting.
+- Uses registered bStats plugin ID 32960 for Slimefun Legacy.
+- Preserves the existing MetricsService constructor and public methods for compatibility.
+- Preserves Slimefun.java unchanged because it already starts and cleans up MetricsService.
+- Adds server/player badges and the bStats signature graph to README.md.
+- Does not add the sample chart_id custom chart because server/player totals are built in automatically.
+
+Validation passed
+-----------------
+PASS - bStats 3.2.1 dependency is present.
+PASS - bStats package relocation is present.
+PASS - Slimefun Legacy bStats ID 32960 is used.
+PASS - Metrics startup uses the existing synchronized Slimefun startup path.
+PASS - Metrics shutdown calls Metrics.shutdown().
+PASS - Legacy MetricsService public method descriptors are retained.
+PASS - Java 21 syntax/API-shape compilation passed using focused stubs.
+PASS - README contains server and player count badges.
+PASS - README contains the large bStats signature chart.
+PASS - No placeholder plugin IDs or sample chart_id remain.
+PASS - No merge-conflict markers or CRLF line endings were found.
+
+Build status
+------------
+A complete Gradle build was not run in this packaging environment because the full repository and
+resolved dependencies were not locally available. Run the repository's normal GitHub Actions build
+after dropping these files into the repository.

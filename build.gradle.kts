@@ -13,7 +13,6 @@ plugins {
     alias(libs.plugins.shadow)
     alias(libs.plugins.git.properties)
 }
-
 group = "com.github.slimefun"
 version = resolveVersion()
 
@@ -28,7 +27,6 @@ tasks.compileJava {
     options.encoding = "UTF-8"
     options.release.set(21)
 }
-
 tasks.compileTestJava {
     // Keep test compilation on the same bytecode/API level as production.
     // This also avoids the Java 25 compiler edge case seen while completing
@@ -36,7 +34,6 @@ tasks.compileTestJava {
     options.encoding = "UTF-8"
     options.release.set(21)
 }
-
 repositories {
     mavenCentral()
     maven("https://hub.spigotmc.org/nexus/content/repositories/snapshots")
@@ -49,7 +46,6 @@ repositories {
     maven("https://repo.walshy.dev/public")
     maven("https://repo.codemc.io/repository/maven-public/")
 }
-
 dependencies {
     compileOnly(libs.paper.api)
     compileOnly(libs.jsr305)
@@ -65,14 +61,13 @@ dependencies {
     testImplementation(libs.sqlite.jdbc)
     testImplementation(libs.jsr305)
     testRuntimeOnly(libs.junit.platform.launcher)
-
     implementation(libs.dough.api)
     implementation(libs.unirest.java) {
         exclude(group = "com.google.code.gson", module = "gson")
     }
     implementation(libs.hikaricp)
     implementation(libs.postgresql)
-
+    implementation("org.bstats:bstats-bukkit:3.2.1")
     compileOnly(libs.worldedit.core) { exclude(group = "*", module = "*") }
     compileOnly(libs.worldedit.bukkit) { exclude(group = "*", module = "*") }
     compileOnly(libs.mcmmo) { exclude(group = "*", module = "*") }
@@ -82,7 +77,6 @@ dependencies {
     compileOnly(libs.orebfuscator.api) { exclude(group = "*", module = "*") }
     compileOnly(libs.vault.api) { exclude(group = "*", module = "*") }
     compileOnly(libs.authlib) { exclude(group = "*", module = "*") }
-
     implementation(libs.commons.lang)
     implementation(libs.slimefun.comp.lib)
     implementation(libs.guizhanlib.updater)
@@ -96,7 +90,6 @@ tasks.jar {
 sourceSets.main {
     java.exclude("**/package-info.java")
 }
-
 tasks.test {
     useJUnitPlatform()
     findProperty("slimefunRealDatabase")?.toString()?.let {
@@ -116,10 +109,8 @@ spotless {
         formatAnnotations()
     }
 }
-
 val buildVersion = version.toString()
 val gitBuildTime: String? = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
-
 configure<GitPropertiesPluginExtension> {
     keys = listOf(
         "git.build.time",
@@ -133,7 +124,6 @@ configure<GitPropertiesPluginExtension> {
     gitPropertiesName = "git.properties"
     gitPropertiesResourceDir = layout.buildDirectory.dir("generated/git-properties").get().asFile
 }
-
 tasks.named<ProcessResources>("processResources") {
     dependsOn(tasks.named("generateGitProperties"))
     val pluginVersion = buildVersion
@@ -146,7 +136,6 @@ tasks.named<ProcessResources>("processResources") {
 tasks.named("sourcesJar") {
     dependsOn(tasks.named("generateGitProperties"))
 }
-
 tasks.named<ShadowJar>("shadowJar") {
     archiveBaseName.set("Slimefun")
     archiveVersion.set(project.version.toString())
@@ -156,15 +145,14 @@ tasks.named<ShadowJar>("shadowJar") {
     relocate("kong.unirest", "io.github.thebusybiscuit.slimefun4.libraries.unirest")
     relocate("org.apache.commons.lang", "io.github.thebusybiscuit.slimefun4.libraries.commons.lang")
     relocate("net.guizhanss.guizhanlib", "io.github.thebusybiscuit.slimefun4.libraries.guizhanlib")
+    relocate("org.bstats", "io.github.thebusybiscuit.slimefun4.libraries.bstats")
     /**exclude {
         it.path == "META-INF" || it.path.startsWith("META-INF/")
     }*/
 }
-
 tasks.build {
     dependsOn(tasks.named("shadowJar"))
 }
-
 publishing {
     publications {
         create<MavenPublication>("mavenJava") {
@@ -189,7 +177,6 @@ publishing {
         }
     }
 }
-
 fun Project.resolveVersion(): String {
     findProperty("projectVersion")?.toString()?.takeIf { it.isNotBlank() }?.let { return it }
     return "Legacy-SNAPSHOT"
