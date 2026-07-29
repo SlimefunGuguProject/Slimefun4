@@ -19,6 +19,7 @@ Slimefun Legacy turns a normal Minecraft server into a modpack-like experience w
 
 [Download](https://github.com/wickidcow/Slimefun-Legacy/releases) ·
 [Builds](https://github.com/wickidcow/Slimefun-Legacy/actions) ·
+[Statistics](https://bstats.org/plugin/bukkit/Slimefun%20Legacy/32960) ·
 [Report a Bug](https://github.com/wickidcow/Slimefun-Legacy/issues) ·
 [Release Notes](STABILITY_RELEASE.md) ·
 [Contributing](CONTRIBUTING.md)
@@ -43,6 +44,29 @@ Slimefun Legacy preserves the familiar Slimefun 4 gameplay, saved-world format, 
 | **Modernized carefully** | Paper APIs, scheduling, energy handling, and internal annotations are updated without casually breaking older addons. |
 
 Players can build automated factories, move items through Cargo networks, generate and store power, operate reactors, explore magic, craft equipment, and expand the experience with compatible addons.
+
+---
+
+## 📊 Live Statistics
+
+<p align="center">
+  <a href="https://bstats.org/plugin/bukkit/Slimefun%20Legacy/32960">
+    <img alt="Servers" src="https://img.shields.io/bstats/servers/32960?style=for-the-badge&label=Servers">
+  </a>
+  <a href="https://bstats.org/plugin/bukkit/Slimefun%20Legacy/32960">
+    <img alt="Players" src="https://img.shields.io/bstats/players/32960?style=for-the-badge&label=Players">
+  </a>
+</p>
+
+<p align="center">
+  <a href="https://bstats.org/plugin/bukkit/Slimefun%20Legacy/32960">
+    <img src="https://bstats.org/signatures/bukkit/Slimefun%20Legacy.svg" alt="Slimefun Legacy bStats statistics">
+  </a>
+</p>
+
+<p align="center">
+  <sub>Anonymous usage statistics are provided by bStats. Server owners can opt out in <code>plugins/bStats/config.yml</code>.</sub>
+</p>
 
 ---
 
