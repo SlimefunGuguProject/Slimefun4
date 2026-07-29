@@ -6,7 +6,7 @@
 
 ### English-first Slimefun for modern Paper servers
 
-Slimefun Legacy turns a normal Minecraft server into a modpack-like experience with machines, electricity, Cargo networks, automation, reactors, magic, backpacks, and hundreds of custom items—without requiring players to install a mod.
+Slimefun Legacy turns a normal Minecraft server into a modpack-like experience with machines, electricity, cargo networks, automation, reactors, magic, backpacks, and hundreds of custom items—without requiring players to install a mod.
 
 [![Build](https://github.com/wickidcow/Slimefun-Legacy/actions/workflows/build-ci.yml/badge.svg)](https://github.com/wickidcow/Slimefun-Legacy/actions/workflows/build-ci.yml)
 [![Stability Release](https://github.com/wickidcow/Slimefun-Legacy/actions/workflows/stability-release.yml/badge.svg)](https://github.com/wickidcow/Slimefun-Legacy/actions/workflows/stability-release.yml)
