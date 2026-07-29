@@ -231,17 +231,22 @@ For a production server:
 ---
 ## Compatibility
 
-Slimefun Legacy aims to preserve the established Slimefun 4 addon API while adding safer and more modern internal paths.
+🗄️ Compatible server software
+Server software	Compatibility
+Paper	✅ Supported
+Purpur	✅ Supported
+Most other Paper forks	⚠️ Usually compatible
+Folia	⚠️ Experimental
+Spigot	❌ Unsupported
+CraftBukkit / Bukkit	❌ Unsupported
+Sponge	❌ Unsupported
+Hybrid servers (Arclight, Mohist, Cardboard, etc.)	❌ Unsupported and blocked
+Fabric / Forge / NeoForge	❌ Unsupported — Slimefun Legacy is not a mod
 
-Compatibility is tested through:
+Slimefun Legacy is built for modern Paper servers. Purpur and most conventional Paper forks should work, but fork-specific behavior cannot be guaranteed.
 
-- Compilation of selected addons against the exact built JAR
-- Binary API comparison reports
-- Legacy scheduler adapters
-- Preserved ticker and energy overloads
-- Protection compatibility tests
-- Storage and lifecycle regression tests
-Because the Slimefun addon ecosystem is large, no fork can guarantee every addon and every historical build. Report reproducible compatibility problems with full version information.
+Folia-aware global, region, entity, and asynchronous scheduling is included, and the plugin declares folia-supported: true. However, Folia support remains experimental until the full core plugin and commonly used addons have received broader production testing. Every installed addon must also be Folia-safe.
+Slimefun Legacy aims to preserve the established Slimefun 4 addon API while adding safer and more modern internal paths. Because the Slimefun addon ecosystem is large, no fork can guarantee every addon and every historical build. Report reproducible compatibility problems with full version information.
 
 When reporting an addon issue, include:
 
