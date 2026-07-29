@@ -1,0 +1,15 @@
+SLIMEFUN LEGACY README DROP-IN
+
+Copy these paths into the root of the Slimefun-Legacy repository:
+
+README.md
+docs/images/README.md
+docs/images/slimefun-legacy-logo.png
+docs/images/showcase/showcase1.png
+docs/images/showcase/showcase2.png
+docs/images/showcase/showcase3.png
+docs/images/showcase/showcase4.png
+docs/images/showcase/showcase5.png
+docs/images/showcase/showcase6.png
+
+Existing unrelated files under docs/images may remain in place. GitHub will render the README using the local image paths above.

@@ -1,22 +1,24 @@
 <div align="center">
 
-<img src="docs/images/slimefun-legacy-banner.png" alt="Slimefun Legacy" width="100%">
+<img src="docs/images/slimefun-legacy-logo.png" alt="Slimefun Legacy logo" width="190">
 
 # Slimefun Legacy
-### A modern, English-first continuation of the classic Slimefun experience
 
-Turn a Paper server into a modpack-like world of machines, electricity, automation, cargo networks, magic, reactors, backpacks, and hundreds of custom items—without requiring players to install a client mod.
+### English-first Slimefun for modern Paper servers
+
+Slimefun Legacy turns a normal Minecraft server into a modpack-like experience with machines, electricity, Cargo networks, automation, reactors, magic, backpacks, and hundreds of custom items—without requiring players to install a mod.
+
 [![Build](https://github.com/wickidcow/Slimefun-Legacy/actions/workflows/build-ci.yml/badge.svg)](https://github.com/wickidcow/Slimefun-Legacy/actions/workflows/build-ci.yml)
 [![Stability Release](https://github.com/wickidcow/Slimefun-Legacy/actions/workflows/stability-release.yml/badge.svg)](https://github.com/wickidcow/Slimefun-Legacy/actions/workflows/stability-release.yml)
 [![License](https://img.shields.io/github/license/wickidcow/Slimefun-Legacy?label=license)](LICENSE)
 [![Java](https://img.shields.io/badge/Java-21%2B-orange)](https://adoptium.net/)
-[![Paper](https://img.shields.io/badge/Paper-modern%20versions-blue)](https://papermc.io/)
-[![Language](https://img.shields.io/badge/player%20language-English-brightgreen)](#english-first-experience)
+[![Paper](https://img.shields.io/badge/Server-Paper-blue)](https://papermc.io/)
+[![Language](https://img.shields.io/badge/Player%20language-English-brightgreen)](#english-first-and-recovery)
 [![Servers](https://img.shields.io/bstats/servers/32960?label=servers)](https://bstats.org/plugin/bukkit/Slimefun%20Legacy/32960)
 [![Players](https://img.shields.io/bstats/players/32960?label=players)](https://bstats.org/plugin/bukkit/Slimefun%20Legacy/32960)
+
 [Download](https://github.com/wickidcow/Slimefun-Legacy/releases) ·
 [Builds](https://github.com/wickidcow/Slimefun-Legacy/actions) ·
-[Statistics](https://bstats.org/plugin/bukkit/Slimefun%20Legacy/32960) ·
 [Report a Bug](https://github.com/wickidcow/Slimefun-Legacy/issues) ·
 [Release Notes](STABILITY_RELEASE.md) ·
 [Contributing](CONTRIBUTING.md)
@@ -24,170 +26,78 @@ Turn a Paper server into a modpack-like world of machines, electricity, automati
 </div>
 
 > [!IMPORTANT]
-> **Slimefun Legacy is an unofficial downstream maintenance fork.**
-> It is not operated by the original Slimefun team, Slimefun United, the Gugu project, Mojang Studios, or Microsoft.
+> **Slimefun Legacy is an unofficial, independently maintained downstream fork.**  
+> It is not operated by the original Slimefun team, Slimefun United, the Gugu Project, Mojang Studios, or Microsoft.
 
 ---
-## 📊 Live Statistics
 
-<p align="center">
-  <a href="https://bstats.org/plugin/bukkit/Slimefun%20Legacy/32960">
-    <img alt="Servers" src="https://img.shields.io/bstats/servers/32960?style=for-the-badge&label=Servers">
-  </a>
-  <a href="https://bstats.org/plugin/bukkit/Slimefun%20Legacy/32960">
-    <img alt="Players" src="https://img.shields.io/bstats/players/32960?style=for-the-badge&label=Players">
-  </a>
-</p>
+## ✨ What is Slimefun Legacy?
 
-<p align="center">
-  <a href="https://bstats.org/plugin/bukkit/Slimefun%20Legacy/32960">
-    <img src="https://bstats.org/signatures/bukkit/Slimefun%20Legacy.svg" alt="Slimefun Legacy bStats statistics">
-  </a>
-</p>
+Slimefun Legacy preserves the familiar Slimefun 4 gameplay, saved-world format, and addon ecosystem while maintaining the project for modern Paper servers.
 
-<p align="center">
-  <sub>Anonymous usage statistics powered by bStats. Server owners can opt out in <code>plugins/bStats/config.yml</code>.</sub>
-</p>
-
----
-## What is Slimefun Legacy?
-
-Slimefun Legacy preserves the familiar Slimefun gameplay and addon API while focusing on the needs of modern Paper servers:
-
-- A consistent English player experience
-- Compatibility with established Slimefun addons and saved worlds
-- Safer storage and item recovery tools
-- Better protection against machine, backpack, and Cargo failures
-- Modern scheduler and Paper compatibility work
-- Reviewed upstream synchronization instead of automatic replacement
-Players can explore technology and magic at their own pace, build automated factories, transport items through Cargo networks, generate and store electricity, operate reactors, craft powerful equipment, and expand the experience with compatible addons.
-<table>
-<tr>
-<td width="33%" align="center">
-<img src="docs/images/english-first.svg" alt="English-first Slimefun experience" width="100%">
-<br><strong>English First</strong>
-<br>Player-facing names, lore, menus, controls, messages, and logs are maintained in English.
-</td>
-<td width="33%" align="center">
-<img src="docs/images/stability.svg" alt="Slimefun stability and recovery tools" width="100%">
-<br><strong>Stability Focused</strong>
-<br>Storage recovery, clean-shutdown tracking, circuit breakers, lifecycle safeguards, and regression tests.
-</td>
-<td width="33%" align="center">
-<img src="docs/images/compatibility.svg" alt="Slimefun addon compatibility" width="100%">
-<br><strong>Legacy Compatible</strong>
-<br>Classic addon entry points remain available while modern APIs are added alongside them.
-</td>
-</tr>
-</table>
----
-## Highlights
-### English-first experience
-
-Slimefun Translate is **not required** for the normal English player experience.
-
-This fork:
-- Defaults to `language: en`
-- Defaults to `enable-translations: false`
-- Replaces hard-coded Chinese player-facing text with English if you used the Gugu fork of slimefun at any point. (basically a server wide fix)
-- Ignores stale per-player Chinese language preferences while translations are disabled
-- Disables the in-plugin auto-updater so another upstream JAR cannot silently replace this build
-- Includes automated verification to prevent untranslated player-facing text from entering releases
-Optional language resources remain in the source tree for upstream compatibility, but they are not used while translations are disabled.
-### Storage and Item Doctor
-
-Slimefun Legacy includes an administrator recovery system for repairing the visible names and lore of recognized Slimefun items while preserving their important stored data.
-| Command | Purpose |
+| Focus | What it means |
 | --- | --- |
-| `/sf doctor status` | Shows shutdown state, pending database writes, paused machine circuits, repairs, and scan status |
-| `/sf doctor hand` | Repairs the Slimefun item held by the executing player |
-| `/sf doctor inventory [player]` | Repairs an online player's inventory and ender chest |
-| `/sf doctor scan` | Performs a batched server-wide dry run without changing items |
-| `/sf doctor repair confirm` | Performs the confirmed batched server-wide repair |
-Permission: `slimefun.command.doctor`
-Default access: server operators
+| **English first** | Player-facing names, lore, menus, messages, and controls are maintained in English without requiring Slimefun Translate. |
+| **Legacy compatible** | Established Slimefun addon entry points and saved data are preserved wherever practical. |
+| **Stability focused** | Storage recovery, machine circuit breakers, lifecycle safeguards, and regression tests protect production servers. |
+| **Modernized carefully** | Paper APIs, scheduling, energy handling, and internal annotations are updated without casually breaking older addons. |
 
-The doctor identifies items through their persistent Slimefun ID rather than guessing from translated text. Unknown IDs, malformed state, and ambiguous dynamic lore are reported and skipped.
-### Stability safeguards
-
-Current maintenance work includes:
-- Duplicate and re-entrant backpack-open protection
-- Disconnect and failed-open cleanup
-- Clean-shutdown markers and pending-write visibility
-- Per-machine ticker circuit breakers with cooldown and retry support
-- Safer viewer, ticker, chunk, and inventory lifecycles
-- Addon compatibility CI against the built Slimefun JAR
-- Public API binary compatibility reporting
-- Protection integration tests that fail closed
-- Thread-safe Paper event and scheduler handling
-### Cargo and automation improvements
-
-Cargo maintenance includes:
-
-- Reduced temporary allocation while processing large networks
-- Cached attached-block resolution
-- Reused item wrappers where safe
-- Main-thread topology construction
-- Preserved filters, events, round-robin behavior, and overflow handling
-- Corrected Cargo profiler accounting
-- Clear connector text using `Connected: ✔` and `Connected: ✘`
-### Modern scheduler and API work
-
-The maintained codebase includes:
-
-- Tracked global, asynchronous, location-owned, and entity-owned scheduling
-- Centralized task cancellation during shutdown
-- Folia-capable routing for known region- and entity-owned work
-- Storage-neutral `BlockTicker` overloads
-- Long-capacity energy APIs using resolved data containers
-- `@SlimefunAPI` and `@SlimefunInternal` annotations
-- Preserved legacy method descriptors for addon compatibility
-
-
-
-
-## Requirements
-### Server
-
-- A supported modern Paper server or compatible fork
-- Java 21 or newer
-- A full server restart after installation or upgrade
-
-The repository build uses a Java 25 toolchain while emitting Java 21-compatible bytecode.
-### Players
-
-Players use a normal Minecraft Java client. No client-side mod is required for core Slimefun gameplay.
-I personally use ItemsAdder by LoneDev to force an unofficial slimefun resource pack
-
-Some servers may optionally provide a resource pack for custom item textures. That resource pack is separate from Slimefun Legacy.
+Players can build automated factories, move items through Cargo networks, generate and store power, operate reactors, explore magic, craft equipment, and expand the experience with compatible addons.
 
 ---
-## Installation
-1. Stop the server normally.
-2. Back up the entire server, including:
-   - Worlds
-   - Player data
-   - `plugins/Slimefun/`
-   - Slimefun databases
-   - Addon configuration and data
-3. Download a release from this repository's [Releases](https://github.com/wickidcow/Slimefun-Legacy/releases) page.
-4. Place the Slimefun Legacy JAR in the server's `plugins` directory.
-5. Remove or archive the previous Slimefun core JAR so only one Slimefun provider loads.
-6. Start the server and review the console carefully.
-7. Run:
+
+## 🖼️ Screenshots
+
+A few classic community builds showing the kinds of technology, automation, and magic available through Slimefun:
+
+| Reactors and Energy | Automation Factory | Magic Laboratory |
+| :---: | :---: | :---: |
+| ![Reactors and energy systems](docs/images/showcase/showcase1.png) | ![Large automation factory](docs/images/showcase/showcase6.png) | ![Slimefun magic laboratory](docs/images/showcase/showcase5.png) |
+| *HamtaBot#0001* | *Piͭxͪeͤl (mnb)#5049* | *Kilaruna#4981* |
+| ![Slimefun industrial build](docs/images/showcase/showcase4.png) | ![Slimefun factory interior](docs/images/showcase/showcase3.png) | ![Slimefun laboratory build](docs/images/showcase/showcase2.png) |
+| *GalaxyKat11#3816* | *TamThan#7987* | *Kilaruna#4981* |
+
+These are historical Slimefun community showcase images. Full image credits and source information are included in [`docs/images/README.md`](docs/images/README.md).
+
+---
+
+## 📦 Download and requirements
+
+| Requirement | Supported setup |
+| --- | --- |
+| **Server** | Modern Paper, Purpur, or a conventional Paper fork |
+| **Java** | Java 21 or newer |
+| **Client** | Normal Minecraft Java client; no client mod required |
+| **Resource pack** | Optional and provided separately by the server |
+
+The repository builds with a Java 25 toolchain while targeting Java 21-compatible bytecode.
+
+Download a tested build from [GitHub Releases](https://github.com/wickidcow/Slimefun-Legacy/releases). Development artifacts are available from [GitHub Actions](https://github.com/wickidcow/Slimefun-Legacy/actions).
+
+> [!WARNING]
+> Back up all worlds, player data, Slimefun data, databases, and addon data before replacing any Slimefun core build. Never use `/reload` for an installation, upgrade, or repair.
+
+---
+
+## 🚀 Installation
+
+1. Stop the server normally and create a complete backup.
+2. Download Slimefun Legacy from this repository's [Releases](https://github.com/wickidcow/Slimefun-Legacy/releases) page.
+3. Place the JAR in the server's `plugins` directory.
+4. Remove or archive the previous Slimefun core JAR so only one core provider can load.
+5. Start the server, review the console, and run:
+
 ```text
 /sf doctor status
 ```
 
-8. Test representative machines, backpacks, Cargo networks, recipes, protections, and addon items before reopening a production server.
-
-> [!WARNING]
-> Never install a new Slimefun core build without a current backup. Do not use `/reload` during item repairs, database work, or migration testing.
+Test representative machines, backpacks, Cargo networks, recipes, protections, and addon items before reopening a production server.
 
 ---
-## Upgrading an existing English or translated installation
 
-Confirm these values in `plugins/Slimefun/config.yml`:
+## 🌐 English-first and recovery
+
+The normal English experience does **not** require Slimefun Translate. Recommended settings in `plugins/Slimefun/config.yml` are:
 
 ```yaml
 options:
@@ -196,12 +106,22 @@ options:
   enable-translations: false
 ```
 
-Perform a **full restart** after changing these options.
-### Existing translated items
+A full restart is required after changing these options.
 
-Minecraft stores an item's display name and lore inside the item stack. Items created by an older translated build can keep their old visible text after the core plugin is replaced.
+Items created by an older translated build can retain translated names or lore because Minecraft stores that display data inside each item stack. Slimefun Legacy includes a conservative **Storage and Item Doctor** that identifies recognized items by persistent Slimefun ID and repairs visible metadata while preserving stored item data.
 
-Use this sequence:
+| Command | Purpose |
+| --- | --- |
+| `/sf doctor status` | Shows shutdown state, pending writes, paused machine circuits, and repair status |
+| `/sf doctor hand` | Repairs the recognized Slimefun item in your hand |
+| `/sf doctor inventory [player]` | Repairs an online player's inventory and ender chest |
+| `/sf doctor scan` | Performs a batched server-wide dry run without changing items |
+| `/sf doctor repair confirm` | Starts the confirmed batched server-wide repair |
+
+Permission: `slimefun.command.doctor`  
+Default access: server operators
+
+For existing translated servers, use:
 
 ```text
 /sf doctor status
@@ -209,81 +129,62 @@ Use this sequence:
 /sf doctor repair confirm
 ```
 
-Always review the dry-run output before confirming a repair.
-
-The doctor is intentionally conservative. It preserves recognized persistent data and skips cases it cannot identify safely.
+Always review the dry-run results before confirming a repair. Unknown IDs, malformed state, and ambiguous dynamic lore are reported and skipped rather than guessed.
 
 ---
-## Recommended rollout
 
-For a production server:
-1. Create a staging copy of the server.
-2. Back up all worlds, player data, Slimefun data, and addon data.
-3. Install the new build on staging.
-4. Run `/sf doctor status`.
-5. Run `/sf doctor scan`.
-6. Review unknown IDs, skipped templates, and failures.
-7. Test machines, power networks, Cargo, backpacks, protections, and addons.
-8. Confirm repairs only after the dry run looks correct.
-9. Wait until pending database writes return to zero.
-10. Stop and restart staging normally.
-11. Move to production only after the staging test succeeds.
----
-## Compatibility
+## 🛡️ Maintenance highlights
 
-🗄️ Compatible server software
-Server software	Compatibility
-Paper	✅ Supported
-Purpur	✅ Supported
-Most other Paper forks	⚠️ Usually compatible
-Folia	⚠️ Experimental
-Spigot	❌ Unsupported
-CraftBukkit / Bukkit	❌ Unsupported
-Sponge	❌ Unsupported
-Hybrid servers (Arclight, Mohist, Cardboard, etc.)	❌ Unsupported and blocked
-Fabric / Forge / NeoForge	❌ Unsupported — Slimefun Legacy is not a mod
+Slimefun Legacy currently includes:
 
-Slimefun Legacy is built for modern Paper servers. Purpur and most conventional Paper forks should work, but fork-specific behavior cannot be guaranteed.
+- Duplicate and re-entrant backpack-open protection
+- Clean-shutdown tracking and pending database-write visibility
+- Per-machine ticker circuit breakers with cooldown and retry support
+- Safer viewer, ticker, chunk, inventory, and entity lifecycles
+- Cargo allocation reductions, cached block resolution, and corrected profiler accounting
+- Clear Cargo connector text using `Connected: ✔` and `Connected: ✘`
+- Addon compatibility CI and public API binary compatibility reporting
+- Protection integration tests that fail closed
+- Global, asynchronous, location-owned, and entity-owned scheduler paths
+- Modern `BlockTicker` and long-capacity energy API overloads
+- Preserved legacy method descriptors for addon compatibility
 
-Folia-aware global, region, entity, and asynchronous scheduling is included, and the plugin declares folia-supported: true. However, Folia support remains experimental until the full core plugin and commonly used addons have received broader production testing. Every installed addon must also be Folia-safe.
-Slimefun Legacy aims to preserve the established Slimefun 4 addon API while adding safer and more modern internal paths. Because the Slimefun addon ecosystem is large, no fork can guarantee every addon and every historical build. Report reproducible compatibility problems with full version information.
-
-When reporting an addon issue, include:
-
-- Paper build and Minecraft version
-- Java version
-- Slimefun Legacy version and commit
-- Addon name and exact build
-- Full startup log
-- Full exception stack trace
-- Reproduction steps
-- Whether the issue occurs on a clean staging server
+Detailed release information is available in [`STABILITY_RELEASE.md`](STABILITY_RELEASE.md), [`SECOND_MAINTENANCE_RELEASE.md`](SECOND_MAINTENANCE_RELEASE.md), [`THIRD_MAINTENANCE_RELEASE.md`](THIRD_MAINTENANCE_RELEASE.md), and [`FOURTH_MAINTENANCE_RELEASE.md`](FOURTH_MAINTENANCE_RELEASE.md).
 
 ---
-## Configuration
 
-Important defaults:
+## 🔌 Compatibility
 
-```yaml
-options:
-  auto-update: false
-  language: en
-  enable-translations: false
+### Compatible server software
 
-stability:
-  machine-circuit-breaker-cooldown-seconds: 300
-  item-doctor:
-    enabled: true
-    repair-player-on-join: true
-    repair-opened-inventories: true
-    repair-chunks-on-load: true
-    repair-picked-up-items: true
-    inventories-per-tick: 12
-```
-Review generated configuration files after each update. Newly added settings may be inserted automatically with maintained defaults.
+| Server software | Compatibility |
+| --- | :---: |
+| Paper | ✅ Supported |
+| Purpur | ✅ Supported |
+| Most conventional Paper forks | ⚠️ Usually compatible |
+| Folia | ⚠️ Experimental |
+| Spigot | ❌ Unsupported |
+| CraftBukkit / Bukkit | ❌ Unsupported |
+| Sponge | ❌ Unsupported |
+| Hybrid servers such as Arclight, Mohist, or Cardboard | ❌ Unsupported and blocked |
+| Fabric / Forge / NeoForge | ❌ Unsupported — this is a server plugin, not a mod |
+
+Slimefun Legacy is built for Paper. Purpur and most conventional Paper forks should work, but fork-specific behavior cannot be guaranteed.
+
+Folia-aware scheduling paths are included and the plugin declares `folia-supported: true`; however, Folia remains experimental until the core and commonly used addons receive broader production testing. **Every installed addon must also be Folia-safe.**
+
+### Addons and existing worlds
+
+The project aims to preserve the established Slimefun 4 addon API and data used by official Slimefun, Gugu-based installations, and compatible forks. The addon ecosystem is large, so no core fork can guarantee every historical addon build.
+
+When reporting an addon compatibility issue, include the Paper and Minecraft versions, Java version, Slimefun Legacy commit, exact addon build, full startup log, complete exception, reproduction steps, and results from a clean staging server.
 
 ---
-## Building from source
+
+## ⚙️ Building from source
+
+<details>
+<summary>Show build instructions</summary>
 
 Clone the repository:
 
@@ -309,95 +210,41 @@ python scripts/verify_english.py .
 .\gradlew.bat spotlessCheck clean build --no-daemon
 ```
 
-The shaded plugin JAR is written to:
-```text
-build/libs/
-```
+The shaded plugin JAR is written to `build/libs/`.
 
-The build toolchain uses Java 25 and targets Java 21 bytecode.
+</details>
 
 ---
-## Upstream synchronization
 
-This repository tracks upstream development through a reviewed synchronization workflow.
+## 🤝 Contributing and reporting bugs
 
-The automated process:
+Pull requests are welcome. Changes should preserve English player-facing text, maintain addon compatibility where practical, include tests for behavior changes, avoid unsafe global inventory rewrites, and respect server-thread or region ownership.
 
-1. Downloads a clean upstream source tree.
-2. Applies the maintained Albion English patch.
-3. Runs English verification.
-4. Builds and tests the project.
-5. Opens or updates a pull request for review.
+Use the [GitHub Issue Tracker](https://github.com/wickidcow/Slimefun-Legacy/issues) for reproducible bugs. Include complete logs and version information rather than a cropped screenshot of a single error line.
 
-Upstream changes are **not auto-merged**. This allows changes to items, constructors, localization, storage, or APIs to be inspected before deployment.
-
-See:
-- [`GUGU_UPSTREAM_SYNC.md`](GUGU_UPSTREAM_SYNC.md)
-- [`ALBION_MERGE_NOTES.md`](ALBION_MERGE_NOTES.md)
-- [`BUILD_VALIDATION.md`](BUILD_VALIDATION.md)
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the complete development workflow.
 
 ---
-## Reporting bugs
 
-Use the [GitHub Issue Tracker](https://github.com/wickidcow/Slimefun-Legacy/issues).
+## 🌳 Project lineage
 
-Please do not report only “it does not work.” Include enough information to reproduce and diagnose the problem.
+Slimefun Legacy is built on years of work by the Slimefun community, including:
 
-Before opening an issue:
-- Test the latest available build on a staging server
-- Confirm that only one Slimefun core JAR is installed
-- Reproduce the problem without `/reload`
-- Check whether the issue belongs to an addon rather than the core
-- Include complete logs instead of cropped screenshots of one line
-
-Security-sensitive reports should not include private credentials, database passwords, player personal information, or server secrets in a public issue.
-
----
-## Contributing
-
-Pull requests are welcome.
-
-Before submitting:
-
-```bash
-python3 scripts/verify_english.py .
-./gradlew spotlessApply --no-daemon
-./gradlew spotlessCheck clean build --no-daemon
-```
-
-Changes should:
-
-- Preserve English player-facing text
-- Preserve legacy addon compatibility where practical
-- Include tests for behavior changes
-- Avoid unsafe global inventory rewrites
-- Keep server-thread and region ownership in mind
-- Document migration or configuration changes
-See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the full development workflow.
-
----
-## Project lineage and attribution
-
-Slimefun Legacy exists because of years of work throughout the Slimefun community.
-
-This repository retains upstream history and attribution and is based on work from projects including:
 - [Slimefun 4](https://github.com/Slimefun/Slimefun4)
 - [SlimefunGuguProject/Slimefun4](https://github.com/SlimefunGuguProject/Slimefun4)
 - [Slimefun United](https://github.com/Slimefun-United/Slimefun-United)
-- The many Slimefun contributors, addon developers, server owners, testers, and translators
+- The many contributors, addon developers, server owners, testers, and translators who kept the ecosystem alive
 
-Slimefun Legacy is maintained independently and should not be presented as an official release from any upstream project.
-
----
-## License
-
-This project is distributed under the [GNU General Public License v3.0](LICENSE).
-
-The repository retains upstream licensing, contributor history, and attribution requirements. Modifications distributed as binaries must continue to follow the GPL and make the corresponding source available as required by the license.
+This repository retains upstream history and attribution while being maintained independently. It must not be presented as an official release from an upstream project.
 
 ---
+
+## 📄 License
+
+Slimefun Legacy is distributed under the [GNU General Public License v3.0](LICENSE). Distributed modifications must continue to follow the GPL and provide corresponding source as required by the license.
 
 <div align="center">
+
 ### Keep Slimefun alive. Keep it compatible. Keep it understandable.
 
 Made for modern Paper servers and the community that still loves Slimefun.

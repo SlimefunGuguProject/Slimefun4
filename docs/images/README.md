@@ -1,36 +1,31 @@
-# README Image Guide
+# Slimefun Legacy README images
 
-The included SVG artwork is original and can be committed directly with the new `README.md`.
+This directory contains the local image assets used by the repository README.
 
-## Included files
+## Project logo
 
-- `slimefun-legacy-banner.svg` — wide README header
-- `english-first.svg` — English-first feature card
-- `stability.svg` — stability and recovery feature card
-- `compatibility.svg` — addon compatibility feature card
+- `slimefun-legacy-logo.png`
+- Slimefun Legacy project logo supplied by the repository maintainer.
 
-## Recommended in-game screenshots
+## Community showcase screenshots
 
-Capture these at 16:9 or square resolution with the HUD cleaned up when practical:
+The files under `showcase/` are historical Slimefun community showcase screenshots originally published by the Slimefun Wiki and displayed by Slimefun United's README.
 
-1. **Slimefun Guide**
-   - Open a visually interesting category.
-   - Use English item names and lore.
-   - Avoid showing private chat, coordinates, or player information.
+| File | README position | Credit |
+| --- | --- | --- |
+| `showcase/showcase1.png` | Reactors and Energy, first row | HamtaBot#0001 |
+| `showcase/showcase6.png` | Automation Factory, first row | Piͭxͪeͤl (mnb)#5049 |
+| `showcase/showcase5.png` | Magic Laboratory, first row | Kilaruna#4981 |
+| `showcase/showcase4.png` | Reactors and Energy, second row | GalaxyKat11#3816 |
+| `showcase/showcase3.png` | Automation Factory, second row | TamThan#7987 |
+| `showcase/showcase2.png` | Magic Laboratory, second row | Kilaruna#4981 |
 
-2. **Automation and Cargo**
-   - Show a clean factory, reactor, power grid, or Cargo network.
-   - Include several recognizable machines.
-   - Use a bright area with good contrast.
+Original source directory:
 
-3. **Storage Doctor**
-   - Show `/sf doctor status` or the summary of a dry run.
-   - Hide IP addresses, database details, UUIDs, and private player data.
+`https://github.com/Slimefun/Slimefun-Wiki/tree/master/images`
 
-Save them as:
+Slimefun United reference README:
 
-- `slimefun-guide.png`
-- `automation-cargo.png`
-- `storage-doctor.png`
+`https://github.com/Slimefun-United/Slimefun-United`
 
-Then use the HTML gallery already included in the main README.
+Credits should remain attached to the screenshots when they are reused. These images can later be replaced with Slimefun Legacy-specific server screenshots while preserving the same filenames and README layout.
