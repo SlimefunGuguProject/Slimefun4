@@ -4,7 +4,6 @@ import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import io.github.thebusybiscuit.slimefun4.api.researches.Research;
 import javax.annotation.Nonnull;
 import org.apache.commons.lang.Validate;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
@@ -28,7 +27,7 @@ public class ResearchUnlockEvent extends Event implements Cancellable {
     private boolean cancelled;
 
     public ResearchUnlockEvent(@Nonnull Player p, @Nonnull Research research) {
-        super(!Bukkit.isPrimaryThread());
+        super(EventThreading.isCurrentThreadAsynchronous(p));
 
         Validate.notNull(p, "The Player cannot be null");
         Validate.notNull(research, "Research cannot be null");

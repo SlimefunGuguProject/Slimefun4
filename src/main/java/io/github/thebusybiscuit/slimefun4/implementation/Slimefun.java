@@ -318,6 +318,14 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
             StartupWarnings.oldJavaVersion(logger, RECOMMENDED_JAVA_VERSION);
         }
 
+        if (schedulerService.isFolia()) {
+            logger.warning("====================================================");
+            logger.warning("Folia detected: experimental region-owned scheduler mode is enabled.");
+            logger.warning("Machine ticks are region-owned. Cargo and energy only operate on currently owned nodes.");
+            logger.warning("Every installed Slimefun addon must also be Folia-safe.");
+            logger.warning("====================================================");
+        }
+
         // If the server has no "data-storage" folder, it's _probably_ a new install. So mark it for
         // metrics.
         isNewlyInstalled = !new File("data-storage/Slimefun").exists();
@@ -489,15 +497,19 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
         SlimefunExtended.shutdown();
         getSQLProfiler().shutdown();
 
-        // Cancel tasks created through the modern scheduler abstraction first.
-        schedulerService.cancelAll();
-
-        // Cancel any remaining legacy Bukkit tasks owned by this plugin.
-        Bukkit.getScheduler().cancelTasks(this);
-
-        // Finishes all started movements/removals of block data
+        // Stop new machine cycles before cancelling the scheduler tasks that own active work.
         ticker.setPaused(true);
         ticker.halt();
+
+        // Cancel tasks created through the modern scheduler abstraction.
+        schedulerService.cancelAll();
+
+        // Folia does not provide a universal Bukkit main-thread scheduler. Legacy Bukkit tasks only exist on Paper.
+        if (!schedulerService.isFolia()) {
+            Bukkit.getScheduler().cancelTasks(this);
+        }
+
+        // Finishes all started movements/removals of block data
         /**try {
          * ticker.halt();
          * ticker.run();
@@ -513,9 +525,13 @@ public final class Slimefun extends JavaPlugin implements SlimefunAddon, ICompat
         // Kill our Profiler Threads
         profiler.kill();
 
-        // Close inventories before profile/database shutdown so close handlers can persist final contents.
-        for (Player p : Bukkit.getOnlinePlayers()) {
-            p.closeInventory();
+        // Paper disables plugins on its primary thread, so inventory close handlers can still run safely here.
+        // Folia disables plugins from the global region after new entity tasks can no longer be accepted; touching
+        // player inventories from that context would violate entity ownership, so Folia lets the server close them.
+        if (!schedulerService.isFolia()) {
+            for (Player p : Bukkit.getOnlinePlayers()) {
+                p.closeInventory();
+            }
         }
 
         // Save all Player Profiles that are still in memory

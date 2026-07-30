@@ -53,7 +53,7 @@ class VersionsCommand extends SubCommand {
     public void onExecute(@Nonnull CommandSender sender, @Nonnull String[] args) {
         if (sender.hasPermission("slimefun.command.versions") || sender instanceof ConsoleCommandSender) {
             String serverSoftware = Bukkit.getName();
-            String schedulerPlatform = isFolia() ? "Folia" : "Paper";
+            String schedulerPlatform = Slimefun.getSchedulerService().isFolia() ? "Folia" : "Paper";
 
             net.kyori.adventure.text.TextComponent.Builder builder = Component.text();
 
@@ -109,18 +109,6 @@ class VersionsCommand extends SubCommand {
             sender.sendMessage(builder.build());
         } else {
             Slimefun.getLocalization().sendMessage(sender, "messages.no-permission", true);
-        }
-    }
-
-    private boolean isFolia() {
-        try {
-            Class.forName(
-                    "io.papermc.paper.threadedregions.RegionizedServer",
-                    false,
-                    VersionsCommand.class.getClassLoader());
-            return true;
-        } catch (ClassNotFoundException | LinkageError ignored) {
-            return false;
         }
     }
 

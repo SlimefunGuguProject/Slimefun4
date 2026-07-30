@@ -18,6 +18,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
@@ -30,13 +32,15 @@ import org.bukkit.Chunk;
 import org.bukkit.Location;
 
 /**
- * The {@link TickerTask} is responsible for ticking every {@link BlockTicker},
- * synchronous or not.
+ * The {@link TickerTask} is responsible for ticking every {@link BlockTicker}, synchronous or not.
+ *
+ * <p>Paper retains the historical split between asynchronous and synchronized tickers. On Folia, every block tick is
+ * dispatched to the region that owns its chunk. The asynchronous coordinator only snapshots registrations and queues
+ * region work; it never reads or mutates Bukkit world state.
  *
  * @author TheBusyBiscuit
  *
  * @see BlockTicker
- *
  */
 @SlimefunInternal
 public class TickerTask implements Runnable {
@@ -48,35 +52,32 @@ public class TickerTask implements Runnable {
     private final Map<ChunkPosition, Set<TickLocation>> tickingLocations = new ConcurrentHashMap<>();
 
     /**
-     * This Map tracks how many bugs have occurred in a given Location .
-     * If too many bugs happen, we delete that Location.
+     * This Map tracks how many bugs have occurred in a given Location.
      */
     private final Map<BlockPosition, Integer> bugs = new ConcurrentHashMap<>();
 
     /**
-     * Locations whose {@link me.mrCookieSlime.Slimefun.api.inventory.BlockMenu}
-     * is currently being viewed. Async tickers for these locations are routed
-     * to the main thread so inventory mutations cannot race player clicks.
+     * Locations whose {@link me.mrCookieSlime.Slimefun.api.inventory.BlockMenu} is currently being viewed.
      */
     private final Set<BlockPosition> viewedInventories = ConcurrentHashMap.newKeySet();
     private final Set<BlockPosition> queuedSynchronousTicks = ConcurrentHashMap.newKeySet();
+    private final Map<BlockTicker, Object> foliaTickerLocks = new ConcurrentHashMap<>();
     private final MachineCircuitBreaker<BlockPosition> circuitBreaker = new MachineCircuitBreaker<>();
 
     private static final int CIRCUIT_FAILURE_THRESHOLD = 4;
 
+    private final AtomicBoolean running = new AtomicBoolean();
     private int tickRate;
     private TaskHandle scheduledTask;
-    private boolean halted = false;
-    private boolean running = false;
+    private volatile boolean halted;
 
     @Setter
-    private volatile boolean paused = false;
+    private volatile boolean paused;
 
     /**
-     * This method starts the {@link TickerTask} on an asynchronous schedule.
+     * Starts the asynchronous coordinator. On Folia the coordinator only schedules location-owned work.
      *
-     * @param plugin
-     *            The instance of our {@link Slimefun}
+     * @param plugin the Slimefun plugin instance
      */
     public void start(@Nonnull Slimefun plugin) {
         this.tickRate = Slimefun.getCfg().getInt("URID.custom-ticker-delay");
@@ -88,240 +89,294 @@ public class TickerTask implements Runnable {
         scheduledTask = Slimefun.getSchedulerService().runAsyncAtFixedRate(this, 100L, tickRate);
     }
 
-    /**
-     * This method resets this {@link TickerTask} to run again.
-     */
-    private void reset() {
-        running = false;
-    }
-
     @Override
     public void run() {
-        if (paused) {
+        if (paused || halted || !running.compareAndSet(false, true)) {
             return;
         }
 
         try {
-            // If this method is actually still running... DON'T
-            if (running) {
-                return;
-            }
-
-            running = true;
             Slimefun.getProfiler().start();
-            Set<BlockTicker> tickers = new HashSet<>();
+            Set<Map.Entry<ChunkPosition, Set<TickLocation>>> snapshot = snapshotTickingLocations();
 
-            // Run our ticker code
-            if (!halted) {
-                Set<Map.Entry<ChunkPosition, Set<TickLocation>>> loc;
-
-                synchronized (tickingLocations) {
-                    loc = new HashSet<>(tickingLocations.entrySet());
-                }
-
-                for (Map.Entry<ChunkPosition, Set<TickLocation>> entry : loc) {
-                    tickChunk(entry.getKey(), tickers, new HashSet<>(entry.getValue()));
-                }
+            if (Slimefun.getSchedulerService().isFolia()) {
+                runFoliaCycle(snapshot);
+            } else {
+                runPaperCycle(snapshot);
             }
-
-            // Start a new tick cycle for every BlockTicker
-            for (BlockTicker ticker : tickers) {
-                ticker.startNewTick();
-            }
-
-            reset();
-            Slimefun.getProfiler().stop();
-        } catch (Exception | LinkageError x) {
-            Slimefun.logger()
-                    .log(
-                            Level.SEVERE,
-                            x,
-                            () -> "An Exception was caught while ticking the Block Tickers Task for Slimefun v"
-                                    + Slimefun.getVersion());
-            reset();
-            if (Slimefun.getProfiler().isProfiling()) {
-                Slimefun.getProfiler().stop();
-            }
+        } catch (Exception | LinkageError throwable) {
+            failCycle(throwable);
         }
     }
 
-    @ParametersAreNonnullByDefault
-    private void tickChunk(ChunkPosition chunk, Set<BlockTicker> tickers, Set<TickLocation> locations) {
-        try {
-            // Only continue if the Chunk is actually loaded
-            if (chunk.isLoaded()) {
-                for (TickLocation l : locations) {
-                    if (l.isUniversal()) {
-                        tickUniversalLocation(l.getUuid(), l.getLocation(), tickers);
-                    } else {
-                        tickLocation(tickers, l.getLocation());
-                    }
-                }
+    private Set<Map.Entry<ChunkPosition, Set<TickLocation>>> snapshotTickingLocations() {
+        Set<Map.Entry<ChunkPosition, Set<TickLocation>>> snapshot = new HashSet<>();
+
+        synchronized (tickingLocations) {
+            for (Map.Entry<ChunkPosition, Set<TickLocation>> entry : tickingLocations.entrySet()) {
+                snapshot.add(Map.entry(entry.getKey(), new HashSet<>(entry.getValue())));
             }
-        } catch (ArrayIndexOutOfBoundsException | NumberFormatException x) {
-            Slimefun.logger()
-                    .log(Level.SEVERE, x, () -> "An Exception has occurred while trying to resolve Chunk: " + chunk);
         }
+
+        return snapshot;
     }
 
-    private void tickLocation(@Nonnull Set<BlockTicker> tickers, @Nonnull Location l) {
-        BlockPosition position = new BlockPosition(l);
-        var blockData = StorageCacheUtils.getBlock(l);
-        if (blockData == null || !blockData.isDataLoaded() || blockData.isPendingRemove()) {
-            circuitBreaker.clear(position);
-            bugs.remove(position);
+    private void runPaperCycle(Set<Map.Entry<ChunkPosition, Set<TickLocation>>> snapshot) {
+        Set<BlockTicker> tickers = new HashSet<>();
+
+        for (Map.Entry<ChunkPosition, Set<TickLocation>> entry : snapshot) {
+            tickChunk(entry.getKey(), tickers, entry.getValue(), false);
+        }
+
+        finishCycle(tickers);
+    }
+
+    private void runFoliaCycle(Set<Map.Entry<ChunkPosition, Set<TickLocation>>> snapshot) {
+        TickCycle cycle = new TickCycle(snapshot.size());
+        if (snapshot.isEmpty()) {
+            cycle.finish();
             return;
         }
 
-        SlimefunItem item = SlimefunItem.getById(blockData.getSfId());
-
-        if (item != null && item.getBlockTicker() != null) {
-            if (item.isDisabledIn(l.getWorld())) {
-                return;
-            }
-            if (!canAttemptTick(position)) {
-                return;
+        for (Map.Entry<ChunkPosition, Set<TickLocation>> entry : snapshot) {
+            Set<TickLocation> locations = entry.getValue();
+            if (locations.isEmpty()) {
+                cycle.completeChunk();
+                continue;
             }
 
-            BlockTicker ticker = item.getBlockTicker();
-            boolean owedProfilerEntry = false;
-
+            Location anchor = locations.iterator().next().getLocation();
             try {
-                if (ticker.isSynchronized() || isInventoryViewed(l)) {
-                    if (!queuedSynchronousTicks.add(position)) {
-                        return;
+                TaskHandle handle = Slimefun.getSchedulerService().runAt(anchor, () -> {
+                    try {
+                        tickChunk(entry.getKey(), cycle.tickers, locations, true);
+                    } finally {
+                        cycle.completeChunk();
                     }
-                    boolean profilerScheduled = Slimefun.getProfiler().isProfiling();
-                    if (profilerScheduled) {
-                        Slimefun.getProfiler().scheduleEntries(1);
-                        owedProfilerEntry = true;
-                    }
-                    ticker.update();
+                });
 
-                    Slimefun.getSchedulerService().runAt(l, () -> {
-                        try {
-                            if (!blockData.isDataLoaded() || blockData.isPendingRemove()) {
-                                circuitBreaker.clear(position);
-                                bugs.remove(position);
-                                if (profilerScheduled) {
-                                    Slimefun.getProfiler().cancelScheduledEntry();
-                                }
-                                return;
-                            }
-                            long timestamp = profilerScheduled ? System.nanoTime() : 0L;
-                            if (tickBlock(l, item, blockData, timestamp)) {
-                                markTickSuccess(position);
-                            }
-                        } finally {
-                            queuedSynchronousTicks.remove(position);
-                        }
-                    });
-                    owedProfilerEntry = false;
-                } else {
-                    long timestamp = Slimefun.getProfiler().newEntry();
-                    owedProfilerEntry = timestamp != 0;
-                    ticker.update();
-                    if (tickBlock(l, item, blockData, timestamp)) {
-                        markTickSuccess(position);
-                    }
-                    owedProfilerEntry = false;
+                if (handle.isCancelled()) {
+                    cycle.completeChunk();
                 }
-
-                tickers.add(ticker);
-            } catch (Exception | LinkageError x) {
-                queuedSynchronousTicks.remove(position);
-                if (owedProfilerEntry) {
-                    Slimefun.getProfiler().cancelScheduledEntry();
-                }
-                reportErrors(l, item, x);
+            } catch (RuntimeException | LinkageError throwable) {
+                Slimefun.logger().log(Level.SEVERE, "Failed to schedule a Folia-owned machine chunk tick.", throwable);
+                cycle.completeChunk();
             }
         }
     }
 
     @ParametersAreNonnullByDefault
-    private void tickUniversalLocation(UUID uuid, Location l, @Nonnull Set<BlockTicker> tickers) {
-        BlockPosition position = new BlockPosition(l);
+    private void tickChunk(
+            ChunkPosition chunk, Set<BlockTicker> tickers, Set<TickLocation> locations, boolean regionOwned) {
+        try {
+            if (locations.isEmpty()) {
+                return;
+            }
+
+            Location anchor = locations.iterator().next().getLocation();
+            if (regionOwned && !Slimefun.getSchedulerService().isOwnedByCurrentRegion(anchor)) {
+                Slimefun.logger().log(
+                        Level.SEVERE,
+                        "Skipped a machine chunk tick because Folia ownership was not held for {0}.",
+                        new BlockPosition(anchor));
+                return;
+            }
+
+            // On Folia this check executes on the owning region. Paper preserves the legacy asynchronous check.
+            if (chunk.isLoaded()) {
+                for (TickLocation tickLocation : locations) {
+                    Location location = tickLocation.getLocation();
+                    if (tickLocation.isUniversal()) {
+                        tickUniversalLocation(tickLocation.getUuid(), location, tickers, regionOwned);
+                    } else {
+                        tickLocation(tickers, location, regionOwned);
+                    }
+                }
+            }
+        } catch (ArrayIndexOutOfBoundsException | NumberFormatException exception) {
+            Slimefun.logger().log(
+                    Level.SEVERE,
+                    exception,
+                    () -> "An Exception has occurred while trying to resolve Chunk: " + chunk);
+        }
+    }
+
+    private void tickLocation(@Nonnull Set<BlockTicker> tickers, @Nonnull Location location, boolean regionOwned) {
+        BlockPosition position = new BlockPosition(location);
+        var data = StorageCacheUtils.getBlock(location);
+        if (data == null || !data.isDataLoaded() || data.isPendingRemove()) {
+            clearFailureState(position);
+            return;
+        }
+
+        tickData(tickers, location, position, data, regionOwned);
+    }
+
+    @ParametersAreNonnullByDefault
+    private void tickUniversalLocation(
+            UUID uuid, Location location, Set<BlockTicker> tickers, boolean regionOwned) {
+        BlockPosition position = new BlockPosition(location);
         var data = StorageCacheUtils.getUniversalBlock(uuid);
         if (data == null || !data.isDataLoaded() || data.isPendingRemove()) {
-            circuitBreaker.clear(position);
-            bugs.remove(position);
+            clearFailureState(position);
             return;
         }
-        var item = SlimefunItem.getById(data.getSfId());
 
-        if (item != null && item.getBlockTicker() != null) {
-            if (item.isDisabledIn(l.getWorld())) {
-                return;
-            }
-            if (!canAttemptTick(position)) {
-                return;
-            }
-
-            BlockTicker ticker = item.getBlockTicker();
-            boolean owedProfilerEntry = false;
-
-            try {
-                if (ticker.isSynchronized() || isInventoryViewed(l)) {
-                    if (!queuedSynchronousTicks.add(position)) {
-                        return;
-                    }
-                    boolean profilerScheduled = Slimefun.getProfiler().isProfiling();
-                    if (profilerScheduled) {
-                        Slimefun.getProfiler().scheduleEntries(1);
-                        owedProfilerEntry = true;
-                    }
-                    ticker.update();
-
-                    Slimefun.getSchedulerService().runAt(l, () -> {
-                        try {
-                            if (!data.isDataLoaded() || data.isPendingRemove()) {
-                                circuitBreaker.clear(position);
-                                bugs.remove(position);
-                                if (profilerScheduled) {
-                                    Slimefun.getProfiler().cancelScheduledEntry();
-                                }
-                                return;
-                            }
-                            long timestamp = profilerScheduled ? System.nanoTime() : 0L;
-                            if (tickBlock(l, item, data, timestamp)) {
-                                markTickSuccess(position);
-                            }
-                        } finally {
-                            queuedSynchronousTicks.remove(position);
-                        }
-                    });
-                    owedProfilerEntry = false;
-                } else {
-                    long timestamp = Slimefun.getProfiler().newEntry();
-                    owedProfilerEntry = timestamp != 0;
-                    ticker.update();
-                    if (tickBlock(l, item, data, timestamp)) {
-                        markTickSuccess(position);
-                    }
-                    owedProfilerEntry = false;
-                }
-
-                tickers.add(ticker);
-            } catch (Exception | LinkageError x) {
-                queuedSynchronousTicks.remove(position);
-                if (owedProfilerEntry) {
-                    Slimefun.getProfiler().cancelScheduledEntry();
-                }
-                reportErrors(l, item, x);
-            }
-        }
+        tickData(tickers, location, position, data, regionOwned);
     }
 
     @ParametersAreNonnullByDefault
-    private boolean tickBlock(Location l, SlimefunItem item, ASlimefunDataContainer data, long timestamp) {
+    private void tickData(
+            Set<BlockTicker> tickers,
+            Location location,
+            BlockPosition position,
+            ASlimefunDataContainer data,
+            boolean regionOwned) {
+        SlimefunItem item = SlimefunItem.getById(data.getSfId());
+        if (item == null || item.getBlockTicker() == null || item.isDisabledIn(location.getWorld())) {
+            return;
+        }
+        if (!canAttemptTick(position)) {
+            return;
+        }
+
+        BlockTicker ticker = item.getBlockTicker();
+        boolean owedProfilerEntry = false;
+
         try {
-            item.getBlockTicker().tick(l.getBlock(), item, data);
+            if (regionOwned) {
+                if (!queuedSynchronousTicks.add(position)) {
+                    return;
+                }
+
+                try {
+                    // Addons commonly keep mutable state on a shared BlockTicker instance. Paper's historical
+                    // coordinator effectively serialized those callbacks; retain that guarantee across Folia regions.
+                    synchronized (foliaTickerLocks.computeIfAbsent(ticker, ignored -> new Object())) {
+                        ticker.update();
+                        long timestamp = Slimefun.getProfiler().newEntry();
+                        owedProfilerEntry = timestamp != 0;
+                        if (tickBlock(location, item, data, timestamp)) {
+                            markTickSuccess(position);
+                        }
+                        owedProfilerEntry = false;
+                    }
+                } finally {
+                    queuedSynchronousTicks.remove(position);
+                }
+            } else if (ticker.isSynchronized() || isInventoryViewed(location)) {
+                if (!queuedSynchronousTicks.add(position)) {
+                    return;
+                }
+
+                boolean profilerScheduled = Slimefun.getProfiler().isProfiling();
+                if (profilerScheduled) {
+                    Slimefun.getProfiler().scheduleEntries(1);
+                    owedProfilerEntry = true;
+                }
+                ticker.update();
+
+                Slimefun.getSchedulerService().runAt(location, () -> {
+                    try {
+                        if (!data.isDataLoaded() || data.isPendingRemove()) {
+                            clearFailureState(position);
+                            if (profilerScheduled) {
+                                Slimefun.getProfiler().cancelScheduledEntry();
+                            }
+                            return;
+                        }
+
+                        long timestamp = profilerScheduled ? System.nanoTime() : 0L;
+                        if (tickBlock(location, item, data, timestamp)) {
+                            markTickSuccess(position);
+                        }
+                    } finally {
+                        queuedSynchronousTicks.remove(position);
+                    }
+                });
+                owedProfilerEntry = false;
+            } else {
+                long timestamp = Slimefun.getProfiler().newEntry();
+                owedProfilerEntry = timestamp != 0;
+                ticker.update();
+                if (tickBlock(location, item, data, timestamp)) {
+                    markTickSuccess(position);
+                }
+                owedProfilerEntry = false;
+            }
+
+            tickers.add(ticker);
+        } catch (Exception | LinkageError throwable) {
+            queuedSynchronousTicks.remove(position);
+            if (owedProfilerEntry) {
+                Slimefun.getProfiler().cancelScheduledEntry();
+            }
+            reportErrors(location, item, throwable);
+        }
+    }
+
+    private void clearFailureState(BlockPosition position) {
+        circuitBreaker.clear(position);
+        bugs.remove(position);
+    }
+
+    @ParametersAreNonnullByDefault
+    private boolean tickBlock(Location location, SlimefunItem item, ASlimefunDataContainer data, long timestamp) {
+        try {
+            item.getBlockTicker().tick(location.getBlock(), item, data);
             return true;
-        } catch (Exception | LinkageError x) {
-            reportErrors(l, item, x);
+        } catch (Exception | LinkageError throwable) {
+            reportErrors(location, item, throwable);
             return false;
         } finally {
-            Slimefun.getProfiler().closeEntry(l, item, timestamp);
+            Slimefun.getProfiler().closeEntry(location, item, timestamp);
+        }
+    }
+
+    private void failCycle(Throwable throwable) {
+        Slimefun.logger().log(
+                Level.SEVERE,
+                throwable,
+                () -> "An Exception was caught while ticking the Block Tickers Task for Slimefun v"
+                        + Slimefun.getVersion());
+        finishCycle(Collections.emptySet());
+    }
+
+    private void finishCycle(Set<BlockTicker> tickers) {
+        for (BlockTicker ticker : tickers) {
+            try {
+                ticker.startNewTick();
+            } catch (RuntimeException | LinkageError throwable) {
+                Slimefun.logger().log(Level.SEVERE, "A BlockTicker failed while starting a new tick cycle.", throwable);
+            }
+        }
+
+        running.set(false);
+        if (Slimefun.getProfiler().isProfiling()) {
+            Slimefun.getProfiler().stop();
+        }
+    }
+
+    private final class TickCycle {
+
+        private final Set<BlockTicker> tickers = ConcurrentHashMap.newKeySet();
+        private final AtomicInteger remainingChunks;
+        private final AtomicBoolean finished = new AtomicBoolean();
+
+        private TickCycle(int chunkCount) {
+            remainingChunks = new AtomicInteger(chunkCount);
+        }
+
+        private void completeChunk() {
+            if (remainingChunks.decrementAndGet() == 0) {
+                finish();
+            }
+        }
+
+        private void finish() {
+            if (finished.compareAndSet(false, true)) {
+                finishCycle(tickers);
+            }
         }
     }
 

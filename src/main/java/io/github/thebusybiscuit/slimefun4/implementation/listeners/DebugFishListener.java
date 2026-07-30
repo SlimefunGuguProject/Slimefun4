@@ -117,7 +117,7 @@ public class DebugFishListener implements Listener {
 
             try {
                 if (data == null) {
-                    TaskUtil.runSyncMethod(() -> Slimefun.getBlockDataService()
+                    TaskUtil.runSyncMethod(b.getLocation(), () -> Slimefun.getBlockDataService()
                             .getUniversalDataUUID(b)
                             .ifPresentOrElse(
                                     (uuid) -> {

@@ -13,11 +13,11 @@ import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.implementation.SlimefunItems;
 import io.github.thebusybiscuit.slimefun4.utils.NumberUtils;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.LongConsumer;
 import javax.annotation.Nonnull;
@@ -43,9 +43,9 @@ public class EnergyNet extends Network implements HologramOwner {
 
     private static final int RANGE = 6;
 
-    private final Map<Location, EnergyNetProvider> generators = new HashMap<>();
-    private final Map<Location, EnergyNetComponent> capacitors = new HashMap<>();
-    private final Map<Location, EnergyNetComponent> consumers = new HashMap<>();
+    private final Map<Location, EnergyNetProvider> generators = new ConcurrentHashMap<>();
+    private final Map<Location, EnergyNetComponent> capacitors = new ConcurrentHashMap<>();
+    private final Map<Location, EnergyNetComponent> consumers = new ConcurrentHashMap<>();
 
     protected EnergyNet(@Nonnull Location l) {
         super(Slimefun.getNetworkManager(), l);
@@ -109,9 +109,12 @@ public class EnergyNet extends Network implements HologramOwner {
 
     @Override
     public void onClassificationChange(Location l, NetworkComponent from, NetworkComponent to) {
-        if (from == NetworkComponent.TERMINUS) {
-            generators.remove(l);
-            consumers.remove(l);
+        generators.remove(l);
+        capacitors.remove(l);
+        consumers.remove(l);
+
+        if (to == null) {
+            return;
         }
 
         EnergyNetComponent component = getComponent(l);
@@ -160,6 +163,9 @@ public class EnergyNet extends Network implements HologramOwner {
 
                 for (Map.Entry<Location, EnergyNetComponent> entry : consumers.entrySet()) {
                     Location loc = entry.getKey();
+                    if (!isLocationAccessible(loc)) {
+                        continue;
+                    }
 
                     var data = StorageCacheUtils.getDataContainer(loc);
                     if (data == null || data.isPendingRemove()) {
@@ -215,6 +221,9 @@ public class EnergyNet extends Network implements HologramOwner {
     private void storeRemainingEnergy(long remainingEnergy) {
         for (Map.Entry<Location, EnergyNetComponent> entry : capacitors.entrySet()) {
             Location loc = entry.getKey();
+            if (!isLocationAccessible(loc)) {
+                continue;
+            }
 
             var data = StorageCacheUtils.getDataContainer(loc);
             if (data == null || data.isPendingRemove() || !data.isDataLoaded()) {
@@ -240,6 +249,9 @@ public class EnergyNet extends Network implements HologramOwner {
 
         for (Map.Entry<Location, EnergyNetProvider> entry : generators.entrySet()) {
             Location loc = entry.getKey();
+            if (!isLocationAccessible(loc)) {
+                continue;
+            }
 
             var data = StorageCacheUtils.getDataContainer(loc);
             if (data == null || data.isPendingRemove() || !data.isDataLoaded()) {
@@ -268,8 +280,12 @@ public class EnergyNet extends Network implements HologramOwner {
         long supply = 0;
 
         for (Map.Entry<Location, EnergyNetProvider> entry : generators.entrySet()) {
-            long timestamp = Slimefun.getProfiler().newEntry();
             Location loc = entry.getKey();
+            if (!isLocationAccessible(loc)) {
+                continue;
+            }
+
+            long timestamp = Slimefun.getProfiler().newEntry();
             EnergyNetProvider provider = entry.getValue();
             SlimefunItem item = (SlimefunItem) provider;
 
@@ -331,7 +347,9 @@ public class EnergyNet extends Network implements HologramOwner {
         long supply = 0;
 
         for (Map.Entry<Location, EnergyNetComponent> entry : capacitors.entrySet()) {
-            supply = NumberUtils.flowSafeAddition(supply, entry.getValue().getChargeLong(entry.getKey()));
+            if (isLocationAccessible(entry.getKey())) {
+                supply = NumberUtils.flowSafeAddition(supply, entry.getValue().getChargeLong(entry.getKey()));
+            }
         }
 
         return supply;

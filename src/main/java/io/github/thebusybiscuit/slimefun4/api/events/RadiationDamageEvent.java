@@ -27,7 +27,7 @@ public class RadiationDamageEvent extends Event implements Cancellable {
      * @param exposure The amount of radiation exposure
      */
     public RadiationDamageEvent(@Nonnull Player player, int exposure) {
-        super(EventThreading.isCurrentThreadAsynchronous());
+        super(EventThreading.isCurrentThreadAsynchronous(player));
         this.player = player;
         this.exposure = exposure;
     }

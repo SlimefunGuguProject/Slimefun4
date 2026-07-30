@@ -7,7 +7,6 @@ import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.implementation.items.blocks.HologramProjector;
 import java.util.function.Supplier;
 import javax.annotation.Nonnull;
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.util.Vector;
@@ -39,7 +38,8 @@ public interface HologramOwner extends ItemAttribute {
     }
 
     default void updateHologram(@Nonnull Block b, @Nonnull String text, Supplier<Boolean> abort) {
-        if (Bukkit.isPrimaryThread()) {
+        Location owner = b.getLocation();
+        if (Slimefun.getSchedulerService().isOwnedByCurrentRegion(owner)) {
             if (abort.get()) {
                 return;
             }
@@ -47,7 +47,7 @@ public interface HologramOwner extends ItemAttribute {
             return;
         }
 
-        Slimefun.runSyncAt(b.getLocation(), () -> {
+        Slimefun.runSyncAt(owner, () -> {
             if (abort.get()) {
                 return;
             }

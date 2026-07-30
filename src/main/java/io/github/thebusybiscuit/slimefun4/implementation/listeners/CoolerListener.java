@@ -88,7 +88,7 @@ public class CoolerListener implements Listener {
      */
     private void takeJuiceFromCooler(@Nonnull Player p, @Nonnull ItemStack cooler) {
         if (PlayerBackpack.isOwnerOnline(cooler.getItemMeta())) {
-            PlayerBackpack.getAsync(cooler, backpack -> consumeJuice(p, cooler, backpack), true);
+            PlayerBackpack.getAsync(cooler, backpack -> consumeJuice(p, cooler, backpack), p);
         }
     }
 

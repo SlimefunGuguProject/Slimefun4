@@ -32,7 +32,9 @@ public class AutoDisenchantEvent extends Event implements Cancellable {
     }
 
     public AutoDisenchantEvent(@Nonnull ItemStack item, @Nullable Block block) {
-        super(EventThreading.isCurrentThreadAsynchronous());
+        super(block == null
+                ? EventThreading.isCurrentThreadAsynchronous()
+                : EventThreading.isCurrentThreadAsynchronous(block.getLocation()));
 
         this.item = item;
         this.block = block;

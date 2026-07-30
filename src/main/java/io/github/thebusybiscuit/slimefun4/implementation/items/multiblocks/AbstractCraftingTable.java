@@ -101,7 +101,7 @@ abstract class AbstractCraftingTable extends MultiBlockMachine {
                             }
                             onReadyCb.run();
                         },
-                        ThreadUtils.getMainDelayedExecutor());
+                        ThreadUtils.getEntityDelayedExecutor(p));
 
         return true;
     }

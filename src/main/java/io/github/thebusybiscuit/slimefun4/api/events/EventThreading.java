@@ -1,23 +1,48 @@
 package io.github.thebusybiscuit.slimefun4.api.events;
 
+import io.github.thebusybiscuit.slimefun4.core.services.scheduling.FoliaSupport;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.entity.Entity;
 
 /**
- * Resolves the asynchronous flag for events that may be fired by a Slimefun machine ticker on either thread.
+ * Resolves the asynchronous flag for events fired by Slimefun machine or entity tick work.
  */
 final class EventThreading {
 
     private EventThreading() {}
 
     /**
-     * Paper requires an event's asynchronous flag to match the thread that calls it. Machine tickers normally run
-     * asynchronously, but are moved onto the primary thread while their inventory is being viewed.
+     * Returns whether a custom Slimefun event should use Bukkit's asynchronous-event flag.
      *
-     * @return whether an event constructed on the current thread must be marked asynchronous
+     * <p>Folia treats events fired from region and global-region tick contexts as synchronous even though there is no
+     * single main thread. Slimefun's machine and player tick events are routed through those owned schedulers, so they
+     * must not be marked asynchronous on Folia. Paper keeps its historical primary-thread check.
+     *
+     * @return whether the event should be marked asynchronous
      */
+    static boolean isCurrentThreadAsynchronous(Location location) {
+        if (Bukkit.getServer() == null) {
+            return true;
+        }
+
+        return FoliaSupport.isFolia()
+                ? !Bukkit.isOwnedByCurrentRegion(location)
+                : !Bukkit.isPrimaryThread();
+    }
+
+    static boolean isCurrentThreadAsynchronous(Entity entity) {
+        if (Bukkit.getServer() == null) {
+            return true;
+        }
+
+        return FoliaSupport.isFolia()
+                ? !Bukkit.isOwnedByCurrentRegion(entity)
+                : !Bukkit.isPrimaryThread();
+    }
+
     static boolean isCurrentThreadAsynchronous() {
-        // Preserve the legacy asynchronous behavior when events are instantiated before a server is available,
-        // such as in lightweight API tests.
+        // Preserve legacy behavior when events are instantiated before a server is available, such as API tests.
         return Bukkit.getServer() == null || !Bukkit.isPrimaryThread();
     }
 }

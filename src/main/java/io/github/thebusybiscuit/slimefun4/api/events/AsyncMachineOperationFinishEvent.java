@@ -6,7 +6,6 @@ import io.github.thebusybiscuit.slimefun4.core.machines.MachineOperation;
 import io.github.thebusybiscuit.slimefun4.core.machines.MachineProcessor;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import org.bukkit.Bukkit;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 
@@ -28,7 +27,7 @@ public class AsyncMachineOperationFinishEvent extends Event {
 
     public <T extends MachineOperation> AsyncMachineOperationFinishEvent(
             BlockPosition pos, MachineProcessor<T> processor, T operation) {
-        super(!Bukkit.isPrimaryThread());
+        super(EventThreading.isCurrentThreadAsynchronous(pos.toLocation()));
 
         this.position = pos;
         this.machineProcessor = processor;

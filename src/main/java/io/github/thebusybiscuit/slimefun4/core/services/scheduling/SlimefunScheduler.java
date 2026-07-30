@@ -92,5 +92,27 @@ public interface SlimefunScheduler {
 
     boolean isOwnedByCurrentRegion(@Nonnull Location location);
 
+    /**
+     * Returns whether the current thread owns the supplied entity.
+     *
+     * <p>The default preserves binary compatibility for external scheduler implementations. Implementations with
+     * native entity ownership checks should override it.
+     *
+     * @param entity the entity to test
+     * @return whether the current execution context owns the entity
+     */
+    default boolean isOwnedByCurrentRegion(@Nonnull Entity entity) {
+        return !isFolia();
+    }
+
+    /**
+     * Returns whether this scheduler is using Folia regionized semantics.
+     *
+     * @return whether Folia is active
+     */
+    default boolean isFolia() {
+        return false;
+    }
+
     void cancelAll();
 }

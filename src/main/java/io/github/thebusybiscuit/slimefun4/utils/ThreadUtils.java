@@ -1,12 +1,17 @@
 package io.github.thebusybiscuit.slimefun4.utils;
 
+import io.github.thebusybiscuit.slimefun4.core.services.scheduling.FoliaSupport;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import java.lang.reflect.Field;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.FutureTask;
+import javax.annotation.Nonnull;
+import org.apache.commons.lang.Validate;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.entity.Entity;
 
 public class ThreadUtils {
     private static final Executor MAIN_THREAD_EXECUTOR;
@@ -21,14 +26,59 @@ public class ThreadUtils {
     }
 
     /**
-     * Executes a task synchronously on the main thread.
-     * If the current thread is already the main thread, the task runs immediately.
-     * Otherwise, the task is scheduled to run on the main thread.
+     * Returns an executor that follows the supplied entity across Folia region changes.
      *
-     * @param runnable The task to execute synchronously
+     * @param entity the entity that owns the callback
+     * @return an entity-owned executor
+     */
+    public static Executor getEntityThreadExecutor(@Nonnull Entity entity) {
+        Validate.notNull(entity, "Entity cannot be null");
+        return task -> {
+            if (Slimefun.getSchedulerService().isOwnedByCurrentRegion(entity)) {
+                task.run();
+            } else {
+                Slimefun.getSchedulerService().runFor(entity, task);
+            }
+        };
+    }
+
+    /**
+     * Returns a one-tick-delayed executor that follows the supplied entity across Folia region changes.
+     *
+     * @param entity the entity that owns the callback
+     * @return a delayed entity-owned executor
+     */
+    public static Executor getEntityDelayedExecutor(@Nonnull Entity entity) {
+        Validate.notNull(entity, "Entity cannot be null");
+        return task -> Slimefun.getSchedulerService().runForLater(entity, task, 1L);
+    }
+
+    /**
+     * Returns an executor owned by the region containing the supplied location.
+     *
+     * @param location the location whose region owns the callback
+     * @return a location-owned executor
+     */
+    public static Executor getLocationThreadExecutor(@Nonnull Location location) {
+        Validate.notNull(location, "Location cannot be null");
+        Location anchor = location.clone();
+        return task -> {
+            if (Slimefun.getSchedulerService().isOwnedByCurrentRegion(anchor)) {
+                task.run();
+            } else {
+                Slimefun.getSchedulerService().runAt(anchor, task);
+            }
+        };
+    }
+
+    /**
+     * Executes a task synchronously on Paper's primary thread or Folia's global region.
+     * Location- or entity-bound Bukkit work must use the corresponding owned executor instead.
+     *
+     * @param runnable the task to execute
      */
     public static void executeSync(Runnable runnable) {
-        if (Bukkit.isPrimaryThread()) {
+        if (!FoliaSupport.isFolia() && Bukkit.isPrimaryThread()) {
             runnable.run();
         } else {
             runSyncNMS(runnable);
@@ -36,84 +86,55 @@ public class ThreadUtils {
     }
 
     /**
-     * Executes a task synchronously on the main thread with scheduling.
-     * If the current thread is already the main thread, the task is scheduled for later execution.
-     * Otherwise, the task is scheduled to run on the main thread.
+     * Always schedules a task onto Paper's primary thread or Folia's global region.
      *
-     * @param runnable The task to execute synchronously
+     * @param runnable the task to execute
      */
     public static void executeSyncSched(Runnable runnable) {
-        if (Bukkit.isPrimaryThread()) {
-            CompletableFuture.runAsync(runnable, MAIN_THREAD_EXECUTOR);
-        } else {
-            runSyncNMS(runnable);
-        }
+        CompletableFuture.runAsync(runnable, MAIN_THREAD_EXECUTOR);
     }
 
-    /**
-     * Creates a FutureTask from a Callable.
-     *
-     * @param <T> The type of the result
-     * @param callable The callable to wrap
-     * @return A FutureTask wrapping the callable
-     */
     public static <T> FutureTask<T> getFutureTask(Callable<T> callable) {
         return new FutureTask<>(callable);
     }
 
-    /**
-     * Creates a FutureTask from a Runnable.
-     * If the input is already a FutureTask, it is cast and returned.
-     * Otherwise, a new FutureTask is created with the Runnable and null result.
-     *
-     * @param runnable The runnable to wrap
-     * @return A FutureTask wrapping the runnable
-     */
+    @SuppressWarnings("unchecked")
     public static FutureTask<Void> getFutureTask(Runnable runnable) {
         return runnable instanceof FutureTask<?> future
                 ? (FutureTask<Void>) future
                 : new FutureTask<>(runnable, (Void) null);
     }
 
-    /**
-     * Creates a FutureTask from a Runnable with a specific result value.
-     *
-     * @param <T> The type of the result
-     * @param runnable The runnable to execute
-     * @param val The result value to return
-     * @return A FutureTask that executes the runnable and returns the specified value
-     */
     public static <T> FutureTask<T> getFutureTask(Runnable runnable, T val) {
         return new FutureTask<>(runnable, val);
     }
 
-    /**
-     * Executes a runnable on the main thread using the NMS main executor.
-     * This is an internal method used by other ThreadUtils methods.
-     *
-     * @param runnable The task to execute on the main thread
-     */
     private static void runSyncNMS(Runnable runnable) {
         MAIN_THREAD_EXECUTOR.execute(runnable);
     }
 
     static {
         Executor executor;
-        try {
-            Class<?> mcUtils = Class.forName("io.papermc.paper.util.MCUtil");
-            Field field = mcUtils.getDeclaredField("MAIN_EXECUTOR");
-            field.setAccessible(true);
-            executor = (Executor) field.get(null);
-        } catch (Throwable e) {
-            executor = (task) -> {
-                if (Bukkit.isPrimaryThread()) {
-                    task.run();
-                } else {
-                    Slimefun.runSync(task);
-                }
-            };
+        if (FoliaSupport.isFolia()) {
+            // Folia has no universal main thread. Generic legacy callbacks are placed on the global region.
+            executor = task -> Slimefun.getSchedulerService().run(task);
+        } else {
+            try {
+                Class<?> mcUtils = Class.forName("io.papermc.paper.util.MCUtil");
+                Field field = mcUtils.getDeclaredField("MAIN_EXECUTOR");
+                field.setAccessible(true);
+                executor = (Executor) field.get(null);
+            } catch (Throwable ignored) {
+                executor = task -> {
+                    if (Bukkit.isPrimaryThread()) {
+                        task.run();
+                    } else {
+                        Slimefun.runSync(task);
+                    }
+                };
+            }
         }
         MAIN_THREAD_EXECUTOR = executor;
-        MAIN_DELAYED_EXECUTOR = Slimefun::runSync;
+        MAIN_DELAYED_EXECUTOR = task -> Slimefun.getSchedulerService().runLater(task, 1L);
     }
 }

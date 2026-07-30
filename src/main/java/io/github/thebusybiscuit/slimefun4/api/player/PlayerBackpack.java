@@ -25,6 +25,7 @@ import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -62,13 +63,35 @@ public class PlayerBackpack extends SlimefunInventoryHolder {
     @Getter
     private InvSnapshot snapshot;
 
+    /**
+     * Loads a backpack and executes the callback using the legacy global/main-thread behavior.
+     *
+     * <p>On Folia, callers that touch a player or world location should use the entity- or location-owned overload
+     * instead.
+     */
     public static void getAsync(ItemStack item, Consumer<PlayerBackpack> callback, boolean runCbOnMainThread) {
-        if (item == null || !item.hasItemMeta()) {
-            return;
-        }
         Executor executor = runCbOnMainThread
                 ? ThreadUtils.getMainDelayedExecutor()
                 : Slimefun.getDatabaseManager().getProfileDataController().getCallbackExecutor();
+        getAsync(item, callback, executor, runCbOnMainThread);
+    }
+
+    /**
+     * Loads a backpack and invokes the callback on the thread that owns the supplied entity.
+     *
+     * @param item the backpack item
+     * @param callback the callback to invoke
+     * @param owner the entity that owns the callback context
+     */
+    public static void getAsync(ItemStack item, Consumer<PlayerBackpack> callback, Entity owner) {
+        getAsync(item, callback, ThreadUtils.getEntityDelayedExecutor(owner), true);
+    }
+
+    private static void getAsync(
+            ItemStack item, Consumer<PlayerBackpack> callback, Executor executor, boolean migrateItem) {
+        if (item == null || !item.hasItemMeta()) {
+            return;
+        }
         var bUuid = getBackpackUUID(item.getItemMeta());
         if (bUuid.isPresent()) {
             Slimefun.getDatabaseManager()
@@ -77,7 +100,7 @@ public class PlayerBackpack extends SlimefunInventoryHolder {
                     .thenAcceptAsync(
                             (result) -> {
                                 if (result != null) {
-                                    if (runCbOnMainThread) {
+                                    if (migrateItem) {
                                         migrateLegacyItem(item, result);
                                     }
                                     callback.accept(result);
@@ -97,7 +120,7 @@ public class PlayerBackpack extends SlimefunInventoryHolder {
                     .thenAcceptAsync(
                             (result) -> {
                                 if (result != null) {
-                                    if (runCbOnMainThread) {
+                                    if (migrateItem) {
                                         migrateLegacyItem(item, result);
                                     }
                                     callback.accept(result);

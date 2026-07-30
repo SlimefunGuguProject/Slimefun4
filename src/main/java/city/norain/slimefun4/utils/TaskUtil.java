@@ -15,7 +15,7 @@ import org.bukkit.Location;
 public class TaskUtil {
     @SneakyThrows
     public void runSyncMethod(Runnable runnable) {
-        if (Bukkit.isPrimaryThread()) {
+        if (!Slimefun.getSchedulerService().isFolia() && Bukkit.isPrimaryThread()) {
             runnable.run();
         } else {
             Slimefun.getSchedulerService().run(runnable);
@@ -23,40 +23,37 @@ public class TaskUtil {
     }
 
     /**
-     * Legacy blocking bridge for call sites that still require an immediate return value.
+     * Legacy blocking bridge for global work.
      *
-     * @deprecated Prefer {@link #callSyncMethod(Callable)} or {@link #callAt(Location, Callable)} and compose the
-     *             returned future.
+     * @deprecated Prefer {@link #callSyncMethod(Callable)} or {@link #callAt(Location, Callable)}.
      */
     @Deprecated
     @SneakyThrows
     public <T> T runSyncMethod(Callable<T> callable) {
-        if (Bukkit.isPrimaryThread()) {
+        if (!Slimefun.getSchedulerService().isFolia() && Bukkit.isPrimaryThread()) {
             return callable.call();
         }
 
-        try {
-            return callSyncMethod(callable).get(1, TimeUnit.SECONDS);
-        } catch (TimeoutException e) {
-            Slimefun.logger().log(Level.WARNING, "Timeout when executing sync method", e);
-            return null;
-        }
+        return await(callSyncMethod(callable));
     }
 
     /**
-     * Executes a callable on the global server scheduler without blocking the caller.
-     *
-     * @param callable
-     *            The callable to execute
-     * @param <T>
-     *            The result type
-     *
-     * @return A future completed with the callable result
+     * Blocking location-owned compatibility bridge. Callers should prefer composing the future from
+     * {@link #callAt(Location, Callable)} whenever possible.
      */
+    @SneakyThrows
+    public <T> T runSyncMethod(Location location, Callable<T> callable) {
+        if (Slimefun.getSchedulerService().isOwnedByCurrentRegion(location)) {
+            return callable.call();
+        }
+
+        return await(callAt(location, callable));
+    }
+
     public <T> CompletableFuture<T> callSyncMethod(Callable<T> callable) {
         CompletableFuture<T> future = new CompletableFuture<>();
 
-        if (Bukkit.isPrimaryThread()) {
+        if (!Slimefun.getSchedulerService().isFolia() && Bukkit.isPrimaryThread()) {
             complete(future, callable);
         } else {
             Slimefun.getSchedulerService().run(() -> complete(future, callable));
@@ -65,18 +62,6 @@ public class TaskUtil {
         return future;
     }
 
-    /**
-     * Executes a callable on the thread that owns the target location without blocking the caller.
-     *
-     * @param location
-     *            The target location
-     * @param callable
-     *            The callable to execute
-     * @param <T>
-     *            The result type
-     *
-     * @return A future completed with the callable result
-     */
     public <T> CompletableFuture<T> callAt(Location location, Callable<T> callable) {
         CompletableFuture<T> future = new CompletableFuture<>();
 
@@ -87,6 +72,24 @@ public class TaskUtil {
         }
 
         return future;
+    }
+
+    private <T> T await(CompletableFuture<T> future) {
+        try {
+            return future.get(1, TimeUnit.SECONDS);
+        } catch (TimeoutException e) {
+            Slimefun.logger().log(Level.WARNING, "Timeout when executing scheduler-owned method", e);
+            return null;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return null;
+        } catch (java.util.concurrent.ExecutionException e) {
+            Throwable cause = e.getCause();
+            if (cause instanceof RuntimeException runtimeException) {
+                throw runtimeException;
+            }
+            throw new IllegalStateException("Scheduler-owned method failed", cause);
+        }
     }
 
     private <T> void complete(CompletableFuture<T> future, Callable<T> callable) {

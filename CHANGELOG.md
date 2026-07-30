@@ -1,3 +1,13 @@
+# Slimefun Legacy Folia Support — Phase 1
+
+- Route every Folia machine tick to the region that owns its machine chunk while preserving the historical Paper ticker path.
+- Prevent overlapping machine cycles and serialize shared addon `BlockTicker` instances across Folia regions.
+- Make `BlockTicker` unique-cycle state safe under concurrent region dispatch.
+- Add location- and entity-owned callback paths for storage, backpacks, inventories, and custom events.
+- Retain Cargo and energy topology while restricting operations to nodes owned by the regulator's current Folia region.
+- Add Folia startup warnings, static verification, a concurrency regression test, and detailed staging guidance.
+- Keep Folia experimental; transactional cross-region Cargo and energy remain future work.
+
 # Slimefun Legacy Fourth Maintenance Release
 
 - Added Folia-safe concurrent state for Soulbound recovery, Elytra impact grace, and Slimefun bow projectiles.

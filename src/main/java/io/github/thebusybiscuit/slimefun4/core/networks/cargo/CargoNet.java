@@ -10,11 +10,11 @@ import io.github.thebusybiscuit.slimefun4.core.attributes.HologramOwner;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -42,10 +42,10 @@ public class CargoNet extends AbstractItemNetwork implements HologramOwner {
 
     private static final int RANGE = 5;
 
-    private final Set<Location> inputNodes = new HashSet<>();
-    private final Set<Location> outputNodes = new HashSet<>();
+    private final Set<Location> inputNodes = ConcurrentHashMap.newKeySet();
+    private final Set<Location> outputNodes = ConcurrentHashMap.newKeySet();
 
-    protected final Map<Location, Integer> roundRobin = new HashMap<>();
+    protected final Map<Location, Integer> roundRobin = new ConcurrentHashMap<>();
     private int tickDelayThreshold = 0;
 
     public static @Nullable CargoNet getNetworkFromLocation(@Nonnull Location l) {
@@ -174,6 +174,10 @@ public class CargoNet extends AbstractItemNetwork implements HologramOwner {
         Map<Location, Integer> inputs = new HashMap<>();
 
         for (Location node : inputNodes) {
+            if (!isLocationAccessible(node)) {
+                continue;
+            }
+
             int frequency = getFrequency(node);
 
             if (frequency >= 0 && frequency < 16) {
@@ -188,6 +192,10 @@ public class CargoNet extends AbstractItemNetwork implements HologramOwner {
         Map<Integer, List<Location>> outputs = new HashMap<>();
 
         for (Location node : outputNodes) {
+            if (!isLocationAccessible(node)) {
+                continue;
+            }
+
             int frequency = getFrequency(node);
             if (frequency >= 0 && frequency < 16) {
                 outputs.computeIfAbsent(frequency, ignored -> new ArrayList<>()).add(node);

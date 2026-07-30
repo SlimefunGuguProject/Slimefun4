@@ -3,7 +3,6 @@ package io.github.thebusybiscuit.slimefun4.api.events;
 import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunAPI;
 import javax.annotation.Nonnull;
 import lombok.Getter;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
@@ -54,7 +53,7 @@ public class AsyncPlayerRadiationLevelUpdateEvent extends PlayerEvent {
     private final boolean fullProtection;
 
     public AsyncPlayerRadiationLevelUpdateEvent(Player player, int previousLevel, int delta, boolean hasProtection) {
-        super(player, !Bukkit.isPrimaryThread());
+        super(player, EventThreading.isCurrentThreadAsynchronous(player));
 
         this.previousLevel = previousLevel;
         this.deltaLevel = delta;

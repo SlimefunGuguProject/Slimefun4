@@ -20,6 +20,10 @@ public abstract class BlockTicker implements ItemHandler {
     @Getter
     private final boolean universal;
 
+    /**
+     * Legacy per-cycle state. Access is serialized by {@link #update()} and {@link #startNewTick()} so one shared
+     * ticker instance can be reached by multiple Folia regions without racing its unique-tick transition.
+     */
     protected boolean unique = true;
 
     public BlockTicker() {
@@ -33,7 +37,7 @@ public abstract class BlockTicker implements ItemHandler {
     /**
      * Refreshes the current ticker execution state.
      */
-    public void update() {
+    public synchronized void update() {
         if (unique) {
             uniqueTick();
             unique = false;
@@ -136,7 +140,7 @@ public abstract class BlockTicker implements ItemHandler {
     /**
      * This method resets the 'unique' flag for {@link BlockTicker#uniqueTick()}
      */
-    public void startNewTick() {
+    public synchronized void startNewTick() {
         unique = true;
     }
 }

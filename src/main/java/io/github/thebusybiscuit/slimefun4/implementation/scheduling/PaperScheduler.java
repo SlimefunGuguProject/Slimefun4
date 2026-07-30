@@ -1,6 +1,7 @@
 package io.github.thebusybiscuit.slimefun4.implementation.scheduling;
 
 import io.github.thebusybiscuit.slimefun4.api.annotations.SlimefunInternal;
+import io.github.thebusybiscuit.slimefun4.core.services.scheduling.FoliaSupport;
 import io.github.thebusybiscuit.slimefun4.core.services.scheduling.SchedulerTime;
 import io.github.thebusybiscuit.slimefun4.core.services.scheduling.SlimefunScheduler;
 import io.github.thebusybiscuit.slimefun4.core.services.scheduling.TaskHandle;
@@ -27,7 +28,7 @@ import org.bukkit.scheduler.BukkitTask;
 @SlimefunInternal
 public final class PaperScheduler implements SlimefunScheduler {
 
-    private static final boolean FOLIA = isClassPresent("io.papermc.paper.threadedregions.RegionizedServer");
+    private static final boolean FOLIA = FoliaSupport.isFolia();
 
     private final Plugin plugin;
     private final Set<TrackedTask> tasks = ConcurrentHashMap.newKeySet();
@@ -346,20 +347,22 @@ public final class PaperScheduler implements SlimefunScheduler {
     }
 
     @Override
+    public boolean isOwnedByCurrentRegion(@Nonnull Entity entity) {
+        Validate.notNull(entity, "Entity cannot be null");
+        return FOLIA ? Bukkit.isOwnedByCurrentRegion(entity) : Bukkit.isPrimaryThread();
+    }
+
+    @Override
+    public boolean isFolia() {
+        return FOLIA;
+    }
+
+    @Override
     public void cancelAll() {
         stopped.set(true);
 
         for (TrackedTask task : Set.copyOf(tasks)) {
             task.cancel();
-        }
-    }
-
-    private static boolean isClassPresent(String className) {
-        try {
-            Class.forName(className, false, PaperScheduler.class.getClassLoader());
-            return true;
-        } catch (ClassNotFoundException | LinkageError ignored) {
-            return false;
         }
     }
 

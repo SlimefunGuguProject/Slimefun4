@@ -3,9 +3,9 @@ package io.github.thebusybiscuit.slimefun4.core.networks.cargo;
 import io.github.thebusybiscuit.slimefun4.api.network.Network;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.utils.SlimefunUtils;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.Optional;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -33,18 +33,22 @@ abstract class AbstractItemNetwork extends Network {
      * This is a cache for the {@link BlockFace} a node is facing, so we don't need to
      * request the {@link BlockData} each time we visit a node
      */
-    protected Map<Location, BlockFace> connectorCache = new HashMap<>();
+    protected Map<Location, BlockFace> connectorCache = new ConcurrentHashMap<>();
 
     /**
      * This is our cache for the {@link ItemFilter} for each node.
      */
-    protected Map<Location, ItemFilter> filterCache = new HashMap<>();
+    protected Map<Location, ItemFilter> filterCache = new ConcurrentHashMap<>();
 
     protected AbstractItemNetwork(@Nonnull Location regulator) {
         super(Slimefun.getNetworkManager(), regulator);
     }
 
     protected Optional<Block> getAttachedBlock(@Nonnull Location l) {
+        if (!isLocationAccessible(l)) {
+            return Optional.empty();
+        }
+
         if (l.getWorld().isChunkLoaded(l.getBlockX() >> 4, l.getBlockZ() >> 4)) {
             Block block = l.getBlock();
 
@@ -52,13 +56,15 @@ abstract class AbstractItemNetwork extends Network {
                 BlockFace cached = connectorCache.get(l);
 
                 if (cached != null) {
-                    return Optional.of(block.getRelative(cached));
+                    Block target = block.getRelative(cached);
+                    return isLocationAccessible(target.getLocation()) ? Optional.of(target) : Optional.empty();
                 }
 
                 BlockFace face =
                         ((Directional) block.getBlockData()).getFacing().getOppositeFace();
                 connectorCache.put(l, face);
-                return Optional.of(block.getRelative(face));
+                Block target = block.getRelative(face);
+                return isLocationAccessible(target.getLocation()) ? Optional.of(target) : Optional.empty();
             }
         }
 
