@@ -11,7 +11,6 @@ import com.xzavier0722.mc.plugin.slimefun4.storage.adapter.postgresql.PostgreSql
 import com.xzavier0722.mc.plugin.slimefun4.storage.adapter.sqlcommon.ISqlCommonConfig;
 import com.xzavier0722.mc.plugin.slimefun4.storage.adapter.sqlcommon.SqlCommonConfig;
 import com.xzavier0722.mc.plugin.slimefun4.storage.adapter.sqlcommon.SqlUtils;
-import com.xzavier0722.mc.plugin.slimefun4.storage.adapter.sqlite.SqliteConfig;
 import com.xzavier0722.mc.plugin.slimefun4.storage.common.DataScope;
 import com.xzavier0722.mc.plugin.slimefun4.storage.util.ItemStackDataCodec;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
