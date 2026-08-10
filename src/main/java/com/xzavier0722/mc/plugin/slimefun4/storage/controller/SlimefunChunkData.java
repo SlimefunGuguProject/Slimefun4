@@ -5,6 +5,7 @@ import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -14,6 +15,7 @@ import me.mrCookieSlime.Slimefun.api.inventory.BlockMenuPreset;
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
+import org.bukkit.World;
 
 /**
  * {@link SlimefunChunkData} 是 Slimefun 中用于存储区块内所有方块数据的容器类。
@@ -22,19 +24,48 @@ public class SlimefunChunkData extends ADataContainer {
     private static final SlimefunBlockData INVALID_BLOCK_DATA = new SlimefunBlockData(
             new Location(Bukkit.getWorlds().get(0), Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE),
             "INVALID_BLOCK_DATA_SF_KEY");
-    private final Chunk chunk;
+    private final UUID worldId;
+    private final int chunkX;
+    private final int chunkZ;
     private final Map<String, SlimefunBlockData> sfBlocks;
 
     @ParametersAreNonnullByDefault
     SlimefunChunkData(Chunk chunk) {
         super(LocationUtils.getChunkKey(chunk));
-        this.chunk = chunk;
+        worldId = chunk.getWorld().getUID();
+        chunkX = chunk.getX();
+        chunkZ = chunk.getZ();
         sfBlocks = new ConcurrentHashMap<>();
     }
 
+    /**
+     * Resolves this data container's world on demand without retaining it.
+     *
+     * @return the currently loaded world that owns this container
+     * @throws IllegalStateException if the world that owns this container is no longer loaded
+     */
+    @Nonnull
+    public World getWorld() {
+        var world = Bukkit.getWorld(worldId);
+        if (world == null) {
+            throw new IllegalStateException("The world for chunk data " + getKey() + " is no longer loaded");
+        }
+        return world;
+    }
+
+    /**
+     * Resolves this data container's chunk on demand. Calling this method may synchronously load the chunk, so it must
+     * only be called from the server thread.
+     *
+     * @return the currently loaded world's chunk at this container's coordinates
+     * @throws IllegalStateException if called asynchronously or if the owning world is no longer loaded
+     */
     @Nonnull
     public Chunk getChunk() {
-        return chunk;
+        if (!Bukkit.isPrimaryThread()) {
+            throw new IllegalStateException("Chunk data must be resolved from the server thread");
+        }
+        return getWorld().getChunkAt(chunkX, chunkZ);
     }
 
     @Nonnull
