@@ -321,20 +321,21 @@ public class TickerTask implements Runnable {
         long timestamp = entry.timestamp;
         try {
             CompletableFuture.runAsync(() -> {
-                if (item.getBlockTicker().isUniversal()) {
-                    if (data instanceof SlimefunUniversalData universalData) {
-                        item.getBlockTicker().tick(l.getBlock(), item, universalData);
-                    } else {
-                        throw new IllegalStateException("BlockTicker is universal but item is non-universal!");
-                    }
-                } else {
-                    if (data instanceof SlimefunBlockData blockData) {
-                        item.getBlockTicker().tick(l.getBlock(), item, blockData);
-                    } else {
-                        throw new IllegalStateException("BlockTicker is non-universal but item is universal!");
-                    }
-                }
-            }).get(10, TimeUnit.SECONDS);
+                        if (item.getBlockTicker().isUniversal()) {
+                            if (data instanceof SlimefunUniversalData universalData) {
+                                item.getBlockTicker().tick(l.getBlock(), item, universalData);
+                            } else {
+                                throw new IllegalStateException("BlockTicker is universal but item is non-universal!");
+                            }
+                        } else {
+                            if (data instanceof SlimefunBlockData blockData) {
+                                item.getBlockTicker().tick(l.getBlock(), item, blockData);
+                            } else {
+                                throw new IllegalStateException("BlockTicker is non-universal but item is universal!");
+                            }
+                        }
+                    })
+                    .get(10, TimeUnit.SECONDS);
         } catch (Exception | LinkageError x) {
             reportErrors(l, item, x);
         } finally {
