@@ -1079,13 +1079,6 @@ public class BlockDataController extends ADataController {
 
             if (uniData instanceof SlimefunUniversalBlockData ubd) {
                 if (ubd.hasTrait(UniversalDataTrait.BLOCK)) {
-                    // 初始化 上次出现位置
-                    var lStr = ubd.getData(UniversalDataTrait.BLOCK.getReservedKey());
-
-                    if (lStr != null && !lStr.isBlank()) {
-                        ubd.setLastPresent(LocationUtils.toLocation(lStr));
-                    }
-
                     var sfItem = SlimefunItem.getById(ubd.getSfId());
 
                     if (sfItem != null && sfItem.isTicking() && ubd.getLastPresent() != null) {
@@ -1226,70 +1219,6 @@ public class BlockDataController extends ADataController {
 
     public Set<SlimefunChunkData> getAllLoadedChunkData() {
         return new HashSet<>(loadedChunk.values());
-    }
-
-    public void unloadChunkCache(Chunk chunk) {
-        var cKey = LocationUtils.getChunkKey(chunk);
-        var cache = loadedChunk.get(cKey);
-        if (cache != null) {
-            unloadChunkCache(cache, cKey);
-            loadedChunk.remove(cKey, cache);
-        }
-    }
-
-    public void unloadWorldCache(World world) {
-        getAllLoadedChunkData(world).forEach(chunkData -> {
-            unloadChunkCache(chunkData, chunkData.getKey());
-            loadedChunk.remove(chunkData.getKey(), chunkData);
-        });
-    }
-
-    private void unloadChunkCache(SlimefunChunkData chunkData, String chunkKey) {
-        var blockData = chunkData.getAllBlockData();
-        blockData.forEach(this::prepareBlockCacheUnload);
-        blockData.forEach(block -> {
-            saveBlockInventoryBeforeUnload(block);
-            finishBlockCacheUnload(block);
-        });
-        executeDelayedDataUpdates(new ChunkKey(DataScope.NONE, chunkKey));
-        chunkData.removeAllCacheInternal();
-    }
-
-    private void prepareAllCacheUnload() {
-        loadedChunk.values().forEach(chunkData -> chunkData.getAllBlockData().forEach(this::prepareBlockCacheUnload));
-        loadedUniversalData.values().forEach(this::prepareUniversalCacheUnload);
-    }
-
-    private void prepareBlockCacheUnload(SlimefunBlockData blockData) {
-        blockData.setPendingRemove(true);
-
-        var l = blockData.getLocation();
-        if (blockData.isDataLoaded() && Slimefun.getRegistry().getTickerBlocks().contains(blockData.getSfId())) {
-            Slimefun.getTickerTask().disableTicker(l);
-        }
-    }
-
-    private void saveBlockInventoryBeforeUnload(SlimefunBlockData blockData) {
-        if (!blockData.isDataLoaded()) {
-            return;
-        }
-
-        var menu = blockData.getBlockMenu();
-        if (menu != null && menu.isDirty()) {
-            saveBlockInventory(blockData);
-        }
-    }
-
-    private void finishBlockCacheUnload(SlimefunBlockData blockData) {
-        var l = blockData.getLocation();
-        executeDelayedDataUpdates(new LocationKey(DataScope.NONE, l));
-        Slimefun.getNetworkManager().updateAllNetworks(l);
-        invSnapshots.remove(blockData.getKey());
-    }
-
-    private void prepareUniversalCacheUnload(SlimefunUniversalData universalData) {
-        universalData.setPendingRemove(true);
-        Slimefun.getTickerTask().disableTicker(universalData.getUUID());
     }
 
     public void removeAllDataInChunk(Chunk chunk) {
@@ -1464,16 +1393,11 @@ public class BlockDataController extends ADataController {
     public void shutdown() {
         saveAllBlockInventories();
         saveAllUniversalInventories();
-        prepareAllCacheUnload();
         if (enableDelayedSaving) {
             looperTask.cancel();
             executeAllDelayedTasks();
         }
         super.shutdown();
-        loadedChunk.clear();
-        loadedUniversalData.clear();
-        invSnapshots.clear();
-        delayedWriteTasks.clear();
     }
 
     void scheduleDelayedBlockDataUpdate(SlimefunBlockData blockData, String key) {
@@ -1512,21 +1436,6 @@ public class BlockDataController extends ADataController {
                     .entrySet()
                     .removeIf(each -> scopeKey.equals(each.getKey().getParent()));
         }
-    }
-
-    private void executeDelayedDataUpdates(ScopeKey scopeKey) {
-        Set<DelayedTask> tasks = new HashSet<>();
-        synchronized (delayedWriteTasks) {
-            delayedWriteTasks.entrySet().removeIf(entry -> {
-                if (scopeKey.equals(entry.getKey().getParent())) {
-                    tasks.add(entry.getValue());
-                    return true;
-                }
-
-                return false;
-            });
-        }
-        tasks.forEach(DelayedTask::runUnsafely);
     }
 
     private void scheduleBlockDataUpdate(ScopeKey scopeKey, RecordKey reqKey, String lKey, String key, String val) {
@@ -1598,12 +1507,9 @@ public class BlockDataController extends ADataController {
     }
 
     private void executeAllDelayedTasks() {
-        Set<DelayedTask> tasks;
         synchronized (delayedWriteTasks) {
-            tasks = new HashSet<>(delayedWriteTasks.values());
-            delayedWriteTasks.clear();
+            delayedWriteTasks.values().forEach(DelayedTask::runUnsafely);
         }
-        tasks.forEach(DelayedTask::runUnsafely);
     }
 
     public SlimefunChunkData getChunkDataFromCache(Location chunk) {

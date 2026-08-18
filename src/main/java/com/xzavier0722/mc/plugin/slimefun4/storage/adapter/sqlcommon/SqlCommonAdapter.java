@@ -14,8 +14,10 @@ import com.xzavier0722.mc.plugin.slimefun4.storage.common.RecordSet;
 import com.xzavier0722.mc.plugin.slimefun4.storage.patch.DatabasePatch;
 import com.xzavier0722.mc.plugin.slimefun4.storage.patch.DatabasePatchV1;
 import com.xzavier0722.mc.plugin.slimefun4.storage.patch.DatabasePatchV2;
+import com.xzavier0722.mc.plugin.slimefun4.storage.patch.DatabasePatchV3;
 import com.zaxxer.hikari.HikariDataSource;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.logging.Level;
@@ -138,6 +140,7 @@ public abstract class SqlCommonAdapter<T extends ISqlCommonConfig> implements ID
         switch (dbVer) {
             case 0 -> patch = new DatabasePatchV1();
             case 1 -> patch = new DatabasePatchV2();
+            case 2 -> patch = new DatabasePatchV3();
         }
 
         if (patch == null) {
@@ -146,16 +149,46 @@ public abstract class SqlCommonAdapter<T extends ISqlCommonConfig> implements ID
 
         try (var conn = ds.getConnection()) {
             Slimefun.logger().log(Level.INFO, "正在更新数据库版本至 " + patch.getVersion() + ", 可能需要一段时间...");
-            var stmt = conn.createStatement();
-            patch.updateVersion(stmt, config);
-            patch.patch(stmt, config);
+            executePatchTransaction(conn, patch, config);
+
             Slimefun.logger().log(Level.INFO, "更新完成. ");
 
             if (getDatabaseVersion() != IDataSourceAdapter.DATABASE_VERSION) {
                 patch();
             }
-        } catch (SQLException e) {
+        } catch (SQLException | RuntimeException e) {
             Slimefun.logger().log(Level.SEVERE, "更新数据库时出现问题!", e);
+        }
+    }
+
+    static void executePatchTransaction(Connection conn, DatabasePatch patch, ISqlCommonConfig config)
+            throws SQLException {
+        var autoCommit = conn.getAutoCommit();
+        try {
+            conn.setAutoCommit(false);
+            try (var stmt = conn.createStatement()) {
+                patch.patch(stmt, config);
+                patch.updateVersion(stmt, config);
+            }
+            conn.commit();
+        } catch (SQLException e) {
+            rollback(conn, e);
+            throw e;
+        } catch (RuntimeException e) {
+            rollback(conn, e);
+            throw e;
+        } finally {
+            if (conn.getAutoCommit() != autoCommit) {
+                conn.setAutoCommit(autoCommit);
+            }
+        }
+    }
+
+    private static void rollback(Connection conn, Throwable failure) {
+        try {
+            conn.rollback();
+        } catch (SQLException rollbackException) {
+            failure.addSuppressed(rollbackException);
         }
     }
 }

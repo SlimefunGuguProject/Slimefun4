@@ -62,7 +62,7 @@ public class PostgreSqlAdapter extends SqlCommonAdapter<PostgreSqlConfig> {
 
     @Override
     public void setData(RecordKey key, RecordSet item) {
-        var data = item.getAll();
+        var data = item.getAllValues();
         var fields = data.keySet();
         var fieldStr = SqlUtils.buildFieldStr(fields);
         if (fieldStr.isEmpty()) {
@@ -77,7 +77,7 @@ public class PostgreSqlAdapter extends SqlCommonAdapter<PostgreSqlConfig> {
             } else {
                 flag = true;
             }
-            valStr.append(SqlUtils.toSqlValStr(field, data.get(field)));
+            valStr.append(SqlUtils.toPostgreSqlValStr(field, data.get(field)));
         }
 
         var updateFields = key.getFields();
@@ -110,14 +110,15 @@ public class PostgreSqlAdapter extends SqlCommonAdapter<PostgreSqlConfig> {
                                                         ", ",
                                                         updateFields.stream()
                                                                 .map(field -> {
-                                                                    var val = item.get(field);
+                                                                    var val = item.getValue(field);
                                                                     if (val == null) {
                                                                         throw new IllegalArgumentException(
                                                                                 "Cannot find value in RecordSet for the specific"
                                                                                         + " key: "
                                                                                         + field);
                                                                     }
-                                                                    return SqlUtils.buildKvStr(field, val);
+                                                                    return SqlUtils.mapField(field) + "="
+                                                                            + SqlUtils.toPostgreSqlValStr(field, val);
                                                                 })
                                                                 .toList())))
                 + ";");
@@ -241,7 +242,7 @@ public class PostgreSqlAdapter extends SqlCommonAdapter<PostgreSqlConfig> {
                 + FIELD_INVENTORY_SLOT
                 + " SMALLINT NOT NULL, "
                 + FIELD_INVENTORY_ITEM
-                + " TEXT NOT NULL, "
+                + " BYTEA NOT NULL, "
                 + "FOREIGN KEY ("
                 + FIELD_BACKPACK_ID
                 + ") "
@@ -328,7 +329,7 @@ public class PostgreSqlAdapter extends SqlCommonAdapter<PostgreSqlConfig> {
                 + FIELD_INVENTORY_SLOT
                 + " SMALLINT NOT NULL, "
                 + FIELD_INVENTORY_ITEM
-                + " TEXT NOT NULL, "
+                + " BYTEA NOT NULL, "
                 + "FOREIGN KEY ("
                 + FIELD_LOCATION
                 + ") "
@@ -353,9 +354,9 @@ public class PostgreSqlAdapter extends SqlCommonAdapter<PostgreSqlConfig> {
                 + FIELD_UNIVERSAL_UUID
                 + " UUID NOT NULL, "
                 + FIELD_INVENTORY_SLOT
-                + " TINYINT UNSIGNED NOT NULL, "
+                + " SMALLINT NOT NULL, "
                 + FIELD_INVENTORY_ITEM
-                + " TEXT NOT NULL,"
+                + " BYTEA NOT NULL,"
                 + "PRIMARY KEY ("
                 + FIELD_UNIVERSAL_UUID
                 + ", "
@@ -419,7 +420,7 @@ public class PostgreSqlAdapter extends SqlCommonAdapter<PostgreSqlConfig> {
         if (Slimefun.isNewlyInstalled()) {
             executeSql(MessageFormat.format(
                     """
-                    INSERT INTO {0} ({1}, {2}) VALUES ("{3}", {4}) ON CONFLICT ({1}) DO NOTHING;
+                    INSERT INTO {0} ({1}, {2}) VALUES ('{3}', '{4}') ON CONFLICT ({1}) DO NOTHING;
                     """,
                     tableMetadataTable,
                     FIELD_TABLE_METADATA_KEY,

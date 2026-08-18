@@ -20,7 +20,7 @@ public class SlimefunChunkDataLoadEvent extends Event {
     }
 
     public World getWorld() {
-        return getChunk().getWorld();
+        return chunkData.getWorld();
     }
 
     public Chunk getChunk() {
