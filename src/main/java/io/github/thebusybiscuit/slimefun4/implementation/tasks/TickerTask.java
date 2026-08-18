@@ -19,7 +19,10 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -317,19 +320,21 @@ public class TickerTask implements Runnable {
         ASlimefunDataContainer data = entry.data;
         long timestamp = entry.timestamp;
         try {
-            if (item.getBlockTicker().isUniversal()) {
-                if (data instanceof SlimefunUniversalData universalData) {
-                    item.getBlockTicker().tick(l.getBlock(), item, universalData);
+            CompletableFuture.runAsync(() -> {
+                if (item.getBlockTicker().isUniversal()) {
+                    if (data instanceof SlimefunUniversalData universalData) {
+                        item.getBlockTicker().tick(l.getBlock(), item, universalData);
+                    } else {
+                        throw new IllegalStateException("BlockTicker is universal but item is non-universal!");
+                    }
                 } else {
-                    throw new IllegalStateException("BlockTicker is universal but item is non-universal!");
+                    if (data instanceof SlimefunBlockData blockData) {
+                        item.getBlockTicker().tick(l.getBlock(), item, blockData);
+                    } else {
+                        throw new IllegalStateException("BlockTicker is non-universal but item is universal!");
+                    }
                 }
-            } else {
-                if (data instanceof SlimefunBlockData blockData) {
-                    item.getBlockTicker().tick(l.getBlock(), item, blockData);
-                } else {
-                    throw new IllegalStateException("BlockTicker is non-universal but item is universal!");
-                }
-            }
+            }).get(10, TimeUnit.SECONDS);
         } catch (Exception | LinkageError x) {
             reportErrors(l, item, x);
         } finally {
@@ -339,6 +344,12 @@ public class TickerTask implements Runnable {
 
     @ParametersAreNonnullByDefault
     private void reportErrors(Location l, SlimefunItem item, Throwable x) {
+        if (x instanceof TimeoutException) {
+            Slimefun.logger().log(Level.SEVERE, "World: {0} X: {1} Y: {2} Z: {3} ({4})", new Object[] {
+                l.getWorld().getName(), l.getBlockX(), l.getBlockY(), l.getBlockZ(), item.getId()
+            });
+            Slimefun.logger().log(Level.SEVERE, "该方块对应的机器在上一个 Tick 中运行超过 10 秒，可能会导致粘液刻严重被拖慢！");
+        }
         BlockPosition position = new BlockPosition(l);
         int errors = bugs.getOrDefault(position, 0) + 1;
 
