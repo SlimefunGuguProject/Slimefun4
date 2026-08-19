@@ -13,6 +13,8 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
 
+import java.util.Locale;
+
 /**
  * @author balugaq
  */
@@ -103,7 +105,7 @@ public class TickCommand extends SubCommand {
                                                                     .getTickRate()));
                     return;
                 } else {
-                    SlimefunItem item = SlimefunItem.getById(args[1].toUpperCase());
+                    SlimefunItem item = SlimefunItem.getById(args[1].toUpperCase(Locale.ROOT));
                     if (item != null) {
                         Slimefun.getTickerTask()
                                 .setTickFreezePredicate(entry -> entry.getItem().equals(item));

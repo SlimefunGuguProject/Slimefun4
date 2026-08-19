@@ -80,15 +80,15 @@ public class TickerTask implements Runnable {
     @Setter
     private volatile boolean paused = false;
 
-    private Deque<WaitingEntry> waiting = new ConcurrentLinkedDeque<>();
+    private final Deque<WaitingEntry> waiting = new ConcurrentLinkedDeque<>();
 
     private final int PAGE_SIZE = 10;
 
     @Setter
-    private boolean tickFreeze = false;
+    private volatile boolean tickFreeze = false;
 
     @Setter
-    private Predicate<WaitingEntry> tickFreezePredicate = entry -> false;
+    private volatile Predicate<WaitingEntry> tickFreezePredicate = entry -> false;
 
     @Data
     @AllArgsConstructor
@@ -342,6 +342,7 @@ public class TickerTask implements Runnable {
 
     @ParametersAreNonnullByDefault
     private void timedTickBlock(WaitingEntry entry, long timeout, TimeUnit timeUnit) {
+        if (entry.data.isPendingRemove()) return; // waiting 期间机器可能会被拆除
         Location l = entry.location;
         SlimefunItem item = entry.item;
         long timestamp = entry.timestamp;
