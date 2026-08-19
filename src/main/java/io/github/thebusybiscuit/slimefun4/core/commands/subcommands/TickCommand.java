@@ -33,32 +33,46 @@ public class TickCommand extends SubCommand {
                                 "messages.tick-mode",
                                 true,
                                 msg -> msg.replace(
-                                        "%mode%", Slimefun.getTickerTask().isTickFreeze() ? "开启" : "关闭"));
+                                        "%mode%",
+                                        Slimefun.getTickerTask().isTickFreeze()
+                                                ? Slimefun.getLocalization().getMessage("messages.tick-freeze-on")
+                                                : Slimefun.getLocalization().getMessage("messages.tick-freeze-off")));
                 return;
             }
 
             if (args.length == 2) {
                 if (sender instanceof Player player && args[1].equalsIgnoreCase("at")) {
                     Block b = player.getTargetBlockExact(8, FluidCollisionMode.NEVER);
-                    SlimefunItem sf = null;
                     if (b != null) {
-                        sf = StorageCacheUtils.getSlimefunItem(b.getLocation());
+                        SlimefunItem sf = StorageCacheUtils.getSlimefunItem(b.getLocation());
+                        if (sf != null) {
+                            Slimefun.getTickerTask().setTickFreezePredicate(entry -> {
+                                var l = entry.getLocation();
+                                return l.getWorld()
+                                                .getName()
+                                                .equals(b.getLocation()
+                                                        .getWorld()
+                                                        .getName())
+                                        && l.getBlockX() == b.getLocation().getBlockX()
+                                        && l.getBlockY() == b.getLocation().getBlockY()
+                                        && l.getBlockZ() == b.getLocation().getBlockZ();
+                            });
+                            return;
+                        }
                     }
 
-                    if (sf == null) {
-                        sf = SlimefunItem.getByItem(player.getInventory().getItemInMainHand());
-                    }
-
-                    if (sf == null) {
-                        Slimefun.getLocalization().sendMessage(sender, "messages.not-found", true);
+                    SlimefunItem sf =
+                            SlimefunItem.getByItem(player.getInventory().getItemInMainHand());
+                    if (sf != null) {
+                        Slimefun.getTickerTask()
+                                .setTickFreezePredicate(
+                                        entry -> entry.getItem().getId().equals(sf.getId()));
                         return;
                     }
 
-                    final SlimefunItem finalSf = sf;
-                    Slimefun.getTickerTask()
-                            .setTickFreezePredicate(
-                                    entry -> entry.getItem().getId().equals(finalSf.getId()));
+                    Slimefun.getTickerTask().setTickFreezePredicate(entry -> false);
 
+                    Slimefun.getLocalization().sendMessage(sender, "messages.tick-freeze-predicate-reset", true);
                     return;
                 } else if (args[1].equalsIgnoreCase("show")) {
                     Slimefun.getTickerTask().showWaitingList();
@@ -135,17 +149,19 @@ public class TickCommand extends SubCommand {
                                 && l.getBlockY() == y
                                 && l.getBlockZ() == z;
                     });
+                    return;
                 } catch (NumberFormatException e) {
                     Slimefun.getLocalization().sendMessage(sender, "messages.not-a-number", true);
+                    return;
                 }
-
-                Slimefun.getLocalization()
-                        .sendMessage(
-                                sender,
-                                "messages.usage",
-                                true,
-                                msg -> msg.replace("%usage%", "/sf tick (<x> <y> <z> | <Slimefun Item>)"));
             }
+
+            Slimefun.getLocalization()
+                    .sendMessage(
+                            sender,
+                            "messages.usage",
+                            true,
+                            msg -> msg.replace("%usage%", "/sf tick (<x> <y> <z> | <Slimefun Item>)"));
         } else {
             Slimefun.getLocalization().sendMessage(sender, "messages.no-permission", true);
         }

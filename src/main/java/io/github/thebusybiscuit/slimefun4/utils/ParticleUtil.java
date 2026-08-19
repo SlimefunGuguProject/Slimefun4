@@ -109,7 +109,7 @@ public class ParticleUtil {
     public static void highlightBlock(@NotNull Player player, @NotNull Location location, int shrinkTimes) {
         for (int i = 0; i < shrinkTimes; i++) {
             Bukkit.getScheduler()
-                    .runTaskLaterAsynchronously(
+                    .runTaskLater(
                             Slimefun.instance(),
                             () -> {
                                 drawLineFrom(player.getEyeLocation().clone().add(0D, -0.5D, 0D), location);
