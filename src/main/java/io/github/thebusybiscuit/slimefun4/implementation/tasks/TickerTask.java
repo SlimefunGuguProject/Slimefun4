@@ -23,13 +23,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
@@ -91,13 +91,24 @@ public class TickerTask implements Runnable {
     private volatile Predicate<WaitingEntry> tickFreezePredicate = entry -> false;
 
     @Data
-    @AllArgsConstructor
     public static class WaitingEntry {
-        private Location location;
-        private SlimefunItem item;
-        private ASlimefunDataContainer data;
-        private long timestamp;
-        private boolean sync;
+        private static final AtomicLong ID = new AtomicLong(0);
+        private final Location location;
+        private final SlimefunItem item;
+        private final ASlimefunDataContainer data;
+        private final long timestamp;
+        private final boolean sync;
+        private final long id;
+
+        public WaitingEntry(
+                Location location, SlimefunItem item, ASlimefunDataContainer data, long timestamp, boolean sync) {
+            this.location = location;
+            this.item = item;
+            this.data = data;
+            this.timestamp = timestamp;
+            this.sync = sync;
+            this.id = ID.getAndIncrement();
+        }
     }
 
     /**
@@ -347,7 +358,7 @@ public class TickerTask implements Runnable {
         SlimefunItem item = entry.item;
         long timestamp = entry.timestamp;
         try {
-            if (Bukkit.isPrimaryThread()) {
+            if (entry.isSync()) {
                 // Bukkit 自带的 Watchdog 会检测超时，不需要我们处理
                 tickBlock(entry);
             } else {
@@ -594,13 +605,13 @@ public class TickerTask implements Runnable {
         int j = 0;
         for (var entry :
                 waiting.stream().skip((page - 1) * PAGE_SIZE).limit(PAGE_SIZE).toList()) {
-            int id = (page - 1) * PAGE_SIZE + j + 1;
-            String head = id + ". " + entry.item.getItemName() + " ";
+            int number = (page - 1) * PAGE_SIZE + j + 1;
+            String head = number + ". " + entry.item.getItemName() + " ";
             builder.color(TextColor.color(0x00B7B7))
                     .append(Component.text()
                             .append(Component.text(head))
                             .hoverEvent(Component.text("点击步过").clickEvent(ClickEvent.callback(p2 -> {
-                                for (int i = 0; i < id; i++) {
+                                while (!waiting.isEmpty() && waiting.peek().id <= entry.id) {
                                     timedTickBlock();
                                 }
                                 showWaitingList();
@@ -609,7 +620,7 @@ public class TickerTask implements Runnable {
                     .append(Component.text("[运行到] ")
                             .hoverEvent(Component.text("点击运行到此并停止"))
                             .clickEvent(ClickEvent.callback(p2 -> {
-                                for (int i = 0; i < id - 1; i++) {
+                                while (!waiting.isEmpty() && waiting.peek().id < entry.id) {
                                     timedTickBlock();
                                 }
                                 showWaitingList();
@@ -617,7 +628,7 @@ public class TickerTask implements Runnable {
                     .append(Component.text("[步过] ")
                             .hoverEvent(Component.text("点击步过"))
                             .clickEvent(ClickEvent.callback(p2 -> {
-                                for (int i = 0; i < id; i++) {
+                                while (!waiting.isEmpty() && waiting.peek().id <= entry.id) {
                                     timedTickBlock();
                                 }
                                 showWaitingList();
@@ -626,7 +637,12 @@ public class TickerTask implements Runnable {
                             .hoverEvent(Component.text("点击高亮方块"))
                             .clickEvent(ClickEvent.callback(p2 -> {
                                 if (p2 instanceof Player p) {
-                                    ParticleUtil.highlightBlock(p, entry.getLocation(), 3);
+                                    if (p.getLocation().getWorld()
+                                            == entry.getLocation().getWorld()) {
+                                        ParticleUtil.highlightBlock(p, entry.getLocation(), 3);
+                                    } else {
+                                        Slimefun.getLocalization().sendMessage(p, "messages.wrong-world");
+                                    }
                                 }
                             })))
                     .appendNewline();

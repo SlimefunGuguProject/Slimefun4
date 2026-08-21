@@ -81,12 +81,24 @@ public class TickCommand extends SubCommand {
                 } else if (args[1].equalsIgnoreCase("freeze")) {
                     Slimefun.getTickerTask().setTickFreeze(true);
                     Slimefun.getLocalization()
-                            .sendMessage(sender, "messages.tick-mode", true, msg -> msg.replace("%mode%", "开启"));
+                            .sendMessage(
+                                    sender,
+                                    "messages.tick-mode",
+                                    true,
+                                    msg -> msg.replace(
+                                            "%mode%",
+                                            Slimefun.getLocalization().getMessage("messages.tick-freeze-on")));
                     return;
                 } else if (args[1].equalsIgnoreCase("unfreeze")) {
                     Slimefun.getTickerTask().setTickFreeze(false);
                     Slimefun.getLocalization()
-                            .sendMessage(sender, "messages.tick-mode", true, msg -> msg.replace("%mode%", "关闭"));
+                            .sendMessage(
+                                    sender,
+                                    "messages.tick-mode",
+                                    true,
+                                    msg -> msg.replace(
+                                            "%mode%",
+                                            Slimefun.getLocalization().getMessage("messages.tick-freeze-off")));
                     return;
                 } else if (args[1].equalsIgnoreCase("query")) {
                     Slimefun.getLocalization()
@@ -96,7 +108,11 @@ public class TickCommand extends SubCommand {
                                     true,
                                     msg -> msg.replace(
                                                     "%mode%",
-                                                    Slimefun.getTickerTask().isTickFreeze() ? "开启" : "关闭")
+                                                    Slimefun.getTickerTask().isTickFreeze()
+                                                            ? Slimefun.getLocalization()
+                                                                    .getMessage("messages.tick-freeze-on")
+                                                            : Slimefun.getLocalization()
+                                                                    .getMessage("messages.tick-freeze-off"))
                                             .replace(
                                                     "%tick-rate%",
                                                     ""

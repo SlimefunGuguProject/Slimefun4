@@ -287,6 +287,7 @@ messages:
   tick-freeze-predicate-reset: "&e已重置 Tick Freeze 自定义检测"
   tick-freeze-on: "开启"
   tick-freeze-off: "关闭"
+  wrong-world: "不在同一世界！无法高亮方块！"
 machines:
   pattern-not-found: '&e抱歉, 这不是正确的合成配方, 请检查发射器里放置物品的顺序.'
   unknown-material: '&e抱歉, 我无法识别在发射器里的物品. 请按照合成配方放置物品.'
