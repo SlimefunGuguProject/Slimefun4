@@ -30,7 +30,7 @@ jobs:
           - mcVersion: '1.21.8'
             javaVersion: '21'
           - mcVersion: 'latest'
-            javaVersion: '21'
+            javaVersion: '25'
 
     steps:
       - name: Checkout repository
@@ -53,17 +53,25 @@ jobs:
         run: |
           VERSION="${{ matrix.mcVersion }}"
           if [ "$VERSION" == "latest" ]; then
-            VERSION=$(curl https://api.papermc.io/v2/projects/paper/ -s | jq -r '.versions[-1]')
+            VERSION=$(curl --fail --silent --show-error \
+              https://fill.papermc.io/v3/projects/paper \
+              | jq -er '.versions | to_entries[0].value[0]')
           fi
 
-          BUILD_JAR=$(curl -s "https://api.papermc.io/v2/projects/paper/versions/$VERSION/builds" \
-            | jq '.builds[-1] | "\(.build) \(.downloads.application.name)"' -r)
-          BUILD=$(echo "$BUILD_JAR" | awk '{print $1}')
-          JAR_FILE=$(echo "$BUILD_JAR" | awk '{print $2}')
+          BUILDS=$(curl --fail --silent --show-error \
+            "https://fill.papermc.io/v3/projects/paper/versions/$VERSION/builds")
+          PAPER_URL=$(echo "$BUILDS" \
+            | jq -er 'first(.[] | select(.channel == "STABLE") | .downloads["server:default"].url)
+              // error("No stable Paper build found")')
+          PAPER_SHA256=$(echo "$BUILDS" \
+            | jq -er 'first(.[] | select(.channel == "STABLE") | .downloads["server:default"].checksums.sha256)
+              // error("No checksum found for stable Paper build")')
 
-          echo "Downloading... https://api.papermc.io/v2/projects/paper/versions/$VERSION/builds/$BUILD/downloads/$JAR_FILE"
-          curl -o paper.jar \
-            "https://api.papermc.io/v2/projects/paper/versions/$VERSION/builds/$BUILD/downloads/$JAR_FILE"
+          echo "Downloading Paper $VERSION from $PAPER_URL"
+          curl --fail --location --show-error \
+            --output paper.jar \
+            "$PAPER_URL"
+          echo "$PAPER_SHA256  paper.jar" | sha256sum --check --strict
 
       - name: Download Slimefun
         uses: actions/download-artifact@v8
