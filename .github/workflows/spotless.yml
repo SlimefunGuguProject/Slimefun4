@@ -33,7 +33,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Set up JDK
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           distribution: 'zulu'
           java-version: ${{ vars.JAVA_CI_VERSION || 21 }}
