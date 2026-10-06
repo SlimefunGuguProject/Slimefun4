@@ -53,9 +53,8 @@ jobs:
         shell: bash
         run: |
           VERSION="${{ matrix.mcVersion }}"
-          USER_AGENT="Slimefun4-CI/1.0 (https://github.com/SlimefunGuguProject/Slimefun4)"
           if [ "$VERSION" == "latest" ]; then
-            VERSIONS=$(curl --fail --silent --show-error --user-agent "$USER_AGENT" \
+            VERSIONS=$(curl --fail --silent --show-error \
               https://fill.papermc.io/v3/projects/paper \
               | jq -er '.versions | to_entries[] | .value[]' | sort -V -r)
           else
@@ -64,7 +63,7 @@ jobs:
 
           PAPER_BUILD=null
           for VERSION in $VERSIONS; do
-            BUILDS=$(curl --fail --silent --show-error --user-agent "$USER_AGENT" \
+            BUILDS=$(curl --fail --silent --show-error \
               "https://fill.papermc.io/v3/projects/paper/versions/$VERSION/builds")
             PAPER_BUILD=$(echo "$BUILDS" \
               | jq -c 'first(.[] | select(.channel == "STABLE")) // null')
@@ -82,7 +81,7 @@ jobs:
               // error("No checksum found for stable Paper build")')
 
           echo "Downloading Paper $VERSION from $PAPER_URL"
-          curl --fail --location --show-error --user-agent "$USER_AGENT" \
+          curl --fail --location --show-error \
             --output paper.jar \
             "$PAPER_URL"
           echo "$PAPER_SHA256  paper.jar" | sha256sum --check --strict
