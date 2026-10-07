@@ -9,10 +9,8 @@ import io.github.thebusybiscuit.slimefun4.implementation.items.backpacks.Cooler;
 import io.github.thebusybiscuit.slimefun4.implementation.items.backpacks.SlimefunBackpack;
 import io.github.thebusybiscuit.slimefun4.utils.ThreadUtils;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Level;
 import javax.annotation.Nonnull;
@@ -31,6 +29,7 @@ import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractAtEntityEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerSwapHandItemsEvent;
 import org.bukkit.inventory.ItemStack;
 
@@ -50,8 +49,8 @@ import org.bukkit.inventory.ItemStack;
  *
  */
 public class BackpackListener implements Listener {
-    // Stores the player uuid maps to the opening backpack uuid
-    private final Set<UUID> openingPlayers = new HashSet<>();
+    // Stores the player UUID and the token of the backpack load currently owned by that player.
+    private final Map<UUID, UUID> openingPlayers = new HashMap<>();
     private final Map<UUID, UUID> backpacks = new HashMap<>();
     private final Map<UUID, SlimefunBackpack> backpackInstances = new HashMap<>();
 
@@ -75,8 +74,16 @@ public class BackpackListener implements Listener {
     }
 
     @EventHandler
+    public void onQuit(PlayerQuitEvent e) {
+        UUID uuid = e.getPlayer().getUniqueId();
+        openingPlayers.remove(uuid);
+        backpacks.remove(uuid);
+        backpackInstances.remove(uuid);
+    }
+
+    @EventHandler
     public void onItemDrop(PlayerDropItemEvent e) {
-        if (!openingPlayers.isEmpty() && openingPlayers.contains(e.getPlayer().getUniqueId())) {
+        if (openingPlayers.containsKey(e.getPlayer().getUniqueId())) {
             e.setCancelled(true);
             return;
         }
@@ -92,7 +99,7 @@ public class BackpackListener implements Listener {
 
     @EventHandler
     public void onPlayerSwap(PlayerSwapHandItemsEvent e) {
-        if (!openingPlayers.isEmpty() && openingPlayers.contains(e.getPlayer().getUniqueId())) {
+        if (openingPlayers.containsKey(e.getPlayer().getUniqueId())) {
             e.setCancelled(true);
             return;
         }
@@ -114,8 +121,7 @@ public class BackpackListener implements Listener {
 
     @EventHandler
     public void onPlayerInteractAtEntity(PlayerInteractAtEntityEvent atEntityEvent) {
-        if (!openingPlayers.isEmpty()
-                && openingPlayers.contains(atEntityEvent.getPlayer().getUniqueId())) {
+        if (openingPlayers.containsKey(atEntityEvent.getPlayer().getUniqueId())) {
             atEntityEvent.setCancelled(true);
             return;
         }
@@ -128,8 +134,7 @@ public class BackpackListener implements Listener {
 
     @EventHandler
     public void onPlayerInteractEntity(PlayerInteractEntityEvent atEntityEvent) {
-        if (!openingPlayers.isEmpty()
-                && openingPlayers.contains(atEntityEvent.getPlayer().getUniqueId())) {
+        if (openingPlayers.containsKey(atEntityEvent.getPlayer().getUniqueId())) {
             atEntityEvent.setCancelled(true);
             return;
         }
@@ -142,8 +147,7 @@ public class BackpackListener implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onClick(InventoryClickEvent e) {
-        if (!openingPlayers.isEmpty()
-                && openingPlayers.contains(e.getWhoClicked().getUniqueId())) {
+        if (openingPlayers.containsKey(e.getWhoClicked().getUniqueId())) {
             e.setCancelled(true);
             return;
         }
@@ -245,20 +249,17 @@ public class BackpackListener implements Listener {
             return;
         }
 
-        /*
-         * Reject the request if the Player is already viewing a backpack or has
-         * a pending backpack load. Repeated open requests (e.g. sent in quick
-         * succession by modded clients) must never close the current view nor
-         * trigger parallel loads, as that can open a duplicate backpack instance
-         * with a stale snapshot and allow item duplication.
-         */
-        if (backpacks.containsKey(p.getUniqueId()) || !openingPlayers.add(p.getUniqueId())) {
+        UUID playerUuid = p.getUniqueId();
+        UUID requestToken = UUID.randomUUID();
+        if (backpacks.containsKey(playerUuid) || openingPlayers.putIfAbsent(playerUuid, requestToken) != null) {
             return;
         }
         PlayerBackpack.getAsync(item)
                 .whenCompleteAsync(
                         (bp, ex) -> {
-                            openingPlayers.remove(p.getUniqueId());
+                            if (!openingPlayers.remove(playerUuid, requestToken)) {
+                                return;
+                            }
                             if (ex != null) {
                                 Slimefun.logger()
                                         .log(Level.SEVERE, "An Exception occurred while opening a backpack", ex);
