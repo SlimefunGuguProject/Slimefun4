@@ -21,6 +21,7 @@ import com.xzavier0722.mc.plugin.slimefun4.storage.util.DataUtils;
 import com.xzavier0722.mc.plugin.slimefun4.storage.util.InvSnapshot;
 import com.xzavier0722.mc.plugin.slimefun4.storage.util.InvStorageUtils;
 import com.xzavier0722.mc.plugin.slimefun4.storage.util.LocationUtils;
+import io.github.bakedlibs.dough.blocks.BlockPosition;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import java.util.HashMap;
@@ -71,6 +72,8 @@ public class BlockDataController extends ADataController {
      * 通用数据缓存
      */
     private final Map<UUID, SlimefunUniversalData> loadedUniversalData;
+
+    private final Map<BlockPosition, SlimefunUniversalBlockData> universalBlockLocationCache;
     /**
      * 方块物品栏快照
      */
@@ -102,6 +105,7 @@ public class BlockDataController extends ADataController {
         delayedWriteTasks = new ConcurrentHashMap<>();
         loadedChunk = new ConcurrentHashMap<>();
         loadedUniversalData = new ConcurrentHashMap<>();
+        universalBlockLocationCache = new ConcurrentHashMap<>();
         invSnapshots = new ConcurrentHashMap<>();
         lock = new ScopedLock();
     }
@@ -279,6 +283,9 @@ public class BlockDataController extends ADataController {
 
         loadedUniversalData.put(uuid, uniData);
 
+        uniData.initLastPresent();
+        universalBlockLocationCache.put(new BlockPosition(l), uniData);
+
         var preset = UniversalMenuPreset.getPreset(sfId);
         if (preset != null) {
             uniData.setMenu(new UniversalMenu(preset, uuid, l));
@@ -293,8 +300,6 @@ public class BlockDataController extends ADataController {
         if (Slimefun.getBlockDataService().isTileEntity(l.getBlock().getType())) {
             Slimefun.getBlockDataService().updateUniversalDataUUID(l.getBlock(), uniData.getKey());
         }
-
-        uniData.initLastPresent();
 
         return uniData;
     }
@@ -446,6 +451,13 @@ public class BlockDataController extends ADataController {
         }
 
         loadedUniversalData.remove(uuid);
+
+        if (toRemove instanceof SlimefunUniversalBlockData ubd) {
+            //            universalBlockLocationCache.remove(ubd.getLastPresent());
+            if (ubd.getLastPresent() != null) {
+                universalBlockLocationCache.remove(ubd.getLastPresent());
+            }
+        }
     }
 
     void removeBlockDirectly(Location l) {
@@ -637,19 +649,7 @@ public class BlockDataController extends ADataController {
     public Optional<SlimefunUniversalBlockData> getUniversalBlockDataFromCache(@Nonnull Location l) {
         checkDestroy();
 
-        for (SlimefunUniversalData uniData : loadedUniversalData.values()) {
-            if (uniData instanceof SlimefunUniversalBlockData ubd) {
-                if (!ubd.isDataLoaded() || ubd.getLastPresent() == null) {
-                    continue;
-                }
-
-                if (l.equals(ubd.getLastPresent().toLocation())) {
-                    return Optional.of(ubd);
-                }
-            }
-        }
-
-        return Optional.empty();
+        return Optional.ofNullable(universalBlockLocationCache.get(new BlockPosition(l)));
     }
 
     /**
@@ -772,7 +772,16 @@ public class BlockDataController extends ADataController {
         }
 
         try {
+
+            if (uniData.getLastPresent() != null) {
+                universalBlockLocationCache.remove(uniData.getLastPresent());
+            }
+
             uniData.setLastPresent(target);
+
+            if (uniData.getLastPresent() != null) {
+                universalBlockLocationCache.put(uniData.getLastPresent(), uniData);
+            }
 
             Slimefun.getBlockDataService()
                     .updateUniversalDataUUID(
@@ -1079,6 +1088,17 @@ public class BlockDataController extends ADataController {
 
             if (uniData instanceof SlimefunUniversalBlockData ubd) {
                 if (ubd.hasTrait(UniversalDataTrait.BLOCK)) {
+                    // 初始化 上次出现位置
+                    var lStr = ubd.getData(UniversalDataTrait.BLOCK.getReservedKey());
+
+                    if (lStr != null && !lStr.isBlank()) {
+                        Location loc = LocationUtils.toLocation(lStr);
+                        if (loc != null) {
+                            ubd.setLastPresent(loc);
+                            universalBlockLocationCache.put(ubd.getLastPresent(), ubd);
+                        }
+                    }
+
                     var sfItem = SlimefunItem.getById(ubd.getSfId());
 
                     if (sfItem != null && sfItem.isTicking() && ubd.getLastPresent() != null) {
@@ -1398,6 +1418,7 @@ public class BlockDataController extends ADataController {
             executeAllDelayedTasks();
         }
         super.shutdown();
+        universalBlockLocationCache.clear();
     }
 
     void scheduleDelayedBlockDataUpdate(SlimefunBlockData blockData, String key) {
