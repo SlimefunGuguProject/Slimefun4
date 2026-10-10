@@ -26,6 +26,7 @@ import org.bukkit.entity.AbstractHorse;
 import org.bukkit.entity.Allay;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.ChestedHorse;
+import org.bukkit.entity.EnderPearl;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -114,12 +115,21 @@ public class TalismanListener implements Listener {
     }
 
     private void onProjectileDamage(@Nonnull EntityDamageByEntityEvent e) {
+        if (!(e.getDamager() instanceof Projectile projectile)) return;
+
         // "Fixes" #1022 - We just ignore Tridents now.
-        if (e.getDamager() instanceof Projectile projectile && !(e.getDamager() instanceof Trident)) {
-            if (Talisman.trigger(e, SlimefunItems.TALISMAN_WHIRLWIND)) {
-                Player p = (Player) e.getEntity();
-                returnProjectile(p, projectile);
-            }
+        if (projectile instanceof Trident) return;
+
+        // 修复 #1237 - 忽略自己发射的末影珍珠，防止重复弹射
+        if (projectile instanceof EnderPearl enderPearl
+                && enderPearl.getShooter() instanceof Player shooter
+                && shooter.equals(e.getEntity())) {
+            return;
+        }
+
+        if (Talisman.trigger(e, SlimefunItems.TALISMAN_WHIRLWIND)) {
+            Player p = (Player) e.getEntity();
+            returnProjectile(p, projectile);
         }
     }
 
