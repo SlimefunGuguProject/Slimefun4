@@ -14,7 +14,6 @@ import java.util.Set;
 import java.util.UUID;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
-import org.bukkit.Bukkit;
 import org.bukkit.Effect;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -25,8 +24,8 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.entity.FallingBlock;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
-import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
+import org.bukkit.event.Event.Result;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.util.Vector;
@@ -90,6 +89,11 @@ public class SeismicAxe extends SimpleSlimefunItem<ItemUseHandler> implements No
             for (int i = 0; i < 4; i++) {
                 damageItem(p, e.getItem());
             }
+
+            if (e.useBlock() != Result.DENY) {
+                e.getClickedBlock()
+                        .ifPresent(block -> Slimefun.getIntegrations().logInteraction(p, block));
+            }
         };
     }
 
@@ -120,12 +124,12 @@ public class SeismicAxe extends SimpleSlimefunItem<ItemUseHandler> implements No
     private void pushEntity(Player p, Entity entity) {
         // Only damage players when PVP is enabled, other entities are fine.
         if (entity.getType() != EntityType.PLAYER || p.getWorld().getPVP()) {
-            EntityDamageByEntityEvent event =
-                    new EntityDamageByEntityEvent(p, entity, DamageCause.ENTITY_ATTACK, DAMAGE);
-            Bukkit.getPluginManager().callEvent(event);
+            EntityDamageEvent previousDamage = entity.getLastDamageCause();
+            ((LivingEntity) entity).damage(DAMAGE, p);
+            EntityDamageEvent event = entity.getLastDamageCause();
 
             // Fixes #2207 - Only apply Vector if the Player is able to damage the entity
-            if (!event.isCancelled()) {
+            if (event != null && event != previousDamage && !event.isCancelled()) {
                 Vector vector = entity.getLocation()
                         .toVector()
                         .subtract(p.getLocation().toVector())
@@ -142,8 +146,6 @@ public class SeismicAxe extends SimpleSlimefunItem<ItemUseHandler> implements No
                      */
                     error("Exception while trying to set velocity: " + vector, x);
                 }
-
-                ((LivingEntity) entity).damage(event.getDamage());
             }
         }
     }
