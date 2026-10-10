@@ -357,23 +357,49 @@ public class TickerTask implements Runnable {
      * 无论是否 tickFreeze，都会调用到此方法
      */
     private void timedTickBlock(WaitingEntry entry) {
-        var timestamp = System.nanoTime();
-        try {
-            if (entry.isSync()) {
-                // tickFreeze 时不进行统计
-                if (!tickFreeze) {
-                    Slimefun.getProfiler().scheduleEntries(1);
+        boolean profiling = Slimefun.getProfiler().isProfiling();
+        timedTickBlock(entry, 10, TimeUnit.SECONDS, profiling); // default timeout
+    }
+
+    @ParametersAreNonnullByDefault
+    private void timedTickBlock(WaitingEntry entry, long timeout, TimeUnit timeUnit, boolean profiling) {
+        if (entry.data.isPendingRemove()) return; // waiting 期间机器可能会被拆除
+
+        Location l = entry.location;
+        SlimefunItem item = entry.item;
+
+        if (entry.isSync()) {
+            Slimefun.runSync(() -> {
+                long timestamp = 0;
+                try {
+                    if (profiling) {
+                        Slimefun.getProfiler().scheduleEntries(1);
+                        timestamp = System.nanoTime();
+                    }
+
+                    // Bukkit 自带的 Watchdog 会检测超时，不需要我们处理
+                    tickBlock(entry);
+                } catch (Exception | LinkageError x) {
+                    reportErrors(l, item, x);
+                } finally {
+                    if (profiling) {
+                        Slimefun.getProfiler().closeEntry(l, item, timestamp);
+                    }
                 }
-                Slimefun.runSync(() -> timedTickBlock(entry, 10, TimeUnit.SECONDS));
-            } else {
-                if (!tickFreeze) {
-                    Slimefun.getProfiler().newEntry();
+            });
+        } else {
+            long timestamp = profiling ? Slimefun.getProfiler().newEntry() : 0;
+
+            try {
+                CompletableFuture.runAsync(() -> tickBlock(entry), tickExecutor).get(timeout, timeUnit);
+            } catch (TimeoutException e) {
+                reportTimeout(l, item, timeout, timeUnit, e);
+            } catch (Exception | LinkageError x) {
+                reportErrors(l, item, x);
+            } finally {
+                if (profiling) {
+                    Slimefun.getProfiler().closeEntry(l, item, timestamp);
                 }
-                timedTickBlock(entry, 10, TimeUnit.SECONDS); // default timeout
-            }
-        } finally {
-            if (!tickFreeze) {
-                Slimefun.getProfiler().closeEntry(entry.location, entry.item, timestamp);
             }
         }
     }
