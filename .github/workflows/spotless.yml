@@ -58,7 +58,7 @@ jobs:
         run: ./gradlew spotlessApply --no-daemon
 
       - name: Push changes
-        uses: EndBug/add-and-commit@v9.1.4
+        uses: EndBug/add-and-commit@v11.1.1
         if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref_name == 'dev' && steps.spotless-check.outputs.status != '0' && success()}}
         with:
           github_token: ${{ secrets.BOT_ACCESS_TOKEN }}
