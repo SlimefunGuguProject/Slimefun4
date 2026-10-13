@@ -73,7 +73,7 @@ public class BlockDataController extends ADataController {
      */
     private final Map<UUID, SlimefunUniversalData> loadedUniversalData;
 
-    private final Map<BlockPosition, SlimefunUniversalBlockData> universalBlockLocationCache;
+    private final Map<BlockPosition, UUID> universalBlockLocationCache;
     /**
      * 方块物品栏快照
      */
@@ -284,7 +284,7 @@ public class BlockDataController extends ADataController {
         loadedUniversalData.put(uuid, uniData);
 
         uniData.initLastPresent();
-        universalBlockLocationCache.put(new BlockPosition(l), uniData);
+        universalBlockLocationCache.put(new BlockPosition(l), uniData.getUUID());
 
         var preset = UniversalMenuPreset.getPreset(sfId);
         if (preset != null) {
@@ -649,7 +649,19 @@ public class BlockDataController extends ADataController {
     public Optional<SlimefunUniversalBlockData> getUniversalBlockDataFromCache(@Nonnull Location l) {
         checkDestroy();
 
-        return Optional.ofNullable(universalBlockLocationCache.get(new BlockPosition(l)));
+        var pos = new BlockPosition(l);
+        var uuid = universalBlockLocationCache.get(pos);
+        if (uuid == null) {
+            return Optional.empty();
+        }
+
+        var data = loadedUniversalData.get(uuid);
+        if (data instanceof SlimefunUniversalBlockData ubd) {
+            return Optional.of(ubd);
+        }
+
+        universalBlockLocationCache.remove(pos, uuid);
+        return Optional.empty();
     }
 
     /**
@@ -780,7 +792,7 @@ public class BlockDataController extends ADataController {
             uniData.setLastPresent(target);
 
             if (uniData.getLastPresent() != null) {
-                universalBlockLocationCache.put(uniData.getLastPresent(), uniData);
+                universalBlockLocationCache.put(uniData.getLastPresent(), uniData.getUUID());
             }
 
             Slimefun.getBlockDataService()
@@ -1095,7 +1107,7 @@ public class BlockDataController extends ADataController {
                         Location loc = LocationUtils.toLocation(lStr);
                         if (loc != null) {
                             ubd.setLastPresent(loc);
-                            universalBlockLocationCache.put(ubd.getLastPresent(), ubd);
+                            universalBlockLocationCache.put(ubd.getLastPresent(), ubd.getUUID());
                         }
                     }
 
