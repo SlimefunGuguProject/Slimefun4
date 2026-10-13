@@ -12,7 +12,7 @@ sqliteJdbc = "3.53.2.0"
 paper-api = { module = "io.papermc.paper:paper-api", version = "1.21.11-R0.1-SNAPSHOT" }
 jsr305 = { module = "com.google.code.findbugs:jsr305", version = "3.0.2" }
 lombok = { module = "org.projectlombok:lombok", version.ref = "lombok" }
-log4j-core = { module = "org.apache.logging.log4j:log4j-core", version = "2.24.1" }
+log4j-core = { module = "org.apache.logging.log4j:log4j-core", version = "2.26.1" }
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit" }
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher", version.ref = "junitPlatform" }
 mockbukkit = { module = "org.mockbukkit.mockbukkit:mockbukkit-v1.21", version.ref = "mockbukkit" }
