@@ -115,8 +115,9 @@ public class TalismanListener implements Listener {
     }
 
     private void onProjectileDamage(@Nonnull EntityDamageByEntityEvent e) {
+        if (!(e.getDamager() instanceof Projectile projectile)) return;
+
         if (Talisman.trigger(e, SlimefunItems.TALISMAN_WHIRLWIND)) {
-            if (!(e.getDamager() instanceof Projectile projectile)) return;
 
             // "Fixes" #1022 - We just ignore Tridents now.
             if (projectile instanceof Trident) return;
