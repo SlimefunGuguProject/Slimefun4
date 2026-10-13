@@ -23,7 +23,7 @@ mcmmo = { module = "com.gmail.nossr50.mcMMO:mcMMO", version = "2.1.225" }
 placeholderapi = { module = "me.clip:placeholderapi", version = "2.11.6" }
 clearlag-core = { module = "me.minebuilders:clearlag-core", version = "3.1.6" }
 itemsadder-api = { module = "com.github.LoneDev6:itemsadder-api", version = "3.6.1" }
-orebfuscator-api = { module = "net.imprex:orebfuscator-api", version = "5.3.0" }
+orebfuscator-api = { module = "net.imprex:orebfuscator-api", version = "5.5.3" }
 vault-api = { module = "com.github.MilkBowl:VaultAPI", version = "1.7.1" }
 authlib = { module = "com.mojang:authlib", version = "6.0.52" }
 commons-lang = { module = "commons-lang:commons-lang", version = "2.6" }
