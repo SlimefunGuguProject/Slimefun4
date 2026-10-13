@@ -115,19 +115,19 @@ public class TalismanListener implements Listener {
     }
 
     private void onProjectileDamage(@Nonnull EntityDamageByEntityEvent e) {
-        if (!(e.getDamager() instanceof Projectile projectile)) return;
-
-        // "Fixes" #1022 - We just ignore Tridents now.
-        if (projectile instanceof Trident) return;
-
-        // 修复 #1237 - 忽略自己发射的末影珍珠，防止重复弹射
-        if (projectile instanceof EnderPearl enderPearl
-                && enderPearl.getShooter() instanceof Player shooter
-                && shooter.equals(e.getEntity())) {
-            return;
-        }
-
         if (Talisman.trigger(e, SlimefunItems.TALISMAN_WHIRLWIND)) {
+            if (!(e.getDamager() instanceof Projectile projectile)) return;
+
+            // "Fixes" #1022 - We just ignore Tridents now.
+            if (projectile instanceof Trident) return;
+
+            // 修复 #1237 - 忽略自己发射的末影珍珠，防止重复弹射
+            if (projectile instanceof EnderPearl enderPearl
+                    && enderPearl.getShooter() instanceof Player shooter
+                    && shooter.equals(e.getEntity())) {
+                return;
+            }
+
             Player p = (Player) e.getEntity();
             returnProjectile(p, projectile);
         }
