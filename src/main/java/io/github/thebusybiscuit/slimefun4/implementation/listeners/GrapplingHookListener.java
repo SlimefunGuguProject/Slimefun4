@@ -3,11 +3,11 @@ package io.github.thebusybiscuit.slimefun4.implementation.listeners;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.implementation.items.tools.GrapplingHook;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -44,7 +44,7 @@ public class GrapplingHookListener implements Listener {
 
     private GrapplingHook grapplingHook;
 
-    private final Map<UUID, GrapplingHookEntity> activeHooks = new HashMap<>();
+    private final Map<UUID, GrapplingHookEntity> activeHooks = new ConcurrentHashMap<>();
     private final Set<UUID> invulnerability = new HashSet<>();
 
     public void register(@Nonnull Slimefun plugin, @Nonnull GrapplingHook grapplingHook) {

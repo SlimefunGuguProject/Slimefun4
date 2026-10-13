@@ -17,12 +17,8 @@ public final class ThreadService {
 
     public ThreadService(JavaPlugin plugin) {
         this.group = new ThreadGroup(plugin.getName());
-        this.cachedPool = Executors.newCachedThreadPool(new ThreadFactory() {
-            @Override
-            public Thread newThread(Runnable r) {
-                return new Thread(group, r, plugin.getName() + " - ThreadService");
-            }
-        });
+        this.cachedPool =
+                Executors.newCachedThreadPool(r -> new Thread(group, r, plugin.getName() + " - ThreadService"));
 
         this.scheduledPool = Executors.newScheduledThreadPool(1, new ThreadFactory() {
             @Override

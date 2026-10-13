@@ -1,5 +1,9 @@
 {
   "extends": [
-    "config:base"
+    "config:base",
+    ":disableDependencyDashboard"
+  ],
+  "baseBranches": [
+    "dev"
   ]
 }
