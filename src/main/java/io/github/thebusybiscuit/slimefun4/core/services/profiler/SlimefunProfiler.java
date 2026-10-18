@@ -104,6 +104,8 @@ public class SlimefunProfiler {
      */
     public void kill() {
         executor.shutdown();
+        Slimefun.getTickerTask().getTickExecutor().shutdown();
+        Slimefun.getTickerTask().getOperateExecutor().shutdown();
     }
 
     /**

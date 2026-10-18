@@ -90,6 +90,7 @@ public class TickCommand extends SubCommand {
                                             Slimefun.getLocalization().getMessage("messages.tick-freeze-on")));
                     return;
                 } else if (args[1].equalsIgnoreCase("unfreeze")) {
+                    Slimefun.getTickerTask().setTickFreezePredicate(entry -> false);
                     Slimefun.getTickerTask().setTickFreeze(false);
                     Slimefun.getLocalization()
                             .sendMessage(
