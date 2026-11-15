@@ -139,6 +139,11 @@ public class ElevatorPlate extends SimpleSlimefunItem<BlockUseHandler> {
         var floors = new LinkedList<ElevatorFloor>();
         for (var i = 0; i < blockDataList.size(); i++) {
             var blockData = blockDataList.get(i);
+            if (!blockData.isDataLoaded()) {
+                // The data of this floor could not be loaded (e.g. its chunk was unloaded
+                // and evicted while the read was in flight), skip it for now.
+                continue;
+            }
             floors.addFirst(new ElevatorFloor(
                     ChatColors.color(blockData.getData(DATA_KEY)),
                     i,

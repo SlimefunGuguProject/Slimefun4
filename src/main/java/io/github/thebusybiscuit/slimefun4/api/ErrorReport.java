@@ -86,6 +86,14 @@ public class ErrorReport<T extends Throwable> {
             stream.println("  X: " + l.getBlockX());
             stream.println("  Y: " + l.getBlockY());
             stream.println("  Z: " + l.getBlockZ());
+
+            if (!l.isChunkLoaded()) {
+                // 区块未加载时不再触碰方块状态, 避免错误上报过程强制加载区块
+                stream.println("  区块状态: 未加载");
+                stream.println();
+                return;
+            }
+
             stream.println("  方块类型: " + l.getBlock().getType());
             stream.println("  方块数据: " + l.getBlock().getBlockData().getClass().getName());
             stream.println("  状态: " + l.getBlock().getState().getClass().getName());
@@ -105,8 +113,9 @@ public class ErrorReport<T extends Throwable> {
 
             stream.println("Slimefun 数据:");
             stream.println("  ID: " + item.getId());
+            // 使用纯缓存查询: 错误上报本身不应触发区块加载或重新创建缓存条目
             var blockData =
-                    Slimefun.getDatabaseManager().getBlockDataController().getBlockData(l);
+                    Slimefun.getDatabaseManager().getBlockDataController().getBlockDataFromCache(l);
 
             if (blockData == null) {
                 Slimefun.runSync(() -> Slimefun.getBlockDataService()
@@ -120,9 +129,13 @@ public class ErrorReport<T extends Throwable> {
                                         stream.println("  数据加载状态: " + universalData.isDataLoaded());
                                         stream.println("  物品栏: " + (universalData.getMenu() != null));
                                         stream.println("  数据: ");
-                                        universalData
-                                                .getAllData()
-                                                .forEach((k, v) -> stream.println("    " + k + ": " + v));
+                                        if (universalData.isDataLoaded()) {
+                                            universalData
+                                                    .getAllData()
+                                                    .forEach((k, v) -> stream.println("    " + k + ": " + v));
+                                        } else {
+                                            stream.println("    (数据未加载)");
+                                        }
                                     } else {
                                         stream.println("该方块没有任何数据.");
                                     }
@@ -132,7 +145,11 @@ public class ErrorReport<T extends Throwable> {
                 stream.println("  数据加载状态: " + blockData.isDataLoaded());
                 stream.println("  物品栏: " + (blockData.getBlockMenu() != null));
                 stream.println("  数据: ");
-                blockData.getAllData().forEach((k, v) -> stream.println("    " + k + ": " + v));
+                if (blockData.isDataLoaded()) {
+                    blockData.getAllData().forEach((k, v) -> stream.println("    " + k + ": " + v));
+                } else {
+                    stream.println("    (数据未加载)");
+                }
             }
             stream.println();
         });

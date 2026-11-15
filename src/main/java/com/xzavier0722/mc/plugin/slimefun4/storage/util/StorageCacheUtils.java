@@ -105,6 +105,10 @@ public class StorageCacheUtils {
         var blockData = getBlock(loc);
 
         if (blockData != null) {
+            if (!blockData.isDataLoaded()) {
+                requestLoad(blockData);
+                return null;
+            }
             return blockData.getData(key);
         } else {
             var uniData = getUniversalBlock(loc.getBlock());
@@ -113,6 +117,10 @@ public class StorageCacheUtils {
                 return null;
             }
 
+            if (!uniData.isDataLoaded()) {
+                requestLoad(uniData);
+                return null;
+            }
             return uniData.getData(key);
         }
     }
@@ -127,11 +135,35 @@ public class StorageCacheUtils {
     public static void setData(Location loc, String key, String val) {
         var block = getBlock(loc);
         if (block != null) {
+            if (!block.isDataLoaded()) {
+                // The data container is not loaded yet (e.g. the chunk was just re-created
+                // after an unload). Replay the write once the data has been loaded.
+                executeAfterLoad(
+                        block,
+                        () -> {
+                            if (block.isDataLoaded()) {
+                                block.setData(key, val);
+                            }
+                        },
+                        false);
+                return;
+            }
             block.setData(key, val);
         } else {
             var uni = getUniversalBlock(loc.getBlock());
 
             if (uni != null) {
+                if (!uni.isDataLoaded()) {
+                    executeAfterLoad(
+                            uni,
+                            () -> {
+                                if (uni.isDataLoaded()) {
+                                    uni.setData(key, val);
+                                }
+                            },
+                            false);
+                    return;
+                }
                 uni.setData(key, val);
             }
         }
@@ -141,11 +173,33 @@ public class StorageCacheUtils {
     public static void removeData(Location loc, String key) {
         var block = getBlock(loc);
         if (block != null) {
+            if (!block.isDataLoaded()) {
+                executeAfterLoad(
+                        block,
+                        () -> {
+                            if (block.isDataLoaded()) {
+                                block.removeData(key);
+                            }
+                        },
+                        false);
+                return;
+            }
             block.removeData(key);
         } else {
             var uni = getUniversalBlock(loc.getBlock());
 
             if (uni != null) {
+                if (!uni.isDataLoaded()) {
+                    executeAfterLoad(
+                            uni,
+                            () -> {
+                                if (uni.isDataLoaded()) {
+                                    uni.removeData(key);
+                                }
+                            },
+                            false);
+                    return;
+                }
                 uni.removeData(key);
             }
         }
@@ -259,15 +313,13 @@ public class StorageCacheUtils {
     }
 
     public static boolean isBlockPendingRemove(@Nonnull Block block) {
-        if (hasBlock(block.getLocation())) {
-            return getBlock(block.getLocation()).isPendingRemove();
+        var blockData = getBlock(block.getLocation());
+        if (blockData != null) {
+            return blockData.isPendingRemove();
         }
 
-        if (hasUniversalBlock(block.getLocation())) {
-            return getUniversalBlock(block).isPendingRemove();
-        }
-
-        return false;
+        var uniData = getUniversalBlock(block);
+        return uniData != null && uniData.isPendingRemove();
     }
 
     public static void requestLoad(ASlimefunDataContainer data) {

@@ -538,7 +538,15 @@ public class BlockDataController extends ADataController {
                 return CompletableFuture.completedFuture(re);
             }
         }
-        return CompletableFuture.supplyAsync(() -> loadBlockData(l), this.readExecutor);
+        return CompletableFuture.supplyAsync(
+                () -> {
+                    // The chunk may have been unloaded (and its cache evicted) while the read was queued
+                    if (!loadedChunk.containsKey(LocationUtils.getChunkKey(l))) {
+                        return null;
+                    }
+                    return loadBlockData(l);
+                },
+                this.readExecutor);
     }
 
     /**
@@ -825,7 +833,16 @@ public class BlockDataController extends ADataController {
 
     public void loadChunk(Chunk chunk, boolean isNewChunk, boolean forceReadData) {
         checkDestroy();
-        var chunkData = getChunkDataCache(chunk, true);
+        loadChunkInternal(isNewChunk, forceReadData, getChunkDataCache(chunk, true));
+    }
+
+    /**
+     * 使用指定的缓存实例加载区块数据。
+     * <p>
+     * 异步读取路径在调用前必须先确认传入的实例仍然是 {@link #loadedChunk} 中存活的条目,
+     * 防止区块卸载驱逐缓存之后, 在途的读取任务把条目重新写回。
+     */
+    private void loadChunkInternal(boolean isNewChunk, boolean forceReadData, SlimefunChunkData chunkData) {
         // what if the database already contains data here but the WORLD CHUNK is newly generated
 
         // escape all return if forceRead Flag is true
@@ -859,6 +876,11 @@ public class BlockDataController extends ADataController {
         key.addCondition(FieldKey.CHUNK, chunkData.getKey());
 
         getData(key).forEach(block -> {
+            if (chunkData.isUnloaded()) {
+                // The chunk was unloaded (and its cache evicted) while this read was in flight
+                return;
+            }
+
             var lKey = block.get(FieldKey.LOCATION);
             var sfId = block.get(FieldKey.SLIMEFUN_ID);
             var sfItem = SlimefunItem.getById(sfId);
@@ -871,11 +893,17 @@ public class BlockDataController extends ADataController {
             chunkData.addBlockCacheInternal(blockData, false);
 
             if (sfItem.loadDataByDefault()) {
-                scheduleReadTask(() -> loadBlockData(blockData));
+                scheduleReadTask(() -> {
+                    if (!chunkData.isUnloaded()) {
+                        loadBlockData(blockData);
+                    }
+                });
             }
         });
 
-        Bukkit.getPluginManager().callEvent(new SlimefunChunkDataLoadEvent(chunkData));
+        if (!chunkData.isUnloaded()) {
+            Bukkit.getPluginManager().callEvent(new SlimefunChunkDataLoadEvent(chunkData));
+        }
     }
 
     public void loadWorld(World world) {
@@ -981,6 +1009,14 @@ public class BlockDataController extends ADataController {
                 return;
             }
 
+            // The owning chunk may have been unloaded (and its cache evicted) while this
+            // read task was queued. Loading into a stale container would write into an
+            // evicted cache and re-enable tickers for an unloaded chunk.
+            var owner = loadedChunk.get(LocationUtils.getChunkKey(blockData.getLocation()));
+            if (owner == null || owner.isUnloaded() || owner.getBlockCacheInternal(blockData.getKey()) != blockData) {
+                return;
+            }
+
             var sfItem = SlimefunItem.getById(blockData.getSfId());
             var universal = sfItem instanceof UniversalBlock;
 
@@ -1065,8 +1101,10 @@ public class BlockDataController extends ADataController {
 
     public void loadBlockDataAsync(
             List<SlimefunBlockData> blockDataList, IAsyncReadCallback<List<SlimefunBlockData>> callback) {
-        scheduleReadTask(() -> blockDataList.forEach(this::loadBlockData));
-        invokeCallback(callback, blockDataList);
+        scheduleReadTask(() -> {
+            blockDataList.forEach(this::loadBlockData);
+            invokeCallback(callback, blockDataList);
+        });
     }
 
     @ParametersAreNonnullByDefault
@@ -1187,12 +1225,21 @@ public class BlockDataController extends ADataController {
         if (cdata.isDataLoaded()) {
             return CompletableFuture.completedFuture(cdata);
         }
-        return CompletableFuture.runAsync(() -> loadChunk(chunk, false), readExecutor)
-                .thenApply((v) -> getChunkDataCache(chunk, false));
+        var cKey = LocationUtils.getChunkKey(chunk);
+        return CompletableFuture.runAsync(
+                        () -> {
+                            // The chunk may have been unloaded (and its cache evicted) while this
+                            // read was queued. Only proceed if our entry is still the live one.
+                            if (loadedChunk.get(cKey) == cdata && !cdata.isUnloaded() && chunk.isLoaded()) {
+                                loadChunkInternal(false, false, cdata);
+                            }
+                        },
+                        readExecutor)
+                .thenApply(v -> loadedChunk.get(cKey) == cdata ? cdata : null);
     }
 
     public void getChunkDataAsync(Chunk chunk, IAsyncReadCallback<SlimefunChunkData> callback) {
-        scheduleReadTask(() -> invokeCallback(callback, getChunkData(chunk)));
+        getChunkDataAsync(chunk).whenComplete((result, throwable) -> invokeCallback(callback, result));
     }
 
     public void saveAllBlockInventories() {
@@ -1251,6 +1298,176 @@ public class BlockDataController extends ADataController {
 
     public Set<SlimefunChunkData> getAllLoadedChunkData() {
         return new HashSet<>(loadedChunk.values());
+    }
+
+    /**
+     * 处理区块卸载事件。
+     * <p>
+     * 在 {@link ChunkDataLoadMode#LOAD_WITH_CHUNK} 模式下, 区块卸载时应将缓存中的数据落盘并驱逐,
+     * 避免 {@link #loadedChunk} 随着玩家探索的区块数量增长而无上限膨胀。
+     * {@link ChunkDataLoadMode#LOAD_ON_STARTUP} 模式的缓存设计为常驻内存, 不随区块卸载而清除。
+     *
+     * @param chunk 正在卸载的区块
+     */
+    public void onChunkUnload(Chunk chunk) {
+        if (isDestroyed() || chunkDataLoadMode.readCacheOnly()) {
+            return;
+        }
+        evictChunkCache(LocationUtils.getChunkKey(chunk));
+    }
+
+    /**
+     * 处理世界卸载事件: 驱逐该世界所有仍缓存在 {@link #loadedChunk} 中的区块数据。
+     * <p>
+     * 注意: 这里只清理内存缓存, 不会删除数据库中的任何数据。
+     *
+     * @param world 正在卸载的世界
+     */
+    public void onWorldUnload(World world) {
+        if (isDestroyed() || chunkDataLoadMode.readCacheOnly()) {
+            return;
+        }
+        var prefix = world.getName() + ";";
+        // Two passes in case an in-flight async read re-created an entry during the first pass.
+        for (int pass = 0; pass < 2; pass++) {
+            var evictingKeys = new HashSet<String>();
+            loadedChunk.forEach((cKey, cache) -> {
+                if (cKey.startsWith(prefix)) {
+                    evictingKeys.add(cKey);
+                }
+            });
+            if (evictingKeys.isEmpty()) {
+                return;
+            }
+            evictingKeys.forEach(this::evictChunkCache);
+        }
+    }
+
+    /**
+     * 从 {@link #loadedChunk} 中驱逐指定区块的缓存, 并完成落盘与资源清理。
+     *
+     * @param cKey 区块键 {@link LocationUtils#getChunkKey(Chunk)}
+     */
+    private void evictChunkCache(String cKey) {
+        var cache = loadedChunk.remove(cKey);
+        if (cache == null) {
+            return;
+        }
+        evictChunkData(cKey, cache);
+    }
+
+    /**
+     * 正确驱逐单个区块缓存数据的完整流程:
+     * <ol>
+     *   <li>标记该实例已卸载, 使在途的异步读取任务失效;</li>
+     *   <li>保存脏物品栏并冲刷该区块范围内的延迟写任务, 保证数据落盘;</li>
+     *   <li>关闭 ticker、更新网络并清理延迟任务与物品栏快照;</li>
+     *   <li>清空块级缓存, 使整个实例可被回收。</li>
+     * </ol>
+     * 注意: 区块卸载不等于数据删除, 因此这里不会删除数据库中的任何数据。
+     *
+     * @param cKey  区块键
+     * @param cache 待驱逐的区块缓存实例
+     */
+    private void evictChunkData(String cKey, SlimefunChunkData cache) {
+        if (!cache.markUnloaded()) {
+            // Already evicted by another unload event
+            return;
+        }
+
+        var blockDataList = cache.getAllBlockData();
+        if (blockDataList.isEmpty()
+                && (!cache.isDataLoaded() || cache.getAllData().isEmpty())) {
+            // Fast path: an empty chunk holds neither block data nor chunk-scoped kv,
+            // so no delayed task can be scoped to it either. Skip the global scan below.
+            cache.removeAllCacheInternal();
+            return;
+        }
+
+        // 1. persist dirty inventories first: they may enqueue delayed inventory update tasks
+        for (var blockData : blockDataList) {
+            if (blockData.isDataLoaded() && !blockData.isPendingRemove()) {
+                var menu = blockData.getBlockMenu();
+                if (menu != null && menu.isDirty()) {
+                    saveBlockInventory(blockData);
+                }
+            }
+        }
+
+        // 2. flush delayed tasks scoped to this chunk, so no queued task keeps this instance alive
+        flushDelayedTasksInChunk(cKey);
+
+        // 3. clean up tickers, networks and inventory snapshots.
+        //    Delayed tasks scoped to this chunk were already flushed and removed above.
+        for (var blockData : blockDataList) {
+            var location = blockData.getLocation();
+
+            if (blockData.isDataLoaded()
+                    && Slimefun.getRegistry().getTickerBlocks().contains(blockData.getSfId())) {
+                Slimefun.getTickerTask().disableTicker(location);
+            }
+
+            Slimefun.getNetworkManager().updateAllNetworks(location);
+            invSnapshots.remove(blockData.getKey());
+        }
+
+        // 4. drop the block cache so the whole chunk data instance becomes collectable
+        cache.removeAllCacheInternal();
+    }
+
+    /**
+     * 冲刷指定区块范围内的所有延迟写任务, 使它们立即进入写入队列,
+     * 然后从 {@link #delayedWriteTasks} 中移除, 避免任务闭包继续持有已驱逐的区块数据实例。
+     *
+     * @param cKey 区块键
+     */
+    private void flushDelayedTasksInChunk(String cKey) {
+        if (delayedWriteTasks.isEmpty()) {
+            return;
+        }
+
+        // Parse once up front so the scan below does not allocate per entry
+        var separator = cKey.indexOf(';');
+        var worldName = cKey.substring(0, separator);
+        var coordinate = cKey.substring(separator + 1);
+        var colon = coordinate.indexOf(':');
+        var chunkX = Integer.parseInt(coordinate.substring(0, colon));
+        var chunkZ = Integer.parseInt(coordinate.substring(colon + 1));
+
+        synchronized (delayedWriteTasks) {
+            var iterator = delayedWriteTasks.entrySet().iterator();
+            while (iterator.hasNext()) {
+                var entry = iterator.next();
+                if (!isDelayedTaskInChunk(entry.getKey(), cKey, worldName, chunkX, chunkZ)) {
+                    continue;
+                }
+
+                var task = entry.getValue();
+                if (!task.isExecuted()) {
+                    task.runUnsafely();
+                }
+                iterator.remove();
+            }
+        }
+    }
+
+    private boolean isDelayedTaskInChunk(LinkedKey linkedKey, String cKey, String worldName, int chunkX, int chunkZ) {
+        var scopeKey = linkedKey.getParent();
+        if (scopeKey instanceof ChunkKey chunkKey) {
+            return chunkKey.getChunkKey().equals(cKey);
+        } else if (scopeKey instanceof LocationKey locationKey) {
+            var location = locationKey.getLocation();
+            var world = location.getWorld();
+            if (world == null) {
+                // the world of this location is no longer loaded; its pending task cannot
+                // belong to a chunk that is being unloaded right now
+                return false;
+            }
+            return world.getName().equals(worldName)
+                    && (location.getBlockX() >> 4) == chunkX
+                    && (location.getBlockZ() >> 4) == chunkZ;
+        }
+        return false;
     }
 
     public void removeAllDataInChunk(Chunk chunk) {

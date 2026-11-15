@@ -101,6 +101,25 @@ public abstract class Reactor extends AbstractEnergyProvider
             @Override
             public void newInstance(BlockMenu menu, Block b) {
                 var blockData = StorageCacheUtils.getBlock(b.getLocation());
+                if (blockData == null) {
+                    updateInventory(menu, b);
+                    return;
+                }
+
+                if (!blockData.isDataLoaded()) {
+                    // 数据尚未加载 (区块刚重载), 数据就绪后重新初始化菜单
+                    var dataRef = blockData;
+                    StorageCacheUtils.executeAfterLoad(
+                            dataRef,
+                            () -> {
+                                if (dataRef.isDataLoaded()) {
+                                    newInstance(menu, b);
+                                }
+                            },
+                            true);
+                    return;
+                }
+
                 if (blockData.getData(MODE) == null) {
                     blockData.setData(MODE, ReactorMode.GENERATOR.toString());
                 }
@@ -281,7 +300,9 @@ public abstract class Reactor extends AbstractEnergyProvider
         ReactorMode mode = ReactorMode.GENERATOR;
 
         var blockData = StorageCacheUtils.getDataContainer(l);
-        if (blockData != null && ReactorMode.PRODUCTION.toString().equals(blockData.getData(MODE))) {
+        if (blockData != null
+                && blockData.isDataLoaded()
+                && ReactorMode.PRODUCTION.toString().equals(blockData.getData(MODE))) {
             mode = ReactorMode.PRODUCTION;
         }
 
@@ -341,6 +362,10 @@ public abstract class Reactor extends AbstractEnergyProvider
     @Override
     public int getGeneratedOutput(@Nonnull Location l, @Nonnull ASlimefunDataContainer data) {
         BlockMenu inv = StorageCacheUtils.getMenu(l);
+        if (inv == null) {
+            // 菜单不可用 (例如区块刚重载, 数据尚未加载完成), 跳过本次能量计算
+            return 0;
+        }
         BlockMenu accessPort = getAccessPort(inv, l);
         FuelOperation operation = processor.getOperation(l);
 
@@ -562,7 +587,9 @@ public abstract class Reactor extends AbstractEnergyProvider
         }
 
         if (!port.isDataLoaded()) {
-            StorageCacheUtils.executeAfterLoad(port, () -> updateInventory(menu, l.getBlock()), false);
+            if (menu != null) {
+                StorageCacheUtils.executeAfterLoad(port, () -> updateInventory(menu, l.getBlock()), false);
+            }
             return null;
         }
 

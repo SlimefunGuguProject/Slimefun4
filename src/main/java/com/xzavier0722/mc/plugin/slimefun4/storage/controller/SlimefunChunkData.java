@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -28,6 +29,12 @@ public class SlimefunChunkData extends ADataContainer {
     private final int chunkX;
     private final int chunkZ;
     private final Map<String, SlimefunBlockData> sfBlocks;
+    /**
+     * 标记该区块缓存实例是否已被驱逐出区块缓存。
+     * <p>
+     * 用于让在途的异步读取任务识别出"区块已卸载", 放弃把结果写回一个已经失效的缓存实例。
+     */
+    private final AtomicBoolean unloaded = new AtomicBoolean(false);
 
     @ParametersAreNonnullByDefault
     SlimefunChunkData(Chunk chunk) {
@@ -130,6 +137,19 @@ public class SlimefunChunkData extends ADataContainer {
 
     void removeAllCacheInternal() {
         sfBlocks.clear();
+    }
+
+    /**
+     * 标记该实例已随区块卸载被驱逐, 只有第一次调用会生效。
+     *
+     * @return true 如果本次调用完成了标记, false 表示该实例此前已被标记
+     */
+    boolean markUnloaded() {
+        return unloaded.compareAndSet(false, true);
+    }
+
+    public boolean isUnloaded() {
+        return unloaded.get();
     }
 
     boolean hasBlockCache(String lKey) {

@@ -173,7 +173,18 @@ public class ResourceManager {
                 .getChunkDataAsync(world.getChunkAt(x, z))
                 // fix issue 1147 : when chunkdata is loaded, this cf method will return completedFuture and data will
                 // be updated at current thread to avoid async readwrite on supply numbers
-                .thenAccept(result -> result.setData(key, String.valueOf(value)));
+                .thenAccept(result -> {
+                    if (result == null) {
+                        // The chunk was unloaded (and its cache evicted) while the read was in flight.
+                        // Retry through the synchronous path on the main thread, which reloads the chunk.
+                        Slimefun.runSync(() -> Slimefun.getDatabaseManager()
+                                .getBlockDataController()
+                                .getChunkData(world.getChunkAt(x, z))
+                                .setData(key, String.valueOf(value)));
+                    } else {
+                        result.setData(key, String.valueOf(value));
+                    }
+                });
     }
 
     /**

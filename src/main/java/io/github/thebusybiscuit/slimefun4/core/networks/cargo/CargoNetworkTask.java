@@ -155,6 +155,18 @@ class CargoNetworkTask implements Runnable {
         ItemStack item = stack;
 
         var blockData = StorageCacheUtils.getBlock(inputNode);
+        if (blockData == null) {
+            // No cached data for this node right now, put the item back without routing
+            return item;
+        }
+
+        if (!blockData.isDataLoaded()) {
+            // The node's chunk was unloaded and its data evicted. A fresh, not-yet-loaded
+            // container is in the cache. Request a load and skip routing for this tick.
+            StorageCacheUtils.requestLoad(blockData);
+            return item;
+        }
+
         boolean roundrobin = Objects.equals(blockData.getData("round-robin"), "true");
         boolean smartFill = Objects.equals(blockData.getData("smart-fill"), "true");
 

@@ -234,6 +234,17 @@ public abstract class ADataController {
         }
     }
 
+    /**
+     * 检查控制器是否已经关闭, 不会抛出异常。
+     * <p>
+     * 用于在区块/世界卸载等事件路径中做防御性判断, 避免插件停用期间事件仍然触发时抛出异常。
+     *
+     * @return true 如果控制器已关闭
+     */
+    protected final boolean isDestroyed() {
+        return destroyed;
+    }
+
     protected <T> void invokeCallback(IAsyncReadCallback<T> callback, T result) {
         if (callback == null) {
             return;

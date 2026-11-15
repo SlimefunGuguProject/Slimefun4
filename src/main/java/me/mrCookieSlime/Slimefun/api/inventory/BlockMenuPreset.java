@@ -1,5 +1,6 @@
 package me.mrCookieSlime.Slimefun.api.inventory;
 
+import com.xzavier0722.mc.plugin.slimefun4.storage.util.StorageCacheUtils;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.utils.ChestMenuUtils;
@@ -221,7 +222,30 @@ public abstract class BlockMenuPreset extends ChestMenu {
         Validate.notNull(l, "Cannot create a new BlockMenu without a Location");
 
         Slimefun.runSync(() -> {
+            if (!l.isChunkLoaded()) {
+                // The chunk has been unloaded while this deferred initialization was pending.
+                // Its data (and this menu instance) are being evicted, so there is nothing
+                // left to initialize. Skipping avoids NPEs in menu handlers.
+                return;
+            }
+
             locked = true;
+
+            var blockData = StorageCacheUtils.getBlock(l);
+            if (blockData != null && !blockData.isDataLoaded()) {
+                // The block data is still loading (e.g. right after a chunk reload).
+                // Defer the hook until the data is ready: if addons read a null value
+                // they may write default settings (such as orientation) over the real ones.
+                StorageCacheUtils.executeAfterLoad(
+                        blockData,
+                        () -> {
+                            if (blockData.isDataLoaded()) {
+                                newInstance(menu, l);
+                            }
+                        },
+                        true);
+                return;
+            }
 
             try {
                 newInstance(menu, l.getBlock());

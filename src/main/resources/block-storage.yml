@@ -8,8 +8,8 @@ base64EncodeVal: true
 
 # 区块数据加载模式
 # 可选的有:
-# - LOAD_WITH_CHUNK: 当本次开服期间内区块首次加载时加载粘液区块数据
-# - LOAD_ON_STARTUP: 当开服时一次性加载全部区块数据，可能会导致开服时间较长
+# - LOAD_WITH_CHUNK: 区块加载时加载粘液区块数据, 区块卸载时将内存缓存落盘并释放
+# - LOAD_ON_STARTUP: 当开服时一次性加载全部区块数据并常驻内存, 可能会导致开服时间较长
 # 默认情况下推荐使用 LOAD_WITH_CHUNK 以节省不必要的内存开销
 # 如发现加载区块时发生明显卡顿，请更改为 LOAD_ON_STARTUP
 dataLoadMode: LOAD_WITH_CHUNK
