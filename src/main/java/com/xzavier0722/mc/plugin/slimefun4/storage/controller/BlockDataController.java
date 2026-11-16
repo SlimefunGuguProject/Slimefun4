@@ -33,6 +33,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import javax.annotation.Nonnull;
@@ -74,6 +75,15 @@ public class BlockDataController extends ADataController {
     private final Map<UUID, SlimefunUniversalData> loadedUniversalData;
 
     private final Map<BlockPosition, UUID> universalBlockLocationCache;
+    /**
+     * 每个区块当前在途 (已入队但尚未执行完) 的写任务计数。
+     * 区块驱逐时排队的写入全部完成后, 才允许重载读取, 避免读到旧数据。
+     */
+    private final Map<String, Integer> pendingChunkWrites = new ConcurrentHashMap<>();
+    /**
+     * 等待区块写任务完成的回调, 在写计数归零时执行。
+     */
+    private final Map<String, List<Runnable>> chunkWriteCompletionListeners = new ConcurrentHashMap<>();
     /**
      * 方块物品栏快照
      */
@@ -843,6 +853,18 @@ public class BlockDataController extends ADataController {
      * 防止区块卸载驱逐缓存之后, 在途的读取任务把条目重新写回。
      */
     private void loadChunkInternal(boolean isNewChunk, boolean forceReadData, SlimefunChunkData chunkData) {
+        if (hasPendingWrites(chunkData.getKey())) {
+            // The chunk was recently evicted and the writes queued during eviction have
+            // not finished yet. Reading the database now could resurrect stale rows
+            // (e.g. items withdrawn before unloading). Defer the load until they complete.
+            runAfterChunkWrites(chunkData.getKey(), () -> {
+                if (!chunkData.isUnloaded()) {
+                    loadChunkInternal(isNewChunk, forceReadData, chunkData);
+                }
+            });
+            return;
+        }
+
         // what if the database already contains data here but the WORLD CHUNK is newly generated
 
         // escape all return if forceRead Flag is true
@@ -903,6 +925,19 @@ public class BlockDataController extends ADataController {
 
         if (!chunkData.isUnloaded()) {
             Bukkit.getPluginManager().callEvent(new SlimefunChunkDataLoadEvent(chunkData));
+
+            // Requeue network discovery for every block location in this chunk.
+            // Unloading evicted their cache, which made Network#discoverStep drop them
+            // from the network's node sets. Without requeueing here, cargo/energy nodes
+            // stay disconnected until a full network rebuild.
+            var locations = new HashSet<Location>();
+            for (var blockData : chunkData.getAllBlockData()) {
+                locations.add(blockData.getLocation());
+            }
+            if (!locations.isEmpty()) {
+                var networkManager = Slimefun.getNetworkManager();
+                Slimefun.runSync(() -> locations.forEach(networkManager::updateAllNetworks));
+            }
         }
     }
 
@@ -998,6 +1033,16 @@ public class BlockDataController extends ADataController {
         if (blockData.isDataLoaded()) {
             return;
         }
+
+        var chunkKey = LocationUtils.getChunkKey(blockData.getLocation());
+        if (hasPendingWrites(chunkKey)) {
+            // Same reasoning as in loadChunkInternal(): wait for the eviction
+            // writes to finish before reading, so inventories cannot resurrect
+            // items that were withdrawn before the unload.
+            runAfterChunkWrites(chunkKey, () -> loadBlockData(blockData));
+            return;
+        }
+
         var key = new RecordKey(DataScope.BLOCK_DATA);
         key.addCondition(FieldKey.LOCATION, blockData.getKey());
         key.addField(FieldKey.DATA_KEY);
@@ -1378,8 +1423,13 @@ public class BlockDataController extends ADataController {
         var blockDataList = cache.getAllBlockData();
         if (blockDataList.isEmpty()
                 && (!cache.isDataLoaded() || cache.getAllData().isEmpty())) {
-            // Fast path: an empty chunk holds neither block data nor chunk-scoped kv,
-            // so no delayed task can be scoped to it either. Skip the global scan below.
+            // Fast path: an empty chunk holds neither block data nor chunk-scoped kv.
+            // Pending delayed tasks scoped to this chunk may still exist though
+            // (e.g. the scheduled deletion of its last kv). Flush them, otherwise
+            // their closure would keep this instance alive and could delete data
+            // written after a reload. flushDelayedTasksInChunk() itself exits
+            // early when the global task map is empty.
+            flushDelayedTasksInChunk(cKey);
             cache.removeAllCacheInternal();
             return;
         }
@@ -1468,6 +1518,101 @@ public class BlockDataController extends ADataController {
                     && (location.getBlockZ() >> 4) == chunkZ;
         }
         return false;
+    }
+
+    private boolean hasPendingWrites(String cKey) {
+        return pendingChunkWrites.getOrDefault(cKey, 0) > 0;
+    }
+
+    /**
+     * 等待指定区块的所有在途写任务完成后执行 {@code run}。
+     * <p>
+     * 非阻塞: 写计数归零时在完成写任务的线程上执行。若等待期间又有新写任务入队,
+     * 会继续等待 (见内部 wrapper 的自检逻辑)。
+     */
+    private void runAfterChunkWrites(String cKey, Runnable run) {
+        var wrapper = new Runnable() {
+            @Override
+            public void run() {
+                if (hasPendingWrites(cKey)) {
+                    runAfterChunkWrites(cKey, this);
+                } else {
+                    run.run();
+                }
+            }
+        };
+
+        List<Runnable> toRun = null;
+        synchronized (chunkWriteCompletionListeners) {
+            if (!hasPendingWrites(cKey)) {
+                toRun = List.of(wrapper);
+            } else {
+                chunkWriteCompletionListeners
+                        .computeIfAbsent(cKey, k -> new CopyOnWriteArrayList<>())
+                        .add(wrapper);
+            }
+        }
+
+        if (toRun != null) {
+            toRun.forEach(Runnable::run);
+        }
+    }
+
+    @Override
+    protected void onWriteTaskCreated(ScopeKey scopeKey) {
+        var cKey = chunkKeyOf(scopeKey);
+        if (cKey != null) {
+            pendingChunkWrites.merge(cKey, 1, Integer::sum);
+        }
+    }
+
+    @Override
+    protected void onWriteTaskCompleted(ScopeKey scopeKey) {
+        var cKey = chunkKeyOf(scopeKey);
+        if (cKey == null) {
+            return;
+        }
+
+        List<Runnable> toRun = null;
+        synchronized (chunkWriteCompletionListeners) {
+            var remaining = pendingChunkWrites.compute(cKey, (k, v) -> (v == null || v <= 1) ? null : v - 1);
+            if (remaining == null) {
+                toRun = chunkWriteCompletionListeners.remove(cKey);
+            }
+        }
+
+        if (toRun != null) {
+            for (var run : toRun) {
+                try {
+                    run.run();
+                } catch (Exception | LinkageError x) {
+                    logger.log(Level.WARNING, "执行区块写入完成后的延迟加载任务失败: " + cKey, x);
+                }
+            }
+        }
+    }
+
+    /**
+     * 从一个写任务的作用域键中解析出它所属的区块键, 无法解析时返回 null。
+     */
+    @Nullable private static String chunkKeyOf(ScopeKey scopeKey) {
+        if (scopeKey instanceof ChunkKey chunkKey) {
+            return chunkKey.getChunkKey();
+        } else if (scopeKey instanceof LocationKey locationKey) {
+            var location = locationKey.getLocation();
+            var world = location.getWorld();
+            if (world == null) {
+                return null;
+            }
+            return LocationUtils.getChunkKey(location);
+        } else if (scopeKey instanceof RecordKey recordKey) {
+            for (var condition : recordKey.getConditions()) {
+                if (condition.getFirstValue() == FieldKey.CHUNK) {
+                    return condition.getSecondValue();
+                }
+            }
+        }
+        return null;
     }
 
     public void removeAllDataInChunk(Chunk chunk) {

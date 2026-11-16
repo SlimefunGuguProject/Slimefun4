@@ -203,6 +203,7 @@ public abstract class ADataController {
                 @Override
                 protected void onSuccess() {
                     scheduledWriteTasks.remove(scopeToUse);
+                    onWriteTaskCompleted(scopeToUse);
                 }
 
                 @Override
@@ -217,6 +218,7 @@ public abstract class ADataController {
             };
             queuedTask.queue(key, task);
             scheduledWriteTasks.put(scopeToUse, queuedTask);
+            onWriteTaskCreated(scopeToUse);
 
             if (serialWriteExecutor != null && key.getScope().isSerial()) {
                 serialWriteExecutor.submit(queuedTask);
@@ -294,8 +296,21 @@ public abstract class ADataController {
         var task = scheduledWriteTasks.remove(key);
         if (task != null) {
             task.abort();
+            onWriteTaskCompleted(key);
         }
     }
+
+    /**
+     * 钩子: 一个新的 {@link QueuedWriteTask} 已创建并入队。
+     * 子类可据此跟踪在途写任务。
+     */
+    protected void onWriteTaskCreated(ScopeKey scopeKey) {}
+
+    /**
+     * 钩子: 一个 {@link QueuedWriteTask} 已执行完其全部任务 (或被中止)。
+     * 子类可据此释放对在途写任务的跟踪。
+     */
+    protected void onWriteTaskCompleted(ScopeKey scopeKey) {}
 
     public final DataType getDataType() {
         return dataType;
