@@ -164,12 +164,21 @@ public class SlimefunChunkData extends ADataContainer {
     @ParametersAreNonnullByDefault
     public void setData(String key, String val) {
         checkData();
+        if (isUnloaded()) {
+            // The chunk cache has been evicted. A write through a stale container would
+            // overwrite the value written by the reloaded instance, so it is discarded.
+            return;
+        }
         setCacheInternal(key, val, true);
         Slimefun.getDatabaseManager().getBlockDataController().scheduleDelayedChunkDataUpdate(this, key);
     }
 
     @ParametersAreNonnullByDefault
     public void removeData(String key) {
+        if (isUnloaded()) {
+            // Same as setData: stale containers must not reach the database.
+            return;
+        }
         if (removeCacheInternal(key) != null) {
             Slimefun.getDatabaseManager().getBlockDataController().scheduleDelayedChunkDataUpdate(this, key);
         }

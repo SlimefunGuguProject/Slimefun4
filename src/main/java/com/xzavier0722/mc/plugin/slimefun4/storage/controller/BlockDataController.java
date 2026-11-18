@@ -1447,9 +1447,14 @@ public class BlockDataController extends ADataController {
         // 2. flush delayed tasks scoped to this chunk, so no queued task keeps this instance alive
         flushDelayedTasksInChunk(cKey);
 
-        // 3. clean up tickers, networks and inventory snapshots.
+        // 3. mark evicted block data as pending-remove, then clean up tickers,
+        //    networks and inventory snapshots.
         //    Delayed tasks scoped to this chunk were already flushed and removed above.
         for (var blockData : blockDataList) {
+            // 恢复 isPendingRemove 语义约定: 第三方持有的旧引用将看到 pendingRemove=true,
+            // 其后续写入会被捕获缓冲 (setWhilePendingRemove) 而不会覆盖数据库中的新数据。
+            blockData.setPendingRemove(true);
+
             var location = blockData.getLocation();
 
             if (blockData.isDataLoaded()
