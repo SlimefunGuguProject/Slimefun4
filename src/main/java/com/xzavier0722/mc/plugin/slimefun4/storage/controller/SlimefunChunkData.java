@@ -78,6 +78,11 @@ public class SlimefunChunkData extends ADataContainer {
     @Nonnull
     @ParametersAreNonnullByDefault
     public SlimefunBlockData createBlockData(Location l, String sfId) {
+        if (isUnloaded()) {
+            // Writing through an evicted chunk cache would create a ghost block record
+            // in the database for a chunk that is no longer loaded.
+            throw new IllegalStateException("Cannot create block data in an unloaded chunk cache: " + getKey());
+        }
         var lKey = LocationUtils.getLocKey(l);
         if (getBlockCacheInternal(lKey) != null) {
             throw new IllegalStateException("There already a block in this location: " + lKey);
@@ -104,6 +109,11 @@ public class SlimefunChunkData extends ADataContainer {
 
     @Nullable @ParametersAreNonnullByDefault
     public SlimefunBlockData removeBlockData(Location l) {
+        if (isUnloaded()) {
+            // Deleting through an evicted chunk cache would remove the database record
+            // of a machine that may have been reloaded by a fresh cache instance.
+            return null;
+        }
         var lKey = LocationUtils.getLocKey(l);
         var re = removeBlockDataCacheInternal(lKey);
         if (re == null) {

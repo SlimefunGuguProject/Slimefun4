@@ -60,6 +60,12 @@ public class MenuListener implements Listener {
         // getHolder() involves Block.getState() in BlockInventory cases
         var holder = e.getInventory().getHolder(false);
 
+        if (holder instanceof BlockMenu detachedMenu && detachedMenu.isDetached()) {
+            // 菜单所属区块已被驱逐: 冻结视图, 防止玩家继续与孤儿菜单交互造成物品复制
+            e.setCancelled(true);
+            return;
+        }
+
         if (holder instanceof ChestMenu menu) {
             try {
                 if (e.getRawSlot() < e.getInventory().getSize()) {
