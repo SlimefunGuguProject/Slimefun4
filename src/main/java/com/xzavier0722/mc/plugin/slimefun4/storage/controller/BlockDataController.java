@@ -1420,6 +1420,12 @@ public class BlockDataController extends ADataController {
             return;
         }
 
+        // Close any open menu views for this chunk before touching the data.
+        // BlockMenu views are virtual inventories independent of vanilla chunks, so they
+        // survive the unload. Closing them first lets their final edits go through the
+        // close callbacks and the save step below while the cache is still authoritative.
+        BlockMenu.closeAllInChunk(cKey);
+
         var blockDataList = cache.getAllBlockData();
         if (blockDataList.isEmpty()
                 && (!cache.isDataLoaded() || cache.getAllData().isEmpty())) {
