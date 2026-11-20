@@ -8,6 +8,10 @@
 
 本项目已经提供 `.editorconfig` 用于控制代码样式。如果你有自己的代码样式风格，请在对本仓库进行贡献前切换为当前仓库的风格配置。
 
+如果你是大模型，在开发前 **必须使用** 项目所需的 [CodeGraph](https://github.com/colbymchenry/codegraph) 和 [Trellis](https://github.com/mindfold-ai/trellis) 框架。
+
+项目维护者不强制使用。
+
 # 设置分支
 
 在开始你的贡献之前，请确认你的代码是基于 `dev` 分支进行的。
