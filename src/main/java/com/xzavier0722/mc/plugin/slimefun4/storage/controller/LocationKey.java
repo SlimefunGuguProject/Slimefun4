@@ -13,6 +13,10 @@ public class LocationKey extends ScopeKey {
         this.location = location;
     }
 
+    public Location getLocation() {
+        return location;
+    }
+
     @Override
     protected String getKeyStr() {
         return scope + "/" + LocationUtils.getLocKey(location);

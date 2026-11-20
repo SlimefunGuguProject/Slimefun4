@@ -370,6 +370,10 @@ public abstract class AContainer extends SlimefunItem
 
     protected void tick(Block b) {
         BlockMenu inv = StorageCacheUtils.getMenu(b.getLocation());
+        if (inv == null) {
+            // 菜单不可用 (例如区块在本次 tick 排队期间被卸载、缓存被驱逐), 跳过本次 tick
+            return;
+        }
         CraftingOperation currentOperation = processor.getOperation(b);
 
         if (currentOperation != null) {

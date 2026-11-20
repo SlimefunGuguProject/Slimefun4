@@ -53,12 +53,22 @@ public abstract class ASlimefunDataContainer extends ADataContainer {
             synchronized (capturedPendingRemoveData) {
                 map = capturedPendingRemoveData.remove(this);
             }
-            if (map != null) {
+            // A stale container (e.g. evicted on chunk unload) must not replay captured
+            // values into the database, or it would overwrite the reloaded instance's data.
+            if (map != null && canReplayPendingRemoveData()) {
                 for (var entry : map.entrySet()) {
                     setData(entry.getKey(), entry.getValue());
                 }
             }
         }
+    }
+
+    /**
+     * 判断 pendingRemove 期间捕获的数据是否应当被重放。
+     * 默认允许; 已被驱逐出缓存的陈旧容器必须拒绝重放, 否则会把旧值写回数据库。
+     */
+    protected boolean canReplayPendingRemoveData() {
+        return true;
     }
 
     @ParametersAreNonnullByDefault

@@ -145,7 +145,8 @@ public class SlimefunItemInteractListener implements Listener {
                 event.getInteractEvent().setCancelled(true);
 
                 if (!(item instanceof UniversalBlock)) {
-                    var blockData = StorageCacheUtils.getBlock(clickedBlock.getLocation());
+                    // 使用 raw 访问器: 未加载的机器数据需要显式 loadBlockDataAsync 后再打开菜单
+                    var blockData = StorageCacheUtils.getBlockRaw(clickedBlock.getLocation());
 
                     if (blockData == null) {
                         return;

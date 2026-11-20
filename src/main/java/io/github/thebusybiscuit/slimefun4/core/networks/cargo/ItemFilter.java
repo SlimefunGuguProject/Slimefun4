@@ -1,6 +1,5 @@
 package io.github.thebusybiscuit.slimefun4.core.networks.cargo;
 
-import com.xzavier0722.mc.plugin.slimefun4.storage.callback.IAsyncReadCallback;
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.ASlimefunDataContainer;
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunBlockData;
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunUniversalData;
@@ -8,7 +7,6 @@ import com.xzavier0722.mc.plugin.slimefun4.storage.util.StorageCacheUtils;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.core.debug.Debug;
 import io.github.thebusybiscuit.slimefun4.core.debug.TestCase;
-import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.implementation.items.cargo.CargoNode;
 import io.github.thebusybiscuit.slimefun4.utils.SlimefunUtils;
 import io.github.thebusybiscuit.slimefun4.utils.itemstack.ItemStackWrapper;
@@ -58,8 +56,6 @@ class ItemFilter implements Predicate<ItemStack> {
      */
     private volatile boolean dirty = true;
 
-    private volatile boolean isLoading = false;
-
     /**
      * This creates a new {@link ItemFilter} for the given {@link Block}.
      * This will copy all settings from that {@link Block} to this filter.
@@ -77,22 +73,15 @@ class ItemFilter implements Predicate<ItemStack> {
      * @param b The {@link Block}
      */
     public void update(@Nonnull Block b) {
-        if (!isDirty() || isLoading) {
+        if (!isDirty()) {
             return;
         }
 
+        // getDataContainer 只返回有效数据; 未加载时返回 null 并顺带触发加载,
+        // 本过滤器保持 dirty, 下次访问时重试即可。
         var blockData = StorageCacheUtils.getDataContainer(b.getLocation());
-        if (blockData.isDataLoaded()) {
+        if (blockData != null) {
             update(blockData);
-        } else {
-            isLoading = true;
-            Slimefun.getDatabaseManager().getBlockDataController().loadDataAsync(blockData, new IAsyncReadCallback<>() {
-                @Override
-                public void onResult(ASlimefunDataContainer result) {
-                    update(blockData);
-                    isLoading = false;
-                }
-            });
         }
     }
 

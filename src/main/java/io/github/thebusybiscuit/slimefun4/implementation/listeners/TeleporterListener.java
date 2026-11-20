@@ -65,8 +65,9 @@ public class TeleporterListener implements Listener {
             elevator.openInterface(p, b);
         } else if (item instanceof AbstractTeleporterPlate teleporterPlate && teleporterPlate.hasAccess(p, b)) {
             // Pressure plate was a teleporter
+            // 使用 raw 访问器: 未加载的传送板数据需要显式 loadBlockDataAsync 后再传送
             var blockData =
-                    StorageCacheUtils.getBlock(b.getRelative(BlockFace.DOWN).getLocation());
+                    StorageCacheUtils.getBlockRaw(b.getRelative(BlockFace.DOWN).getLocation());
             if (blockData == null) {
                 return;
             }

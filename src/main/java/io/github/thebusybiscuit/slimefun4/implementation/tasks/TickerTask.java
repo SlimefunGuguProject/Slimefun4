@@ -251,8 +251,9 @@ public class TickerTask implements Runnable {
     }
 
     private void tickLocation(@Nonnull Set<BlockTicker> tickers, @Nonnull Location l) {
+        // getBlock 只返回有效 (已加载且未待移除) 的数据, 无效数据返回 null 并顺带触发加载
         var blockData = StorageCacheUtils.getBlock(l);
-        if (blockData == null || !blockData.isDataLoaded() || blockData.isPendingRemove()) {
+        if (blockData == null) {
             return;
         }
 
@@ -363,7 +364,10 @@ public class TickerTask implements Runnable {
 
     @ParametersAreNonnullByDefault
     private void timedTickBlock(WaitingEntry entry, long timeout, TimeUnit timeUnit, boolean profiling) {
-        if (entry.data.isPendingRemove()) return; // waiting 期间机器可能会被拆除
+        if (entry.data.isPendingRemove() || isEntryStale(entry)) {
+            // waiting 期间机器可能被拆除, 或者其区块已在等待期间卸载并驱逐出缓存
+            return;
+        }
 
         Location l = entry.location;
         SlimefunItem item = entry.item;
@@ -373,6 +377,11 @@ public class TickerTask implements Runnable {
             Slimefun.runSync(() -> {
                 long timestamp = profiling ? System.nanoTime() : 0;
                 try {
+                    // Re-check on the executing thread: the chunk may have been unloaded
+                    // (and its cache evicted) between the queue check and this task
+                    if (entry.data.isPendingRemove() || isEntryStale(entry)) {
+                        return;
+                    }
                     // Bukkit 自带的 Watchdog 会检测超时，不需要我们处理
                     tickBlock(entry);
                 } catch (Exception | LinkageError x) {
@@ -387,7 +396,17 @@ public class TickerTask implements Runnable {
             long timestamp = profiling ? Slimefun.getProfiler().newEntry() : 0;
 
             try {
-                CompletableFuture.runAsync(() -> tickBlock(entry), tickExecutor).get(timeout, timeUnit);
+                CompletableFuture.runAsync(
+                                () -> {
+                                    // Re-check on the executing thread to shrink the
+                                    // unload/evict race window to a minimum
+                                    if (entry.data.isPendingRemove() || isEntryStale(entry)) {
+                                        return;
+                                    }
+                                    tickBlock(entry);
+                                },
+                                tickExecutor)
+                        .get(timeout, timeUnit);
             } catch (TimeoutException e) {
                 reportTimeout(l, item, timeout, timeUnit, e);
             } catch (Exception | LinkageError x) {
@@ -423,7 +442,10 @@ public class TickerTask implements Runnable {
 
     @ParametersAreNonnullByDefault
     private void timedTickBlock(WaitingEntry entry, long timeout, TimeUnit timeUnit) {
-        if (entry.data.isPendingRemove()) return; // waiting 期间机器可能会被拆除
+        if (entry.data.isPendingRemove() || isEntryStale(entry)) {
+            // waiting 期间机器可能被拆除, 或者其区块已在等待期间卸载并驱逐出缓存
+            return;
+        }
 
         Location l = entry.location;
         SlimefunItem item = entry.item;
@@ -431,10 +453,16 @@ public class TickerTask implements Runnable {
         try {
             if (entry.isSync()) {
                 // Bukkit 自带的 Watchdog 会检测超时，不需要我们处理
+                if (entry.data.isPendingRemove() || isEntryStale(entry)) {
+                    return;
+                }
                 tickBlock(entry);
             } else {
                 CompletableFuture.runAsync(
                                 () -> {
+                                    if (entry.data.isPendingRemove() || isEntryStale(entry)) {
+                                        return;
+                                    }
                                     tickBlock(entry);
                                 },
                                 tickExecutor)
@@ -445,6 +473,17 @@ public class TickerTask implements Runnable {
         } catch (Exception | LinkageError x) {
             reportErrors(l, item, x);
         }
+    }
+
+    /**
+     * 检查等待条目是否已经失效。
+     * <p>
+     * 区块卸载后, 其缓存会被驱逐。此时 {@code waiting} 队列中仍可能存在指向旧数据容器的条目,
+     * 如果继续执行, 它会重新查询缓存得到 null 菜单并抛出空指针异常。
+     * 因此执行前用"缓存中仍是同一个实例"来判断条目是否仍然有效。
+     */
+    private boolean isEntryStale(WaitingEntry entry) {
+        return entry.data instanceof SlimefunBlockData && StorageCacheUtils.getBlock(entry.location) != entry.data;
     }
 
     public static String getChineseTimeUnit(TimeUnit unit) {

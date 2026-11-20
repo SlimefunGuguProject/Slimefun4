@@ -152,6 +152,10 @@ public abstract class AGenerator extends AbstractEnergyProvider implements Machi
     @Override
     public int getGeneratedOutput(@Nonnull Location l, @Nonnull ASlimefunDataContainer data) {
         BlockMenu inv = StorageCacheUtils.getMenu(l);
+        if (inv == null) {
+            // 菜单不可用 (例如区块刚重载, 数据尚未加载完成), 跳过本次发电 tick
+            return 0;
+        }
         FuelOperation operation = processor.getOperation(l);
 
         if (operation != null) {
