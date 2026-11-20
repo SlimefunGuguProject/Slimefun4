@@ -231,7 +231,7 @@ public abstract class BlockMenuPreset extends ChestMenu {
 
             locked = true;
 
-            var blockData = StorageCacheUtils.getBlock(l);
+            var blockData = StorageCacheUtils.getBlockRaw(l);
             if (blockData != null && !blockData.isDataLoaded()) {
                 // The block data is still loading (e.g. right after a chunk reload).
                 // Defer the hook until the data is ready: if addons read a null value

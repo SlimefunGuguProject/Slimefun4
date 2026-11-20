@@ -100,27 +100,10 @@ public abstract class Reactor extends AbstractEnergyProvider
 
             @Override
             public void newInstance(BlockMenu menu, Block b) {
+                // newInstance 已被 BlockMenuPreset 延迟到数据加载完成后调用,
+                // 这里的 getBlock 只会返回有效数据 (null 仅出现在极端驱逐时序)
                 var blockData = StorageCacheUtils.getBlock(b.getLocation());
-                if (blockData == null) {
-                    updateInventory(menu, b);
-                    return;
-                }
-
-                if (!blockData.isDataLoaded()) {
-                    // 数据尚未加载 (区块刚重载), 数据就绪后重新初始化菜单
-                    var dataRef = blockData;
-                    StorageCacheUtils.executeAfterLoad(
-                            dataRef,
-                            () -> {
-                                if (dataRef.isDataLoaded()) {
-                                    newInstance(menu, b);
-                                }
-                            },
-                            true);
-                    return;
-                }
-
-                if (blockData.getData(MODE) == null) {
+                if (blockData != null && blockData.getData(MODE) == null) {
                     blockData.setData(MODE, ReactorMode.GENERATOR.toString());
                 }
 
@@ -300,9 +283,7 @@ public abstract class Reactor extends AbstractEnergyProvider
         ReactorMode mode = ReactorMode.GENERATOR;
 
         var blockData = StorageCacheUtils.getDataContainer(l);
-        if (blockData != null
-                && blockData.isDataLoaded()
-                && ReactorMode.PRODUCTION.toString().equals(blockData.getData(MODE))) {
+        if (blockData != null && ReactorMode.PRODUCTION.toString().equals(blockData.getData(MODE))) {
             mode = ReactorMode.PRODUCTION;
         }
 

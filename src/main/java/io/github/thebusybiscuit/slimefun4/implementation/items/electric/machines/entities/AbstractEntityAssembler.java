@@ -166,24 +166,11 @@ public abstract class AbstractEntityAssembler<T extends Entity> extends SimpleSl
     }
 
     private void updateBlockInventory(BlockMenu menu, Block b) {
+        // updateBlockInventory 经由 BlockMenuPreset 延迟到数据加载完成后调用,
+        // getBlock 只返回有效数据; null 仅在极端驱逐时序出现, 此时按默认状态渲染
         var blockData = StorageCacheUtils.getBlock(b.getLocation());
         String val;
-        if (blockData == null
-                || !blockData.isDataLoaded()
-                || (val = blockData.getData(KEY_ENABLED)) == null
-                || val.equals(String.valueOf(false))) {
-            if (blockData != null && !blockData.isDataLoaded()) {
-                // 数据尚未加载 (区块刚重载), 先渲染默认状态, 数据就绪后刷新显示
-                var dataRef = blockData;
-                StorageCacheUtils.executeAfterLoad(
-                        dataRef,
-                        () -> {
-                            if (dataRef.isDataLoaded()) {
-                                updateBlockInventory(menu, b);
-                            }
-                        },
-                        true);
-            }
+        if (blockData == null || (val = blockData.getData(KEY_ENABLED)) == null || val.equals(String.valueOf(false))) {
             menu.replaceExistingItem(22, new CustomItemStack(Material.GUNPOWDER, "&7是否可用: &4\u2718", "", "&e> 单击开启机器"));
             menu.addMenuClickHandler(22, (p, slot, item, action) -> {
                 StorageCacheUtils.setData(b.getLocation(), KEY_ENABLED, String.valueOf(true));

@@ -102,8 +102,13 @@ public class ElevatorPlate extends SimpleSlimefunItem<BlockUseHandler> {
             var block = b.getWorld().getBlockAt(b.getX(), y, b.getZ());
             var loc = block.getLocation();
 
-            if (block.getType() == getItem().getType() && StorageCacheUtils.isBlock(loc, getId())) {
-                var blockData = StorageCacheUtils.getBlock(loc);
+            if (block.getType() == getItem().getType()) {
+                // 使用 raw 访问器: 电梯需要收集未加载的楼层数据以批量加载
+                var blockData = StorageCacheUtils.getBlockRaw(loc);
+                if (blockData == null || !getId().equals(blockData.getSfId())) {
+                    continue;
+                }
+
                 if (blockData.isPendingRemove()) {
                     continue;
                 }

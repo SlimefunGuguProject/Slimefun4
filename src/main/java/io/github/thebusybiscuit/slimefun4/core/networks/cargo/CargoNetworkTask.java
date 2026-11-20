@@ -156,14 +156,7 @@ class CargoNetworkTask implements Runnable {
 
         var blockData = StorageCacheUtils.getBlock(inputNode);
         if (blockData == null) {
-            // No cached data for this node right now, put the item back without routing
-            return item;
-        }
-
-        if (!blockData.isDataLoaded()) {
-            // The node's chunk was unloaded and its data evicted. A fresh, not-yet-loaded
-            // container is in the cache. Request a load and skip routing for this tick.
-            StorageCacheUtils.requestLoad(blockData);
+            // 无效或未加载的节点数据: getBlock 已触发加载, 本周期跳过路由, 物品退回
             return item;
         }
 

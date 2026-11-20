@@ -2015,12 +2015,20 @@ public class BlockDataController extends ADataController {
         }
     }
 
+    /**
+     * 从缓存中获取一个"有效"的 {@link SlimefunChunkData}。
+     * <p>
+     * 契约: 非 null 即表示该区块数据已加载且未被驱逐, 调用方可以直接读取。
+     * 未加载 / 已驱逐的区块数据返回 null, 调用方应走异步加载路径重试。
+     */
     public SlimefunChunkData getChunkDataFromCache(Location chunk) {
-        return getChunkDataCache(chunk, false);
+        var re = getChunkDataCache(chunk, false);
+        return re != null && re.isDataLoaded() && !re.isUnloaded() ? re : null;
     }
 
     public SlimefunChunkData getChunkDataFromCache(Chunk chunk) {
-        return getChunkDataCache(chunk, false);
+        var re = getChunkDataCache(chunk, false);
+        return re != null && re.isDataLoaded() && !re.isUnloaded() ? re : null;
     }
 
     private SlimefunChunkData getChunkDataCache(Chunk chunk, boolean createOnNotExists) {

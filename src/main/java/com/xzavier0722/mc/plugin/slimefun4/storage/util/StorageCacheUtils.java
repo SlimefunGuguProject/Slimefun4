@@ -58,8 +58,36 @@ public class StorageCacheUtils {
                 () -> Slimefun.getBlockDataService().getUniversalDataUUID(block).isPresent());
     }
 
+    /**
+     * 从缓存中获取一个"有效"的 {@link SlimefunBlockData}。
+     * <p>
+     * 契约: 返回值非 null 即表示数据已加载且未被标记待移除, 调用方可以直接读写。
+     * 无效数据 (未加载 / pendingRemove / 已被驱逐) 一律返回 null, 未加载但仍在缓存中的
+     * 数据会顺带触发一次异步加载, 调用方下次重试即可获得有效数据。
+     */
     @ParametersAreNonnullByDefault
     @Nullable public static SlimefunBlockData getBlock(Location l) {
+        var raw = Slimefun.getDatabaseManager().getBlockDataController().getBlockDataFromCache(l);
+        if (raw == null || raw.isPendingRemove()) {
+            return null;
+        }
+
+        if (!raw.isDataLoaded()) {
+            requestLoad(raw);
+            return null;
+        }
+
+        return raw;
+    }
+
+    /**
+     * 从缓存中获取方块数据, 不检查有效性。
+     * <p>
+     * 仅用于需要访问"未加载 / 待移除"状态的内部机制 (加载流程、拆除流程、驱逐流程)。
+     * 附属与普通调用方请使用 {@link #getBlock(Location)}。
+     */
+    @ParametersAreNonnullByDefault
+    @Nullable public static SlimefunBlockData getBlockRaw(Location l) {
         return Slimefun.getDatabaseManager().getBlockDataController().getBlockDataFromCache(l);
     }
 
@@ -105,10 +133,6 @@ public class StorageCacheUtils {
         var blockData = getBlock(loc);
 
         if (blockData != null) {
-            if (!blockData.isDataLoaded()) {
-                requestLoad(blockData);
-                return null;
-            }
             return blockData.getData(key);
         } else {
             var uniData = getUniversalBlock(loc.getBlock());
@@ -133,7 +157,8 @@ public class StorageCacheUtils {
 
     @ParametersAreNonnullByDefault
     public static void setData(Location loc, String key, String val) {
-        var block = getBlock(loc);
+        // 使用 raw 访问器: 未加载的容器需要走写回放, 不能在 getBlock 的过滤中丢失
+        var block = getBlockRaw(loc);
         if (block != null) {
             if (!block.isDataLoaded()) {
                 // The data container is not loaded yet (e.g. the chunk was just re-created
@@ -158,7 +183,8 @@ public class StorageCacheUtils {
 
     @ParametersAreNonnullByDefault
     public static void removeData(Location loc, String key) {
-        var block = getBlock(loc);
+        // 使用 raw 访问器: 未加载的容器需要走写回放, 不能在 getBlock 的过滤中丢失
+        var block = getBlockRaw(loc);
         if (block != null) {
             if (!block.isDataLoaded()) {
                 replayBlockDataWrite(loc, key, null);
@@ -255,7 +281,8 @@ public class StorageCacheUtils {
 
     @ParametersAreNonnullByDefault
     @Nullable public static BlockMenu getMenu(Location loc) {
-        var blockData = getBlock(loc);
+        // 使用 raw 访问器: 待移除 (pendingRemove) 的机器在拆除流程中仍需读取菜单以掉落物品
+        var blockData = getBlockRaw(loc);
         if (blockData == null) {
             return null;
         }
@@ -361,7 +388,8 @@ public class StorageCacheUtils {
     }
 
     public static boolean isBlockPendingRemove(@Nonnull Block block) {
-        var blockData = getBlock(block.getLocation());
+        // 使用 raw 访问器: 待移除容器必须可见, 否则该判断永远返回 false
+        var blockData = getBlockRaw(block.getLocation());
         if (blockData != null) {
             return blockData.isPendingRemove();
         }

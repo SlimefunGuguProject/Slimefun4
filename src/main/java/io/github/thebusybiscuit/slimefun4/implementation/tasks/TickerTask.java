@@ -251,8 +251,9 @@ public class TickerTask implements Runnable {
     }
 
     private void tickLocation(@Nonnull Set<BlockTicker> tickers, @Nonnull Location l) {
+        // getBlock 只返回有效 (已加载且未待移除) 的数据, 无效数据返回 null 并顺带触发加载
         var blockData = StorageCacheUtils.getBlock(l);
-        if (blockData == null || !blockData.isDataLoaded() || blockData.isPendingRemove()) {
+        if (blockData == null) {
             return;
         }
 
