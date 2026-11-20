@@ -112,7 +112,14 @@ public class ResourceManager {
         Validate.notNull(world, "World must not be null");
 
         String key = resource.getKey().toString().replace(':', '-');
-        var chunkData = Slimefun.getDatabaseManager().getBlockDataController().getChunkData(world.getChunkAt(x, z));
+        SlimefunChunkData chunkData;
+        try {
+            chunkData = Slimefun.getDatabaseManager().getBlockDataController().getChunkData(world.getChunkAt(x, z));
+        } catch (IllegalStateException e) {
+            // The chunk's eviction writes are still being flushed, so the data is not
+            // readable yet. Report "no data" for now; a later interaction retries.
+            return OptionalInt.empty();
+        }
         if (chunkData == null) {
             return OptionalInt.empty();
         }
@@ -175,12 +182,17 @@ public class ResourceManager {
                 // be updated at current thread to avoid async readwrite on supply numbers
                 .thenAccept(result -> {
                     if (result == null) {
-                        // The chunk was unloaded (and its cache evicted) while the read was in flight.
-                        // Retry through the synchronous path on the main thread, which reloads the chunk.
-                        Slimefun.runSync(() -> Slimefun.getDatabaseManager()
+                        // The chunk was unloaded (and its cache evicted) while the read was
+                        // in flight. Retry asynchronously: the future completes only after
+                        // the data has actually been loaded.
+                        Slimefun.getDatabaseManager()
                                 .getBlockDataController()
-                                .getChunkData(world.getChunkAt(x, z))
-                                .setData(key, String.valueOf(value)));
+                                .getChunkDataAsync(world.getChunkAt(x, z))
+                                .thenAccept(retry -> {
+                                    if (retry != null) {
+                                        retry.setData(key, String.valueOf(value));
+                                    }
+                                });
                     } else {
                         result.setData(key, String.valueOf(value));
                     }

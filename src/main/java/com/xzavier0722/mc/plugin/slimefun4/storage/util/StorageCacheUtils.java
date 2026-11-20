@@ -137,15 +137,9 @@ public class StorageCacheUtils {
         if (block != null) {
             if (!block.isDataLoaded()) {
                 // The data container is not loaded yet (e.g. the chunk was just re-created
-                // after an unload). Replay the write once the data has been loaded.
-                executeAfterLoad(
-                        block,
-                        () -> {
-                            if (block.isDataLoaded()) {
-                                block.setData(key, val);
-                            }
-                        },
-                        false);
+                // after an unload). Defer the write and re-bind it to the currently live
+                // container once loading completes, so an eviction mid-load cannot drop it.
+                replayBlockDataWrite(loc, key, val);
                 return;
             }
             block.setData(key, val);
@@ -154,14 +148,7 @@ public class StorageCacheUtils {
 
             if (uni != null) {
                 if (!uni.isDataLoaded()) {
-                    executeAfterLoad(
-                            uni,
-                            () -> {
-                                if (uni.isDataLoaded()) {
-                                    uni.setData(key, val);
-                                }
-                            },
-                            false);
+                    replayUniversalDataWrite(uni.getUUID(), key, val);
                     return;
                 }
                 uni.setData(key, val);
@@ -174,14 +161,7 @@ public class StorageCacheUtils {
         var block = getBlock(loc);
         if (block != null) {
             if (!block.isDataLoaded()) {
-                executeAfterLoad(
-                        block,
-                        () -> {
-                            if (block.isDataLoaded()) {
-                                block.removeData(key);
-                            }
-                        },
-                        false);
+                replayBlockDataWrite(loc, key, null);
                 return;
             }
             block.removeData(key);
@@ -190,18 +170,86 @@ public class StorageCacheUtils {
 
             if (uni != null) {
                 if (!uni.isDataLoaded()) {
-                    executeAfterLoad(
-                            uni,
-                            () -> {
-                                if (uni.isDataLoaded()) {
-                                    uni.removeData(key);
-                                }
-                            },
-                            false);
+                    replayUniversalDataWrite(uni.getUUID(), key, null);
                     return;
                 }
                 uni.removeData(key);
             }
+        }
+    }
+
+    /**
+     * 把一次方块数据写入绑定到"当前存活"的容器实例上。
+     * <p>
+     * 若容器在加载完成前被区块驱逐, 旧实例永远不会变为已加载, 直接丢弃会导致
+     * 玩家设置静默丢失。这里在每次回调时重新解析缓存中的存活实例并换绑。
+     */
+    private static void replayBlockDataWrite(@Nonnull Location loc, @Nonnull String key, @Nullable String val) {
+        var target = getBlock(loc);
+        if (target == null) {
+            // 区块当前完全未加载, 没有可写入的容器; 写入丢弃。
+            // 正常交互流程都会在区块加载后进行, 此分支仅在极端时序下发生。
+            return;
+        }
+
+        if (target.isDataLoaded()) {
+            writeBlockData(target, key, val);
+        } else {
+            executeAfterLoad(
+                    target,
+                    () -> {
+                        if (target.isDataLoaded()) {
+                            writeBlockData(target, key, val);
+                        } else {
+                            // 加载完成前又被驱逐: 换绑到当前存活实例, 而不是丢弃写入
+                            replayBlockDataWrite(loc, key, val);
+                        }
+                    },
+                    false);
+        }
+    }
+
+    private static void writeBlockData(@Nonnull SlimefunBlockData data, @Nonnull String key, @Nullable String val) {
+        if (val == null) {
+            data.removeData(key);
+        } else {
+            data.setData(key, val);
+        }
+    }
+
+    /**
+     * 把一次通用数据写入绑定到当前缓存中的通用数据实例。
+     * 通用数据不随区块驱逐, 但可能在写入时尚未加载完成, 同样需要换绑式回放。
+     */
+    private static void replayUniversalDataWrite(@Nonnull UUID uuid, @Nonnull String key, @Nullable String val) {
+        var target = Slimefun.getDatabaseManager().getBlockDataController().getUniversalBlockDataFromCache(uuid);
+        if (target == null) {
+            // 通用数据当前不在缓存中, 没有可写入的容器
+            return;
+        }
+
+        if (target.isDataLoaded()) {
+            writeUniversalData(target, key, val);
+        } else {
+            executeAfterLoad(
+                    target,
+                    () -> {
+                        if (target.isDataLoaded()) {
+                            writeUniversalData(target, key, val);
+                        } else {
+                            replayUniversalDataWrite(uuid, key, val);
+                        }
+                    },
+                    false);
+        }
+    }
+
+    private static void writeUniversalData(
+            @Nonnull SlimefunUniversalData data, @Nonnull String key, @Nullable String val) {
+        if (val == null) {
+            data.removeData(key);
+        } else {
+            data.setData(key, val);
         }
     }
 

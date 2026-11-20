@@ -35,6 +35,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -196,7 +197,11 @@ public class BlockDataController extends ADataController {
                 .runTaskTimerAsynchronously(
                         p,
                         new DelayedSavingLooperTask(
-                                forceSavePeriod, () -> new HashMap<>(delayedWriteTasks), delayedWriteTasks::remove),
+                                forceSavePeriod,
+                                () -> new HashMap<>(delayedWriteTasks),
+                                // 条件删除: 只删除自己刚执行过的任务实例,
+                                // 避免误删执行间隙被同 key 新任务替换后的条目 (会导致新设置丢失)
+                                (key, task) -> delayedWriteTasks.remove(key, task)),
                         20,
                         20);
     }
@@ -853,18 +858,19 @@ public class BlockDataController extends ADataController {
      * 防止区块卸载驱逐缓存之后, 在途的读取任务把条目重新写回。
      */
     private void loadChunkInternal(boolean isNewChunk, boolean forceReadData, SlimefunChunkData chunkData) {
-        if (hasPendingWrites(chunkData.getKey())) {
-            // The chunk was recently evicted and the writes queued during eviction have
-            // not finished yet. Reading the database now could resurrect stale rows
-            // (e.g. items withdrawn before unloading). Defer the load until they complete.
-            runAfterChunkWrites(chunkData.getKey(), () -> {
-                if (!chunkData.isUnloaded()) {
-                    loadChunkInternal(isNewChunk, forceReadData, chunkData);
-                }
-            });
-            return;
-        }
+        loadChunkInternal(isNewChunk, forceReadData, chunkData, null);
+    }
 
+    /**
+     * 使用指定的缓存实例加载区块数据。
+     * <p>
+     * 异步读取路径在调用前必须先确认传入的实例仍然是 {@link #loadedChunk} 中存活的条目,
+     * 防止区块卸载驱逐缓存之后, 在途的读取任务把条目重新写回。
+     * <p>
+     * 加载真正完成 (或被驱逐) 后执行 {@code onComplete}, 使异步调用方只在数据就绪时收到结果。
+     */
+    private void loadChunkInternal(
+            boolean isNewChunk, boolean forceReadData, SlimefunChunkData chunkData, @Nullable Runnable onComplete) {
         // what if the database already contains data here but the WORLD CHUNK is newly generated
 
         // escape all return if forceRead Flag is true
@@ -879,13 +885,35 @@ public class BlockDataController extends ADataController {
             // not force loading
             if (isNewChunk) {
                 chunkData.setIsDataLoaded(true);
-                Bukkit.getPluginManager().callEvent(new SlimefunChunkDataLoadEvent(chunkData));
+                fireChunkDataLoadEvent(chunkData);
+                if (onComplete != null) {
+                    onComplete.run();
+                }
                 return;
             }
 
             if (chunkData.isDataLoaded()) {
+                // Already loaded: no database read below, so pending writes cannot
+                // cause a stale read and must not block this path.
+                if (onComplete != null) {
+                    onComplete.run();
+                }
                 return;
             }
+        }
+
+        if (hasPendingWrites(chunkData.getKey())) {
+            // The chunk was recently evicted and the writes queued during eviction have
+            // not finished yet. Reading the database now could resurrect stale rows
+            // (e.g. items withdrawn before unloading). Defer the load until they complete.
+            runAfterChunkWrites(chunkData.getKey(), () -> {
+                if (!chunkData.isUnloaded()) {
+                    loadChunkInternal(isNewChunk, forceReadData, chunkData, onComplete);
+                } else if (onComplete != null) {
+                    onComplete.run();
+                }
+            });
+            return;
         }
 
         loadChunkData(chunkData);
@@ -924,7 +952,7 @@ public class BlockDataController extends ADataController {
         });
 
         if (!chunkData.isUnloaded()) {
-            Bukkit.getPluginManager().callEvent(new SlimefunChunkDataLoadEvent(chunkData));
+            fireChunkDataLoadEvent(chunkData);
 
             // Requeue network discovery for every block location in this chunk.
             // Unloading evicted their cache, which made Network#discoverStep drop them
@@ -938,6 +966,24 @@ public class BlockDataController extends ADataController {
                 var networkManager = Slimefun.getNetworkManager();
                 Slimefun.runSync(() -> locations.forEach(networkManager::updateAllNetworks));
             }
+        }
+
+        if (onComplete != null) {
+            onComplete.run();
+        }
+    }
+
+    /**
+     * 在正确的线程上派发 {@link SlimefunChunkDataLoadEvent}。
+     * <p>
+     * 该事件是同步事件, 不能在异步线程直接派发。延迟加载的续体会在读取执行器上运行,
+     * 因此需要把事件调度回主线程; 主线程上的调用则保持同步派发语义不变。
+     */
+    private void fireChunkDataLoadEvent(SlimefunChunkData chunkData) {
+        if (Bukkit.isPrimaryThread()) {
+            Bukkit.getPluginManager().callEvent(new SlimefunChunkDataLoadEvent(chunkData));
+        } else {
+            Slimefun.runSync(() -> Bukkit.getPluginManager().callEvent(new SlimefunChunkDataLoadEvent(chunkData)));
         }
     }
 
@@ -1030,7 +1076,14 @@ public class BlockDataController extends ADataController {
     }
 
     public void loadBlockData(SlimefunBlockData blockData) {
+        loadBlockDataInternal(blockData, null);
+    }
+
+    private void loadBlockDataInternal(SlimefunBlockData blockData, @Nullable Runnable onComplete) {
         if (blockData.isDataLoaded()) {
+            if (onComplete != null) {
+                onComplete.run();
+            }
             return;
         }
 
@@ -1039,7 +1092,7 @@ public class BlockDataController extends ADataController {
             // Same reasoning as in loadChunkInternal(): wait for the eviction
             // writes to finish before reading, so inventories cannot resurrect
             // items that were withdrawn before the unload.
-            runAfterChunkWrites(chunkKey, () -> loadBlockData(blockData));
+            runAfterChunkWrites(chunkKey, () -> loadBlockDataInternal(blockData, onComplete));
             return;
         }
 
@@ -1051,6 +1104,9 @@ public class BlockDataController extends ADataController {
         lock.lock(key);
         try {
             if (blockData.isDataLoaded()) {
+                if (onComplete != null) {
+                    onComplete.run();
+                }
                 return;
             }
 
@@ -1059,6 +1115,9 @@ public class BlockDataController extends ADataController {
             // evicted cache and re-enable tickers for an unloaded chunk.
             var owner = loadedChunk.get(LocationUtils.getChunkKey(blockData.getLocation()));
             if (owner == null || owner.isUnloaded() || owner.getBlockCacheInternal(blockData.getKey()) != blockData) {
+                if (onComplete != null) {
+                    onComplete.run();
+                }
                 return;
             }
 
@@ -1123,32 +1182,42 @@ public class BlockDataController extends ADataController {
         } finally {
             lock.unlock(key);
         }
+
+        if (onComplete != null) {
+            onComplete.run();
+        }
     }
 
     public void loadDataAsync(ASlimefunDataContainer container, IAsyncReadCallback<ASlimefunDataContainer> callback) {
         scheduleReadTask(() -> {
             if (container instanceof SlimefunBlockData blockData) {
-                loadBlockData(blockData);
+                loadBlockDataInternal(blockData, () -> invokeCallback(callback, container));
             } else if (container instanceof SlimefunUniversalData uniData) {
                 loadUniversalData(uniData);
+                invokeCallback(callback, container);
             }
-
-            invokeCallback(callback, container);
         });
     }
 
     public void loadBlockDataAsync(SlimefunBlockData blockData, IAsyncReadCallback<SlimefunBlockData> callback) {
-        scheduleReadTask(() -> {
-            loadBlockData(blockData);
-            invokeCallback(callback, blockData);
-        });
+        scheduleReadTask(() -> loadBlockDataInternal(blockData, () -> invokeCallback(callback, blockData)));
     }
 
     public void loadBlockDataAsync(
             List<SlimefunBlockData> blockDataList, IAsyncReadCallback<List<SlimefunBlockData>> callback) {
         scheduleReadTask(() -> {
-            blockDataList.forEach(this::loadBlockData);
-            invokeCallback(callback, blockDataList);
+            if (blockDataList.isEmpty()) {
+                invokeCallback(callback, blockDataList);
+                return;
+            }
+
+            var remaining = new AtomicInteger(blockDataList.size());
+            Runnable onDone = () -> {
+                if (remaining.decrementAndGet() == 0) {
+                    invokeCallback(callback, blockDataList);
+                }
+            };
+            blockDataList.forEach(data -> loadBlockDataInternal(data, onDone));
         });
     }
 
@@ -1261,7 +1330,15 @@ public class BlockDataController extends ADataController {
     public SlimefunChunkData getChunkData(Chunk chunk) {
         checkDestroy();
         loadChunk(chunk, false);
-        return getChunkDataCache(chunk, false);
+        var chunkData = getChunkDataCache(chunk, false);
+        if (chunkData != null && !chunkData.isDataLoaded()) {
+            // Eviction writes are still being flushed, so the data cannot be read safely
+            // without blocking the server thread. Fail loudly instead of returning an
+            // unloaded container, which would break callers with confusing exceptions.
+            throw new IllegalStateException("Chunk data for " + LocationUtils.getChunkKey(chunk)
+                    + " is not loaded yet (pending eviction writes)");
+        }
+        return chunkData;
     }
 
     public CompletableFuture<SlimefunChunkData> getChunkDataAsync(Chunk chunk) {
@@ -1271,16 +1348,26 @@ public class BlockDataController extends ADataController {
             return CompletableFuture.completedFuture(cdata);
         }
         var cKey = LocationUtils.getChunkKey(chunk);
-        return CompletableFuture.runAsync(
-                        () -> {
-                            // The chunk may have been unloaded (and its cache evicted) while this
-                            // read was queued. Only proceed if our entry is still the live one.
-                            if (loadedChunk.get(cKey) == cdata && !cdata.isUnloaded() && chunk.isLoaded()) {
-                                loadChunkInternal(false, false, cdata);
-                            }
-                        },
-                        readExecutor)
-                .thenApply(v -> loadedChunk.get(cKey) == cdata ? cdata : null);
+        var future = new CompletableFuture<SlimefunChunkData>();
+        Runnable complete = () -> {
+            if (loadedChunk.get(cKey) == cdata && !cdata.isUnloaded()) {
+                future.complete(cdata);
+            } else {
+                future.complete(null);
+            }
+        };
+        scheduleReadTask(() -> {
+            // The chunk may have been unloaded (and its cache evicted) while this
+            // read was queued. Only proceed if our entry is still the live one.
+            if (loadedChunk.get(cKey) == cdata && !cdata.isUnloaded() && chunk.isLoaded()) {
+                // The future is completed inside loadChunkInternal only after the data
+                // has actually been loaded (or the deferral was abandoned).
+                loadChunkInternal(false, false, cdata, complete);
+            } else {
+                future.complete(null);
+            }
+        });
+        return future;
     }
 
     public void getChunkDataAsync(Chunk chunk, IAsyncReadCallback<SlimefunChunkData> callback) {
@@ -1602,9 +1689,12 @@ public class BlockDataController extends ADataController {
         if (toRun != null) {
             for (var run : toRun) {
                 try {
-                    run.run();
-                } catch (Exception | LinkageError x) {
-                    logger.log(Level.WARNING, "执行区块写入完成后的延迟加载任务失败: " + cKey, x);
+                    // Do not run the deferred loads inline on the write thread: they perform
+                    // database reads and fire synchronous Bukkit events. Marshal them onto
+                    // the read executor instead.
+                    scheduleReadTask(run);
+                } catch (IllegalStateException x) {
+                    logger.log(Level.WARNING, "无法调度区块写入完成后的延迟加载任务 (控制器已关闭): " + cKey, x);
                 }
             }
         }
