@@ -1270,6 +1270,26 @@ public class BlockDataController extends ADataController {
         });
     }
 
+    /**
+     * 冲刷指定区块的空数据缓存
+     * <p>
+     * 仅当区块数据已加载且从未存在过任何数据时才会移除缓存。
+     * 曾存在数据 (即使已被移除) 的区块缓存不会被移除, 以免与挂起的
+     * 异步读写任务产生竞态, 或引发机器生命周期问题与兼容性风险。
+     *
+     * @param chunk 区块 {@link Chunk}
+     * @return 是否已从缓存中移除
+     */
+    public boolean flushEmptyChunkData(Chunk chunk) {
+        checkDestroy();
+        var cKey = LocationUtils.getChunkKey(chunk);
+        var chunkData = loadedChunk.get(cKey);
+        if (chunkData != null && chunkData.isEmpty()) {
+            return loadedChunk.remove(cKey, chunkData);
+        }
+        return false;
+    }
+
     public void removeAllDataInWorld(World world) {
         // 1. remove block cache
         var loadedBlockData = new HashSet<SlimefunBlockData>();
