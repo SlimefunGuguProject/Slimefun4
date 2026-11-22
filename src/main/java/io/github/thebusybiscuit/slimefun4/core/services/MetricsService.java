@@ -13,6 +13,7 @@ import java.net.URI;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.net.http.HttpClient;
+import java.net.http.HttpClient.Redirect;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandler;
@@ -71,7 +72,8 @@ public class MetricsService {
     private final Slimefun plugin;
     private final File parentFolder;
     private final File metricsModuleFile;
-    private final HttpClient client = HttpClient.newHttpClient();
+    private final HttpClient client =
+            HttpClient.newBuilder().followRedirects(Redirect.NORMAL).build();
 
     private URLClassLoader moduleClassLoader;
     private String metricVersion = null;
@@ -250,6 +252,12 @@ public class MetricsService {
                 metricVersion = String.valueOf(version);
                 hasDownloadedUpdate = true;
                 return true;
+            } else {
+                plugin.getLogger()
+                        .log(
+                                Level.WARNING,
+                                "Failed to download the latest jar file from GitHub. Response code: {0}",
+                                response.statusCode());
             }
         } catch (InterruptedException | JsonParseException e) {
             plugin.getLogger()
