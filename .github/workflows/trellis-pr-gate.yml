@@ -13,6 +13,7 @@ concurrency:
 
 jobs:
   trellis-pr-gate:
+    if: github.event.pull_request.user.type != 'Bot' && github.event.pull_request.user.login != 'noraincity-bot'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
