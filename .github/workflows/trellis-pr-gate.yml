@@ -1,0 +1,117 @@
+name: Trellis PR Gate
+
+on:
+  pull_request_target:
+    types: [opened, edited, synchronize, reopened, ready_for_review]
+
+permissions:
+  pull-requests: read
+
+concurrency:
+  group: trellis-pr-gate-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  trellis-pr-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check AI disclosure and Trellis records
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          BOT_ACCESS_TOKEN: ${{ secrets.BOT_ACCESS_TOKEN }}
+        with:
+          script: |
+            const botLogin = "noraincity-bot";
+            const reviewMarker = "<!-- trellis-pr-gate -->";
+            const reviewMessage = "若使用 AI 工具辅助开发，必须使用 Trellis 完成开发流程的记录";
+            const params = { ...context.repo, pull_number: context.payload.number };
+
+            function disclosedAiUse(body) {
+              const markdown = (body ?? "").replace(/<!--[\s\S]*?(?:-->|$)/g, "");
+              const checkbox = /^ {0,3}[-*+][ \t]+\[[xX]\][ \t]+我使用了 AI 工具辅助完成了这个提交请求[ \t]*$/;
+              let fence;
+
+              for (const line of markdown.split(/\r?\n/)) {
+                const match = /^ {0,3}(\x60{3,}|~{3,})(.*)$/.exec(line);
+                if (match) {
+                  const [, delimiter, suffix] = match;
+                  if (!fence) {
+                    fence = delimiter;
+                  } else if (delimiter.startsWith(fence) && !suffix.trim()) {
+                    fence = undefined;
+                  }
+                  continue;
+                }
+                if (!fence && checkbox.test(line)) return true;
+              }
+              return false;
+            }
+
+            function hasTrellisChanges(pr) {
+              const { execFileSync, spawnSync } = require("node:child_process");
+              const { mkdtempSync, rmSync } = require("node:fs");
+              const { join } = require("node:path");
+              const cwd = mkdtempSync(join(process.env.RUNNER_TEMP, "trellis-gate-"));
+              const { BOT_ACCESS_TOKEN, ...gitEnv } = process.env;
+              const options = { cwd, env: { ...gitEnv, GIT_TERMINAL_PROMPT: "0" } };
+              const remote = process.env.GITHUB_SERVER_URL + "/" + process.env.GITHUB_REPOSITORY + ".git";
+
+              // Inspect Git objects in a bare repository without executing pull request code.
+              try {
+                execFileSync("git", ["init", "--bare", "--quiet"], options);
+                execFileSync("git", [
+                  "fetch", "--quiet", "--no-tags", "--no-recurse-submodules", "--filter=blob:none", remote,
+                  pr.base.sha + ":refs/trellis/base", pr.head.sha + ":refs/trellis/head",
+                ], options);
+                const diff = spawnSync("git", [
+                  "diff", "--quiet", "--no-ext-diff", "--no-textconv", "--no-renames",
+                  "refs/trellis/base...refs/trellis/head", "--", ".trellis/tasks/",
+                ], { ...options, stdio: "inherit" });
+                if (diff.error) throw diff.error;
+                if (diff.status !== 0 && diff.status !== 1) {
+                  throw new Error("Git could not compare the pull request commits.");
+                }
+                return diff.status === 1;
+              } finally {
+                rmSync(cwd, { recursive: true, force: true });
+              }
+            }
+
+            const { data: pr } = await github.rest.pulls.get(params);
+            if (pr.state !== "open") return;
+            const disclosed = disclosedAiUse(pr.body);
+            const needsChanges = disclosed && !hasTrellisChanges(pr);
+            const reviews = await github.paginate(github.rest.pulls.listReviews, { ...params, per_page: 100 });
+            const gateReviews = reviews.filter(review =>
+              review.state === "CHANGES_REQUESTED" &&
+              review.user?.login?.toLowerCase() === botLogin &&
+              review.body?.includes(reviewMarker)
+            );
+            if (needsChanges === (gateReviews.length > 0)) return;
+
+            const { data: latest } = await github.rest.pulls.get(params);
+            if (latest.state !== "open" || disclosedAiUse(latest.body) !== disclosed ||
+                latest.head.sha !== pr.head.sha || latest.base.ref !== pr.base.ref) return;
+
+            const token = process.env.BOT_ACCESS_TOKEN;
+            if (!token) throw new Error("BOT_ACCESS_TOKEN is required for Trellis gate reviews.");
+            const bot = getOctokit(token);
+            const { data: account } = await bot.rest.users.getAuthenticated();
+            if (account.login.toLowerCase() !== botLogin) {
+              throw new Error("BOT_ACCESS_TOKEN must authenticate as noraincity-bot.");
+            }
+
+            if (needsChanges) {
+              await bot.rest.pulls.createReview({
+                ...params, commit_id: pr.head.sha, event: "REQUEST_CHANGES",
+                body: reviewMessage + "\n\n" + reviewMarker,
+              });
+              return;
+            }
+
+            for (const review of gateReviews) {
+              await bot.rest.pulls.dismissReview({
+                ...params, review_id: review.id, message: "已解除 Trellis 门禁的更改请求。",
+              });
+            }

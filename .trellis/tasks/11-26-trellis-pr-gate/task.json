@@ -1,0 +1,29 @@
+{
+  "id": "trellis-pr-gate",
+  "name": "trellis-pr-gate",
+  "title": "为 AI 辅助开发设置 Trellis PR 门禁",
+  "description": "在 CI 中检查 PR 的 AI 使用声明及 Trellis 任务文件变更",
+  "status": "in_progress",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "StarWishsama",
+  "assignee": "StarWishsama",
+  "createdAt": "2026-11-26",
+  "completedAt": null,
+  "branch": "codex/trellis-pr-gate",
+  "base_branch": "master",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [
+    ".github/PULL_REQUEST_TEMPLATE.md",
+    ".github/workflows/trellis-pr-gate.yml"
+  ],
+  "notes": "GitHub 端的凭据和分支保护待上线时验证。",
+  "meta": {}
+}
