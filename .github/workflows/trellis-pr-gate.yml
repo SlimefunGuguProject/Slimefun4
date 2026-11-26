@@ -9,7 +9,7 @@ permissions:
 
 concurrency:
   group: trellis-pr-gate-${{ github.event.pull_request.number }}
-  cancel-in-progress: false
+  queue: max
 
 jobs:
   trellis-pr-gate:
@@ -24,13 +24,19 @@ jobs:
           script: |
             const botLogin = "noraincity-bot";
             const reviewMarker = "<!-- trellis-pr-gate -->";
+            const removalMarkerPrefix = "<!-- trellis-pr-checkbox-removed:";
             const reviewMessage = "若使用 AI 工具辅助开发，必须使用 Trellis 完成开发流程的记录";
             const params = { ...context.repo, pull_number: context.payload.number };
 
-            function disclosedAiUse(body) {
+            function isCollaborator(pr) {
+              return pr.author_association === "COLLABORATOR";
+            }
+
+            function readAiCheckbox(body) {
               const markdown = (body ?? "").replace(/<!--[\s\S]*?(?:-->|$)/g, "");
-              const checkbox = /^ {0,3}[-*+][ \t]+\[[xX]\][ \t]+我使用了 AI 工具辅助完成了这个提交请求[ \t]*$/;
+              const checkbox = /^ {0,3}[-*+][ \t]+\[([ xX])\][ \t]+我使用了 AI 工具辅助完成了这个提交请求[ \t]*$/;
               let fence;
+              let unchecked = false;
 
               for (const line of markdown.split(/\r?\n/)) {
                 const match = /^ {0,3}(\x60{3,}|~{3,})(.*)$/.exec(line);
@@ -43,9 +49,62 @@ jobs:
                   }
                   continue;
                 }
-                if (!fence && checkbox.test(line)) return true;
+                if (fence) continue;
+                const taskItem = checkbox.exec(line);
+                if (!taskItem) continue;
+                if (taskItem[1] !== " ") return true;
+                unchecked = true;
               }
-              return false;
+              return unchecked ? false : null;
+            }
+
+            function canCloseForMissingCheckbox(pr) {
+              return pr.state === "open" && !isCollaborator(pr) && readAiCheckbox(pr.body) === null;
+            }
+
+            async function authenticateBot() {
+              const token = process.env.BOT_ACCESS_TOKEN;
+              if (!token) throw new Error("BOT_ACCESS_TOKEN is required for Trellis gate actions.");
+              const bot = getOctokit(token);
+              const { data: account } = await bot.rest.users.getAuthenticated();
+              if (account.login.toLowerCase() !== botLogin) {
+                throw new Error("BOT_ACCESS_TOKEN must authenticate as noraincity-bot.");
+              }
+              return bot;
+            }
+
+            async function closeIfCheckboxRemoved() {
+              const { action, changes, pull_request: editedPr } = context.payload;
+              const removed = action === "edited" && readAiCheckbox(changes?.body?.from) !== null &&
+                editedPr?.body !== undefined && readAiCheckbox(editedPr.body) === null;
+              if (!removed && action !== "reopened") return false;
+
+              const issue = { ...context.repo, issue_number: params.pull_number };
+              const comments = await github.paginate(github.rest.issues.listComments, { ...issue, per_page: 100 });
+              const reminders = comments.filter(comment =>
+                comment.user?.login?.toLowerCase() === botLogin && comment.body?.includes(removalMarkerPrefix)
+              );
+              if (!removed && reminders.length === 0) return false;
+
+              const bot = await authenticateBot();
+              const { data: latest } = await github.rest.pulls.get(params);
+              if (!canCloseForMissingCheckbox(latest)) return true;
+
+              const marker = `${removalMarkerPrefix}${context.runId} -->`;
+              if (removed && !reminders.some(comment => comment.body.includes(marker))) {
+                const mention = latest.user?.login ? `@${latest.user.login} ` : "";
+                await bot.rest.issues.createComment({
+                  ...issue,
+                  body: mention + "PR 描述中的 AI 使用声明复选框已被删除。请恢复「我使用了 AI 工具辅助完成了这个提交请求」复选框后重新打开此 PR。" +
+                    "仅在使用了 AI 工具时勾选。如果无法重新打开，请联系维护者。\n\n" + marker,
+                });
+
+                const { data: beforeClose } = await github.rest.pulls.get(params);
+                if (!canCloseForMissingCheckbox(beforeClose)) return true;
+              }
+
+              await bot.rest.pulls.update({ ...params, state: "closed" });
+              return true;
             }
 
             function hasTrellisChanges(pr) {
@@ -80,8 +139,10 @@ jobs:
 
             const { data: pr } = await github.rest.pulls.get(params);
             if (pr.state !== "open") return;
-            const disclosed = disclosedAiUse(pr.body);
-            const needsChanges = disclosed && !hasTrellisChanges(pr);
+            const exempt = isCollaborator(pr);
+            const disclosed = exempt ? null : readAiCheckbox(pr.body);
+            if (!exempt && disclosed === null && await closeIfCheckboxRemoved()) return;
+            const needsChanges = disclosed === true && !hasTrellisChanges(pr);
             const reviews = await github.paginate(github.rest.pulls.listReviews, { ...params, per_page: 100 });
             const gateReviews = reviews.filter(review =>
               review.state === "CHANGES_REQUESTED" &&
@@ -91,16 +152,11 @@ jobs:
             if (needsChanges === (gateReviews.length > 0)) return;
 
             const { data: latest } = await github.rest.pulls.get(params);
-            if (latest.state !== "open" || disclosedAiUse(latest.body) !== disclosed ||
+            if (latest.state !== "open" || isCollaborator(latest) !== exempt ||
+                (!exempt && readAiCheckbox(latest.body) !== disclosed) ||
                 latest.head.sha !== pr.head.sha || latest.base.ref !== pr.base.ref) return;
 
-            const token = process.env.BOT_ACCESS_TOKEN;
-            if (!token) throw new Error("BOT_ACCESS_TOKEN is required for Trellis gate reviews.");
-            const bot = getOctokit(token);
-            const { data: account } = await bot.rest.users.getAuthenticated();
-            if (account.login.toLowerCase() !== botLogin) {
-              throw new Error("BOT_ACCESS_TOKEN must authenticate as noraincity-bot.");
-            }
+            const bot = await authenticateBot();
 
             if (needsChanges) {
               await bot.rest.pulls.createReview({
