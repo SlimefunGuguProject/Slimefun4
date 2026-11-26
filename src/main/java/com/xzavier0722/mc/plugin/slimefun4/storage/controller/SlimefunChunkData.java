@@ -28,6 +28,13 @@ public class SlimefunChunkData extends ADataContainer {
     private final int chunkX;
     private final int chunkZ;
     private final Map<String, SlimefunBlockData> sfBlocks;
+    /**
+     * 是否曾经写入或加载过任何数据
+     * <p>
+     * 一旦置为 true 将不再回退。用于保证冲刷空区块缓存时,
+     * 不会误卸载曾存在数据的区块, 避免与挂起的异步读写任务产生竞态。
+     */
+    private volatile boolean everHadData = false;
 
     @ParametersAreNonnullByDefault
     SlimefunChunkData(Chunk chunk) {
@@ -78,6 +85,7 @@ public class SlimefunChunkData extends ADataContainer {
         var re = new SlimefunBlockData(l, sfId);
         re.setIsDataLoaded(true);
         sfBlocks.put(lKey, re);
+        everHadData = true;
 
         var preset = BlockMenuPreset.getPreset(sfId);
         if (preset != null) {
@@ -114,6 +122,10 @@ public class SlimefunChunkData extends ADataContainer {
             sfBlocks.put(data.getKey(), data);
         } else {
             sfBlocks.putIfAbsent(data.getKey(), data);
+        }
+
+        if (data != INVALID_BLOCK_DATA) {
+            everHadData = true;
         }
     }
 
@@ -157,6 +169,27 @@ public class SlimefunChunkData extends ADataContainer {
 
     public Set<SlimefunBlockData> getAllBlockData() {
         return getAllCacheInternal();
+    }
+
+    /**
+     * 判断该区块缓存是否从未有过任何数据。
+     * 仅当区块数据已加载后, 该判断才是可信的。
+     * <p>
+     * 曾存在数据 (即使已被移除) 的区块不会被判定为空,
+     * 以保证卸载冲刷不会影响可能仍挂起的异步任务。
+     *
+     * @return 区块数据已加载且从未存在过任何方块数据与区块数据时为 true
+     */
+    boolean isEmpty() {
+        return isDataLoaded() && !everHadData && sfBlocks.isEmpty() && !hasCacheData();
+    }
+
+    @Override
+    protected void setCacheInternal(String key, String val, boolean override) {
+        super.setCacheInternal(key, val, override);
+        if (val != null) {
+            everHadData = true;
+        }
     }
 
     @Override

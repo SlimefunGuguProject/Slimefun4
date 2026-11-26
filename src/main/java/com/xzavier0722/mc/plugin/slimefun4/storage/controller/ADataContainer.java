@@ -114,6 +114,15 @@ public abstract class ADataContainer {
     }
 
     /**
+     * Checks whether any cached key-value data exists without allocating a wrapper.
+     *
+     * @return true if the cache contains any data
+     */
+    protected boolean hasCacheData() {
+        return !data.isEmpty();
+    }
+
+    /**
      * Gets all keys in this container.
      *
      * @return An unmodifiable set of all keys
