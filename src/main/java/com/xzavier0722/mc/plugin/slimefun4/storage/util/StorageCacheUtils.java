@@ -58,8 +58,36 @@ public class StorageCacheUtils {
                 () -> Slimefun.getBlockDataService().getUniversalDataUUID(block).isPresent());
     }
 
+    /**
+     * 从缓存中获取一个"有效"的 {@link SlimefunBlockData}。
+     * <p>
+     * 契约: 返回值非 null 即表示数据已加载且未被标记待移除, 调用方可以直接读写。
+     * 无效数据 (未加载 / pendingRemove / 已被驱逐) 一律返回 null, 未加载但仍在缓存中的
+     * 数据会顺带触发一次异步加载, 调用方下次重试即可获得有效数据。
+     */
     @ParametersAreNonnullByDefault
     @Nullable public static SlimefunBlockData getBlock(Location l) {
+        var raw = Slimefun.getDatabaseManager().getBlockDataController().getBlockDataFromCache(l);
+        if (raw == null || raw.isPendingRemove()) {
+            return null;
+        }
+
+        if (!raw.isDataLoaded()) {
+            requestLoad(raw);
+            return null;
+        }
+
+        return raw;
+    }
+
+    /**
+     * 从缓存中获取方块数据, 不检查有效性。
+     * <p>
+     * 仅用于需要访问"未加载 / 待移除"状态的内部机制 (加载流程、拆除流程、驱逐流程)。
+     * 附属与普通调用方请使用 {@link #getBlock(Location)}。
+     */
+    @ParametersAreNonnullByDefault
+    @Nullable public static SlimefunBlockData getBlockRaw(Location l) {
         return Slimefun.getDatabaseManager().getBlockDataController().getBlockDataFromCache(l);
     }
 
@@ -113,6 +141,10 @@ public class StorageCacheUtils {
                 return null;
             }
 
+            if (!uniData.isDataLoaded()) {
+                requestLoad(uniData);
+                return null;
+            }
             return uniData.getData(key);
         }
     }
@@ -125,13 +157,25 @@ public class StorageCacheUtils {
 
     @ParametersAreNonnullByDefault
     public static void setData(Location loc, String key, String val) {
-        var block = getBlock(loc);
+        // 使用 raw 访问器: 未加载的容器需要走写回放, 不能在 getBlock 的过滤中丢失
+        var block = getBlockRaw(loc);
         if (block != null) {
+            if (!block.isDataLoaded()) {
+                // The data container is not loaded yet (e.g. the chunk was just re-created
+                // after an unload). Defer the write and re-bind it to the currently live
+                // container once loading completes, so an eviction mid-load cannot drop it.
+                replayBlockDataWrite(loc, key, val);
+                return;
+            }
             block.setData(key, val);
         } else {
             var uni = getUniversalBlock(loc.getBlock());
 
             if (uni != null) {
+                if (!uni.isDataLoaded()) {
+                    replayUniversalDataWrite(uni.getUUID(), key, val);
+                    return;
+                }
                 uni.setData(key, val);
             }
         }
@@ -139,21 +183,106 @@ public class StorageCacheUtils {
 
     @ParametersAreNonnullByDefault
     public static void removeData(Location loc, String key) {
-        var block = getBlock(loc);
+        // 使用 raw 访问器: 未加载的容器需要走写回放, 不能在 getBlock 的过滤中丢失
+        var block = getBlockRaw(loc);
         if (block != null) {
+            if (!block.isDataLoaded()) {
+                replayBlockDataWrite(loc, key, null);
+                return;
+            }
             block.removeData(key);
         } else {
             var uni = getUniversalBlock(loc.getBlock());
 
             if (uni != null) {
+                if (!uni.isDataLoaded()) {
+                    replayUniversalDataWrite(uni.getUUID(), key, null);
+                    return;
+                }
                 uni.removeData(key);
             }
         }
     }
 
+    /**
+     * 把一次方块数据写入绑定到"当前存活"的容器实例上。
+     * <p>
+     * 若容器在加载完成前被区块驱逐, 旧实例永远不会变为已加载, 直接丢弃会导致
+     * 玩家设置静默丢失。这里在每次回调时重新解析缓存中的存活实例并换绑。
+     */
+    private static void replayBlockDataWrite(@Nonnull Location loc, @Nonnull String key, @Nullable String val) {
+        var target = getBlock(loc);
+        if (target == null) {
+            // 区块当前完全未加载, 没有可写入的容器; 写入丢弃。
+            // 正常交互流程都会在区块加载后进行, 此分支仅在极端时序下发生。
+            return;
+        }
+
+        if (target.isDataLoaded()) {
+            writeBlockData(target, key, val);
+        } else {
+            executeAfterLoad(
+                    target,
+                    () -> {
+                        if (target.isDataLoaded()) {
+                            writeBlockData(target, key, val);
+                        } else {
+                            // 加载完成前又被驱逐: 换绑到当前存活实例, 而不是丢弃写入
+                            replayBlockDataWrite(loc, key, val);
+                        }
+                    },
+                    false);
+        }
+    }
+
+    private static void writeBlockData(@Nonnull SlimefunBlockData data, @Nonnull String key, @Nullable String val) {
+        if (val == null) {
+            data.removeData(key);
+        } else {
+            data.setData(key, val);
+        }
+    }
+
+    /**
+     * 把一次通用数据写入绑定到当前缓存中的通用数据实例。
+     * 通用数据不随区块驱逐, 但可能在写入时尚未加载完成, 同样需要换绑式回放。
+     */
+    private static void replayUniversalDataWrite(@Nonnull UUID uuid, @Nonnull String key, @Nullable String val) {
+        var target = Slimefun.getDatabaseManager().getBlockDataController().getUniversalBlockDataFromCache(uuid);
+        if (target == null) {
+            // 通用数据当前不在缓存中, 没有可写入的容器
+            return;
+        }
+
+        if (target.isDataLoaded()) {
+            writeUniversalData(target, key, val);
+        } else {
+            executeAfterLoad(
+                    target,
+                    () -> {
+                        if (target.isDataLoaded()) {
+                            writeUniversalData(target, key, val);
+                        } else {
+                            replayUniversalDataWrite(uuid, key, val);
+                        }
+                    },
+                    false);
+        }
+    }
+
+    private static void writeUniversalData(
+            @Nonnull SlimefunUniversalData data, @Nonnull String key, @Nullable String val) {
+        if (val == null) {
+            data.removeData(key);
+        } else {
+            data.setData(key, val);
+        }
+    }
+
     @ParametersAreNonnullByDefault
     @Nullable public static BlockMenu getMenu(Location loc) {
-        var blockData = getBlock(loc);
+        // 使用 raw 访问器: 待移除 (pendingRemove) 的机器在拆除流程中仍需读取菜单以掉落物品
+        var blockData = getBlockRaw(loc);
         if (blockData == null) {
             return null;
         }
@@ -259,15 +388,14 @@ public class StorageCacheUtils {
     }
 
     public static boolean isBlockPendingRemove(@Nonnull Block block) {
-        if (hasBlock(block.getLocation())) {
-            return getBlock(block.getLocation()).isPendingRemove();
+        // 使用 raw 访问器: 待移除容器必须可见, 否则该判断永远返回 false
+        var blockData = getBlockRaw(block.getLocation());
+        if (blockData != null) {
+            return blockData.isPendingRemove();
         }
 
-        if (hasUniversalBlock(block.getLocation())) {
-            return getUniversalBlock(block).isPendingRemove();
-        }
-
-        return false;
+        var uniData = getUniversalBlock(block);
+        return uniData != null && uniData.isPendingRemove();
     }
 
     public static void requestLoad(ASlimefunDataContainer data) {

@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -28,6 +29,12 @@ public class SlimefunChunkData extends ADataContainer {
     private final int chunkX;
     private final int chunkZ;
     private final Map<String, SlimefunBlockData> sfBlocks;
+    /**
+     * 标记该区块缓存实例是否已被驱逐出区块缓存。
+     * <p>
+     * 用于让在途的异步读取任务识别出"区块已卸载", 放弃把结果写回一个已经失效的缓存实例。
+     */
+    private final AtomicBoolean unloaded = new AtomicBoolean(false);
 
     @ParametersAreNonnullByDefault
     SlimefunChunkData(Chunk chunk) {
@@ -71,6 +78,11 @@ public class SlimefunChunkData extends ADataContainer {
     @Nonnull
     @ParametersAreNonnullByDefault
     public SlimefunBlockData createBlockData(Location l, String sfId) {
+        if (isUnloaded()) {
+            // Writing through an evicted chunk cache would create a ghost block record
+            // in the database for a chunk that is no longer loaded.
+            throw new IllegalStateException("Cannot create block data in an unloaded chunk cache: " + getKey());
+        }
         var lKey = LocationUtils.getLocKey(l);
         if (getBlockCacheInternal(lKey) != null) {
             throw new IllegalStateException("There already a block in this location: " + lKey);
@@ -97,6 +109,11 @@ public class SlimefunChunkData extends ADataContainer {
 
     @Nullable @ParametersAreNonnullByDefault
     public SlimefunBlockData removeBlockData(Location l) {
+        if (isUnloaded()) {
+            // Deleting through an evicted chunk cache would remove the database record
+            // of a machine that may have been reloaded by a fresh cache instance.
+            return null;
+        }
         var lKey = LocationUtils.getLocKey(l);
         var re = removeBlockDataCacheInternal(lKey);
         if (re == null) {
@@ -132,6 +149,19 @@ public class SlimefunChunkData extends ADataContainer {
         sfBlocks.clear();
     }
 
+    /**
+     * 标记该实例已随区块卸载被驱逐, 只有第一次调用会生效。
+     *
+     * @return true 如果本次调用完成了标记, false 表示该实例此前已被标记
+     */
+    boolean markUnloaded() {
+        return unloaded.compareAndSet(false, true);
+    }
+
+    public boolean isUnloaded() {
+        return unloaded.get();
+    }
+
     boolean hasBlockCache(String lKey) {
         return sfBlocks.containsKey(lKey);
     }
@@ -144,12 +174,21 @@ public class SlimefunChunkData extends ADataContainer {
     @ParametersAreNonnullByDefault
     public void setData(String key, String val) {
         checkData();
+        if (isUnloaded()) {
+            // The chunk cache has been evicted. A write through a stale container would
+            // overwrite the value written by the reloaded instance, so it is discarded.
+            return;
+        }
         setCacheInternal(key, val, true);
         Slimefun.getDatabaseManager().getBlockDataController().scheduleDelayedChunkDataUpdate(this, key);
     }
 
     @ParametersAreNonnullByDefault
     public void removeData(String key) {
+        if (isUnloaded()) {
+            // Same as setData: stale containers must not reach the database.
+            return;
+        }
         if (removeCacheInternal(key) != null) {
             Slimefun.getDatabaseManager().getBlockDataController().scheduleDelayedChunkDataUpdate(this, key);
         }

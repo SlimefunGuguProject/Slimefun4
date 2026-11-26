@@ -155,6 +155,11 @@ class CargoNetworkTask implements Runnable {
         ItemStack item = stack;
 
         var blockData = StorageCacheUtils.getBlock(inputNode);
+        if (blockData == null) {
+            // 无效或未加载的节点数据: getBlock 已触发加载, 本周期跳过路由, 物品退回
+            return item;
+        }
+
         boolean roundrobin = Objects.equals(blockData.getData("round-robin"), "true");
         boolean smartFill = Objects.equals(blockData.getData("smart-fill"), "true");
 

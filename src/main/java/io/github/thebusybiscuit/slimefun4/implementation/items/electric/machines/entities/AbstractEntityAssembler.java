@@ -166,6 +166,8 @@ public abstract class AbstractEntityAssembler<T extends Entity> extends SimpleSl
     }
 
     private void updateBlockInventory(BlockMenu menu, Block b) {
+        // updateBlockInventory 经由 BlockMenuPreset 延迟到数据加载完成后调用,
+        // getBlock 只返回有效数据; null 仅在极端驱逐时序出现, 此时按默认状态渲染
         var blockData = StorageCacheUtils.getBlock(b.getLocation());
         String val;
         if (blockData == null || (val = blockData.getData(KEY_ENABLED)) == null || val.equals(String.valueOf(false))) {

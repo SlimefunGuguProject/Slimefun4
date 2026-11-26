@@ -17,6 +17,10 @@ public class ChunkKey extends ScopeKey {
         this.chunkKey = chunkKey;
     }
 
+    public String getChunkKey() {
+        return chunkKey;
+    }
+
     @Override
     protected String getKeyStr() {
         return scope + "/" + chunkKey;

@@ -89,14 +89,13 @@ public class HologramProjector extends SlimefunItem implements HologramOwner {
 
             var p = e.getPlayer();
             var b = e.getClickedBlock().get();
+            // getBlock 只返回有效数据; 未加载时返回 null 并顺带触发加载, 本次交互直接结束
             var data = StorageCacheUtils.getBlock(b.getLocation());
-
-            if (data != null && !data.isDataLoaded()) {
-                StorageCacheUtils.requestLoad(data);
+            if (data == null) {
                 return;
             }
 
-            if (p.getUniqueId().toString().equals(StorageCacheUtils.getData(b.getLocation(), "owner"))) {
+            if (p.getUniqueId().toString().equals(data.getData("owner"))) {
                 openEditor(p, b);
             }
         };

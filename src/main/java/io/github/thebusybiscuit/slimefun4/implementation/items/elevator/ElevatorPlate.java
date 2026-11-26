@@ -102,8 +102,13 @@ public class ElevatorPlate extends SimpleSlimefunItem<BlockUseHandler> {
             var block = b.getWorld().getBlockAt(b.getX(), y, b.getZ());
             var loc = block.getLocation();
 
-            if (block.getType() == getItem().getType() && StorageCacheUtils.isBlock(loc, getId())) {
-                var blockData = StorageCacheUtils.getBlock(loc);
+            if (block.getType() == getItem().getType()) {
+                // 使用 raw 访问器: 电梯需要收集未加载的楼层数据以批量加载
+                var blockData = StorageCacheUtils.getBlockRaw(loc);
+                if (blockData == null || !getId().equals(blockData.getSfId())) {
+                    continue;
+                }
+
                 if (blockData.isPendingRemove()) {
                     continue;
                 }
@@ -139,6 +144,11 @@ public class ElevatorPlate extends SimpleSlimefunItem<BlockUseHandler> {
         var floors = new LinkedList<ElevatorFloor>();
         for (var i = 0; i < blockDataList.size(); i++) {
             var blockData = blockDataList.get(i);
+            if (!blockData.isDataLoaded()) {
+                // The data of this floor could not be loaded (e.g. its chunk was unloaded
+                // and evicted while the read was in flight), skip it for now.
+                continue;
+            }
             floors.addFirst(new ElevatorFloor(
                     ChatColors.color(blockData.getData(DATA_KEY)),
                     i,

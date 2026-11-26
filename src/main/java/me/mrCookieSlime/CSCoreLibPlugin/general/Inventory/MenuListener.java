@@ -5,12 +5,14 @@ import java.util.logging.Level;
 import javax.annotation.Nonnull;
 import me.mrCookieSlime.CSCoreLibPlugin.general.Inventory.ChestMenu.AdvancedMenuClickHandler;
 import me.mrCookieSlime.CSCoreLibPlugin.general.Inventory.ChestMenu.MenuClickHandler;
+import me.mrCookieSlime.Slimefun.api.inventory.BlockMenu;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.plugin.Plugin;
 
 /**
@@ -27,6 +29,16 @@ public class MenuListener implements Listener {
     }
 
     @EventHandler
+    public void onOpen(InventoryOpenEvent e) {
+        // getHolder() involves Block.getState() in BlockInventory cases
+        var holder = e.getInventory().getHolder(false);
+
+        if (holder instanceof BlockMenu menu) {
+            BlockMenu.registerOpen(menu);
+        }
+    }
+
+    @EventHandler
     public void onClose(InventoryCloseEvent e) {
         // getHolder() involves Block.getState() in BlockInventory cases
         var holder = e.getInventory().getHolder(false);
@@ -35,12 +47,24 @@ public class MenuListener implements Listener {
             menu.removeViewer(e.getPlayer().getUniqueId());
             menu.getMenuCloseHandler().onClose((Player) e.getPlayer());
         }
+
+        if (holder instanceof BlockMenu blockMenu
+                && blockMenu.toInventory().getViewers().isEmpty()) {
+            // 最后一个观看者已关闭视图, 从打开视图注册表中移除, 保持注册表有界
+            BlockMenu.unregisterOpen(blockMenu);
+        }
     }
 
     @EventHandler
     public void onClick(InventoryClickEvent e) {
         // getHolder() involves Block.getState() in BlockInventory cases
         var holder = e.getInventory().getHolder(false);
+
+        if (holder instanceof BlockMenu detachedMenu && detachedMenu.isDetached()) {
+            // 菜单所属区块已被驱逐: 冻结视图, 防止玩家继续与孤儿菜单交互造成物品复制
+            e.setCancelled(true);
+            return;
+        }
 
         if (holder instanceof ChestMenu menu) {
             try {

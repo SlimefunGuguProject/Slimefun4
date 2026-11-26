@@ -19,6 +19,12 @@ public class DelayedTask {
     }
 
     public synchronized boolean tryRun() {
+        if (executed) {
+            // Already executed (e.g. flushed on chunk eviction); a looper snapshot may
+            // still hold this task, but re-running it would write stale values.
+            return false;
+        }
+
         if (System.currentTimeMillis() < runAfter) {
             return false;
         }
@@ -37,7 +43,13 @@ public class DelayedTask {
         return executed;
     }
 
-    public void runUnsafely() {
+    public synchronized void runUnsafely() {
+        if (executed) {
+            // Skip double execution: the task closure captures the original data
+            // container, so running it twice can overwrite reloaded state.
+            return;
+        }
+
         try {
             executed = true;
             task.run();

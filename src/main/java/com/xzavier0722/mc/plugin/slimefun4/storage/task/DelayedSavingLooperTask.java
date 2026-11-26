@@ -2,7 +2,7 @@ package com.xzavier0722.mc.plugin.slimefun4.storage.task;
 
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.LinkedKey;
 import java.util.Map;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 import lombok.extern.slf4j.Slf4j;
 
@@ -10,7 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 public class DelayedSavingLooperTask implements Runnable {
     private final long forceSavePeriodInMillis;
     private final Supplier<Map<LinkedKey, DelayedTask>> taskGetter;
-    private final Consumer<LinkedKey> executeCallback;
+    private final BiConsumer<LinkedKey, DelayedTask> executeCallback;
     private long nextForceRun;
 
     /**
@@ -19,7 +19,7 @@ public class DelayedSavingLooperTask implements Runnable {
     public DelayedSavingLooperTask(
             int forceSavePeriod,
             Supplier<Map<LinkedKey, DelayedTask>> taskGetter,
-            Consumer<LinkedKey> executeCallback) {
+            BiConsumer<LinkedKey, DelayedTask> executeCallback) {
         this.forceSavePeriodInMillis = forceSavePeriod * 1000L;
         this.executeCallback = executeCallback;
         this.taskGetter = taskGetter;
@@ -36,14 +36,14 @@ public class DelayedSavingLooperTask implements Runnable {
         if (nextForceRun > System.currentTimeMillis()) {
             tasks.forEach((key, task) -> {
                 if (task.tryRun()) {
-                    executeCallback.accept(key);
+                    executeCallback.accept(key, task);
                 }
             });
         } else {
             updateNextForceRunTime();
             tasks.forEach((key, task) -> {
                 task.runUnsafely();
-                executeCallback.accept(key);
+                executeCallback.accept(key, task);
             });
         }
     }

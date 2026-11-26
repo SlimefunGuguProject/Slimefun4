@@ -1,6 +1,7 @@
 package com.xzavier0722.mc.plugin.slimefun4.storage.controller;
 
 import com.xzavier0722.mc.plugin.slimefun4.storage.util.LocationUtils;
+import com.xzavier0722.mc.plugin.slimefun4.storage.util.StorageCacheUtils;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -78,5 +79,14 @@ public class SlimefunBlockData extends ASlimefunDataContainer {
     @ParametersAreNonnullByDefault
     public void scheduleUpdateData(String key) {
         Slimefun.getDatabaseManager().getBlockDataController().scheduleDelayedBlockDataUpdate(this, key);
+    }
+
+    /**
+     * 只有当本实例仍是缓存中的存活条目时, 才允许重放 pendingRemove 期间捕获的数据。
+     * 被区块驱逐的陈旧实例重放会把旧值写回数据库, 覆盖重载后新实例的数据。
+     */
+    @Override
+    protected boolean canReplayPendingRemoveData() {
+        return StorageCacheUtils.getBlock(location) == this;
     }
 }

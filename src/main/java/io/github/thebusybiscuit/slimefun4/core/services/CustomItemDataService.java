@@ -101,7 +101,14 @@ public class CustomItemDataService implements Keyed {
             return Optional.empty();
         }
 
-        return getItemData(item.getItemMeta());
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null) {
+            // A rare race (e.g. async access to a shared inventory) can leave the item
+            // without meta between hasItemMeta() and getItemMeta(), treat it as plain.
+            return Optional.empty();
+        }
+
+        return getItemData(meta);
     }
 
     /**
@@ -109,12 +116,16 @@ public class CustomItemDataService implements Keyed {
      * on the given {@link ItemMeta}.
      *
      * @param meta
-     *            The {@link ItemMeta} to check
+     *            The {@link ItemMeta} to check, may be null
      *
      * @return An {@link Optional} describing the result
      */
-    public @Nonnull Optional<String> getItemData(@Nonnull ItemMeta meta) {
-        Validate.notNull(meta, "Cannot read data from null!");
+    public @Nonnull Optional<String> getItemData(@Nullable ItemMeta meta) {
+        if (meta == null) {
+            // A rare race (e.g. async access to a shared inventory) can leave the item
+            // without meta between hasItemMeta() and getItemMeta(), treat it as plain.
+            return Optional.empty();
+        }
 
         PersistentDataContainer container = meta.getPersistentDataContainer();
         return Optional.ofNullable(container.get(namespacedKey, PersistentDataType.STRING));
